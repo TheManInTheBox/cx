@@ -17,9 +17,30 @@ dotnet build CxLanguage.sln
 # Run AI agentic examples (planned - Phase 4)
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/08_agentic_ai.cx
 
-# Test current working features
+# Test current working features (✅ All Phase 1 features working)
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_working_demo.cx
+
+# Test function system (❌ Currently failing compilation)
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/05_functions.cx
 ```
+
+## 📊 Current Development Status
+
+### ✅ **Stable & Production Ready**
+- **Phase 1 Core Language**: All features complete and thoroughly tested
+- **Build System**: Compiles successfully with .NET 8
+- **Parser**: ANTLR4 grammar handles all current syntax correctly  
+- **Examples**: Comprehensive working demo showcases all stable features
+
+### ⚠️ **In Active Development** 
+- **Phase 2 Function System**: Parsing complete, IL compilation failing
+- **Critical Issue**: Function declarations cause "The invoked member is not supported before the type is created" error
+- **Next Priority**: Fix function IL generation in `CxCompiler.cs`
+
+### 🔮 **Planned Features**
+- **Phase 3**: Advanced language constructs (arrays, objects, exceptions)
+- **Phase 4**: Native AI function integration
+- **Phase 5**: Autonomous agentic capabilities
 
 ## 🤖 Native AI Functions - Zero Imports Required
 
@@ -104,10 +125,14 @@ await autonomousAgent();
 - ✅ Compound assignment operators (`+=`, `-=`, `*=`, `/=`)
 
 ### 🔄 **Phase 2: Function System** (IN PROGRESS - Current Priority)
+- ✅ Function declaration syntax and parsing (working)
+- ❌ Function IL compilation (failing - critical issue)
 - ⏳ Function parameters and return values
 - ⏳ Function call mechanism fixes
 - ⏳ Proper variable scoping
 - ⏳ Function overloading support
+
+**Current Issue**: Function declarations parse correctly but fail during IL code generation with "The invoked member is not supported before the type is created" error. This is the critical blocker preventing Phase 2 completion.
 
 ### 📋 **Phase 3: Advanced Language Features** (PLANNED)
 - 📋 For-in loops and iterators
@@ -135,16 +160,21 @@ await autonomousAgent();
 
 ## 🛠️ Current Working Features (Phase 1 Complete)
 
-### Core Language Features ✅
-- **Variables and Data Types**: String, integer, and boolean support
-- **Arithmetic Operations**: Addition, subtraction, multiplication, division with proper precedence
-- **Compound Assignment**: `+=`, `-=`, `*=`, `/=` operators
-- **Comparison Operations**: `==`, `!=`, `<`, `>`, `<=`, `>=`
-- **Logical Operators**: `&&`, `||`, `!` with boolean logic
-- **Control Flow**: If/else statements and while loops
-- **String Operations**: Concatenation and formatting
+### ✅ Fully Working Core Language Features
+- **Variables and Data Types**: String, integer, and boolean support with proper type handling
+- **Arithmetic Operations**: Addition, subtraction, multiplication, division with correct operator precedence  
+- **Compound Assignment**: `+=`, `-=`, `*=`, `/=` operators working correctly
+- **Comparison Operations**: `==`, `!=`, `<`, `>`, `<=`, `>=` all functional
+- **Logical Operators**: `&&`, `||`, `!` with proper boolean logic and short-circuiting
+- **Control Flow**: If/else statements and while loops with nested support
+- **String Operations**: Concatenation, formatting, and variable interpolation
 
-### Working Examples
+### ⚠️ Known Issues (Phase 2)
+- **Function System**: Function declarations parse correctly but fail during IL compilation
+- **Function Calls**: User-defined function calls not working due to compilation issues
+- **Variable Scoping**: Global vs local variable scope needs implementation within functions
+
+### ✅ Verified Working Examples
 
 ```cx
 // Core language features that work today
@@ -224,30 +254,46 @@ dotnet build CxLanguage.sln
 # Run tests
 dotnet test
 
-# Run a CX script
+# Run a CX script (✅ Working examples)
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_working_demo.cx
 
-# Parse and show AST
+# Test function system (❌ Currently failing)
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/05_functions.cx
+
+# Parse and show AST (for debugging)
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj parse examples/test_arithmetic.cx
 ```
 
 ## 📁 Example Files
 
-### Core Examples (Working Today)
-- **`comprehensive_working_demo.cx`** - Complete showcase of all working features
-- **`test_arithmetic.cx`** - Arithmetic operations and precedence
+### ✅ Fully Working Examples (Phase 1)
+- **`comprehensive_working_demo.cx`** - Complete showcase of all working Phase 1 features (recommended starting point)
+- **`01_basic_variables.cx`** - Variable declarations and data types
+- **`02_arithmetic.cx`** - Arithmetic operations and operator precedence
 - **`test_assignment_operators.cx`** - Compound assignment operators
-- **`test_logical_operators.cx`** - Logical operators demonstration
+- **`07_logical_operators.cx`** - Logical operators demonstration
+- **`04_control_flow.cx`** - If/else statements and while loops
 
-The `comprehensive_working_demo.cx` file demonstrates all Phase 1 features:
-1. Variable declarations and data types
-2. Arithmetic operations with precedence
-3. Compound assignment operators
-4. Comparison operations
-5. Logical operators and boolean logic
-6. If/else control structures
-7. While loops and iterative logic
-8. String concatenation and formatting
+### ⚠️ In Development Examples (Phase 2)
+- **`05_functions.cx`** - Function system (parsing works, compilation fails)
+- **`simple_function.cx`** - Basic function examples (compilation issues)
+
+### 🔮 Future Examples (Phases 3-5)
+- **`08_agentic_ai.cx`** - AI function showcase (Phase 4 planned)
+- **`09_advanced_ai.cx`** - Advanced AI capabilities (Phase 5 vision)
+
+### 📊 Current Test Status
+The **`comprehensive_working_demo.cx`** file demonstrates all working Phase 1 features:
+1. ✅ Variable declarations and data types
+2. ✅ Arithmetic operations with precedence  
+3. ✅ Compound assignment operators
+4. ✅ Comparison operations
+5. ✅ Logical operators and boolean logic
+6. ✅ If/else control structures with nesting
+7. ✅ While loops and iterative logic
+8. ✅ String concatenation and formatting
+
+**Function examples currently fail compilation** but parsing works correctly, making function system IL generation the #1 development priority.
 
 ## 🎯 AI Agentic Vision
 
@@ -300,11 +346,17 @@ We welcome contributions to the CX language! Here's how to get started:
 7. **Submit a pull request**
 
 ### Contribution Areas
-- **Core Language Features** (Phase 2): Function system improvements, parser enhancements
-- **Compiler Enhancement**: IL generation optimization, error handling
+- **🔥 Priority: Function System** (Phase 2): Fix IL compilation for function declarations - critical blocker
+- **Core Language Features**: Parser enhancements, error handling improvements  
+- **Compiler Enhancement**: IL generation optimization, function call implementation
 - **AI Integration** (Phase 4): Implementation of task, synthesize, reason functions
-- **Documentation**: Examples, tutorials, API documentation
+- **Documentation**: Examples, tutorials, API documentation  
 - **Testing**: Unit tests, integration tests, example verification
+
+### Current Critical Issues Needing Help
+1. **Function IL Compilation**: Fix "The invoked member is not supported before the type is created" error in `CxCompiler.cs`
+2. **Function Call Mechanism**: Implement proper function call IL generation
+3. **Variable Scoping**: Add local vs global variable scope within functions
 
 ### Coding Standards
 - Follow C# best practices for backend code
@@ -321,3 +373,28 @@ MIT License - see [LICENSE](LICENSE) for details.
 **Cx Language - The First AI-Native Agentic Programming Language** 🤖🚀
 
 *Building the foundation for AI-native programming with familiar syntax and powerful autonomous capabilities.*
+
+## 📋 Recent Updates
+
+### Latest Development Activity
+- ✅ **Phase 1 Complete**: All core language features working and tested
+- ✅ **Documentation**: README consolidated and updated with accurate status
+- ✅ **Code Standards**: Allman-style bracket formatting enforced across all examples
+- ✅ **Function Syntax**: Function declaration parsing implemented and working
+- ⚠️ **Current Issue**: Function IL compilation failing - critical Phase 2 blocker
+
+### What's Working Now (Tested & Verified)
+- Variable declarations, assignments, and all data types
+- Complete arithmetic operations with proper precedence
+- All comparison and logical operators  
+- Control flow (if/else, while loops) with nesting
+- String operations and concatenation
+- Compound assignment operators
+
+### Next Immediate Goals
+1. **Fix Function IL Compilation** - Resolve the "type creation" error
+2. **Implement Function Calls** - Enable calling user-defined functions  
+3. **Add Variable Scoping** - Local vs global variable handling
+4. **Function Parameters** - Parameter passing and return values
+
+*For the latest development status and to contribute, see the [GitHub repository](https://github.com/ahebert-lt/cx).*
