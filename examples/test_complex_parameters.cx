@@ -1,0 +1,17 @@
+function add(a, b)
+{
+    print("Adding " + a + " + " + b);
+    var result = a + b;
+    print("Result: " + result);
+}
+
+function greetMultiple(first, second, third)
+{
+    print("Hello " + first + ", " + second + ", and " + third + "!");
+}
+
+print("=== Function Parameter Test ===");
+add(10, 20);
+add(5, 15);
+greetMultiple("Alice", "Bob", "Charlie");
+print("=== Test Complete ===");

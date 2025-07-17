@@ -1,0 +1,8 @@
+// Test null concatenation
+function getNull() 
+{
+    // No return statement, should return null
+}
+
+var result = getNull();
+print(result);

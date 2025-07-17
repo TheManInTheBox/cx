@@ -1,0 +1,8 @@
+// Test simple assignment with return value
+function getValue() 
+{
+    return 42;
+}
+
+var result = getValue();
+print("Result: " + result);

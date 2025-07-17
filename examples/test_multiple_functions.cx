@@ -1,0 +1,16 @@
+function greet(name)
+{
+    print("Hello, " + name + "!");
+}
+
+function calculate()
+{
+    var x = 10;
+    var y = 20;
+    print("Sum: " + (x + y));
+}
+
+print("Starting program...");
+greet("World");
+calculate();
+print("Program complete!");
