@@ -1,0 +1,17 @@
+// Test: Boolean Operations
+// Expected Output: true, false, true, false
+
+var isTrue = true
+var isFalse = false
+
+var test1 = isTrue == true
+print(test1)
+
+var test2 = isTrue == false
+print(test2)
+
+var test3 = isFalse == false
+print(test3)
+
+var test4 = isFalse == true
+print(test4)

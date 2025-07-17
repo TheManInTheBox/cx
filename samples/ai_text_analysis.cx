@@ -1,0 +1,52 @@
+// AI-powered text analysis example
+using ai from "azure.openai"
+
+// Configure AI model
+model = ai.connect("gpt-4-turbo")
+
+async function analyzeText(text: string) -> object {
+    // Perform sentiment analysis
+    result = await model.analyze(text, {
+        task: "sentiment_analysis",
+        format: "json",
+        schema: {
+            sentiment: "string",
+            confidence: "number",
+            topics: "array<string>",
+            summary: "string"
+        }
+    })
+    
+    return result
+}
+
+async function batchAnalysis(texts: array<string>) -> array<object> {
+    // Process multiple texts in parallel
+    results = await parallel texts.map(text => analyzeText(text))
+    return results
+}
+
+// Example usage
+async function main() {
+    // Single text analysis
+    sampleText = "I absolutely love this new AI-powered scripting language! It makes working with AI so much easier."
+    
+    print("Analyzing text: " + sampleText)
+    analysis = await analyzeText(sampleText)
+    print("Analysis result: " + analysis)
+    
+    // Batch analysis
+    texts = [
+        "This product is amazing!",
+        "I'm not sure about this...",
+        "Terrible experience, would not recommend.",
+        "Outstanding quality and great customer service!"
+    ]
+    
+    print("Performing batch analysis...")
+    batchResults = await batchAnalysis(texts)
+    
+    for result in batchResults {
+        print("Sentiment: " + result.sentiment + " (confidence: " + result.confidence + ")")
+    }
+}

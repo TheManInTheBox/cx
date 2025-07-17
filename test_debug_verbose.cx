@@ -1,0 +1,7 @@
+function main() {
+    print("Before assignment")
+    y = "Hello, World!"
+    print("After assignment")
+    print(y)
+    print("After print")
+}
