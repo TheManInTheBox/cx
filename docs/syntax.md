@@ -54,7 +54,8 @@ function myFunction()
 **Not recommended:** K&R style (opening brace on same line):
 ```cx
 // Avoid this style
-if (condition) {
+if (condition) 
+{
     statement
 }
 ```
@@ -180,11 +181,13 @@ var not2 = !b           // true (NOT false)
 // Combining with comparisons
 var x = 10
 var y = 5
-if (x > y && a) {        // true AND true = true
+if (x > y && a) 
+{        // true AND true = true
     print("Both conditions are true")
 }
 
-if (x < y || a) {        // false OR true = true
+if (x < y || a) 
+{        // false OR true = true
     print("At least one condition is true")
 }
 
@@ -279,7 +282,8 @@ For loops are defined in the grammar but basic implementation needs enhancement:
 ### Basic Functions
 ```cx
 // Simple function
-function greet() {
+function greet() 
+{
     print("Hello from a function!")
 }
 
@@ -290,7 +294,8 @@ greet()
 ### Functions with Parameters (Basic Support)
 ```cx
 // Function parameters are defined in grammar but need full implementation:
-// function add(a: number, b: number) -> number {
+// function add(a: number, b: number) -> number 
+// {
 //     return a + b
 // }
 ```
