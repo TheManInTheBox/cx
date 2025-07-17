@@ -1,0 +1,19 @@
+// Cx - New AI Syntax Demo
+// Natural AI function calls without ai_ prefix
+
+// Basic AI functions
+var result = task("Complete a software development task")
+var summary = synthesize("Take this data and create a summary")
+var answer = reason("What is the best approach to solve this problem?")
+
+// Advanced AI functions  
+var processed = process("raw text data", "clean and structure")
+var code = generate("Create a REST API in Python")
+var embedding = embed("Hello world")
+var adapted = adapt("legacy_code.py")
+
+// Multi-step AI workflow
+var requirements = task("Analyze user requirements")  
+var design = synthesize("Create system architecture")
+var implementation = generate("Implement the solution")
+var review = reason("Is this implementation correct?")
