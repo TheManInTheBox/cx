@@ -1,0 +1,10 @@
+// Test simple function declaration and call
+
+function simpleGreeting() {
+    print("Hello from function!");
+}
+
+// Call the function
+print("Before function call");
+simpleGreeting();
+print("After function call");

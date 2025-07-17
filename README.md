@@ -1,30 +1,139 @@
-# Cx - AI-Native Programming Language
+# Cx - AI-Native Agentic Programming Language
 
 [![CI](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml/badge.svg)](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ahebert-lt/cx)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
 
-## 🚀 A Modern AI-Integrated Programming Language
+## 🤖 The First AI-Native Agentic Programming Language
 
-**Cx** is an innovative programming language designed for the AI era, featuring first-class support for AI functions and autonomous workflows. Built on .NET with JavaScript/TypeScript-like syntax, Cx combines familiar programming constructs with cutting-edge AI capabilities.
+**Cx** is a revolutionary programming language where **AI functions are native, not imported**. Designed specifically for autonomous agentic workflows, Cx enables agents to interpret goals, plan actions, learn from feedback, and modify their own behavior dynamically.
 
-### Quick Start
+### 🚀 Quick Start - AI Agentic Workflows
 
 ```bash
 # Build the project
 dotnet build CxLanguage.sln
 
-# Run the comprehensive demo
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_working_demo.cx
+# Run AI agentic examples
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/08_agentic_ai.cx
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/09_advanced_ai.cx
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/autonomous_agent_demo.cx
 
-# Run other examples
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/test_arithmetic.cx
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/test_if_semicolons.cx
+# Test core language features
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_working_demo.cx
 ```
 
-## ✨ Currently Working Features
+## 🤖 Native AI Functions - Zero Imports Required
 
-### Core Language Features ✅
+### **Built-in Autonomous Agentic Functions**
+
+```cx
+// Task planning and autonomous execution
+var plan = task("Optimize customer service workflow and reduce response times");
+
+// Intelligent code synthesis
+var code = synthesize("Create a function to calculate compound interest");
+
+// AI reasoning and decision making
+var decision = reason("What is the best approach to solve this problem?");
+
+// Multi-modal data processing
+var result = process("customer_feedback.json", "analyze sentiment and trends");
+
+// Content generation across modalities
+var content = generate("Create a marketing email for new product launch");
+
+// Vector embeddings for semantic search
+var embedding = embed("Convert this text to vector representation");
+
+// Self-optimizing code adaptation
+function slowFunction() {
+    // Function can examine and optimize itself
+    adapt(self, { performance: "optimize_for_speed" });
+}
+```
+
+### **Autonomous Workflow Example**
+
+```cx
+// Complete autonomous workflow - no human intervention required
+async function autonomousAgent() {
+    // 1. Goal interpretation and planning
+    var goal = "Improve customer satisfaction scores by 15% within 30 days";
+    var plan = await task(goal, {
+        autonomous: true,
+        learning_enabled: true,
+        max_subtasks: 10
+    });
+    
+    // 2. Dynamic tool discovery and integration
+    var tools = await reason("Discover available customer service tools and APIs");
+    
+    // 3. Multi-step execution with adaptation
+    for (step in plan.steps) {
+        var result = await process(step.data, step.action);
+        
+        // 4. Learning and performance optimization
+        if (result.performance < 0.8) {
+            adapt(step.action, {
+                feedback: result,
+                optimize_for: "accuracy"
+            });
+        }
+    }
+    
+    // 5. Self-assessment and reporting
+    var assessment = await reason("Evaluate goal achievement and next steps");
+    return assessment;
+}
+
+// Agent runs completely autonomously
+await autonomousAgent();
+```
+
+## 🎯 Development Roadmap & Current Status
+
+### ✅ **Phase 1: Core Language Foundation** (COMPLETED)
+- ✅ Variables and data types (string, integer, boolean)
+- ✅ Arithmetic operations with proper precedence
+- ✅ Comparison and logical operators
+- ✅ Control flow (if/else, while loops)
+- ✅ String concatenation and basic operations
+- ✅ Compound assignment operators (`+=`, `-=`, `*=`, `/=`)
+
+### 🔄 **Phase 2: Function System** (IN PROGRESS)
+- ⏳ Function parameters and return values
+- ⏳ Function call mechanism fixes
+- ⏳ Proper variable scoping
+- ⏳ Function overloading support
+
+### 📋 **Phase 3: Advanced Language Features** (PLANNED)
+- 📋 For-in loops and iterators
+- 📋 Exception handling (try/catch/throw)
+- 📋 Array and object literals
+- 📋 Class system and inheritance
+- 📋 Module system and imports
+
+### 🤖 **Phase 4: AI Integration** (PLANNED)
+- 📋 `task()` function for autonomous planning
+- 📋 `synthesize()` function for code generation
+- 📋 `reason()` function for AI decision making
+- 📋 `process()` function for data transformation
+- 📋 `generate()` function for content creation
+- 📋 `embed()` function for vector embeddings
+- 📋 `adapt()` function for self-optimization
+- 📋 `self` keyword for function introspection
+
+### 🚀 **Phase 5: Autonomous Agentic Features** (FUTURE)
+- 📋 Multi-agent coordination and swarms
+- 📋 Learning and adaptation mechanisms
+- 📋 Environment interaction and tool discovery
+- 📋 Self-modifying code capabilities
+- 📋 Goal interpretation from natural language
+
+## 🛠️ Current Working Features
+
+### Core Language Features ✅ (Phase 1 Complete)
 - **Variables and Data Types**: String, integer, and boolean support
 - **Arithmetic Operations**: Addition, subtraction, multiplication, division with proper precedence
 - **Compound Assignment**: `+=`, `-=`, `*=`, `/=` operators
@@ -33,10 +142,10 @@ dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/test_
 - **Control Flow**: If/else statements and while loops
 - **String Operations**: Concatenation and formatting
 
-### Language Examples
+### Working Examples
 
 ```cx
-// Variable declarations and basic operations
+// Core language features that work today
 var message = "Hello, CX Language!";
 var count = 42;
 var isActive = true;
@@ -45,23 +154,17 @@ var isActive = true;
 var a = 20;
 var b = 8;
 var result = a + b * 2;  // 36 (proper precedence)
-var result2 = (a + b) * 2;  // 56 (parentheses)
 
 // Compound assignments
 var total = 100;
 total += 50;  // 150
 total *= 2;   // 300
 
-// Logical operations
-var canProceed = (age >= 18) && hasPermission;
-
 // Control flow
 if (score >= 90) {
     print("Excellent!");
 } else if (score >= 80) {
     print("Good job!");
-} else {
-    print("Keep trying!");
 }
 
 // While loops
@@ -69,6 +172,47 @@ var counter = 5;
 while (counter > 0) {
     print("Count: " + counter);
     counter = counter - 1;
+}
+```
+
+## 🎯 AI Agentic Vision
+
+### **Why Cx for Autonomous Agents?**
+
+- 🤖 **AI-Native**: AI functions are built into the language, not imported
+- 🎯 **Goal-Directed**: Natural language goal interpretation and autonomous planning
+- 🔄 **Self-Modifying**: Dynamic code synthesis and behavioral adaptation at runtime
+- 📚 **Learning-Enabled**: Continuous improvement through feedback and experience
+- 🌐 **Environment-Aware**: Automatic tool discovery and API integration
+- ⚡ **Async-First**: Native async/await patterns for concurrent agentic operations
+
+### **Planned AI Functions** (Phase 4)
+
+```cx
+// Autonomous task planning (planned)
+var plan = task("Optimize customer service workflow", {
+    autonomous: true,
+    learning_enabled: true,
+    max_subtasks: 10
+});
+
+// Intelligent code synthesis (planned)
+var optimizedCode = synthesize("Improve this algorithm", {
+    input: self,
+    optimize_for: "speed"
+});
+
+// AI reasoning and decision making (planned)
+var decision = reason("What is the best approach?", {
+    context: currentState,
+    constraints: ["budget", "time"]
+});
+
+// Self-reflection and optimization (planned)
+function optimizeMe() {
+    var currentCode = self;  // Get own source code
+    var improved = task(currentCode, { optimize: true });
+    return improved;
 }
 ```
 
