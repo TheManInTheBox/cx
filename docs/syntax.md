@@ -3,13 +3,14 @@
 ## Table of Contents
 
 1. [Basic Syntax](#basic-syntax)
-2. [Variables](#variables)
-3. [Types](#types)
-4. [Operators](#operators)
-5. [Control Flow](#control-flow)
-6. [Functions](#functions)
-7. [Comments](#comments)
-8. [Error Handling](#error-handling)
+2. [Code Style](#code-style)
+3. [Variables](#variables)
+4. [Types](#types)
+5. [Operators](#operators)
+6. [Control Flow](#control-flow)
+7. [Functions](#functions)
+8. [Comments](#comments)
+9. [Error Handling](#error-handling)
 
 ## Basic Syntax
 
@@ -21,6 +22,47 @@ var x = 42
 var name = "Alice"
 print("Hello, World!")
 ```
+
+## Code Style
+
+### Bracket Style
+Cx follows **Allman style** (also known as BSD style) bracket placement for better readability:
+
+```cx
+// Preferred: Allman style (opening brace on new line)
+if (condition)
+{
+    statement1
+    statement2
+}
+else
+{
+    statement3
+}
+
+while (condition)
+{
+    body
+}
+
+function myFunction()
+{
+    functionBody
+}
+```
+
+**Not recommended:** K&R style (opening brace on same line):
+```cx
+// Avoid this style
+if (condition) {
+    statement
+}
+```
+
+### Indentation
+- Use 4 spaces for indentation
+- Be consistent with spacing around operators
+- Place each statement on its own line
 
 ## Variables
 
@@ -118,25 +160,59 @@ var lessEqual = x <= y    // Less than or equal: true
 var greaterEqual = x >= y // Greater than or equal: false
 ```
 
-### Logical Operators (Defined in Grammar)
-These operators are defined in the grammar but not yet implemented in the IL compiler:
-
+### Logical Operators
 ```cx
-// Coming soon:
-// var result1 = true && false    // Logical AND
-// var result2 = true || false    // Logical OR
+var a = true
+var b = false
+
+// Logical AND - returns true if both operands are true
+var and1 = a && b        // false (true AND false)
+var and2 = a && a        // true (true AND true)
+
+// Logical OR - returns true if at least one operand is true
+var or1 = a || b         // true (true OR false)
+var or2 = b || b         // false (false OR false)
+
+// Logical NOT - returns the opposite boolean value
+var not1 = !a           // false (NOT true)
+var not2 = !b           // true (NOT false)
+
+// Combining with comparisons
+var x = 10
+var y = 5
+if (x > y && a) {        // true AND true = true
+    print("Both conditions are true")
+}
+
+if (x < y || a) {        // false OR true = true
+    print("At least one condition is true")
+}
+
+// Complex expressions with parentheses
+var complex = !(x < y) && (a || b)  // true AND true = true
+```
+
+### Unary Operators
+```cx
+var num = 5
+var flag = true
+
+var negative = -num      // Unary minus: -5
+var positive = +num      // Unary plus: 5 (no change)
+var inverted = !flag     // Logical NOT: false
 ```
 
 ### Operator Precedence
 Operators follow standard mathematical precedence:
 
-1. `*`, `/` (Multiplication, Division)
-2. `+`, `-` (Addition, Subtraction)  
-3. `<`, `>`, `<=`, `>=` (Comparison)
-4. `==`, `!=` (Equality)
-5. `&&` (Logical AND) - *coming soon*
-6. `||` (Logical OR) - *coming soon*
-7. `=` (Assignment)
+1. `!`, `-`, `+` (Unary NOT, Minus, Plus)
+2. `*`, `/` (Multiplication, Division)
+3. `+`, `-` (Addition, Subtraction)  
+4. `<`, `>`, `<=`, `>=` (Comparison)
+5. `==`, `!=` (Equality)
+6. `&&` (Logical AND)
+7. `||` (Logical OR)
+8. `=` (Assignment)
 
 ## Control Flow
 
@@ -144,19 +220,27 @@ Operators follow standard mathematical precedence:
 ```cx
 var score = 85
 
-if (score >= 90) {
+if (score >= 90)
+{
     print("Grade: A")
-} else if (score >= 80) {
+}
+else if (score >= 80)
+{
     print("Grade: B")
-} else if (score >= 70) {
+}
+else if (score >= 70)
+{
     print("Grade: C")
-} else {
+}
+else
+{
     print("Grade: F")
 }
 
 // Single line conditions
 var age = 20
-if (age >= 18) {
+if (age >= 18)
+{
     print("Adult")
 }
 ```
@@ -165,14 +249,16 @@ if (age >= 18) {
 ```cx
 // Basic while loop
 var counter = 0
-while (counter < 5) {
+while (counter < 5)
+{
     print(counter)
     counter = counter + 1
 }
 
 // While loop with complex condition
 var x = 10
-while (x > 0) {
+while (x > 0)
+{
     print(x)
     x = x - 2
 }

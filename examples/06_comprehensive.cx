@@ -15,7 +15,8 @@ print("Player:")
 print(playerName)
 
 // Game simulation loop
-while (gameActive == true) {
+while (gameActive == true)
+{
     print("Level:")
     print(playerLevel)
     print("Score:")
@@ -31,7 +32,8 @@ while (gameActive == true) {
     print(roundScore)
     
     // Check if player advances to next level
-    if (playerScore >= 50) {
+    if (playerScore >= 50)
+    {
         playerLevel = playerLevel + 1
         print("Level up!")
         
@@ -39,14 +41,18 @@ while (gameActive == true) {
         playerScore = 0
         
         // Check win condition
-        if (playerLevel > 3) {
+        if (playerLevel > 3)
+        {
             print("Congratulations! You won!")
             gameActive = false
         }
-    } else {
+    }
+    else
+    {
         attemptsLeft = attemptsLeft - 1
         
-        if (attemptsLeft <= 0) {
+        if (attemptsLeft <= 0)
+        {
             print("Game Over!")
             gameActive = false
         }
@@ -62,30 +68,48 @@ print(playerScore)
 
 // Calculate and display performance rating
 var rating = 0
-if (playerLevel >= 4) {
+if (playerLevel >= 4)
+{
     rating = 3    // Excellent
-} else {
-    if (playerLevel >= 3) {
+}
+else
+{
+    if (playerLevel >= 3)
+    {
         rating = 2    // Good
-    } else {
-        if (playerLevel >= 2) {
+    }
+    else
+    {
+        if (playerLevel >= 2)
+        {
             rating = 1    // Fair
-        } else {
+        }
+        else
+        {
             rating = 0    // Poor
         }
     }
 }
 
 print("Performance Rating:")
-if (rating == 3) {
+if (rating == 3)
+{
     print("Excellent!")
-} else {
-    if (rating == 2) {
+}
+else
+{
+    if (rating == 2)
+    {
         print("Good!")
-    } else {
-        if (rating == 1) {
+    }
+    else
+    {
+        if (rating == 1)
+        {
             print("Fair")
-        } else {
+        }
+        else
+        {
             print("Try again!")
         }
     }
@@ -101,22 +125,32 @@ print("Numbers: a=15, b=4")
 var operations = 4
 var currentOp = 1
 
-while (currentOp <= operations) {
-    if (currentOp == 1) {
+while (currentOp <= operations)
+{
+    if (currentOp == 1)
+    {
         var result = a + b
         print("Addition:")
         print(result)
-    } else {
-        if (currentOp == 2) {
+    }
+    else
+    {
+        if (currentOp == 2)
+        {
             var result = a - b
             print("Subtraction:")
             print(result)
-        } else {
-            if (currentOp == 3) {
+        }
+        else
+        {
+            if (currentOp == 3)
+            {
                 var result = a * b
                 print("Multiplication:")
                 print(result)
-            } else {
+            }
+            else
+            {
                 var result = a / b
                 print("Division:")
                 print(result)

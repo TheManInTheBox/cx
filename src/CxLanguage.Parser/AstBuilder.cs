@@ -391,6 +391,25 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return literal;
     }
 
+    public override AstNode VisitUnaryExpression(UnaryExpressionContext context)
+    {
+        var unaryExpr = new UnaryExpressionNode();
+        SetLocation(unaryExpr, context);
+
+        unaryExpr.Operand = (ExpressionNode)Visit(context.expression());
+        
+        var operatorText = context.children[0].GetText();
+        unaryExpr.Operator = operatorText switch
+        {
+            "!" => UnaryOperator.Not,
+            "-" => UnaryOperator.Minus,
+            "+" => UnaryOperator.Plus,
+            _ => throw new InvalidOperationException($"Unknown unary operator: {operatorText}")
+        };
+
+        return unaryExpr;
+    }
+
     private CxType ParseType(TypeContext context)
     {
         var typeText = context.GetText();
