@@ -1,0 +1,9 @@
+// Test for-in loop implementation
+var numbers = [1, 2, 3, 4, 5];
+
+print("Iterating over array:");
+for (num in numbers) {
+    print(num);
+}
+
+print("Done!");

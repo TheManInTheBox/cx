@@ -396,6 +396,18 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         assignment.Left = (ExpressionNode)Visit(context.expression(0));
         assignment.Right = (ExpressionNode)Visit(context.expression(1));
 
+        // Determine the assignment operator
+        var operatorText = context.children[1].GetText(); // The operator is always the second child
+        assignment.Operator = operatorText switch
+        {
+            "=" => AssignmentOperator.Assign,
+            "+=" => AssignmentOperator.AddAssign,
+            "-=" => AssignmentOperator.SubtractAssign,
+            "*=" => AssignmentOperator.MultiplyAssign,
+            "/=" => AssignmentOperator.DivideAssign,
+            _ => AssignmentOperator.Assign
+        };
+
         return assignment;
     }
 
@@ -411,12 +423,20 @@ public class AstBuilder : CxBaseVisitor<AstNode>
 
     public override AstNode VisitArrayLiteral(ArrayLiteralContext context)
     {
-        // For now, just return a null literal - array literals not fully implemented
-        var literal = new LiteralNode();
-        SetLocation(literal, context);
-        literal.Value = null;
-        literal.Type = LiteralType.Null;
-        return literal;
+        var arrayLiteral = new ArrayLiteralNode();
+        SetLocation(arrayLiteral, context);
+        
+        // Parse argument list if present
+        if (context.argumentList() != null)
+        {
+            var argListContext = context.argumentList();
+            foreach (var exprContext in argListContext.expression())
+            {
+                arrayLiteral.Elements.Add((ExpressionNode)Visit(exprContext));
+            }
+        }
+        
+        return arrayLiteral;
     }
 
     public override AstNode VisitUnaryExpression(UnaryExpressionContext context)

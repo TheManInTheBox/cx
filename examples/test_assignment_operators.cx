@@ -1,0 +1,24 @@
+// Test compound assignment operators
+var total = 100;
+
+print("Initial value:");
+print(total);
+
+total += 50;
+print("After += 50:");
+print(total);
+
+total -= 25;
+print("After -= 25:");
+print(total);
+
+total *= 2;
+print("After *= 2:");
+print(total);
+
+total /= 4;
+print("After /= 4:");
+print(total);
+
+print("Final value:");
+print(total);
