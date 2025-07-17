@@ -1,0 +1,8 @@
+// Test zero parameter function assignment
+function test() 
+{
+    return 123;
+}
+
+var result = test();
+print(result);

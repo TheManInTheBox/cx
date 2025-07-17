@@ -1,0 +1,9 @@
+// Simple function test with one function call
+
+function sayHello()
+{
+    print("Hello from function!");
+}
+
+// Single function call
+sayHello();

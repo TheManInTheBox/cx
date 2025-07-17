@@ -29,15 +29,21 @@ public class CxCompiler : IAstVisitor<object>
     private readonly ModuleBuilder _moduleBuilder;
     private readonly TypeBuilder _programTypeBuilder;
     private readonly Dictionary<string, FieldBuilder> _globalFields = new();
+    private readonly Dictionary<string, MethodBuilder> _userFunctions = new();
     private readonly Stack<SymbolTable> _scopes = new();
     private readonly CompilerOptions _options;
     private readonly string _scriptName;
     private readonly FieldBuilder _consoleField;
 
+    // Two-pass compilation state
+    private bool _isFirstPass = true;
+    private readonly List<FunctionDeclarationNode> _pendingFunctions = new();
+
     // Method-level fields for current compilation context
     private MethodBuilder? _currentMethod;
     private ILGenerator? _currentIl;
     private Dictionary<string, LocalBuilder> _currentLocals = new();
+    private Dictionary<string, int>? _currentParameterMapping = null;
     private int _ifCounter = 0;
     private int _whileCounter = 0;
 
@@ -70,7 +76,7 @@ public class CxCompiler : IAstVisitor<object>
     }
 
     /// <summary>
-    /// Compile AST into a .NET assembly
+    /// Compile AST into a .NET assembly using two-pass compilation
     /// </summary>
     public CompilationResult Compile(ProgramNode ast, string scriptName, string sourceText)
     {
@@ -104,15 +110,37 @@ public class CxCompiler : IAstVisitor<object>
             _currentIl = runMethod.GetILGenerator();
             _currentLocals.Clear();
 
-            // Compile all statements
+            // **PASS 1: Collect function declarations**
+            Console.WriteLine("[DEBUG] Starting Pass 1: Collecting function declarations");
+            _isFirstPass = true;
+            _pendingFunctions.Clear();
+            ast.Accept(this);
+            Console.WriteLine($"[DEBUG] Pass 1 complete. Found {_pendingFunctions.Count} functions: {string.Join(", ", _pendingFunctions.Select(f => f.Name))}");
+            
+            // **PASS 2: Compile function bodies and all other statements**
+            Console.WriteLine("[DEBUG] Starting Pass 2: Compiling function bodies and main program");
+            _isFirstPass = false;
+            
+            // First, compile all pending function bodies
+            foreach (var functionNode in _pendingFunctions)
+            {
+                Console.WriteLine($"[DEBUG] Compiling function body: {functionNode.Name}");
+                CompileFunctionBody(functionNode);
+            }
+            
+            // Then compile the main program (excluding function declarations which are skipped in second pass)
+            Console.WriteLine("[DEBUG] Compiling main program statements");
             ast.Accept(this);
             
             // Return null by default
+            Console.WriteLine("[DEBUG] Adding final return to main method");
             _currentIl.Emit(OpCodes.Ldnull);
             _currentIl.Emit(OpCodes.Ret);
             
             // Create the type
+            Console.WriteLine("[DEBUG] Creating program type");
             var programType = _programTypeBuilder.CreateType();
+            Console.WriteLine("[DEBUG] Compilation successful");
             
             return CompilationResult.Success(_assemblyBuilder, programType);
         }
@@ -174,10 +202,16 @@ public class CxCompiler : IAstVisitor<object>
 
     public object? VisitExpression(ExpressionStatementNode node)
     {
+        Console.WriteLine($"[DEBUG] Processing expression statement in Pass {(_isFirstPass ? "1" : "2")}");
         node.Expression.Accept(this);
         
-        // Discard the expression result
-        _currentIl!.Emit(OpCodes.Pop);
+        // Discard the expression result (only if there is one on the stack)
+        // For void function calls, we pushed null, so we need to pop it
+        if (!_isFirstPass)
+        {
+            Console.WriteLine("[DEBUG] Popping expression result from stack");
+            _currentIl!.Emit(OpCodes.Pop);
+        }
         
         return null;
     }
@@ -262,14 +296,13 @@ public class CxCompiler : IAstVisitor<object>
         return null;
     }
 
-    public object? VisitFunctionDeclaration(FunctionDeclarationNode node)
+    /// <summary>
+    /// Compile a function body (used in Pass 2)
+    /// </summary>
+    private void CompileFunctionBody(FunctionDeclarationNode node)
     {
-        // Define method
-        var methodBuilder = _programTypeBuilder.DefineMethod(
-            node.Name, 
-            MethodAttributes.Public,
-            typeof(object),
-            Array.Empty<Type>());
+        // Get the already-created MethodBuilder
+        var methodBuilder = _userFunctions[node.Name];
         
         // Save current method and locals
         var savedMethod = _currentMethod;
@@ -281,21 +314,82 @@ public class CxCompiler : IAstVisitor<object>
         _currentIl = methodBuilder.GetILGenerator();
         _currentLocals = new Dictionary<string, LocalBuilder>();
         
+        // Create a mapping for parameters so they can be accessed like local variables
+        // Parameters are accessed via Ldarg instructions, not local variables
+        var parameterMapping = new Dictionary<string, int>();
+        for (int i = 0; i < node.Parameters.Count; i++)
+        {
+            parameterMapping[node.Parameters[i].Name] = i;
+            Console.WriteLine($"[DEBUG] Function {node.Name}: Parameter {node.Parameters[i].Name} mapped to arg {i}");
+        }
+        
+        // Store parameter mapping for use in identifier resolution
+        var savedParameterMapping = _currentParameterMapping;
+        _currentParameterMapping = parameterMapping;
+        
         // Compile body
         node.Body.Accept(this);
         
-        // Return null by default
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ret);
+        // Only add implicit return if the function doesn't end with a return statement
+        // (This is a simplification - ideally we'd track control flow)
+        var lastStatement = node.Body.Statements.LastOrDefault();
+        if (lastStatement == null || lastStatement is not ReturnStatementNode)
+        {
+            _currentIl.Emit(OpCodes.Ldnull);
+            _currentIl.Emit(OpCodes.Ret);
+        }
         
         // Restore previous method context
         _currentMethod = savedMethod;
         _currentIl = savedIl;
         _currentLocals = savedLocals;
-        
-        // Add function to symbol table  
-        var symbol = new FunctionSymbol(node.Name, CxLanguage.Core.Types.CxType.Any, new List<ParameterSymbol>(), false, node);
-        _scopes.Peek().TryDefine(symbol);
+        _currentParameterMapping = savedParameterMapping;
+    }
+
+    public object? VisitFunctionDeclaration(FunctionDeclarationNode node)
+    {
+        if (_isFirstPass)
+        {
+            Console.WriteLine($"[DEBUG] Pass 1: Defining function {node.Name} with {node.Parameters.Count} parameters");
+            
+            // **PASS 1: Define the method signature with proper parameter types**
+            // For now, treat all parameters as object type (we'll improve this later)
+            var parameterTypes = new Type[node.Parameters.Count];
+            for (int i = 0; i < node.Parameters.Count; i++)
+            {
+                parameterTypes[i] = typeof(object); // All parameters are object type for now
+                Console.WriteLine($"[DEBUG] Parameter {i}: {node.Parameters[i].Name} (type: object)");
+            }
+            
+            var methodBuilder = _programTypeBuilder.DefineMethod(
+                node.Name, 
+                MethodAttributes.Public | MethodAttributes.Static,
+                typeof(object),
+                parameterTypes);
+            
+            // Define parameter names for debugging
+            for (int i = 0; i < node.Parameters.Count; i++)
+            {
+                methodBuilder.DefineParameter(i + 1, ParameterAttributes.None, node.Parameters[i].Name);
+            }
+            
+            // Store the method builder for Pass 2
+            _userFunctions[node.Name] = methodBuilder;
+            
+            // Store the function node for body compilation in Pass 2
+            _pendingFunctions.Add(node);
+            
+            // Add function to symbol table  
+            var parameterSymbols = node.Parameters.Select(p => new ParameterSymbol(p.Name, p.Type)).ToList();
+            var symbol = new FunctionSymbol(node.Name, CxLanguage.Core.Types.CxType.Any, parameterSymbols, false, node);
+            _scopes.Peek().TryDefine(symbol);
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] Pass 2: Skipping function declaration {node.Name} (body compiled separately)");
+            // **PASS 2: Skip function declarations (bodies are compiled separately)**
+            // Function bodies are compiled in CompileFunctionBody method
+        }
         
         return null;
     }
@@ -505,33 +599,44 @@ public class CxCompiler : IAstVisitor<object>
 
     public object? VisitVariableDeclaration(VariableDeclarationNode node)
     {
-        // Create variable
-        var symbol = new VariableSymbol(node.Name, CxLanguage.Core.Types.CxType.Any, false);
-        _scopes.Peek().TryDefine(symbol);
-        
-        if (node.Initializer != null)
+        if (_isFirstPass)
         {
-            // Initialize with value
-            node.Initializer.Accept(this);
+            // Pass 1: Only define the symbol, don't generate IL
+            var symbol = new VariableSymbol(node.Name, CxLanguage.Core.Types.CxType.Any, false);
+            _scopes.Peek().TryDefine(symbol);
             
-            // Store in local or global field
-            if (_currentMethod != null)
+            // Skip the initializer in Pass 1 - it might contain function calls
+            // Don't process the initializer in Pass 1
+        }
+        else
+        {
+            // Pass 2: Generate IL for the variable assignment
+            // The symbol was already defined in Pass 1
+            
+            if (node.Initializer != null)
             {
-                // Local variable
-                var local = _currentIl!.DeclareLocal(typeof(object));
-                _currentLocals[node.Name] = local;
-                _currentIl.Emit(OpCodes.Stloc, local);
-            }
-            else
-            {
-                // Global variable - handled in static constructor
-                var field = _programTypeBuilder.DefineField(
-                    node.Name, 
-                    typeof(object), 
-                    FieldAttributes.Static | FieldAttributes.Public);
+                // Initialize with value
+                node.Initializer.Accept(this);
                 
-                _globalFields[node.Name] = field;
-                _currentIl!.Emit(OpCodes.Stsfld, field);
+                // Store in local or global field
+                if (_currentMethod != null)
+                {
+                    // Local variable
+                    var local = _currentIl!.DeclareLocal(typeof(object));
+                    _currentLocals[node.Name] = local;
+                    _currentIl.Emit(OpCodes.Stloc, local);
+                }
+                else
+                {
+                    // Global variable - handled in static constructor
+                    var field = _programTypeBuilder.DefineField(
+                        node.Name, 
+                        typeof(object), 
+                        FieldAttributes.Static | FieldAttributes.Public);
+                    
+                    _globalFields[node.Name] = field;
+                    _currentIl!.Emit(OpCodes.Stsfld, field);
+                }
             }
         }
         
@@ -603,18 +708,13 @@ public class CxCompiler : IAstVisitor<object>
 
     public object? VisitFunctionCall(FunctionCallNode node)
     {
-        // For console methods, we don't need to load this instance
-        if (node.FunctionName == "print" || node.FunctionName == "write")
+        // Skip function calls in Pass 1 (they'll be compiled in Pass 2)
+        if (_isFirstPass)
         {
-            // Don't load instance for static Console methods
-        }
-        else
-        {
-            // Load this instance for instance methods
-            _currentIl!.Emit(OpCodes.Ldarg_0);
+            return null;
         }
         
-        // Compile arguments
+        // Compile arguments first
         foreach (var arg in node.Arguments)
         {
             arg.Accept(this);
@@ -624,6 +724,7 @@ public class CxCompiler : IAstVisitor<object>
         var methodInfo = GetMethodInfo(node.FunctionName, node.Arguments.Count);
         if (methodInfo != null)
         {
+            // Built-in function (like print, write)
             _currentIl!.EmitCall(OpCodes.Call, methodInfo, null);
             
             // Methods like print/write return void, but we need object for expressions
@@ -632,18 +733,18 @@ public class CxCompiler : IAstVisitor<object>
                 _currentIl.Emit(OpCodes.Ldnull);
             }
         }
+        else if (_userFunctions.TryGetValue(node.FunctionName, out var methodBuilder))
+        {
+            // User-defined function - now we can call it directly using the MethodBuilder!
+            // Since we made functions static, we don't need to load 'this'
+            _currentIl!.EmitCall(OpCodes.Call, methodBuilder, null);
+            
+            // User functions now return object, so no need to push null
+            // The function will return either a value or null if no explicit return
+        }
         else
         {
-            // Call a user-defined function
-            var methodBuilder = _programTypeBuilder.GetMethod(node.FunctionName);
-            if (methodBuilder != null)
-            {
-                _currentIl!.EmitCall(OpCodes.Call, methodBuilder, null);
-            }
-            else
-            {
-                throw new CompilationException($"Function not found: {node.FunctionName}");
-            }
+            throw new CompilationException($"Function not found: {node.FunctionName}");
         }
         
         return null;
@@ -651,7 +752,23 @@ public class CxCompiler : IAstVisitor<object>
 
     public object? VisitIdentifier(IdentifierNode node)
     {
-        // Check for local variables first
+        // Check for parameters first (when inside a function)
+        if (_currentParameterMapping != null && _currentParameterMapping.TryGetValue(node.Name, out var paramIndex))
+        {
+            Console.WriteLine($"[DEBUG] Loading parameter {node.Name} from arg {paramIndex}");
+            // Load parameter using Ldarg instruction
+            switch (paramIndex)
+            {
+                case 0: _currentIl!.Emit(OpCodes.Ldarg_0); break;
+                case 1: _currentIl!.Emit(OpCodes.Ldarg_1); break;
+                case 2: _currentIl!.Emit(OpCodes.Ldarg_2); break;
+                case 3: _currentIl!.Emit(OpCodes.Ldarg_3); break;
+                default: _currentIl!.Emit(OpCodes.Ldarg, paramIndex); break;
+            }
+            return null;
+        }
+        
+        // Check for local variables next
         if (_currentLocals.TryGetValue(node.Name, out var local))
         {
             _currentIl!.Emit(OpCodes.Ldloc, local);
@@ -748,11 +865,91 @@ public class CxCompiler : IAstVisitor<object>
     }
 
     // Required interface methods that are not implemented yet
-    public object? VisitFor(ForStatementNode node) => null;
+    public object? VisitFor(ForStatementNode node)
+    {
+        if (_isFirstPass)
+        {
+            return null;
+        }
+
+        Console.WriteLine($"[DEBUG] Processing for-in loop with variable: {node.Variable}");
+        
+        // Get the iterable expression (should be an array)
+        node.Iterable.Accept(this);
+        
+        // Cast to array (object[])
+        _currentIl!.Emit(OpCodes.Castclass, typeof(object[]));
+        
+        // Store the array in a temporary local variable
+        var arrayLocal = _currentIl.DeclareLocal(typeof(object[]));
+        _currentIl.Emit(OpCodes.Stloc, arrayLocal);
+        
+        // Create a local variable for the loop index
+        var indexLocal = _currentIl.DeclareLocal(typeof(int));
+        _currentIl.Emit(OpCodes.Ldc_I4_0);  // index = 0
+        _currentIl.Emit(OpCodes.Stloc, indexLocal);
+        
+        // Create a local variable for the loop variable
+        var loopVarLocal = _currentIl.DeclareLocal(typeof(object));
+        _currentLocals[node.Variable] = loopVarLocal;
+        
+        // Define labels for loop control
+        var loopStart = _currentIl.DefineLabel();
+        var loopEnd = _currentIl.DefineLabel();
+        
+        // Start of loop: check if index < array.Length
+        _currentIl.MarkLabel(loopStart);
+        
+        // Load index
+        _currentIl.Emit(OpCodes.Ldloc, indexLocal);
+        
+        // Load array length
+        _currentIl.Emit(OpCodes.Ldloc, arrayLocal);
+        _currentIl.Emit(OpCodes.Ldlen);
+        _currentIl.Emit(OpCodes.Conv_I4);
+        
+        // Compare: if index >= length, exit loop
+        _currentIl.Emit(OpCodes.Bge, loopEnd);
+        
+        // Load current array element: array[index]
+        _currentIl.Emit(OpCodes.Ldloc, arrayLocal);
+        _currentIl.Emit(OpCodes.Ldloc, indexLocal);
+        _currentIl.Emit(OpCodes.Ldelem_Ref);
+        
+        // Store in loop variable
+        _currentIl.Emit(OpCodes.Stloc, loopVarLocal);
+        
+        // Execute loop body
+        node.Body.Accept(this);
+        
+        // Increment index
+        _currentIl.Emit(OpCodes.Ldloc, indexLocal);
+        _currentIl.Emit(OpCodes.Ldc_I4_1);
+        _currentIl.Emit(OpCodes.Add);
+        _currentIl.Emit(OpCodes.Stloc, indexLocal);
+        
+        // Jump back to loop start
+        _currentIl.Emit(OpCodes.Br, loopStart);
+        
+        // End of loop
+        _currentIl.MarkLabel(loopEnd);
+        
+        Console.WriteLine($"[DEBUG] For-in loop compilation complete");
+        return null;
+    }
     public object? VisitParameter(ParameterNode node) => null;
     public object? VisitImport(ImportStatementNode node) => null;
     public object? VisitCallExpression(CallExpressionNode node)
     {
+        // Skip function calls in Pass 1 (they'll be compiled in Pass 2)
+        if (_isFirstPass)
+        {
+            Console.WriteLine($"[DEBUG] Pass 1: Skipping call expression to {(node.Callee as IdentifierNode)?.Name ?? "unknown"}");
+            return null;
+        }
+        
+        Console.WriteLine($"[DEBUG] Pass 2: Processing call expression to {(node.Callee as IdentifierNode)?.Name ?? "unknown"}");
+        
         // For now, handle simple function calls where callee is an identifier
         if (node.Callee is IdentifierNode identifier)
         {
@@ -760,6 +957,7 @@ public class CxCompiler : IAstVisitor<object>
             var methodInfo = GetMethodInfo(identifier.Name, node.Arguments.Count);
             if (methodInfo != null)
             {
+                Console.WriteLine($"[DEBUG] Found built-in function: {identifier.Name}");
                 // For console methods, we don't need to load this instance
                 if (identifier.Name == "print" || identifier.Name == "write")
                 {
@@ -790,9 +988,9 @@ public class CxCompiler : IAstVisitor<object>
             }
             else
             {
+                Console.WriteLine($"[DEBUG] Found user-defined function: {identifier.Name}");
                 // Call a user-defined function
-                var methodBuilder = _programTypeBuilder.GetMethod(identifier.Name);
-                if (methodBuilder != null)
+                if (_userFunctions.TryGetValue(identifier.Name, out var methodBuilder))
                 {
                     // Load arguments
                     foreach (var arg in node.Arguments)
@@ -800,7 +998,11 @@ public class CxCompiler : IAstVisitor<object>
                         arg.Accept(this);
                     }
                     
+                    // User-defined function - now we can call it directly using the MethodBuilder!
                     _currentIl!.EmitCall(OpCodes.Call, methodBuilder, null);
+                    
+                    // User functions now return object, so no need to push null
+                    // The function will return either a value or null if no explicit return
                 }
                 else
                 {
@@ -824,8 +1026,88 @@ public class CxCompiler : IAstVisitor<object>
     public object? VisitAIProcess(AIProcessNode node) => null;
     public object? VisitAIEmbed(AIEmbedNode node) => null;
     public object? VisitAIAdapt(AIAdaptNode node) => null;
-    public object? VisitTryStatement(TryStatementNode node) => null;
-    public object? VisitThrowStatement(ThrowStatementNode node) => null;
+    public object? VisitTryStatement(TryStatementNode node)
+    {
+        if (_isFirstPass)
+        {
+            return null;
+        }
+
+        Console.WriteLine($"[DEBUG] Processing try-catch statement");
+        
+        // Define labels for exception handling
+        var catchLabel = _currentIl!.DefineLabel();
+        var endLabel = _currentIl.DefineLabel();
+        
+        // Begin exception handling block
+        _currentIl.BeginExceptionBlock();
+        
+        // Compile the try block
+        Console.WriteLine($"[DEBUG] Compiling try block");
+        node.TryBlock.Accept(this);
+        
+        // Leave the try block
+        _currentIl.Emit(OpCodes.Leave, endLabel);
+        
+        // Begin catch block if present
+        if (node.CatchBlock != null && node.CatchVariableName != null)
+        {
+            Console.WriteLine($"[DEBUG] Compiling catch block with variable: {node.CatchVariableName}");
+            
+            // Begin catch handler for all exceptions
+            _currentIl.BeginCatchBlock(typeof(Exception));
+            
+            // Create local variable for the caught exception
+            var exceptionLocal = _currentIl.DeclareLocal(typeof(object));
+            _currentLocals[node.CatchVariableName] = exceptionLocal;
+            
+            // Store the exception in the local variable
+            // For now, we'll just store the exception message
+            var messageProperty = typeof(Exception).GetProperty("Message");
+            _currentIl.EmitCall(OpCodes.Callvirt, messageProperty!.GetGetMethod()!, null);
+            _currentIl.Emit(OpCodes.Stloc, exceptionLocal);
+            
+            // Compile the catch block
+            node.CatchBlock.Accept(this);
+            
+            // Leave the catch block
+            _currentIl.Emit(OpCodes.Leave, endLabel);
+        }
+        
+        // End exception handling block
+        _currentIl.EndExceptionBlock();
+        
+        // Mark the end label
+        _currentIl.MarkLabel(endLabel);
+        
+        Console.WriteLine($"[DEBUG] Try-catch compilation complete");
+        return null;
+    }
+
+    public object? VisitThrowStatement(ThrowStatementNode node)
+    {
+        if (_isFirstPass)
+        {
+            return null;
+        }
+
+        Console.WriteLine($"[DEBUG] Processing throw statement");
+        
+        // Compile the expression to throw
+        node.Expression.Accept(this);
+        
+        // Convert the expression to a string for the exception message
+        var toStringMethod = typeof(object).GetMethod("ToString");
+        _currentIl!.EmitCall(OpCodes.Callvirt, toStringMethod!, null);
+        
+        // Create and throw a new Exception
+        var exceptionConstructor = typeof(Exception).GetConstructor(new[] { typeof(string) });
+        _currentIl.Emit(OpCodes.Newobj, exceptionConstructor!);
+        _currentIl.Emit(OpCodes.Throw);
+        
+        Console.WriteLine($"[DEBUG] Throw statement compilation complete");
+        return null;
+    }
     public object? VisitNewExpression(NewExpressionNode node) => null;
     public object? VisitAwaitExpression(AwaitExpressionNode node) => null;
     public object? VisitParallelExpression(ParallelExpressionNode node) => null;

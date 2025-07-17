@@ -3,13 +3,15 @@ var fruits = ["apple", "banana", "cherry"];
 var numbers = [10, 20, 30];
 
 print("=== Fruit Iteration ===");
-for (fruit in fruits) {
+for (fruit in fruits) 
+{
     print(fruit);
 }
 
 print("=== Number Processing ===");
 var total = 0;
-for (num in numbers) {
+for (num in numbers) 
+{
     total += num;
     print(total);
 }
@@ -19,13 +21,15 @@ print(total);
 
 print("=== Empty Array Test ===");
 var empty = [];
-for (item in empty) {
+for (item in empty) 
+{
     print("This should not print");
 }
 print("Empty array iteration completed");
 
 print("=== Mixed Types ===");
 var mixed = [42, "hello", 99];
-for (item in mixed) {
+for (item in mixed) 
+{
     print(item);
 }
