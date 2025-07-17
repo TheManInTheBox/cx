@@ -1,0 +1,10 @@
+globalMessage = "I'm global!"
+
+function main() {
+    localMessage = "I'm local!"
+    
+    print("Global:")
+    print(globalMessage)
+    print("Local:")
+    print(localMessage)
+}

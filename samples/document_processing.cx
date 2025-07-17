@@ -1,0 +1,87 @@
+// Document processing with AI integration
+using ai from "azure.openai"
+using storage from "azure.storage"
+
+// Setup connections
+gpt4 = ai.connect("gpt-4-turbo")
+documentStore = storage.connect("documents")
+
+async function extractKeyPoints(document: string) -> object {
+    content = documentStore.read(document)
+    
+    result = await gpt4.analyze(content, {
+        task: "extract_key_points",
+        format: "json",
+        schema: {
+            keyPoints: "array<string>",
+            mainTopic: "string",
+            actionItems: "array<string>",
+            wordCount: "number"
+        }
+    })
+    
+    return result
+}
+
+async function generateSummary(document: string) -> string {
+    content = documentStore.read(document)
+    
+    summary = await gpt4.generate(
+        "Provide a concise summary of the following document: " + content,
+        { maxTokens: 200, temperature: 0.3 }
+    )
+    
+    return summary
+}
+
+async function processDocumentBatch(documentPaths: array<string>) -> object {
+    print("Processing " + documentPaths.length + " documents...")
+    
+    // Process all documents in parallel
+    keyPointsPromises = parallel documentPaths.map(doc => extractKeyPoints(doc))
+    summaryPromises = parallel documentPaths.map(doc => generateSummary(doc))
+    
+    keyPoints = await keyPointsPromises
+    summaries = await summaryPromises
+    
+    // Compile results
+    results = {
+        totalDocuments: documentPaths.length,
+        keyPoints: keyPoints,
+        summaries: summaries,
+        processedAt: new Date()
+    }
+    
+    return results
+}
+
+// Streaming example for real-time processing
+async function streamingAnalysis(text: string) {
+    print("Starting streaming analysis...")
+    
+    // Stream tokens as they're generated
+    async for token in gpt4.stream("Analyze this text and provide insights: " + text) {
+        print(token, { newline: false }) // Print without newline to show streaming
+    }
+    
+    print("\nStreaming complete!")
+}
+
+async function main() {
+    // Example documents (in a real scenario, these would be actual file paths)
+    documents = [
+        "meeting_notes_2024_01.txt",
+        "project_proposal.pdf",
+        "customer_feedback.docx",
+        "quarterly_report.xlsx"
+    ]
+    
+    // Process batch of documents
+    batchResults = await processDocumentBatch(documents)
+    print("Batch processing complete!")
+    print("Total documents processed: " + batchResults.totalDocuments)
+    
+    // Example of streaming analysis
+    streamText = "Artificial intelligence is revolutionizing how we work with data and automate complex tasks."
+    await streamingAnalysis(streamText)
+}

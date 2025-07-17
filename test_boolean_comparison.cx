@@ -1,0 +1,16 @@
+function main() {
+    print("Testing simpler boolean comparison:")
+    
+    x = true
+    y = false
+    
+    print("x =")
+    print(x)
+    print("y =")
+    print(y)
+    
+    // Let's test boolean comparison without using it in an if statement
+    result = x == y
+    print("x == y:")
+    print(result)
+}

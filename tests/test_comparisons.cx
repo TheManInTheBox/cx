@@ -1,0 +1,23 @@
+// Test: Comparison Operations  
+// Expected Output: true, false, true, false, true, false
+
+var x = 5
+var y = 10
+
+var equal = x == y
+print(equal)
+
+var notEqual = x != y  
+print(notEqual)
+
+var less = x < y
+print(less)
+
+var greater = x > y
+print(greater)
+
+var lessEqual = x <= y
+print(lessEqual)
+
+var greaterEqual = x >= y
+print(greaterEqual)

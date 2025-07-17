@@ -1,0 +1,14 @@
+// Hello World in Cx - AI-integrated scripting language
+message = "Hello from Cx language!"
+print(message)
+
+// AI-powered example (placeholder for now)
+aiConfig = { 
+    model: "gpt-4", 
+    temperature: 0.7, 
+    maxTokens: 100 
+}
+
+// Async AI interaction (placeholder syntax)
+result = await ai.complete("Explain quantum computing in simple terms", aiConfig)
+print(result)
