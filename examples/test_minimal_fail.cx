@@ -1,0 +1,7 @@
+// Minimal test case
+function test() 
+{
+    return 123;
+}
+
+var x = test();

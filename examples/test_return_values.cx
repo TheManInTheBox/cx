@@ -1,0 +1,29 @@
+// Test return values - Phase 3 priority
+function add(a, b)
+{
+    return a + b;
+}
+
+function multiply(x, y)
+{
+    return x * y;
+}
+
+function greet(name)
+{
+    return "Hello, " + name + "!";
+}
+
+print("Testing function return values:");
+var sum = add(10, 20);
+print("10 + 20 = " + sum);
+
+var product = multiply(5, 6);
+print("5 * 6 = " + product);
+
+var greeting = greet("World");
+print(greeting);
+
+print("Testing function composition:");
+var result = add(multiply(3, 4), 5);
+print("(3 * 4) + 5 = " + result);

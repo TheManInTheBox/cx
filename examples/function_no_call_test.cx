@@ -1,0 +1,6 @@
+function sayHello()
+{
+    print("Hello from function!");
+}
+
+print("Program finished!");

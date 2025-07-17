@@ -1,0 +1,8 @@
+// Test function without explicit return
+function greet(name) 
+{
+    print("Hello, " + name);
+}
+
+var result = greet("World");
+print("Result: " + result);
