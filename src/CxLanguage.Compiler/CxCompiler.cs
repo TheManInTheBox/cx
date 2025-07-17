@@ -1,9 +1,10 @@
 using System.Reflection;
-using System.Reflection;
 using System.Reflection.Emit;
 using CxLanguage.Core.Ast;
 using CxLanguage.Core.Symbols;
 using CxLanguage.Core.Types;
+using CxLanguage.Core.AI;
+using Microsoft.Extensions.Logging;
 
 namespace CxLanguage.Compiler;
 
@@ -68,6 +69,11 @@ public class IlEmitter : IAstVisitor<object?>
     private ILGenerator? _currentIl;
     private MethodBuilder? _currentMethod;
     private Type? _currentReturnType;
+    
+    // AI Runtime integration
+    private FieldBuilder? _agenticRuntimeField;
+    private FieldBuilder? _multiModalAIField;
+    private FieldBuilder? _codeSynthesizerField;
 
     public IlEmitter(ModuleBuilder moduleBuilder, TypeBuilder typeBuilder, CompilerOptions options)
     {
@@ -81,6 +87,9 @@ public class IlEmitter : IAstVisitor<object?>
         _methodReturnTypes = new Dictionary<string, Type>();
         _currentLocals = new Dictionary<string, LocalBuilder>();
         _scopes.Push(_globalScope);
+        
+        // Initialize AI runtime fields
+        InitializeAIRuntime();
     }
 
     // Store global variable initializations for later processing
@@ -527,52 +536,44 @@ public class IlEmitter : IAstVisitor<object?>
                 break;
                 
             case BinaryOperator.Equal:
+            case BinaryOperator.NotEqual:
             case BinaryOperator.LessThan:
+            case BinaryOperator.LessThanOrEqual:
             case BinaryOperator.GreaterThan:
-                // For comparison operations - determine the type of the operands
-                var leftIsBool = IsLiteralBooleanExpression(node.Left);
-                var rightIsBool = IsLiteralBooleanExpression(node.Right);
+            case BinaryOperator.GreaterThanOrEqual:
+                // For comparison operations - we need to handle mixed types
+                node.Left.Accept(this);
+                EmitUnboxToInt(_currentIl!);
                 
-                if (leftIsBool || rightIsBool)
+                node.Right.Accept(this);
+                EmitUnboxToInt(_currentIl);
+                
+                switch (node.Operator)
                 {
-                    // At least one operand is boolean - handle as boolean comparison
-                    node.Left.Accept(this);
-                    _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
-                    
-                    node.Right.Accept(this);
-                    _currentIl.Emit(OpCodes.Unbox_Any, typeof(bool));
-                    
-                    // For now, only support equality for booleans
-                    if (node.Operator == BinaryOperator.Equal)
-                    {
+                    case BinaryOperator.Equal:
                         _currentIl.Emit(OpCodes.Ceq);
-                    }
-                    else
-                    {
-                        throw new NotImplementedException("Boolean comparison operators other than == not implemented yet");
-                    }
-                }
-                else
-                {
-                    // Both operands are integers - handle as integer comparison
-                    node.Left.Accept(this);
-                    _currentIl!.Emit(OpCodes.Unbox_Any, typeof(int));
-                    
-                    node.Right.Accept(this);
-                    _currentIl.Emit(OpCodes.Unbox_Any, typeof(int));
-                    
-                    switch (node.Operator)
-                    {
-                        case BinaryOperator.Equal:
-                            _currentIl.Emit(OpCodes.Ceq);
-                            break;
-                        case BinaryOperator.LessThan:
-                            _currentIl.Emit(OpCodes.Clt);
-                            break;
-                        case BinaryOperator.GreaterThan:
-                            _currentIl.Emit(OpCodes.Cgt);
-                            break;
-                    }
+                        break;
+                    case BinaryOperator.NotEqual:
+                        _currentIl.Emit(OpCodes.Ceq);
+                        _currentIl.Emit(OpCodes.Ldc_I4_0);
+                        _currentIl.Emit(OpCodes.Ceq);
+                        break;
+                    case BinaryOperator.LessThan:
+                        _currentIl.Emit(OpCodes.Clt);
+                        break;
+                    case BinaryOperator.LessThanOrEqual:
+                        _currentIl.Emit(OpCodes.Cgt);
+                        _currentIl.Emit(OpCodes.Ldc_I4_0);
+                        _currentIl.Emit(OpCodes.Ceq);
+                        break;
+                    case BinaryOperator.GreaterThan:
+                        _currentIl.Emit(OpCodes.Cgt);
+                        break;
+                    case BinaryOperator.GreaterThanOrEqual:
+                        _currentIl.Emit(OpCodes.Clt);
+                        _currentIl.Emit(OpCodes.Ldc_I4_0);
+                        _currentIl.Emit(OpCodes.Ceq);
+                        break;
                 }
                 
                 _currentIl.Emit(OpCodes.Box, typeof(bool));
@@ -616,7 +617,58 @@ public class IlEmitter : IAstVisitor<object?>
         {
             return literal.Type == LiteralType.Boolean;
         }
+        // Also check for boolean variables and expressions that return boolean
+        if (node is IdentifierNode identifier)
+        {
+            // For now, assume any identifier could be boolean
+            // In the future, we could do type inference here
+            return false; // Keep conservative approach for variables
+        }
+        if (node is BinaryExpressionNode binaryExpr)
+        {
+            // Comparison operators return boolean
+            switch (binaryExpr.Operator)
+            {
+                case BinaryOperator.Equal:
+                case BinaryOperator.NotEqual:
+                case BinaryOperator.LessThan:
+                case BinaryOperator.LessThanOrEqual:
+                case BinaryOperator.GreaterThan:
+                case BinaryOperator.GreaterThanOrEqual:
+                case BinaryOperator.And:
+                case BinaryOperator.Or:
+                    return true;
+                default:
+                    return false;
+            }
+        }
         return false;
+    }
+
+    /// <summary>
+    /// Emits IL to unbox an object to int, with proper handling for boolean-to-int conversion
+    /// </summary>
+    private void EmitUnboxToInt(ILGenerator il)
+    {
+        // Check if the object is an int first
+        var isIntLabel = il.DefineLabel();
+        var endLabel = il.DefineLabel();
+        
+        // Duplicate value to test type
+        il.Emit(OpCodes.Dup);
+        il.Emit(OpCodes.Isinst, typeof(int));
+        il.Emit(OpCodes.Brtrue, isIntLabel);
+        
+        // Not an int, try boolean and convert to int
+        il.Emit(OpCodes.Unbox_Any, typeof(bool));
+        il.Emit(OpCodes.Conv_I4); // Convert boolean to int (false=0, true=1)
+        il.Emit(OpCodes.Br, endLabel);
+        
+        // Is an int, just unbox
+        il.MarkLabel(isIntLabel);
+        il.Emit(OpCodes.Unbox_Any, typeof(int));
+        
+        il.MarkLabel(endLabel);
     }
 
     // Runtime helper methods for type-safe comparisons
@@ -921,6 +973,349 @@ public class IlEmitter : IAstVisitor<object?>
         // For now, return a basic type - this should be enhanced with proper type inference
         // TODO: Implement proper type system
         return new PrimitiveType("object");
+    }
+
+    /// <summary>
+    /// Initialize AI runtime fields for the compiled program
+    /// </summary>
+    private void InitializeAIRuntime()
+    {
+        // Create static fields for AI runtime components
+        _agenticRuntimeField = _typeBuilder.DefineField(
+            "_agenticRuntime",
+            typeof(IAgenticRuntime),
+            FieldAttributes.Private | FieldAttributes.Static);
+
+        _multiModalAIField = _typeBuilder.DefineField(
+            "_multiModalAI",
+            typeof(IMultiModalAI),
+            FieldAttributes.Private | FieldAttributes.Static);
+
+        _codeSynthesizerField = _typeBuilder.DefineField(
+            "_codeSynthesizer",
+            typeof(ICodeSynthesizer),
+            FieldAttributes.Private | FieldAttributes.Static);
+    }
+
+    /// <summary>
+    /// AI task planning visitor
+    /// </summary>
+    public object? VisitAITask(AITaskNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling AI task: {Goal}", node.Goal);
+
+            // Load the agentic runtime
+            _currentIl!.Emit(OpCodes.Ldsfld, _agenticRuntimeField!);
+
+            // Load the goal string
+            _currentIl.Emit(OpCodes.Ldstr, node.Goal);
+
+            // Create options object (simplified for now)
+            _currentIl.Emit(OpCodes.Ldnull); // TaskPlanningOptions
+
+            // Call PlanTaskAsync
+            var planTaskMethod = typeof(IAgenticRuntime).GetMethod("PlanTaskAsync");
+            _currentIl.Emit(OpCodes.Callvirt, planTaskMethod!);
+
+            // Store result if assigned to a variable
+            if (!string.IsNullOrEmpty(node.AssignTo))
+            {
+                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
+                {
+                    _currentIl.Emit(OpCodes.Stloc, local);
+                }
+                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
+                {
+                    _currentIl.Emit(OpCodes.Stsfld, field);
+                }
+            }
+            else
+            {
+                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling AI task");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// AI code synthesis visitor
+    /// </summary>
+    public object? VisitAISynthesize(AISynthesizeNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling AI synthesize: {Spec}", node.Specification);
+
+            // Load the code synthesizer
+            _currentIl!.Emit(OpCodes.Ldsfld, _codeSynthesizerField!);
+
+            // Load the specification string
+            _currentIl.Emit(OpCodes.Ldstr, node.Specification);
+
+            // Create options object (simplified for now)
+            _currentIl.Emit(OpCodes.Ldnull); // CodeSynthesisOptions
+
+            // Call SynthesizeFunctionAsync
+            var synthesizeMethod = typeof(ICodeSynthesizer).GetMethod("SynthesizeFunctionAsync");
+            _currentIl.Emit(OpCodes.Callvirt, synthesizeMethod!);
+
+            // Store result if assigned to a variable
+            if (!string.IsNullOrEmpty(node.AssignTo))
+            {
+                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
+                {
+                    _currentIl.Emit(OpCodes.Stloc, local);
+                }
+                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
+                {
+                    _currentIl.Emit(OpCodes.Stsfld, field);
+                }
+            }
+            else
+            {
+                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling AI synthesize");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// AI function call visitor
+    /// </summary>
+    public object? VisitAICall(AICallNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling AI call: {Function}", node.FunctionName);
+
+            // Load the agentic runtime
+            _currentIl!.Emit(OpCodes.Ldsfld, _agenticRuntimeField!);
+
+            // Load function name
+            _currentIl.Emit(OpCodes.Ldstr, node.FunctionName);
+
+            // Create array for parameters
+            _currentIl.Emit(OpCodes.Ldc_I4, node.Arguments.Count);
+            _currentIl.Emit(OpCodes.Newarr, typeof(object));
+
+            // Fill array with arguments
+            for (int i = 0; i < node.Arguments.Count; i++)
+            {
+                _currentIl.Emit(OpCodes.Dup); // Duplicate array reference
+                _currentIl.Emit(OpCodes.Ldc_I4, i); // Array index
+                node.Arguments[i].Accept(this); // Evaluate argument
+                _currentIl.Emit(OpCodes.Stelem_Ref); // Store in array
+            }
+
+            // Create options object (simplified for now)
+            _currentIl.Emit(OpCodes.Ldnull); // AIInvocationOptions
+
+            // Call InvokeAIFunctionAsync
+            var invokeMethod = typeof(IAgenticRuntime).GetMethod("InvokeAIFunctionAsync");
+            _currentIl.Emit(OpCodes.Callvirt, invokeMethod!);
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling AI call");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// AI reasoning loop visitor
+    /// </summary>
+    public object? VisitAIReason(AIReasonNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling AI reason: {Goal}", node.Goal);
+
+            // For now, emit a placeholder that calls the agentic runtime
+            // In a full implementation, this would create a reasoning loop
+            _currentIl!.Emit(OpCodes.Ldstr, $"Reasoning about: {node.Goal}");
+            
+            // Store result if assigned to a variable
+            if (!string.IsNullOrEmpty(node.AssignTo))
+            {
+                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
+                {
+                    _currentIl.Emit(OpCodes.Stloc, local);
+                }
+                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
+                {
+                    _currentIl.Emit(OpCodes.Stsfld, field);
+                }
+            }
+            else
+            {
+                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling AI reason");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// AI multi-modal processing visitor
+    /// </summary>
+    public object? VisitAIProcess(AIProcessNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling AI process: {InputType}", node.InputType);
+
+            // Load the multi-modal AI service
+            _currentIl!.Emit(OpCodes.Ldsfld, _multiModalAIField!);
+
+            // Process based on input type
+            switch (node.InputType.ToLower())
+            {
+                case "text":
+                    node.Input.Accept(this); // Evaluate input expression
+                    _currentIl.Emit(OpCodes.Ldnull); // MultiModalOptions
+                    var processTextMethod = typeof(IMultiModalAI).GetMethod("ProcessTextAsync");
+                    _currentIl.Emit(OpCodes.Callvirt, processTextMethod!);
+                    break;
+                case "image":
+                    node.Input.Accept(this); // Evaluate input expression (should be byte[])
+                    _currentIl.Emit(OpCodes.Ldnull); // description
+                    _currentIl.Emit(OpCodes.Ldnull); // MultiModalOptions
+                    var processImageMethod = typeof(IMultiModalAI).GetMethod("ProcessImageAsync");
+                    _currentIl.Emit(OpCodes.Callvirt, processImageMethod!);
+                    break;
+                default:
+                    // Default to text processing
+                    node.Input.Accept(this);
+                    _currentIl.Emit(OpCodes.Ldnull);
+                    var defaultMethod = typeof(IMultiModalAI).GetMethod("ProcessTextAsync");
+                    _currentIl.Emit(OpCodes.Callvirt, defaultMethod!);
+                    break;
+            }
+
+            // Store result if assigned to a variable
+            if (!string.IsNullOrEmpty(node.AssignTo))
+            {
+                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
+                {
+                    _currentIl.Emit(OpCodes.Stloc, local);
+                }
+                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
+                {
+                    _currentIl.Emit(OpCodes.Stsfld, field);
+                }
+            }
+            else
+            {
+                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling AI process");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// AI embedding generation visitor
+    /// </summary>
+    public object? VisitAIEmbed(AIEmbedNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling AI embed");
+
+            // Load the multi-modal AI service
+            _currentIl!.Emit(OpCodes.Ldsfld, _multiModalAIField!);
+
+            // Load text input
+            node.Text.Accept(this);
+
+            // Create options object (simplified for now)
+            _currentIl.Emit(OpCodes.Ldnull); // EmbeddingOptions
+
+            // Call GenerateEmbeddingsAsync
+            var embedMethod = typeof(IMultiModalAI).GetMethod("GenerateEmbeddingsAsync");
+            _currentIl.Emit(OpCodes.Callvirt, embedMethod!);
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling AI embed");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// AI adaptive code path visitor
+    /// </summary>
+    public object? VisitAIAdapt(AIAdaptNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling AI adapt: {CodePath}", node.CodePath);
+
+            // Load the code synthesizer
+            _currentIl!.Emit(OpCodes.Ldsfld, _codeSynthesizerField!);
+
+            // Load code path
+            _currentIl.Emit(OpCodes.Ldstr, node.CodePath);
+
+            // Load context
+            node.Context.Accept(this);
+
+            // Create options object (simplified for now)
+            _currentIl.Emit(OpCodes.Ldnull); // AdaptationOptions
+
+            // Call AdaptCodePathAsync
+            var adaptMethod = typeof(ICodeSynthesizer).GetMethod("AdaptCodePathAsync");
+            _currentIl.Emit(OpCodes.Callvirt, adaptMethod!);
+
+            // Result is bool, box it for consistency
+            _currentIl.Emit(OpCodes.Box, typeof(bool));
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling AI adapt");
+            throw;
+        }
+    }
+
+    // Add logger field for AI operations
+    private ILogger? _logger;
+    
+    /// <summary>
+    /// Set logger for AI operations
+    /// </summary>
+    public void SetLogger(ILogger logger)
+    {
+        _logger = logger;
     }
 }
 

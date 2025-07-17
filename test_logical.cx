@@ -1,0 +1,3 @@
+// Simple logical operator test
+var result = true && false
+print(result)
