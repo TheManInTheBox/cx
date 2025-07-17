@@ -356,26 +356,70 @@ public class IlEmitter : IAstVisitor<object?>
 
     public object? VisitFor(ForStatementNode node)
     {
-        // ForStatementNode is for foreach-style loops (for variable in iterable)
-        // Generate the iteration logic
+        // ForStatementNode implements for-in loops (for variable in iterable)
+        // This supports iteration over arrays, collections, and enumerable objects
         
-        // Get the iterable
+        // Compile the iterable expression (array, collection, etc.)
         node.Iterable.Accept(this);
         
-        // TODO: Implement proper foreach iteration
-        // For now, just a simple loop placeholder
-        var loopStart = _currentIl!.DefineLabel();
+        // Get IEnumerable interface from the iterable
+        _currentIl!.Emit(OpCodes.Castclass, typeof(System.Collections.IEnumerable));
+        
+        // Call GetEnumerator() method
+        _currentIl.Emit(OpCodes.Callvirt, typeof(System.Collections.IEnumerable).GetMethod("GetEnumerator")!);
+        
+        // Store the enumerator in a local variable
+        var enumeratorLocal = _currentIl.DeclareLocal(typeof(System.Collections.IEnumerator));
+        _currentIl.Emit(OpCodes.Stloc, enumeratorLocal);
+        
+        // Create labels for loop control
+        var loopStart = _currentIl.DefineLabel();
         var loopEnd = _currentIl.DefineLabel();
         
+        // Declare local variable for the loop variable if it doesn't exist
+        LocalBuilder? iterVar = null;
+        if (!_currentLocals.TryGetValue(node.Variable, out iterVar))
+        {
+            iterVar = _currentIl.DeclareLocal(typeof(object));
+            _currentLocals[node.Variable] = iterVar;
+        }
+        
+        // Start of the loop
         _currentIl.MarkLabel(loopStart);
         
-        // Generate body
+        // Call MoveNext() on the enumerator
+        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
+        _currentIl.Emit(OpCodes.Callvirt, typeof(System.Collections.IEnumerator).GetMethod("MoveNext")!);
+        
+        // If MoveNext() returns false, exit the loop
+        _currentIl.Emit(OpCodes.Brfalse, loopEnd);
+        
+        // Get Current property and store in loop variable
+        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
+        _currentIl.Emit(OpCodes.Callvirt, typeof(System.Collections.IEnumerator).GetProperty("Current")!.GetGetMethod()!);
+        _currentIl.Emit(OpCodes.Stloc, iterVar);
+        
+        // Execute the loop body
         node.Body.Accept(this);
         
-        // Jump back to start (simplified)
+        // Jump back to the start of the loop
         _currentIl.Emit(OpCodes.Br, loopStart);
         
+        // End of the loop
         _currentIl.MarkLabel(loopEnd);
+        
+        // Dispose the enumerator if it implements IDisposable
+        var skipDispose = _currentIl.DefineLabel();
+        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
+        _currentIl.Emit(OpCodes.Isinst, typeof(IDisposable));
+        _currentIl.Emit(OpCodes.Brfalse_S, skipDispose);
+        
+        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
+        _currentIl.Emit(OpCodes.Castclass, typeof(IDisposable));
+        _currentIl.Emit(OpCodes.Callvirt, typeof(IDisposable).GetMethod("Dispose")!);
+        
+        _currentIl.MarkLabel(skipDispose);
+        
         return null;
     }
 
@@ -424,28 +468,8 @@ public class IlEmitter : IAstVisitor<object?>
 
     public object? VisitForStatement(ForStatementNode node)
     {
-        // For now, implement as a simple while loop
-        // TODO: Implement proper iteration over arrays/collections
-        var startLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-
-        // Compile iterable
-        node.Iterable.Accept(this);
-        var iteratorLocal = _currentIl.DeclareLocal(typeof(object));
-        _currentIl.Emit(OpCodes.Stloc, iteratorLocal);
-
-        _currentIl.MarkLabel(startLabel);
-
-        // Simple condition (needs proper iterator implementation)
-        _currentIl.Emit(OpCodes.Ldc_I4_0);
-        _currentIl.Emit(OpCodes.Brfalse, endLabel);
-
-        // Compile body
-        node.Body.Accept(this);
-        _currentIl.Emit(OpCodes.Br, startLabel);
-
-        _currentIl.MarkLabel(endLabel);
-        return null;
+        // Delegate to VisitFor method (same implementation)
+        return VisitFor(node);
     }
 
     public object? VisitBlockStatement(BlockStatementNode node)
@@ -793,27 +817,67 @@ public class IlEmitter : IAstVisitor<object?>
 
     public object? VisitAssignmentExpression(AssignmentExpressionNode node)
     {
-        // Evaluate the right side first
-        node.Right.Accept(this);
-        
-        // Handle assignment to variable
+        // Handle different types of assignment
         if (node.Left is IdentifierNode identifier)
         {
-            // Only assign to existing variables (local or global)
-            if (_currentLocals.TryGetValue(identifier.Name, out var local))
+            if (node.Operator == AssignmentOperator.Assign)
             {
-                _currentIl!.Emit(OpCodes.Dup);
-                _currentIl.Emit(OpCodes.Stloc, local);
-            }
-            else if (_globalFields.TryGetValue(identifier.Name, out var field))
-            {
-                _currentIl!.Emit(OpCodes.Dup);
-                _currentIl.Emit(OpCodes.Stsfld, field);
+                // Simple assignment: x = value
+                node.Right.Accept(this);
+                
+                // Store the value
+                if (_currentLocals.TryGetValue(identifier.Name, out var local))
+                {
+                    _currentIl!.Emit(OpCodes.Dup);
+                    _currentIl.Emit(OpCodes.Stloc, local);
+                }
+                else if (_globalFields.TryGetValue(identifier.Name, out var field))
+                {
+                    _currentIl!.Emit(OpCodes.Dup);
+                    _currentIl.Emit(OpCodes.Stsfld, field);
+                }
+                else
+                {
+                    throw new Exception($"Variable '{identifier.Name}' not declared. Use 'var' keyword to declare new variables.");
+                }
             }
             else
             {
-                // Variable does not exist, error
-                throw new Exception($"Variable '{identifier.Name}' not declared. Use 'var' keyword to declare new variables.");
+                // Compound assignment: x += value, x -= value, etc.
+                // Load current value of variable
+                LocalBuilder? local = null;
+                FieldBuilder? globalField = null;
+                
+                if (_currentLocals.TryGetValue(identifier.Name, out local))
+                {
+                    _currentIl!.Emit(OpCodes.Ldloc, local);
+                }
+                else if (_globalFields.TryGetValue(identifier.Name, out globalField))
+                {
+                    _currentIl!.Emit(OpCodes.Ldsfld, globalField);
+                }
+                else
+                {
+                    throw new Exception($"Variable '{identifier.Name}' not declared. Use 'var' keyword to declare new variables.");
+                }
+
+                // Load the right-hand side value
+                node.Right.Accept(this);
+
+                // Perform the operation based on the assignment operator
+                EmitCompoundAssignmentOperation(node.Operator);
+
+                // Store the result back to the variable
+                if (local != null)
+                {
+                    _currentIl!.Emit(OpCodes.Dup);
+                    _currentIl.Emit(OpCodes.Stloc, local);
+                }
+                else if (globalField != null)
+                {
+                    _currentIl!.Emit(OpCodes.Dup);
+                    _currentIl.Emit(OpCodes.Stsfld, globalField);
+                }
             }
         }
         else
@@ -825,6 +889,48 @@ public class IlEmitter : IAstVisitor<object?>
         return null;
     }
 
+    /// <summary>
+    /// Emits IL for compound assignment operations
+    /// </summary>
+    private void EmitCompoundAssignmentOperation(AssignmentOperator op)
+    {
+        // At this point, stack has: [current_value, new_value]
+        // Both are boxed objects, need to unbox for arithmetic
+
+        // Store the new value temporarily
+        var tempLocal = _currentIl!.DeclareLocal(typeof(object));
+        _currentIl.Emit(OpCodes.Stloc, tempLocal);
+
+        // Unbox current value (left operand for the operation)
+        _currentIl.Emit(OpCodes.Unbox_Any, typeof(int));
+
+        // Load and unbox new value (right operand for the operation)
+        _currentIl.Emit(OpCodes.Ldloc, tempLocal);
+        _currentIl.Emit(OpCodes.Unbox_Any, typeof(int));
+
+        // Perform the arithmetic operation
+        switch (op)
+        {
+            case AssignmentOperator.AddAssign:
+                _currentIl.Emit(OpCodes.Add);
+                break;
+            case AssignmentOperator.SubtractAssign:
+                _currentIl.Emit(OpCodes.Sub);
+                break;
+            case AssignmentOperator.MultiplyAssign:
+                _currentIl.Emit(OpCodes.Mul);
+                break;
+            case AssignmentOperator.DivideAssign:
+                _currentIl.Emit(OpCodes.Div);
+                break;
+            default:
+                throw new NotImplementedException($"Assignment operator {op} not yet implemented");
+        }
+
+        // Box the result
+        _currentIl.Emit(OpCodes.Box, typeof(int));
+    }
+
     public object? VisitIndexAccess(IndexAccessNode node)
     {
         // Generate IL for index access (array/collection indexing)
@@ -834,6 +940,32 @@ public class IlEmitter : IAstVisitor<object?>
         // Emit array load instruction
         _currentIl!.Emit(OpCodes.Ldelem_Ref);
         
+        return null;
+    }
+
+    public object? VisitArrayLiteral(ArrayLiteralNode node)
+    {
+        // Create an object array to hold the elements
+        _currentIl!.Emit(OpCodes.Ldc_I4, node.Elements.Count);
+        _currentIl.Emit(OpCodes.Newarr, typeof(object));
+
+        // Populate the array with elements
+        for (int i = 0; i < node.Elements.Count; i++)
+        {
+            // Duplicate array reference for storing
+            _currentIl.Emit(OpCodes.Dup);
+            
+            // Load index
+            _currentIl.Emit(OpCodes.Ldc_I4, i);
+            
+            // Compile the element expression
+            node.Elements[i].Accept(this);
+            
+            // Store element in array
+            _currentIl.Emit(OpCodes.Stelem_Ref);
+        }
+
+        // Array is now on top of stack as IEnumerable for for-in loops
         return null;
     }
 

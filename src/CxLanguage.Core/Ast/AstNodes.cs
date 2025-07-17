@@ -27,6 +27,7 @@ public interface IAstVisitor<T>
     T VisitMemberAccess(MemberAccessNode node);
     T VisitIndexAccess(IndexAccessNode node);
     T VisitFunctionCall(FunctionCallNode node);
+    T VisitArrayLiteral(ArrayLiteralNode node);
     
     // AI-specific visitor methods
     T VisitAITask(AITaskNode node);
@@ -251,12 +252,13 @@ public class LiteralNode : ExpressionNode
 }
 
 /// <summary>
-/// Assignment expression (e.g., x = 5)
+/// Assignment expression (e.g., x = 5, x += 10)
 /// </summary>
 public class AssignmentExpressionNode : ExpressionNode
 {
     public ExpressionNode Left { get; set; } = null!;
     public ExpressionNode Right { get; set; } = null!;
+    public AssignmentOperator Operator { get; set; } = AssignmentOperator.Assign;
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAssignmentExpression(this);
 }
@@ -295,6 +297,16 @@ public class FunctionCallNode : ExpressionNode
 }
 
 /// <summary>
+/// Array literal expression (e.g., [1, 2, 3])
+/// </summary>
+public class ArrayLiteralNode : ExpressionNode
+{
+    public List<ExpressionNode> Elements { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitArrayLiteral(this);
+}
+
+/// <summary>
 /// Enum for binary operators
 /// </summary>
 public enum BinaryOperator
@@ -319,6 +331,18 @@ public enum UnaryOperator
 public enum LiteralType
 {
     String, Number, Boolean, Null
+}
+
+/// <summary>
+/// Enum for assignment operators
+/// </summary>
+public enum AssignmentOperator
+{
+    Assign,        // =
+    AddAssign,     // +=
+    SubtractAssign, // -=
+    MultiplyAssign, // *=
+    DivideAssign   // /=
 }
 
 /// <summary>
