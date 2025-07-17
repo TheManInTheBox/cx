@@ -28,6 +28,7 @@ public interface IAstVisitor<T>
     T VisitIndexAccess(IndexAccessNode node);
     T VisitFunctionCall(FunctionCallNode node);
     T VisitArrayLiteral(ArrayLiteralNode node);
+    T VisitSelfReference(SelfReferenceNode node);
     
     // AI-specific visitor methods
     T VisitAITask(AITaskNode node);
@@ -48,6 +49,15 @@ public interface IAstVisitor<T>
     // Async/await visitor methods
     T VisitAwaitExpression(AwaitExpressionNode node);
     T VisitParallelExpression(ParallelExpressionNode node);
+    
+    // Class system visitor methods
+    T VisitClassDeclaration(ClassDeclarationNode node);
+    T VisitFieldDeclaration(FieldDeclarationNode node);
+    T VisitMethodDeclaration(MethodDeclarationNode node);
+    T VisitConstructorDeclaration(ConstructorDeclarationNode node);
+    T VisitInterfaceDeclaration(InterfaceDeclarationNode node);
+    T VisitInterfaceMethodSignature(InterfaceMethodSignatureNode node);
+    T VisitInterfacePropertySignature(InterfacePropertySignatureNode node);
 }
 
 /// <summary>
@@ -94,10 +104,13 @@ public abstract class ExpressionNode : AstNode
 public class FunctionDeclarationNode : StatementNode
 {
     public string Name { get; set; } = string.Empty;
+    public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
     public List<ParameterNode> Parameters { get; set; } = new();
     public CxType? ReturnType { get; set; }
     public BlockStatementNode Body { get; set; } = new();
     public bool IsAsync { get; set; }
+    public int StartLine { get; set; }
+    public int EndLine { get; set; }
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitFunctionDeclaration(this);
 }
@@ -311,6 +324,14 @@ public class ArrayLiteralNode : ExpressionNode
 }
 
 /// <summary>
+/// Self-reference expression that refers to the current function
+/// </summary>
+public class SelfReferenceNode : ExpressionNode
+{
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitSelfReference(this);
+}
+
+/// <summary>
 /// Enum for binary operators
 /// </summary>
 public enum BinaryOperator
@@ -487,4 +508,105 @@ public class ParallelExpressionNode : ExpressionNode
     public ExpressionNode Expression { get; set; } = new LiteralNode();
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitParallelExpression(this);
+}
+
+// Access modifier enumeration
+public enum AccessModifier
+{
+    Public,
+    Private,
+    Protected
+}
+
+/// <summary>
+/// Class declaration statement
+/// </summary>
+public class ClassDeclarationNode : StatementNode
+{
+    public string Name { get; set; } = string.Empty;
+    public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
+    public string? BaseClass { get; set; }
+    public List<string> Interfaces { get; set; } = new();
+    public List<FieldDeclarationNode> Fields { get; set; } = new();
+    public List<MethodDeclarationNode> Methods { get; set; } = new();
+    public List<ConstructorDeclarationNode> Constructors { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitClassDeclaration(this);
+}
+
+/// <summary>
+/// Field declaration within a class
+/// </summary>
+public class FieldDeclarationNode : AstNode
+{
+    public string Name { get; set; } = string.Empty;
+    public AccessModifier AccessModifier { get; set; } = AccessModifier.Private;
+    public CxType Type { get; set; } = CxType.Any;
+    public ExpressionNode? Initializer { get; set; }
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitFieldDeclaration(this);
+}
+
+/// <summary>
+/// Method declaration within a class
+/// </summary>
+public class MethodDeclarationNode : AstNode
+{
+    public string Name { get; set; } = string.Empty;
+    public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
+    public List<ParameterNode> Parameters { get; set; } = new();
+    public CxType? ReturnType { get; set; }
+    public BlockStatementNode Body { get; set; } = new();
+    public bool IsAsync { get; set; }
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitMethodDeclaration(this);
+}
+
+/// <summary>
+/// Constructor declaration within a class
+/// </summary>
+public class ConstructorDeclarationNode : AstNode
+{
+    public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
+    public List<ParameterNode> Parameters { get; set; } = new();
+    public BlockStatementNode Body { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitConstructorDeclaration(this);
+}
+
+/// <summary>
+/// Interface declaration statement
+/// </summary>
+public class InterfaceDeclarationNode : StatementNode
+{
+    public string Name { get; set; } = string.Empty;
+    public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
+    public List<string> ExtendedInterfaces { get; set; } = new();
+    public List<InterfaceMethodSignatureNode> Methods { get; set; } = new();
+    public List<InterfacePropertySignatureNode> Properties { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitInterfaceDeclaration(this);
+}
+
+/// <summary>
+/// Interface method signature
+/// </summary>
+public class InterfaceMethodSignatureNode : AstNode
+{
+    public string Name { get; set; } = string.Empty;
+    public List<ParameterNode> Parameters { get; set; } = new();
+    public CxType? ReturnType { get; set; }
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitInterfaceMethodSignature(this);
+}
+
+/// <summary>
+/// Interface property signature
+/// </summary>
+public class InterfacePropertySignatureNode : AstNode
+{
+    public string Name { get; set; } = string.Empty;
+    public CxType Type { get; set; } = CxType.Any;
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitInterfacePropertySignature(this);
 }
