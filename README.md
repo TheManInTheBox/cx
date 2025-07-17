@@ -57,12 +57,12 @@ dotnet run -- --help
 - ✅ **Error Handling**: Proper error messages for undeclared variables
 
 **AI RUNTIME INTEGRATION:**
-- ✅ **AI Task Nodes**: `ai_task()` for autonomous goal decomposition
-- ✅ **Code Synthesis**: `ai_synthesize()` for runtime code generation
-- ✅ **Multi-Modal Calls**: `ai_call()` for text, image, audio, video processing
-- ✅ **Reasoning Loops**: `ai_reason()` for plan-execute-evaluate-refine cycles
-- ✅ **Content Processing**: `ai_process()` for intelligent data transformation
-- ✅ **Adaptive Execution**: `ai_adapt()` for self-optimizing code paths
+- ✅ **AI Task Nodes**: `task()` for autonomous goal decomposition
+- ✅ **Code Synthesis**: `synthesize()` for runtime code generation
+- ✅ **Multi-Modal Calls**: `generate()` for text, image, audio, video processing
+- ✅ **Reasoning Loops**: `reason()` for plan-execute-evaluate-refine cycles
+- ✅ **Content Processing**: `process()` for intelligent data transformation
+- ✅ **Adaptive Execution**: `adapt()` for self-optimizing code paths
 
 **COMPILATION & EXECUTION:**
 - ✅ **IL Compilation**: Full .NET IL emission using System.Reflection.Emit
@@ -99,33 +99,33 @@ var threshold = 85.0
 print(message)
 
 // AI-powered autonomous task planning
-var analysis_result = ai_task("Analyze customer sentiment and generate insights", {
+var analysis_result = task("Analyze customer sentiment and generate insights", {
     data_source: "customer_feedback.json",
     quality_threshold: threshold
 })
 
 // Dynamic code synthesis at runtime
-var calculator = ai_synthesize(
+var calculator = synthesize(
     "Create a compound interest calculator with validation",
     language: "cx",
     features: ["input_validation", "error_handling"]
 )
 
 // Multi-modal AI processing
-var insights = ai_process("marketing_video.mp4", {
+var insights = process("marketing_video.mp4", {
     extract: ["key_messages", "sentiment", "demographics"],
     format: "structured_report"
 })
 
 // Reasoning loops for complex problem solving
-var strategy = ai_reason("Optimize marketing campaign performance", {
+var strategy = reason("Optimize marketing campaign performance", {
     data: analysis_result,
     constraints: ["budget_limit", "timeline"],
     iterations: 3
 })
 
 // Adaptive execution - code that improves itself
-ai_adapt("campaign_optimization", {
+adapt("campaign_optimization", {
     feedback: strategy.results,
     optimize_for: "conversion_rate"
 })
@@ -138,12 +138,12 @@ print("AI workflow completed successfully!")
 // Standard control flow works seamlessly with AI features
 if (analysis_result.confidence > threshold)
 {
-    var next_task = ai_task("Execute high-confidence recommendations")
+    var next_task = task("Execute high-confidence recommendations")
     print("Executing recommendations with " + analysis_result.confidence + "% confidence")
 }
 else
 {
-    var refinement = ai_reason("Improve analysis quality", {
+    var refinement = reason("Improve analysis quality", {
         current_confidence: analysis_result.confidence,
         target_confidence: threshold
     })
