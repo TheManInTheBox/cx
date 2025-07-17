@@ -1,0 +1,95 @@
+// Control Flow Example
+// Demonstrates if/else statements and while loops
+
+var age = 25
+var score = 87
+var balance = 150
+
+print("Control Flow Examples")
+
+// Simple if statement
+if (age >= 18) {
+    print("You are an adult")
+}
+
+// If/else statement
+if (score >= 90) {
+    print("Grade: A")
+} else {
+    print("Grade: B or lower")
+}
+
+// Nested if/else statements
+print("Score analysis:")
+if (score >= 90) {
+    print("Excellent!")
+} else {
+    if (score >= 80) {
+        print("Good job!")
+    } else {
+        if (score >= 70) {
+            print("Passing grade")
+        } else {
+            print("Needs improvement")
+        }
+    }
+}
+
+// Multiple conditions
+print("Eligibility check:")
+if (age >= 21) {
+    if (balance >= 100) {
+        print("Eligible for premium account")
+    } else {
+        print("Age requirement met, but insufficient balance")
+    }
+} else {
+    print("Must be 21 or older")
+}
+
+// While loop example
+print("Countdown:")
+var counter = 5
+while (counter > 0) {
+    print(counter)
+    counter = counter - 1
+}
+print("Launch!")
+
+// While loop with complex condition
+print("Even numbers from 2 to 10:")
+var number = 2
+while (number <= 10) {
+    print(number)
+    number = number + 2
+}
+
+// Calculating factorial using while loop
+var n = 5
+var factorial = 1
+var i = 1
+
+while (i <= n) {
+    factorial = factorial * i
+    i = i + 1
+}
+
+print("Factorial of 5:")
+print(factorial)
+
+// While loop with boolean condition
+var keepGoing = true
+var attempts = 0
+
+while (keepGoing == true) {
+    attempts = attempts + 1
+    print("Attempt:")
+    print(attempts)
+    
+    if (attempts >= 3) {
+        keepGoing = false
+    }
+}
+
+print("Finished after attempts:")
+print(attempts)

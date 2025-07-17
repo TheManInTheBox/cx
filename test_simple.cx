@@ -1,0 +1,7 @@
+// Simple test program
+function main() {
+    x = 42
+    y = "Hello, World!"
+    print(y)
+    return x
+}

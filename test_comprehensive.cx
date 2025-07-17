@@ -1,0 +1,17 @@
+function main() {
+    x = 42
+    y = "Hello, World!"
+    z = "Another variable"
+    
+    print("x =")
+    print(x)
+    print("y =")
+    print(y)
+    print("z =")
+    print(z)
+    
+    // Test reassignment
+    x = 100
+    print("x after reassignment =")
+    print(x)
+}

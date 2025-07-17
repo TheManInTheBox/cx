@@ -1,0 +1,18 @@
+// Test: Error Cases
+// This file demonstrates expected compilation errors
+
+// Error 1: Assignment to undeclared variable
+// Uncomment the next line to test error handling:
+// undeclaredVar = 10
+
+// Error 2: Invalid syntax  
+// Uncomment the next line to test error handling:
+// var x = 
+
+// Error 3: Missing expression
+// Uncomment the next line to test error handling:
+// var y = +
+
+// This file should compile successfully when all error lines are commented out
+var validVar = 42
+print(validVar)

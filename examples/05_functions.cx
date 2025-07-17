@@ -1,0 +1,61 @@
+// Functions Example
+// Demonstrates basic function declaration and calling
+
+// Simple function with no parameters
+function sayHello() {
+    print("Hello from a function!")
+}
+
+function showNumbers() {
+    var x = 1
+    var y = 2
+    var sum = x + y
+    print("Function calculated:")
+    print(sum)
+}
+
+function countdown() {
+    var i = 3
+    while (i > 0) {
+        print(i)
+        i = i - 1
+    }
+    print("Function countdown complete!")
+}
+
+// Call the functions
+print("Calling functions:")
+
+sayHello()
+showNumbers()
+countdown()
+
+// Function with local variables
+function calculateArea() {
+    var length = 10
+    var width = 5
+    var area = length * width
+    print("Area calculation:")
+    print(area)
+}
+
+calculateArea()
+
+// Function that demonstrates variable scope
+function scopeExample() {
+    var localVar = 100
+    print("Local variable in function:")
+    print(localVar)
+}
+
+scopeExample()
+
+// Note: Function parameters and return values are defined in grammar
+// but need full implementation in the IL compiler
+// Coming soon:
+// function add(a: number, b: number) -> number {
+//     return a + b
+// }
+//
+// var result = add(5, 3)
+// print(result)

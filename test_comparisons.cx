@@ -1,0 +1,18 @@
+function main() {
+    a = 10
+    b = 5
+    
+    print("Comparison Tests:")
+    
+    result = a == b
+    print("10 == 5:")
+    print(result)
+    
+    result = a > b  
+    print("10 > 5:")
+    print(result)
+    
+    result = a < b
+    print("10 < 5:")
+    print(result)
+}

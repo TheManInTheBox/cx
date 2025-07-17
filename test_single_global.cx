@@ -1,0 +1,6 @@
+message = "Hello from global scope!"
+
+function main() {
+    print("Global message:")
+    print(message)
+}
