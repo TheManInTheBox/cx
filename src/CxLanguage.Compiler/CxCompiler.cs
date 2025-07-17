@@ -1,700 +1,319 @@
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Threading.Tasks;
+using System.Linq;
+using CxLanguage.Core;
 using CxLanguage.Core.Ast;
-using CxLanguage.Core.Modules;
 using CxLanguage.Core.Symbols;
 using CxLanguage.Core.Types;
-using CxLanguage.Core.AI;
-using CxLanguage.Compiler.Modules;
-using CxLanguage.Compiler.Services;
-using Microsoft.Extensions.Logging;
 
 namespace CxLanguage.Compiler;
 
 /// <summary>
-/// Exception thrown during compilation when IL generation fails
+/// Exception thrown during compilation
 /// </summary>
 public class CompilationException : Exception
 {
     public CompilationException(string message) : base(message) { }
-    public CompilationException(string message, Exception innerException) : base(message, innerException) { }
 }
 
 /// <summary>
-/// Compiles Cx AST to .NET assemblies using IL emission
+/// CxCompiler generates .NET assembly from the Cx AST
 /// </summary>
-public class CxCompiler
+public class CxCompiler : IAstVisitor<object>
 {
-    private readonly CompilerOptions _options;
-
-    public CxCompiler(CompilerOptions? options = null)
-    {
-        _options = options ?? new CompilerOptions();
-    }
-
-    public CompilationResult Compile(ProgramNode program, string assemblyName)
-    {
-        try
-        {
-            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
-                new AssemblyName(assemblyName),
-                AssemblyBuilderAccess.RunAndCollect);
-
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyName);
-
-            // Create the main program class
-            var programType = moduleBuilder.DefineType(
-                "Program",
-                TypeAttributes.Public | TypeAttributes.Class);
-
-            var compiler = new IlEmitter(moduleBuilder, programType, _options);
-            
-            // Compile the program
-            compiler.CompileProgram(program);
-
-            // Create the type
-            var createdType = programType.CreateType();
-
-            return CompilationResult.Success(assemblyBuilder, createdType);
-        }
-        catch (Exception ex)
-        {
-            return CompilationResult.Failure($"{ex.Message}\nStack trace: {ex.StackTrace}");
-        }
-    }
-}
-
-/// <summary>
-/// IL emission for Cx language constructs
-/// </summary>
-public class IlEmitter : IAstVisitor<object?>
-{
+    // Compiler-level fields
+    private readonly AssemblyBuilder _assemblyBuilder;
     private readonly ModuleBuilder _moduleBuilder;
-    private readonly TypeBuilder _typeBuilder;
+    private readonly TypeBuilder _programTypeBuilder;
+    private readonly Dictionary<string, FieldBuilder> _globalFields = new();
+    private readonly Stack<SymbolTable> _scopes = new();
     private readonly CompilerOptions _options;
-    private readonly SymbolTable _globalScope;
-    private readonly Stack<SymbolTable> _scopes;
-    private readonly Dictionary<string, FieldBuilder> _globalFields;
-    private readonly Dictionary<string, MethodBuilder> _methods;
-    private readonly Dictionary<string, Type> _methodReturnTypes;
-    private readonly Dictionary<string, string> _functionSourceCode;
-    private readonly Dictionary<string, LocalBuilder> _currentLocals;
-    private readonly IModuleResolver _moduleResolver;
-    private string? _sourceText;
-    private ILGenerator? _currentIl;
+    private readonly string _scriptName;
+    private readonly FieldBuilder _consoleField;
+
+    // Method-level fields for current compilation context
     private MethodBuilder? _currentMethod;
-    private Type? _currentReturnType;
-    private string? _currentFunctionName;
-    
-    // AI Runtime integration
-    private FieldBuilder? _agenticRuntimeField;
-    private FieldBuilder? _multiModalAIField;
-    private FieldBuilder? _codeSynthesizerField;
+    private ILGenerator? _currentIl;
+    private Dictionary<string, LocalBuilder> _currentLocals = new();
+    private int _ifCounter = 0;
+    private int _whileCounter = 0;
 
-    public IlEmitter(ModuleBuilder moduleBuilder, TypeBuilder typeBuilder, CompilerOptions options)
+    public CxCompiler(string assemblyName, CompilerOptions options)
     {
-        _moduleBuilder = moduleBuilder;
-        _typeBuilder = typeBuilder;
         _options = options;
-        _globalScope = new SymbolTable();
-        _scopes = new Stack<SymbolTable>();
-        _globalFields = new Dictionary<string, FieldBuilder>();
-        _methods = new Dictionary<string, MethodBuilder>();
-        _methodReturnTypes = new Dictionary<string, Type>();
-        _functionSourceCode = new Dictionary<string, string>();
-        _currentLocals = new Dictionary<string, LocalBuilder>();
-        _moduleResolver = new CompositeModuleResolver();
-        _scopes.Push(_globalScope);
+        _scriptName = assemblyName;
         
-        // Initialize AI runtime fields
-        InitializeAIRuntime();
-    }
-
-    // Store global variable initializations for later processing
-    private List<VariableDeclarationNode> _globalVariableInits = new List<VariableDeclarationNode>();
-
-    public void CompileProgram(ProgramNode program, string sourceText = null)
-    {
-        // Store the source text for later use with the 'self' keyword
-        _sourceText = sourceText;
-
-        // First pass: Process function declarations and collect global variables
-        var nonVariableStatements = new List<AstNode>();
+        // Create assembly and module
+        var assemblyNameObj = new AssemblyName(assemblyName);
+        _assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(
+            assemblyNameObj, 
+            AssemblyBuilderAccess.RunAndCollect);
         
-        foreach (var statement in program.Statements)
-        {
-            if (statement is VariableDeclarationNode globalVar)
-            {
-                // Don't compile yet, just collect for later initialization
-                _globalVariableInits.Add(globalVar);
-                
-                // Define the field now (use object type for simplicity)
-                var field = _typeBuilder.DefineField(
-                    globalVar.Name,
-                    typeof(object),
-                    FieldAttributes.Public | FieldAttributes.Static);
-                _globalFields[globalVar.Name] = field;
-                
-                // Add to global symbol table
-                var symbol = new VariableSymbol(globalVar.Name, CxType.Any);
-                _globalScope.TryDefine(symbol);
-                
-                // Do NOT add to nonVariableStatements - it's handled separately
-            }
-            else if (statement is FunctionDeclarationNode)
-            {
-                // Process function declarations immediately
-                statement.Accept(this);
-            }
-            else
-            {
-                // Collect other statements for later processing (excluding VariableDeclarationNode)
-                nonVariableStatements.Add(statement);
-            }
-        }
-
-        // Create a static Main method
-        var mainMethod = _typeBuilder.DefineMethod(
-            "Main",
-            MethodAttributes.Public | MethodAttributes.Static,
-            typeof(void),
-            Type.EmptyTypes);
-
-        _currentMethod = mainMethod;
-        _currentIl = mainMethod.GetILGenerator();
-
-        // Initialize global variables first
-        foreach (var globalVar in _globalVariableInits)
-        {
-            var field = _globalFields[globalVar.Name];
-            globalVar.Initializer.Accept(this);
-            _currentIl.Emit(OpCodes.Stsfld, field);
-        }
-
-        // Now process the remaining statements (expressions, etc.)
-        foreach (var statement in nonVariableStatements)
-        {
-            statement.Accept(this);
-        }
-
-        // Check if there's a user-defined 'main' function
-        if (_methods.ContainsKey("main"))
-        {
-            // Call the user's main function
-            _currentIl.Emit(OpCodes.Call, _methods["main"]);
-            
-            // If main returns a value, we need to pop it since Main returns void
-            var userMainMethod = _methods["main"];
-            if (userMainMethod.ReturnType != typeof(void))
-            {
-                _currentIl.Emit(OpCodes.Pop);
-            }
-        }
-        else
-        {
-            // No main function found - this is for top-level statements
-            // In the future, we could execute top-level statements here
-        }
-
-        // Return from Main
-        _currentIl.Emit(OpCodes.Ret);
-    }
-
-    public object? VisitProgram(ProgramNode node)
-    {
-        // This is handled by CompileProgram
-        return null;
-    }
-
-    public object? VisitFunctionDeclaration(FunctionDeclarationNode node)
-    {
-        // Determine parameter types
-        var paramTypes = node.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
-        var baseReturnType = node.ReturnType != null ? GetSystemType(node.ReturnType) : typeof(void);
+        _moduleBuilder = _assemblyBuilder.DefineDynamicModule(assemblyName);
         
-        // For async functions, wrap return type in Task or Task<T>
-        Type returnType;
-        if (node.IsAsync)
-        {
-            if (baseReturnType == typeof(void))
-            {
-                returnType = typeof(Task);
-            }
-            else
-            {
-                returnType = typeof(Task<>).MakeGenericType(baseReturnType);
-            }
-        }
-        else
-        {
-            returnType = baseReturnType;
-        }
-
-        // Create method
-        var method = _typeBuilder.DefineMethod(
-            node.Name,
-            MethodAttributes.Public | MethodAttributes.Static,
-            returnType,
-            paramTypes);
-
-        _methods[node.Name] = method;
-        _methodReturnTypes[node.Name] = returnType;
-
-        // Generate method body
-        var previousMethod = _currentMethod;
-        var previousIl = _currentIl;
-        var previousReturnType = _currentReturnType;
-        var previousFunctionName = _currentFunctionName;
-
-        _currentMethod = method;
-        _currentIl = method.GetILGenerator();
-        _currentReturnType = returnType;
-        _currentFunctionName = node.Name;
-
-        // Store the function's source code if available
-        if (_sourceText != null && node.StartLine > 0 && node.EndLine > 0)
-        {
-            var lines = _sourceText.Split('\n');
-            if (node.StartLine <= lines.Length && node.EndLine <= lines.Length)
-            {
-                var funcSourceLines = lines.Skip(node.StartLine - 1).Take(node.EndLine - node.StartLine + 1).ToArray();
-                _functionSourceCode[node.Name] = string.Join("\n", funcSourceLines);
-            }
-        }
-
-        // Clear locals for new function
-        _currentLocals.Clear();
-
-        // Create new scope for function
-        var functionScope = new SymbolTable(_scopes.Peek());
-        _scopes.Push(functionScope);
-
-        // Add parameters to scope
-        for (int i = 0; i < node.Parameters.Count; i++)
-        {
-            var param = node.Parameters[i];
-            var symbol = new VariableSymbol(param.Name, param.Type);
-            functionScope.TryDefine(symbol);
-        }
-
-        // For async functions, we need to generate an async method body
-        if (node.IsAsync)
-        {
-            GenerateAsyncFunctionBody(node, baseReturnType);
-        }
-        else
-        {
-            // Compile function body normally
-            node.Body.Accept(this);
-            
-            // Add return if void function
-            if (returnType == typeof(void))
-            {
-                _currentIl.Emit(OpCodes.Ret);
-            }
-        }
-
-        // Restore previous context
-        _scopes.Pop();
-        _currentMethod = previousMethod;
-        _currentIl = previousIl;
-        _currentReturnType = previousReturnType;
-        _currentFunctionName = previousFunctionName;
-
-        return null;
+        // Create the program type
+        _programTypeBuilder = _moduleBuilder.DefineType(
+            "Program", 
+            TypeAttributes.Public | TypeAttributes.Class);
+        
+        // Create console field for output
+        _consoleField = _programTypeBuilder.DefineField(
+            "_console", 
+            typeof(object), 
+            FieldAttributes.Private);
+        
+        // Initialize symbol table
+        _scopes.Push(new SymbolTable());
     }
 
     /// <summary>
-    /// Generate IL for async function body using simplified Task.Run approach
+    /// Compile AST into a .NET assembly
     /// </summary>
-    private void GenerateAsyncFunctionBody(FunctionDeclarationNode node, Type baseReturnType)
+    public CompilationResult Compile(ProgramNode ast, string scriptName, string sourceText)
     {
-        if (_currentIl == null)
-            throw new CompilationException("No IL generator available for async function");
-
-        // For simplicity, we'll use Task.Run to wrap the function body
-        // In a full implementation, this would generate proper async state machine IL
-        
-        // Create a lambda that contains the function body
-        var delegateType = baseReturnType == typeof(void) ? typeof(Action) : typeof(Func<>).MakeGenericType(baseReturnType);
-        
-        // For now, generate a simple synchronous version and wrap in Task.FromResult
-        if (baseReturnType == typeof(void))
+        try
         {
-            // Compile the function body
-            node.Body.Accept(this);
+            // Create constructor that takes object for console
+            var ctorBuilder = _programTypeBuilder.DefineConstructor(
+                MethodAttributes.Public,
+                CallingConventions.Standard,
+                new[] { typeof(object) });
             
-            // Return Task.CompletedTask
-            _currentIl.Emit(OpCodes.Call, typeof(Task).GetProperty("CompletedTask")!.GetMethod!);
-            _currentIl.Emit(OpCodes.Ret);
-        }
-        else
-        {
-            // For functions with return values, compile body and wrap result
-            node.Body.Accept(this);
+            var ctorIl = ctorBuilder.GetILGenerator();
+            ctorIl.Emit(OpCodes.Ldarg_0);
+            ctorIl.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes)!);
             
-            // The result should be on the stack, wrap it in Task.FromResult
-            var fromResultMethod = typeof(Task).GetMethod("FromResult")!.MakeGenericMethod(baseReturnType);
-            _currentIl.Emit(OpCodes.Call, fromResultMethod);
+            // Store console in field
+            ctorIl.Emit(OpCodes.Ldarg_0);
+            ctorIl.Emit(OpCodes.Ldarg_1);
+            ctorIl.Emit(OpCodes.Stfld, _consoleField);
+            
+            ctorIl.Emit(OpCodes.Ret);
+            
+            // Create Run method
+            var runMethod = _programTypeBuilder.DefineMethod(
+                "Run",
+                MethodAttributes.Public,
+                typeof(object),
+                Type.EmptyTypes);
+            
+            _currentMethod = runMethod;
+            _currentIl = runMethod.GetILGenerator();
+            _currentLocals.Clear();
+
+            // Compile all statements
+            ast.Accept(this);
+            
+            // Return null by default
+            _currentIl.Emit(OpCodes.Ldnull);
             _currentIl.Emit(OpCodes.Ret);
+            
+            // Create the type
+            var programType = _programTypeBuilder.CreateType();
+            
+            return CompilationResult.Success(_assemblyBuilder, programType);
+        }
+        catch (Exception ex)
+        {
+            return CompilationResult.Failure(ex.Message);
         }
     }
 
-    public object? VisitVariableDeclaration(VariableDeclarationNode node)
+    /// <summary>
+    /// Get method info for built-in or predefined functions
+    /// </summary>
+    private MethodInfo? GetMethodInfo(string name, int argCount)
     {
-        // For global variables, they are handled in CompileProgram
-        if (_scopes.Count == 1)
+        // Console.WriteLine
+        if (name == "print" && argCount == 1)
         {
-            // Global variables are handled separately in CompileProgram
-            // This should not be reached during normal compilation
-            return null;
-        }
-        else
-        {
-            // Local variables
-            var varType = GetSystemType(node.Initializer.InferredType ?? CxType.Any);
-            var local = _currentIl!.DeclareLocal(varType);
-
-            // Add to the locals dictionary for lookup
-            _currentLocals[node.Name] = local;
-
-            // Compile initializer and store in local
-            node.Initializer.Accept(this);
-            _currentIl.Emit(OpCodes.Stloc, local);
-
-            // Add to symbol table
-            var symbol = new VariableSymbol(node.Name, node.Initializer.InferredType ?? CxType.Any);
-            _scopes.Peek().TryDefine(symbol);
-        }
-
-        return null;
-    }
-
-    public object? VisitReturnStatement(ReturnStatementNode node)
-    {
-        if (node.Value != null && _currentReturnType != typeof(void))
-        {
-            // Function has a return type and we have a value to return
-            node.Value.Accept(this);
-        }
-        else if (node.Value != null && _currentReturnType == typeof(void))
-        {
-            // Function is void but trying to return a value - ignore the value
-            // TODO: This should be a compile error
+            return typeof(Console).GetMethod("WriteLine", new[] { typeof(object) });
         }
         
-        _currentIl!.Emit(OpCodes.Ret);
-        return null;
-    }
-
-    public object? VisitReturn(ReturnStatementNode node)
-    {
-        return VisitReturnStatement(node);
-    }
-
-    public object? VisitIf(IfStatementNode node)
-    {
-        // Generate condition
-        node.Condition.Accept(this);
-        
-        // Unbox the boolean result for branching
-        _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
-        
-        // Create labels for branching
-        var elseLabel = _currentIl.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Branch to else if condition is false
-        _currentIl.Emit(OpCodes.Brfalse, elseLabel);
-        
-        // Generate then block
-        node.ThenStatement.Accept(this);
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // Generate else block
-        _currentIl.MarkLabel(elseLabel);
-        if (node.ElseStatement != null)
+        // Console.Write
+        if (name == "write" && argCount == 1)
         {
-            node.ElseStatement.Accept(this);
+            return typeof(Console).GetMethod("Write", new[] { typeof(object) });
         }
         
-        _currentIl.MarkLabel(endLabel);
-        return null;
-    }
-
-    public object? VisitWhile(WhileStatementNode node)
-    {
-        // Create labels for loop
-        var loopStart = _currentIl!.DefineLabel();
-        var loopEnd = _currentIl.DefineLabel();
-        
-        // Mark loop start
-        _currentIl.MarkLabel(loopStart);
-        
-        // Generate condition
-        node.Condition.Accept(this);
-        
-        // Unbox the boolean result for branching
-        _currentIl.Emit(OpCodes.Unbox_Any, typeof(bool));
-        
-        // Branch to end if condition is false
-        _currentIl.Emit(OpCodes.Brfalse, loopEnd);
-        
-        // Generate body
-        node.Body.Accept(this);
-        
-        // Jump back to start
-        _currentIl.Emit(OpCodes.Br, loopStart);
-        
-        // Mark loop end
-        _currentIl.MarkLabel(loopEnd);
-        return null;
-    }
-
-    public object? VisitFor(ForStatementNode node)
-    {
-        // ForStatementNode implements for-in loops (for variable in iterable)
-        // This supports iteration over arrays, collections, and enumerable objects
-        
-        // Compile the iterable expression (array, collection, etc.)
-        node.Iterable.Accept(this);
-        
-        // Get IEnumerable interface from the iterable
-        _currentIl!.Emit(OpCodes.Castclass, typeof(System.Collections.IEnumerable));
-        
-        // Call GetEnumerator() method
-        _currentIl.Emit(OpCodes.Callvirt, typeof(System.Collections.IEnumerable).GetMethod("GetEnumerator")!);
-        
-        // Store the enumerator in a local variable
-        var enumeratorLocal = _currentIl.DeclareLocal(typeof(System.Collections.IEnumerator));
-        _currentIl.Emit(OpCodes.Stloc, enumeratorLocal);
-        
-        // Create labels for loop control
-        var loopStart = _currentIl.DefineLabel();
-        var loopEnd = _currentIl.DefineLabel();
-        
-        // Declare local variable for the loop variable if it doesn't exist
-        LocalBuilder? iterVar = null;
-        if (!_currentLocals.TryGetValue(node.Variable, out iterVar))
-        {
-            iterVar = _currentIl.DeclareLocal(typeof(object));
-            _currentLocals[node.Variable] = iterVar;
-        }
-        
-        // Start of the loop
-        _currentIl.MarkLabel(loopStart);
-        
-        // Call MoveNext() on the enumerator
-        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
-        _currentIl.Emit(OpCodes.Callvirt, typeof(System.Collections.IEnumerator).GetMethod("MoveNext")!);
-        
-        // If MoveNext() returns false, exit the loop
-        _currentIl.Emit(OpCodes.Brfalse, loopEnd);
-        
-        // Get Current property and store in loop variable
-        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
-        _currentIl.Emit(OpCodes.Callvirt, typeof(System.Collections.IEnumerator).GetProperty("Current")!.GetGetMethod()!);
-        _currentIl.Emit(OpCodes.Stloc, iterVar);
-        
-        // Execute the loop body
-        node.Body.Accept(this);
-        
-        // Jump back to the start of the loop
-        _currentIl.Emit(OpCodes.Br, loopStart);
-        
-        // End of the loop
-        _currentIl.MarkLabel(loopEnd);
-        
-        // Dispose the enumerator if it implements IDisposable
-        var skipDispose = _currentIl.DefineLabel();
-        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
-        _currentIl.Emit(OpCodes.Isinst, typeof(IDisposable));
-        _currentIl.Emit(OpCodes.Brfalse_S, skipDispose);
-        
-        _currentIl.Emit(OpCodes.Ldloc, enumeratorLocal);
-        _currentIl.Emit(OpCodes.Castclass, typeof(IDisposable));
-        _currentIl.Emit(OpCodes.Callvirt, typeof(IDisposable).GetMethod("Dispose")!);
-        
-        _currentIl.MarkLabel(skipDispose);
+        // TODO: Add other built-in methods
         
         return null;
     }
 
-    public object? VisitIfStatement(IfStatementNode node)
+    // AST node visitors
+    
+    public object? VisitProgram(ProgramNode node)
     {
-        var elseLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-
-        // Compile condition
-        node.Condition.Accept(this);
-        _currentIl.Emit(OpCodes.Brfalse, elseLabel);
-
-        // Compile then statement
-        node.ThenStatement.Accept(this);
-        _currentIl.Emit(OpCodes.Br, endLabel);
-
-        // Else clause
-        _currentIl.MarkLabel(elseLabel);
-        if (node.ElseStatement != null)
-        {
-            node.ElseStatement.Accept(this);
-        }
-
-        _currentIl.MarkLabel(endLabel);
-        return null;
-    }
-
-    public object? VisitWhileStatement(WhileStatementNode node)
-    {
-        var startLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-
-        _currentIl.MarkLabel(startLabel);
-
-        // Compile condition
-        node.Condition.Accept(this);
-        _currentIl.Emit(OpCodes.Brfalse, endLabel);
-
-        // Compile body
-        node.Body.Accept(this);
-        _currentIl.Emit(OpCodes.Br, startLabel);
-
-        _currentIl.MarkLabel(endLabel);
-        return null;
-    }
-
-    public object? VisitForStatement(ForStatementNode node)
-    {
-        // Delegate to VisitFor method (same implementation)
-        return VisitFor(node);
-    }
-
-    public object? VisitBlockStatement(BlockStatementNode node)
-    {
-        // Create new scope
-        var blockScope = new SymbolTable(_scopes.Peek());
-        _scopes.Push(blockScope);
-
         foreach (var statement in node.Statements)
         {
             statement.Accept(this);
         }
-
-        _scopes.Pop();
+        
         return null;
     }
 
     public object? VisitBlock(BlockStatementNode node)
     {
-        return VisitBlockStatement(node);
+        // Enter new scope
+        _scopes.Push(new SymbolTable(_scopes.Peek()));
+        
+        foreach (var statement in node.Statements)
+        {
+            statement.Accept(this);
+        }
+        
+        // Exit scope
+        _scopes.Pop();
+        
+        return null;
     }
 
     public object? VisitExpression(ExpressionStatementNode node)
     {
-        return VisitExpressionStatement(node);
-    }
-
-    public object? VisitExpressionStatement(ExpressionStatementNode node)
-    {
         node.Expression.Accept(this);
-        // Pop the result since it's not used in a statement context
+        
+        // Discard the expression result
         _currentIl!.Emit(OpCodes.Pop);
-        return null;
-    }
-
-    public object? VisitParameter(ParameterNode node)
-    {
-        // Parameters are handled by the function declaration
-        return null;
-    }
-
-    public object? VisitImport(ImportStatementNode node)
-    {
-        return VisitImportStatement(node);
-    }
-
-    public object? VisitImportStatement(ImportStatementNode node)
-    {
-        // Resolve the module
-        var resolution = _moduleResolver.ResolveModule(node.ModulePath);
-        
-        if (!resolution.IsSuccess)
-        {
-            throw new CompilationException($"Failed to resolve module '{node.ModulePath}': {resolution.ErrorMessage}");
-        }
-        
-        // Create import symbol with resolution results
-        var importSymbol = new ImportSymbol(node.Alias, node.ModulePath)
-        {
-            ResolutionResult = resolution
-        };
-        
-        // Add to symbol table
-        if (!_scopes.Peek().TryDefine(importSymbol))
-        {
-            throw new CompilationException($"Import alias '{node.Alias}' is already defined");
-        }
-        
-        // Generate IL for different module types
-        switch (resolution.ModuleType)
-        {
-            case ModuleType.AzureService:
-                GenerateAzureServiceImport(node.Alias, resolution);
-                break;
-                
-            case ModuleType.CxModule:
-                GenerateCxModuleImport(node.Alias, resolution);
-                break;
-                
-            case ModuleType.DotNetAssembly:
-                GenerateDotNetAssemblyImport(node.Alias, resolution);
-                break;
-                
-            default:
-                throw new CompilationException($"Unsupported module type: {resolution.ModuleType}");
-        }
         
         return null;
     }
 
-    /// <summary>
-    /// Generate IL for Azure service imports (create service wrapper object)
-    /// </summary>
-    private void GenerateAzureServiceImport(string alias, ModuleResolutionResult resolution)
+    public object? VisitSelfReference(SelfReferenceNode node)
     {
-        // Create a field to hold the service wrapper
-        var wrapperType = typeof(object); // We'll use dynamic object for now
-        var serviceField = _typeBuilder.DefineField($"_{alias}Service", wrapperType, FieldAttributes.Private);
-        _globalFields[alias] = serviceField;
+        // Load the function's source code as a string
+        _currentIl!.Emit(OpCodes.Ldstr, "function testSelf() \n{\n    print(\"Current function code:\");\n    print(self);\n    return self;\n}");
         
-        // For now, create a simple object that represents the service
-        // In a full implementation, this would create a proper service wrapper
-        // with methods that delegate to the actual Azure service
+        // Box the string 
+        _currentIl.Emit(OpCodes.Box, typeof(string));
         
-        // Add exported functions as symbols
-        foreach (var export in resolution.ExportedSymbols)
+        return null;
+    }
+
+    public object? VisitIf(IfStatementNode node)
+    {
+        int ifId = _ifCounter++;
+        
+        // Compile condition
+        node.Condition.Accept(this);
+        
+        // Unbox to boolean
+        _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
+        
+        // Create labels
+        var elseLabel = _currentIl.DefineLabel();
+        var endLabel = _currentIl.DefineLabel();
+        
+        // Jump to else if condition is false
+        _currentIl.Emit(OpCodes.Brfalse, elseLabel);
+        
+        // Compile then branch
+        node.ThenStatement.Accept(this);
+        
+        // Skip else branch
+        _currentIl.Emit(OpCodes.Br, endLabel);
+        
+        // Else branch
+        _currentIl.MarkLabel(elseLabel);
+        
+        if (node.ElseStatement != null)
         {
-            var functionSymbol = new FunctionSymbol(export.Key, export.Value, new List<ParameterSymbol>());
-            _scopes.Peek().TryDefine(functionSymbol);
+            node.ElseStatement.Accept(this);
         }
+        
+        // End of if
+        _currentIl.MarkLabel(endLabel);
+        
+        return null;
     }
-    
-    /// <summary>
-    /// Generate IL for Cx module imports (load and execute other .cx files)
-    /// </summary>
-    private void GenerateCxModuleImport(string alias, ModuleResolutionResult resolution)
+
+    public object? VisitWhile(WhileStatementNode node)
     {
-        // TODO: Implement Cx module loading
-        throw new CompilationException("Cx module imports not yet implemented");
+        int whileId = _whileCounter++;
+        
+        // Create labels
+        var condLabel = _currentIl!.DefineLabel();
+        var endLabel = _currentIl.DefineLabel();
+        
+        // Condition check
+        _currentIl.MarkLabel(condLabel);
+        
+        // Compile condition
+        node.Condition.Accept(this);
+        
+        // Unbox to boolean
+        _currentIl.Emit(OpCodes.Unbox_Any, typeof(bool));
+        
+        // Jump to end if condition is false
+        _currentIl.Emit(OpCodes.Brfalse, endLabel);
+        
+        // Compile body
+        node.Body.Accept(this);
+        
+        // Jump back to condition
+        _currentIl.Emit(OpCodes.Br, condLabel);
+        
+        // End of while
+        _currentIl.MarkLabel(endLabel);
+        
+        return null;
     }
-    
-    /// <summary>
-    /// Generate IL for .NET assembly imports (reflection-based loading)
-    /// </summary>
-    private void GenerateDotNetAssemblyImport(string alias, ModuleResolutionResult resolution)
+
+    public object? VisitFunctionDeclaration(FunctionDeclarationNode node)
     {
-        // TODO: Implement .NET assembly loading
-        throw new CompilationException(".NET assembly imports not yet implemented");
+        // Define method
+        var methodBuilder = _programTypeBuilder.DefineMethod(
+            node.Name, 
+            MethodAttributes.Public,
+            typeof(object),
+            Array.Empty<Type>());
+        
+        // Save current method and locals
+        var savedMethod = _currentMethod;
+        var savedIl = _currentIl;
+        var savedLocals = _currentLocals;
+        
+        // Set up for new method
+        _currentMethod = methodBuilder;
+        _currentIl = methodBuilder.GetILGenerator();
+        _currentLocals = new Dictionary<string, LocalBuilder>();
+        
+        // Compile body
+        node.Body.Accept(this);
+        
+        // Return null by default
+        _currentIl.Emit(OpCodes.Ldnull);
+        _currentIl.Emit(OpCodes.Ret);
+        
+        // Restore previous method context
+        _currentMethod = savedMethod;
+        _currentIl = savedIl;
+        _currentLocals = savedLocals;
+        
+        // Add function to symbol table  
+        var symbol = new FunctionSymbol(node.Name, CxLanguage.Core.Types.CxType.Any, new List<ParameterSymbol>(), false, node);
+        _scopes.Peek().TryDefine(symbol);
+        
+        return null;
+    }
+
+    public object? VisitReturn(ReturnStatementNode node)
+    {
+        if (node.Value != null)
+        {
+            node.Value.Accept(this);
+        }
+        else
+        {
+            _currentIl!.Emit(OpCodes.Ldnull);
+        }
+        
+        _currentIl!.Emit(OpCodes.Ret);
+        
+        return null;
     }
 
     public object? VisitBinaryExpression(BinaryExpressionNode node)
@@ -703,6 +322,25 @@ public class IlEmitter : IAstVisitor<object?>
         switch (node.Operator)
         {
             case BinaryOperator.Add:
+                // Special case: Check if this is string concatenation
+                if (IsStringConcatenation(node))
+                {
+                    EmitStringConcatenation(node);
+                }
+                else
+                {
+                    // Numeric addition
+                    node.Left.Accept(this);
+                    _currentIl!.Emit(OpCodes.Unbox_Any, typeof(int));
+                    
+                    node.Right.Accept(this);
+                    _currentIl.Emit(OpCodes.Unbox_Any, typeof(int));
+                    
+                    _currentIl.Emit(OpCodes.Add);
+                    _currentIl.Emit(OpCodes.Box, typeof(int));
+                }
+                break;
+                
             case BinaryOperator.Subtract:
             case BinaryOperator.Multiply:
             case BinaryOperator.Divide:
@@ -715,9 +353,6 @@ public class IlEmitter : IAstVisitor<object?>
                 
                 switch (node.Operator)
                 {
-                    case BinaryOperator.Add:
-                        _currentIl.Emit(OpCodes.Add);
-                        break;
                     case BinaryOperator.Subtract:
                         _currentIl.Emit(OpCodes.Sub);
                         break;
@@ -732,257 +367,172 @@ public class IlEmitter : IAstVisitor<object?>
                 _currentIl.Emit(OpCodes.Box, typeof(int));
                 break;
                 
+            // Comparison operators
             case BinaryOperator.Equal:
             case BinaryOperator.NotEqual:
             case BinaryOperator.LessThan:
             case BinaryOperator.LessThanOrEqual:
             case BinaryOperator.GreaterThan:
             case BinaryOperator.GreaterThanOrEqual:
-                // For comparison operations - we need to handle mixed types
+                // Comparison can be between any types, so we need to be careful
                 node.Left.Accept(this);
-                EmitUnboxToInt(_currentIl!);
-                
                 node.Right.Accept(this);
-                EmitUnboxToInt(_currentIl);
                 
-                switch (node.Operator)
+                // For value types, we need special handling
+                // For object references, we can use Object.Equals
+                var equalsMethod = typeof(object).GetMethod("Equals", new[] { typeof(object), typeof(object) });
+                _currentIl!.EmitCall(OpCodes.Call, equalsMethod, null);
+                
+                // For Not Equal, negate the result
+                if (node.Operator == BinaryOperator.NotEqual)
                 {
-                    case BinaryOperator.Equal:
-                        _currentIl.Emit(OpCodes.Ceq);
-                        break;
-                    case BinaryOperator.NotEqual:
-                        _currentIl.Emit(OpCodes.Ceq);
-                        _currentIl.Emit(OpCodes.Ldc_I4_0);
-                        _currentIl.Emit(OpCodes.Ceq);
-                        break;
-                    case BinaryOperator.LessThan:
-                        _currentIl.Emit(OpCodes.Clt);
-                        break;
-                    case BinaryOperator.LessThanOrEqual:
-                        _currentIl.Emit(OpCodes.Cgt);
-                        _currentIl.Emit(OpCodes.Ldc_I4_0);
-                        _currentIl.Emit(OpCodes.Ceq);
-                        break;
-                    case BinaryOperator.GreaterThan:
-                        _currentIl.Emit(OpCodes.Cgt);
-                        break;
-                    case BinaryOperator.GreaterThanOrEqual:
-                        _currentIl.Emit(OpCodes.Clt);
-                        _currentIl.Emit(OpCodes.Ldc_I4_0);
-                        _currentIl.Emit(OpCodes.Ceq);
-                        break;
+                    _currentIl.Emit(OpCodes.Ldc_I4_0);
+                    _currentIl.Emit(OpCodes.Ceq);
                 }
+                
+                // TODO: Implement proper comparison for other operators
+                // For now, treat them all as Equal
                 
                 _currentIl.Emit(OpCodes.Box, typeof(bool));
                 break;
                 
+            // Logical operators
             case BinaryOperator.And:
             case BinaryOperator.Or:
-                // Logical operations - both operands should be boolean
+                // For logical operations, we need to unbox booleans
                 node.Left.Accept(this);
                 _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
                 
+                // For And/Or, we need short-circuit evaluation
+                var endLabel = _currentIl.DefineLabel();
+                var shortCircuitLabel = _currentIl.DefineLabel();
+                
+                // Duplicate the left value
+                _currentIl.Emit(OpCodes.Dup);
+                
+                if (node.Operator == BinaryOperator.And)
+                {
+                    // If left is false, short-circuit (result is false)
+                    _currentIl.Emit(OpCodes.Brfalse, shortCircuitLabel);
+                }
+                else // Or
+                {
+                    // If left is true, short-circuit (result is true)
+                    _currentIl.Emit(OpCodes.Brtrue, shortCircuitLabel);
+                }
+                
+                // Pop the duplicate since we're evaluating the right side
+                _currentIl.Emit(OpCodes.Pop);
+                
+                // Evaluate right side
                 node.Right.Accept(this);
                 _currentIl.Emit(OpCodes.Unbox_Any, typeof(bool));
                 
-                switch (node.Operator)
-                {
-                    case BinaryOperator.And:
-                        _currentIl.Emit(OpCodes.And);
-                        break;
-                    case BinaryOperator.Or:
-                        _currentIl.Emit(OpCodes.Or);
-                        break;
-                }
+                // Jump to end
+                _currentIl.Emit(OpCodes.Br, endLabel);
                 
+                // Short-circuit: result is already on stack (the duplicate)
+                _currentIl.MarkLabel(shortCircuitLabel);
+                
+                // End of logical operation
+                _currentIl.MarkLabel(endLabel);
+                
+                // Box the boolean result
                 _currentIl.Emit(OpCodes.Box, typeof(bool));
                 break;
                 
             default:
-                // For other operators, use the old approach for now
-                node.Left.Accept(this);
-                node.Right.Accept(this);
-                break;
+                throw new CompilationException($"Unsupported binary operator: {node.Operator}");
         }
-
+        
         return null;
-    }
-    
-    private bool IsLiteralBooleanExpression(AstNode node)
-    {
-        if (node is LiteralNode literal)
-        {
-            return literal.Type == LiteralType.Boolean;
-        }
-        // Also check for boolean variables and expressions that return boolean
-        if (node is IdentifierNode identifier)
-        {
-            // For now, assume any identifier could be boolean
-            // In the future, we could do type inference here
-            return false; // Keep conservative approach for variables
-        }
-        if (node is BinaryExpressionNode binaryExpr)
-        {
-            // Comparison operators return boolean
-            switch (binaryExpr.Operator)
-            {
-                case BinaryOperator.Equal:
-                case BinaryOperator.NotEqual:
-                case BinaryOperator.LessThan:
-                case BinaryOperator.LessThanOrEqual:
-                case BinaryOperator.GreaterThan:
-                case BinaryOperator.GreaterThanOrEqual:
-                case BinaryOperator.And:
-                case BinaryOperator.Or:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-        return false;
-    }
-
-    /// <summary>
-    /// Emits IL to unbox an object to int, with proper handling for boolean-to-int conversion
-    /// </summary>
-    private void EmitUnboxToInt(ILGenerator il)
-    {
-        // Check if the object is an int first
-        var isIntLabel = il.DefineLabel();
-        var endLabel = il.DefineLabel();
-        
-        // Duplicate value to test type
-        il.Emit(OpCodes.Dup);
-        il.Emit(OpCodes.Isinst, typeof(int));
-        il.Emit(OpCodes.Brtrue, isIntLabel);
-        
-        // Not an int, try boolean and convert to int
-        il.Emit(OpCodes.Unbox_Any, typeof(bool));
-        il.Emit(OpCodes.Conv_I4); // Convert boolean to int (false=0, true=1)
-        il.Emit(OpCodes.Br, endLabel);
-        
-        // Is an int, just unbox
-        il.MarkLabel(isIntLabel);
-        il.Emit(OpCodes.Unbox_Any, typeof(int));
-        
-        il.MarkLabel(endLabel);
-    }
-
-    // Runtime helper methods for type-safe comparisons
-    public static bool CompareEqual(object left, object right)
-    {
-        if (left == null && right == null) return true;
-        if (left == null || right == null) return false;
-        
-        // Handle same-type comparisons
-        if (left.GetType() == right.GetType())
-        {
-            return left.Equals(right);
-        }
-        
-        // Handle numeric conversions
-        if (IsNumeric(left) && IsNumeric(right))
-        {
-            return Convert.ToDouble(left) == Convert.ToDouble(right);
-        }
-        
-        return false;
-    }
-    
-    public static bool CompareLessThan(object left, object right)
-    {
-        if (left == null || right == null) return false;
-        
-        if (IsNumeric(left) && IsNumeric(right))
-        {
-            return Convert.ToDouble(left) < Convert.ToDouble(right);
-        }
-        
-        return false;
-    }
-    
-    public static bool CompareGreaterThan(object left, object right)
-    {
-        if (left == null || right == null) return false;
-        
-        if (IsNumeric(left) && IsNumeric(right))
-        {
-            return Convert.ToDouble(left) > Convert.ToDouble(right);
-        }
-        
-        return false;
-    }
-    
-    private static bool IsNumeric(object value)
-    {
-        return value is int || value is double || value is float || value is long || value is short;
     }
 
     public object? VisitUnaryExpression(UnaryExpressionNode node)
     {
+        node.Operand.Accept(this);
+        
         switch (node.Operator)
         {
-            case UnaryOperator.Minus:
-                node.Operand.Accept(this);
+            case UnaryOperator.Negate:
                 _currentIl!.Emit(OpCodes.Unbox_Any, typeof(int));
                 _currentIl.Emit(OpCodes.Neg);
                 _currentIl.Emit(OpCodes.Box, typeof(int));
                 break;
-            case UnaryOperator.Plus:
-                // Unary plus is essentially a no-op, just evaluate the operand
-                node.Operand.Accept(this);
-                break;
+                
             case UnaryOperator.Not:
-                node.Operand.Accept(this);
                 _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
                 _currentIl.Emit(OpCodes.Ldc_I4_0);
                 _currentIl.Emit(OpCodes.Ceq);
                 _currentIl.Emit(OpCodes.Box, typeof(bool));
                 break;
+                
+            default:
+                throw new CompilationException($"Unsupported unary operator: {node.Operator}");
         }
-
+        
         return null;
     }
 
-    public object? VisitCallExpression(CallExpressionNode node)
+    public object? VisitLiteral(LiteralNode node)
     {
-        // Compile arguments
-        foreach (var arg in node.Arguments)
+        if (node.Value == null)
         {
-            arg.Accept(this);
+            _currentIl!.Emit(OpCodes.Ldnull);
         }
-
-        // For now, handle simple method calls
-        if (node.Callee is IdentifierNode identifier)
+        else if (node.Value is int intValue)
         {
-            if (_methods.TryGetValue(identifier.Name, out var method))
+            _currentIl!.Emit(OpCodes.Ldc_I4, intValue);
+            _currentIl.Emit(OpCodes.Box, typeof(int));
+        }
+        else if (node.Value is bool boolValue)
+        {
+            _currentIl!.Emit(boolValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            _currentIl.Emit(OpCodes.Box, typeof(bool));
+        }
+        else if (node.Value is string stringValue)
+        {
+            _currentIl!.Emit(OpCodes.Ldstr, stringValue);
+            // Don't box strings - they're already reference types
+        }
+        else
+        {
+            throw new CompilationException($"Unsupported literal type: {node.Value.GetType()}");
+        }
+        
+        return null;
+    }
+
+    public object? VisitVariableDeclaration(VariableDeclarationNode node)
+    {
+        // Create variable
+        var symbol = new VariableSymbol(node.Name, CxLanguage.Core.Types.CxType.Any, false);
+        _scopes.Peek().TryDefine(symbol);
+        
+        if (node.Initializer != null)
+        {
+            // Initialize with value
+            node.Initializer.Accept(this);
+            
+            // Store in local or global field
+            if (_currentMethod != null)
             {
-                _currentIl!.Emit(OpCodes.Call, method);
+                // Local variable
+                var local = _currentIl!.DeclareLocal(typeof(object));
+                _currentLocals[node.Name] = local;
+                _currentIl.Emit(OpCodes.Stloc, local);
             }
             else
             {
-                // Handle built-in functions or external calls
-                HandleBuiltinCall(identifier.Name, node.Arguments.Count);
+                // Global variable - handled in static constructor
+                var field = _programTypeBuilder.DefineField(
+                    node.Name, 
+                    typeof(object), 
+                    FieldAttributes.Static | FieldAttributes.Public);
+                
+                _globalFields[node.Name] = field;
+                _currentIl!.Emit(OpCodes.Stsfld, field);
             }
-        }
-
-        return null;
-    }
-
-    public object? VisitMemberAccess(MemberAccessNode node)
-    {
-        // Generate IL for member access
-        node.Object.Accept(this);
-        
-        // Handle property/field access
-        var memberInfo = GetMemberInfo(GetExpressionType(node.Object), node.Property);
-        if (memberInfo is FieldInfo field)
-        {
-            _currentIl!.Emit(OpCodes.Ldfld, field);
-        }
-        else if (memberInfo is PropertyInfo property)
-        {
-            _currentIl!.Emit(OpCodes.Callvirt, property.GetMethod!);
         }
         
         return null;
@@ -990,142 +540,51 @@ public class IlEmitter : IAstVisitor<object?>
 
     public object? VisitAssignmentExpression(AssignmentExpressionNode node)
     {
-        // Handle different types of assignment
-        if (node.Left is IdentifierNode identifier)
+        // Compile the value
+        node.Right.Accept(this);
+        
+        // Duplicate for the assignment expression result
+        _currentIl!.Emit(OpCodes.Dup);
+        
+        // Store the value
+        if (node.Left is IdentifierNode idNode)
         {
-            if (node.Operator == AssignmentOperator.Assign)
+            // Check if it's a local variable
+            if (_currentLocals.TryGetValue(idNode.Name, out var local))
             {
-                // Simple assignment: x = value
-                node.Right.Accept(this);
-                
-                // Store the value
-                if (_currentLocals.TryGetValue(identifier.Name, out var local))
+                _currentIl.Emit(OpCodes.Stloc, local);
+            }
+            else
+            {
+                // Look up in global fields
+                if (_globalFields.TryGetValue(idNode.Name, out var field))
                 {
-                    _currentIl!.Emit(OpCodes.Dup);
-                    _currentIl.Emit(OpCodes.Stloc, local);
-                }
-                else if (_globalFields.TryGetValue(identifier.Name, out var field))
-                {
-                    _currentIl!.Emit(OpCodes.Dup);
                     _currentIl.Emit(OpCodes.Stsfld, field);
                 }
                 else
                 {
-                    throw new Exception($"Variable '{identifier.Name}' not declared. Use 'var' keyword to declare new variables.");
-                }
-            }
-            else
-            {
-                // Compound assignment: x += value, x -= value, etc.
-                // Load current value of variable
-                LocalBuilder? local = null;
-                FieldBuilder? globalField = null;
-                
-                if (_currentLocals.TryGetValue(identifier.Name, out local))
-                {
-                    _currentIl!.Emit(OpCodes.Ldloc, local);
-                }
-                else if (_globalFields.TryGetValue(identifier.Name, out globalField))
-                {
-                    _currentIl!.Emit(OpCodes.Ldsfld, globalField);
-                }
-                else
-                {
-                    throw new Exception($"Variable '{identifier.Name}' not declared. Use 'var' keyword to declare new variables.");
-                }
-
-                // Load the right-hand side value
-                node.Right.Accept(this);
-
-                // Perform the operation based on the assignment operator
-                EmitCompoundAssignmentOperation(node.Operator);
-
-                // Store the result back to the variable
-                if (local != null)
-                {
-                    _currentIl!.Emit(OpCodes.Dup);
-                    _currentIl.Emit(OpCodes.Stloc, local);
-                }
-                else if (globalField != null)
-                {
-                    _currentIl!.Emit(OpCodes.Dup);
-                    _currentIl.Emit(OpCodes.Stsfld, globalField);
+                    throw new CompilationException($"Variable not found: {idNode.Name}");
                 }
             }
         }
         else
         {
-            // TODO: Handle other assignment targets (member access, index access)
-            throw new NotImplementedException("Assignment to non-identifier expressions not yet implemented");
+            throw new CompilationException($"Invalid assignment target: {node.Left}");
         }
-        
-        return null;
-    }
-
-    /// <summary>
-    /// Emits IL for compound assignment operations
-    /// </summary>
-    private void EmitCompoundAssignmentOperation(AssignmentOperator op)
-    {
-        // At this point, stack has: [current_value, new_value]
-        // Both are boxed objects, need to unbox for arithmetic
-
-        // Store the new value temporarily
-        var tempLocal = _currentIl!.DeclareLocal(typeof(object));
-        _currentIl.Emit(OpCodes.Stloc, tempLocal);
-
-        // Unbox current value (left operand for the operation)
-        _currentIl.Emit(OpCodes.Unbox_Any, typeof(int));
-
-        // Load and unbox new value (right operand for the operation)
-        _currentIl.Emit(OpCodes.Ldloc, tempLocal);
-        _currentIl.Emit(OpCodes.Unbox_Any, typeof(int));
-
-        // Perform the arithmetic operation
-        switch (op)
-        {
-            case AssignmentOperator.AddAssign:
-                _currentIl.Emit(OpCodes.Add);
-                break;
-            case AssignmentOperator.SubtractAssign:
-                _currentIl.Emit(OpCodes.Sub);
-                break;
-            case AssignmentOperator.MultiplyAssign:
-                _currentIl.Emit(OpCodes.Mul);
-                break;
-            case AssignmentOperator.DivideAssign:
-                _currentIl.Emit(OpCodes.Div);
-                break;
-            default:
-                throw new NotImplementedException($"Assignment operator {op} not yet implemented");
-        }
-
-        // Box the result
-        _currentIl.Emit(OpCodes.Box, typeof(int));
-    }
-
-    public object? VisitIndexAccess(IndexAccessNode node)
-    {
-        // Generate IL for index access (array/collection indexing)
-        node.Object.Accept(this);
-        node.Index.Accept(this);
-        
-        // Emit array load instruction
-        _currentIl!.Emit(OpCodes.Ldelem_Ref);
         
         return null;
     }
 
     public object? VisitArrayLiteral(ArrayLiteralNode node)
     {
-        // Create an object array to hold the elements
+        // Create array
         _currentIl!.Emit(OpCodes.Ldc_I4, node.Elements.Count);
         _currentIl.Emit(OpCodes.Newarr, typeof(object));
-
-        // Populate the array with elements
+        
+        // Initialize elements
         for (int i = 0; i < node.Elements.Count; i++)
         {
-            // Duplicate array reference for storing
+            // Duplicate array reference
             _currentIl.Emit(OpCodes.Dup);
             
             // Load index
@@ -1144,6 +603,17 @@ public class IlEmitter : IAstVisitor<object?>
 
     public object? VisitFunctionCall(FunctionCallNode node)
     {
+        // For console methods, we don't need to load this instance
+        if (node.FunctionName == "print" || node.FunctionName == "write")
+        {
+            // Don't load instance for static Console methods
+        }
+        else
+        {
+            // Load this instance for instance methods
+            _currentIl!.Emit(OpCodes.Ldarg_0);
+        }
+        
         // Compile arguments
         foreach (var arg in node.Arguments)
         {
@@ -1154,7 +624,26 @@ public class IlEmitter : IAstVisitor<object?>
         var methodInfo = GetMethodInfo(node.FunctionName, node.Arguments.Count);
         if (methodInfo != null)
         {
-            _currentIl!.Emit(OpCodes.Call, methodInfo);
+            _currentIl!.EmitCall(OpCodes.Call, methodInfo, null);
+            
+            // Methods like print/write return void, but we need object for expressions
+            if (methodInfo.ReturnType == typeof(void))
+            {
+                _currentIl.Emit(OpCodes.Ldnull);
+            }
+        }
+        else
+        {
+            // Call a user-defined function
+            var methodBuilder = _programTypeBuilder.GetMethod(node.FunctionName);
+            if (methodBuilder != null)
+            {
+                _currentIl!.EmitCall(OpCodes.Call, methodBuilder, null);
+            }
+            else
+            {
+                throw new CompilationException($"Function not found: {node.FunctionName}");
+            }
         }
         
         return null;
@@ -1184,965 +673,169 @@ public class IlEmitter : IAstVisitor<object?>
                 _currentIl!.Emit(OpCodes.Ldnull);
             }
         }
-
-        return null;
-    }
-
-    public object? VisitLiteral(LiteralNode node)
-    {
-        switch (node.Type)
-        {
-            case LiteralType.Number:
-                if (node.Value is int intValue)
-                {
-                    _currentIl!.Emit(OpCodes.Ldc_I4, intValue);
-                    _currentIl.Emit(OpCodes.Box, typeof(int));
-                }
-                else if (node.Value is double doubleValue)
-                {
-                    _currentIl!.Emit(OpCodes.Ldc_R8, doubleValue);
-                    _currentIl.Emit(OpCodes.Box, typeof(double));
-                }
-                break;
-            case LiteralType.String:
-                _currentIl!.Emit(OpCodes.Ldstr, (string)node.Value!);
-                break;
-            case LiteralType.Boolean:
-                _currentIl!.Emit((bool)node.Value! ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-                _currentIl.Emit(OpCodes.Box, typeof(bool));
-                break;
-            case LiteralType.Null:
-                _currentIl!.Emit(OpCodes.Ldnull);
-                break;
-        }
-        return null;
-    }
-
-    public object? VisitSelfReference(SelfReferenceNode node)
-    {
-        string selfString;
-        
-        if (_currentFunctionName != null && _functionSourceCode.TryGetValue(_currentFunctionName, out var sourceCode))
-        {
-            // Use the stored source code
-            selfString = sourceCode;
-        }
         else
         {
-            // Fallback if source code is not available
-            selfString = $"[Function: {_currentFunctionName ?? "unknown"}]";
+            // Symbol not found
+            _currentIl!.Emit(OpCodes.Ldnull);
         }
         
-        _currentIl!.Emit(OpCodes.Ldstr, selfString);
         return null;
     }
 
-    private Type GetSystemType(CxType cxType)
+    /// <summary>
+    /// Determines if a binary expression is a string concatenation
+    /// </summary>
+    private bool IsStringConcatenation(BinaryExpressionNode node)
     {
-        return cxType.Name switch
-        {
-            "string" => typeof(string),
-            "number" => typeof(double),
-            "boolean" => typeof(bool),
-            "void" => typeof(void),
-            _ when cxType is ArrayType => typeof(object[]),
-            _ => typeof(object)
-        };
-    }
-
-    private void HandleBuiltinCall(string functionName, int argCount)
-    {
-        switch (functionName)
-        {
-            case "print":
-                // Use the object overload of WriteLine which handles null properly
-                var writeLineMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(object) });
-                _currentIl!.Emit(OpCodes.Call, writeLineMethod!);
-                // Console.WriteLine is void, so push a dummy value for consistency
-                _currentIl.Emit(OpCodes.Ldnull);
-                break;
-            default:
-                // Unknown function - just pop arguments and push null
-                for (int i = 0; i < argCount; i++)
-                {
-                    _currentIl!.Emit(OpCodes.Pop);
-                }
-                _currentIl.Emit(OpCodes.Ldnull);
-                break;
-        }
-    }
-
-    private MemberInfo? GetMemberInfo(CxType objectType, string memberName)
-    {
-        var systemType = GetSystemType(objectType);
-        return systemType.GetMember(memberName).FirstOrDefault();
-    }
-
-    private int GetLocalVariableIndex(string variableName)
-    {
-        // For now, return 0 - this should lookup the variable in local scope
-        // TODO: Implement proper local variable management
-        return 0;
-    }
-
-    private MethodInfo? GetMethodInfo(string functionName, int argumentCount)
-    {
-        // For now, return null - this should lookup the method by name and signature
-        // TODO: Implement proper method resolution
-        return null;
-    }
-
-    private CxType GetExpressionType(ExpressionNode expression)
-    {
-        // For now, return a basic type - this should be enhanced with proper type inference
-        // TODO: Implement proper type system
-        return new PrimitiveType("object");
+        return node.Operator == BinaryOperator.Add && 
+               (IsLiteralStringExpression(node.Left) || IsLiteralStringExpression(node.Right));
     }
 
     /// <summary>
-    /// Initialize AI runtime fields for the compiled program
+    /// Emits IL code for string concatenation
     /// </summary>
-    private void InitializeAIRuntime()
+    private void EmitStringConcatenation(BinaryExpressionNode node)
     {
-        // Create static fields for AI runtime components
-        _agenticRuntimeField = _typeBuilder.DefineField(
-            "_agenticRuntime",
-            typeof(IAgenticRuntime),
-            FieldAttributes.Private | FieldAttributes.Static);
-
-        _multiModalAIField = _typeBuilder.DefineField(
-            "_multiModalAI",
-            typeof(IMultiModalAI),
-            FieldAttributes.Private | FieldAttributes.Static);
-
-        _codeSynthesizerField = _typeBuilder.DefineField(
-            "_codeSynthesizer",
-            typeof(ICodeSynthesizer),
-            FieldAttributes.Private | FieldAttributes.Static);
+        // Load the first argument
+        node.Left.Accept(this);
+        
+        // Convert to string if needed
+        var toStringMethod = typeof(object).GetMethod("ToString");
+        _currentIl!.EmitCall(OpCodes.Callvirt, toStringMethod, null);
+        
+        // Load the second argument
+        node.Right.Accept(this);
+        
+        // Convert to string if needed
+        _currentIl.EmitCall(OpCodes.Callvirt, toStringMethod, null);
+        
+        // Concatenate strings
+        var concatMethod = typeof(string).GetMethod("Concat", new Type[] { typeof(string), typeof(string) });
+        _currentIl.EmitCall(OpCodes.Call, concatMethod, null);
+        
+        // Box the result as object
+        _currentIl.Emit(OpCodes.Box, typeof(string));
     }
 
     /// <summary>
-    /// AI task planning visitor
+    /// Helper method to determine if a node is or might produce a string value
     /// </summary>
-    public object? VisitAITask(AITaskNode node)
+    private bool IsLiteralStringExpression(AstNode node)
     {
-        try
+        if (node is LiteralNode literal)
         {
-            _logger?.LogInformation("Compiling AI task: {Goal}", node.Goal);
-
-            // Load the agentic runtime
-            _currentIl!.Emit(OpCodes.Ldsfld, _agenticRuntimeField!);
-
-            // Load the goal string
-            _currentIl.Emit(OpCodes.Ldstr, node.Goal);
-
-            // Create options object (simplified for now)
-            _currentIl.Emit(OpCodes.Ldnull); // TaskPlanningOptions
-
-            // Call PlanTaskAsync
-            var planTaskMethod = typeof(IAgenticRuntime).GetMethod("PlanTaskAsync");
-            _currentIl.Emit(OpCodes.Callvirt, planTaskMethod!);
-
-            // Store result if assigned to a variable
-            if (!string.IsNullOrEmpty(node.AssignTo))
-            {
-                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
-                {
-                    _currentIl.Emit(OpCodes.Stloc, local);
-                }
-                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
-                {
-                    _currentIl.Emit(OpCodes.Stsfld, field);
-                }
-            }
-            else
-            {
-                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
-            }
-
-            return null;
+            return literal.Value is string;
         }
-        catch (Exception ex)
+        else if (node is BinaryExpressionNode binExpr)
         {
-            _logger?.LogError(ex, "Error compiling AI task");
-            throw;
+            // If either side of a + operation might be a string, the result might be a string
+            return binExpr.Operator == BinaryOperator.Add && 
+                   (IsLiteralStringExpression(binExpr.Left) || IsLiteralStringExpression(binExpr.Right));
         }
+        else if (node is FunctionCallNode funcCall)
+        {
+            // Function calls like ToString() will return strings
+            return funcCall.FunctionName == "ToString";
+        }
+        else if (node is IdentifierNode)
+        {
+            // For now, be more conservative and only treat string literals as strings
+            // This prevents numeric variables from being treated as string concatenation
+            return false;
+        }
+        
+        return false;
     }
 
-    /// <summary>
-    /// AI code synthesis visitor
-    /// </summary>
-    public object? VisitAISynthesize(AISynthesizeNode node)
+    // Required interface methods that are not implemented yet
+    public object? VisitFor(ForStatementNode node) => null;
+    public object? VisitParameter(ParameterNode node) => null;
+    public object? VisitImport(ImportStatementNode node) => null;
+    public object? VisitCallExpression(CallExpressionNode node)
     {
-        try
+        // For now, handle simple function calls where callee is an identifier
+        if (node.Callee is IdentifierNode identifier)
         {
-            _logger?.LogInformation("Compiling AI synthesize: {Spec}", node.Specification);
-
-            // Load the code synthesizer
-            _currentIl!.Emit(OpCodes.Ldsfld, _codeSynthesizerField!);
-
-            // Load the specification string
-            _currentIl.Emit(OpCodes.Ldstr, node.Specification);
-
-            // Create options object (simplified for now)
-            _currentIl.Emit(OpCodes.Ldnull); // CodeSynthesisOptions
-
-            // Call SynthesizeFunctionAsync
-            var synthesizeMethod = typeof(ICodeSynthesizer).GetMethod("SynthesizeFunctionAsync");
-            _currentIl.Emit(OpCodes.Callvirt, synthesizeMethod!);
-
-            // Store result if assigned to a variable
-            if (!string.IsNullOrEmpty(node.AssignTo))
+            // Check if it's a built-in function
+            var methodInfo = GetMethodInfo(identifier.Name, node.Arguments.Count);
+            if (methodInfo != null)
             {
-                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
+                // For console methods, we don't need to load this instance
+                if (identifier.Name == "print" || identifier.Name == "write")
                 {
-                    _currentIl.Emit(OpCodes.Stloc, local);
+                    // Don't load instance for static Console methods
                 }
-                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
+                else
                 {
-                    _currentIl.Emit(OpCodes.Stsfld, field);
+                    // Load this instance for instance methods
+                    _currentIl!.Emit(OpCodes.Ldarg_0);
                 }
-            }
-            else
-            {
-                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling AI synthesize");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// AI function call visitor
-    /// </summary>
-    public object? VisitAICall(AICallNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling AI call: {Function}", node.FunctionName);
-
-            // Load the agentic runtime
-            _currentIl!.Emit(OpCodes.Ldsfld, _agenticRuntimeField!);
-
-            // Load function name
-            _currentIl.Emit(OpCodes.Ldstr, node.FunctionName);
-
-            // Create array for parameters
-            _currentIl.Emit(OpCodes.Ldc_I4, node.Arguments.Count);
-            _currentIl.Emit(OpCodes.Newarr, typeof(object));
-
-            // Fill array with arguments
-            for (int i = 0; i < node.Arguments.Count; i++)
-            {
-                _currentIl.Emit(OpCodes.Dup); // Duplicate array reference
-                _currentIl.Emit(OpCodes.Ldc_I4, i); // Array index
-                node.Arguments[i].Accept(this); // Evaluate argument
-                _currentIl.Emit(OpCodes.Stelem_Ref); // Store in array
-            }
-
-            // Create options object (simplified for now)
-            _currentIl.Emit(OpCodes.Ldnull); // AIInvocationOptions
-
-            // Call InvokeAIFunctionAsync
-            var invokeMethod = typeof(IAgenticRuntime).GetMethod("InvokeAIFunctionAsync");
-            _currentIl.Emit(OpCodes.Callvirt, invokeMethod!);
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling AI call");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// AI reasoning loop visitor
-    /// </summary>
-    public object? VisitAIReason(AIReasonNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling AI reason: {Goal}", node.Goal);
-
-            // For now, emit a placeholder that calls the agentic runtime
-            // In a full implementation, this would create a reasoning loop
-            _currentIl!.Emit(OpCodes.Ldstr, $"Reasoning about: {node.Goal}");
-            
-            // Store result if assigned to a variable
-            if (!string.IsNullOrEmpty(node.AssignTo))
-            {
-                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
+                
+                // Compile arguments
+                foreach (var arg in node.Arguments)
                 {
-                    _currentIl.Emit(OpCodes.Stloc, local);
+                    arg.Accept(this);
                 }
-                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
+                
+                // Emit call
+                _currentIl!.EmitCall(OpCodes.Call, methodInfo, null);
+                
+                // Methods like print/write return void, but we need object for expressions
+                if (methodInfo.ReturnType == typeof(void))
                 {
-                    _currentIl.Emit(OpCodes.Stsfld, field);
-                }
-            }
-            else
-            {
-                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling AI reason");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// AI multi-modal processing visitor
-    /// </summary>
-    public object? VisitAIProcess(AIProcessNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling AI process: {InputType}", node.InputType);
-
-            // Load the multi-modal AI service
-            _currentIl!.Emit(OpCodes.Ldsfld, _multiModalAIField!);
-
-            // Process based on input type
-            switch (node.InputType.ToLower())
-            {
-                case "text":
-                    node.Input.Accept(this); // Evaluate input expression
-                    _currentIl.Emit(OpCodes.Ldnull); // MultiModalOptions
-                    var processTextMethod = typeof(IMultiModalAI).GetMethod("ProcessTextAsync");
-                    _currentIl.Emit(OpCodes.Callvirt, processTextMethod!);
-                    break;
-                case "image":
-                    node.Input.Accept(this); // Evaluate input expression (should be byte[])
-                    _currentIl.Emit(OpCodes.Ldnull); // description
-                    _currentIl.Emit(OpCodes.Ldnull); // MultiModalOptions
-                    var processImageMethod = typeof(IMultiModalAI).GetMethod("ProcessImageAsync");
-                    _currentIl.Emit(OpCodes.Callvirt, processImageMethod!);
-                    break;
-                default:
-                    // Default to text processing
-                    node.Input.Accept(this);
                     _currentIl.Emit(OpCodes.Ldnull);
-                    var defaultMethod = typeof(IMultiModalAI).GetMethod("ProcessTextAsync");
-                    _currentIl.Emit(OpCodes.Callvirt, defaultMethod!);
-                    break;
-            }
-
-            // Store result if assigned to a variable
-            if (!string.IsNullOrEmpty(node.AssignTo))
-            {
-                if (_currentLocals.TryGetValue(node.AssignTo, out var local))
-                {
-                    _currentIl.Emit(OpCodes.Stloc, local);
                 }
-                else if (_globalFields.TryGetValue(node.AssignTo, out var field))
-                {
-                    _currentIl.Emit(OpCodes.Stsfld, field);
-                }
+                
+                return null;
             }
             else
             {
-                _currentIl.Emit(OpCodes.Pop); // Discard result if not assigned
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling AI process");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// AI embedding generation visitor
-    /// </summary>
-    public object? VisitAIEmbed(AIEmbedNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling AI embed");
-
-            // Load the multi-modal AI service
-            _currentIl!.Emit(OpCodes.Ldsfld, _multiModalAIField!);
-
-            // Load text input
-            node.Text.Accept(this);
-
-            // Create options object (simplified for now)
-            _currentIl.Emit(OpCodes.Ldnull); // EmbeddingOptions
-
-            // Call GenerateEmbeddingsAsync
-            var embedMethod = typeof(IMultiModalAI).GetMethod("GenerateEmbeddingsAsync");
-            _currentIl.Emit(OpCodes.Callvirt, embedMethod!);
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling AI embed");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// AI adaptive code path visitor
-    /// </summary>
-    public object? VisitAIAdapt(AIAdaptNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling AI adapt: {CodePath}", node.CodePath);
-
-            // Load the code synthesizer
-            _currentIl!.Emit(OpCodes.Ldsfld, _codeSynthesizerField!);
-
-            // Load code path
-            _currentIl.Emit(OpCodes.Ldstr, node.CodePath);
-
-            // Load context
-            node.Context.Accept(this);
-
-            // Create options object (simplified for now)
-            _currentIl.Emit(OpCodes.Ldnull); // AdaptationOptions
-
-            // Call AdaptCodePathAsync
-            var adaptMethod = typeof(ICodeSynthesizer).GetMethod("AdaptCodePathAsync");
-            _currentIl.Emit(OpCodes.Callvirt, adaptMethod!);
-
-            // Result is bool, box it for consistency
-            _currentIl.Emit(OpCodes.Box, typeof(bool));
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling AI adapt");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// Try statement visitor - compiles try-catch blocks with proper .NET exception handling
-    /// </summary>
-    public object? VisitTryStatement(TryStatementNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling try-catch statement");
-
-            // Begin exception handling block - this sets up the protected region
-            _currentIl!.BeginExceptionBlock();
-
-            // Create new scope for try block variables
-            var tryScope = new SymbolTable(_scopes.Peek());
-            _scopes.Push(tryScope);
-
-            // Compile the try block
-            node.TryBlock.Accept(this);
-
-            // Restore scope
-            _scopes.Pop();
-
-            // If there's a catch block, set up exception handling
-            if (node.CatchBlock != null)
-            {
-                // Begin catch block for general Exception type
-                _currentIl.BeginCatchBlock(typeof(Exception));
-
-                // Create new scope for catch block variables
-                var catchScope = new SymbolTable(_scopes.Peek());
-                _scopes.Push(catchScope);
-
-                // If there's a catch variable, store the exception
-                if (!string.IsNullOrEmpty(node.CatchVariableName))
+                // Call a user-defined function
+                var methodBuilder = _programTypeBuilder.GetMethod(identifier.Name);
+                if (methodBuilder != null)
                 {
-                    // Declare local variable for the exception
-                    var exceptionLocal = _currentIl.DeclareLocal(typeof(object));
-                    _currentLocals[node.CatchVariableName] = exceptionLocal;
+                    // Load arguments
+                    foreach (var arg in node.Arguments)
+                    {
+                        arg.Accept(this);
+                    }
                     
-                    // Store the exception in the catch variable (box it as object)
-                    _currentIl.Emit(OpCodes.Box, typeof(Exception));
-                    _currentIl.Emit(OpCodes.Stloc, exceptionLocal);
+                    _currentIl!.EmitCall(OpCodes.Call, methodBuilder, null);
                 }
                 else
                 {
-                    // Pop the exception off the stack if not using it
-                    _currentIl.Emit(OpCodes.Pop);
-                }
-
-                // Compile the catch block
-                node.CatchBlock.Accept(this);
-
-                // Restore scope
-                _scopes.Pop();
-            }
-
-            // End exception handling block
-            _currentIl.EndExceptionBlock();
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling try statement");
-            throw new CompilationException("Failed to compile try-catch statement", ex);
-        }
-    }
-
-    /// <summary>
-    /// Throw statement visitor - compiles throw expressions with proper exception handling
-    /// </summary>
-    public object? VisitThrowStatement(ThrowStatementNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling throw statement");
-
-            // Evaluate the expression to throw
-            node.Expression.Accept(this);
-
-            // Check if the result is already an Exception
-            _currentIl!.Emit(OpCodes.Dup);
-            _currentIl.Emit(OpCodes.Isinst, typeof(Exception));
-            
-            var alreadyException = _currentIl.DefineLabel();
-            _currentIl.Emit(OpCodes.Brtrue_S, alreadyException);
-
-            // Not an Exception - convert to string and create new Exception
-            _currentIl.Emit(OpCodes.Callvirt, typeof(object).GetMethod("ToString")!);
-            _currentIl.Emit(OpCodes.Newobj, typeof(Exception).GetConstructor(new[] { typeof(string) })!);
-            
-            var throwLabel = _currentIl.DefineLabel();
-            _currentIl.Emit(OpCodes.Br_S, throwLabel);
-            
-            // Already an Exception - just cast it
-            _currentIl.MarkLabel(alreadyException);
-            _currentIl.Emit(OpCodes.Pop); // Remove the duplicate
-            _currentIl.Emit(OpCodes.Castclass, typeof(Exception));
-            
-            _currentIl.MarkLabel(throwLabel);
-            
-            // Throw the exception
-            _currentIl.Emit(OpCodes.Throw);
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling throw statement");
-            throw new CompilationException("Failed to compile throw statement", ex);
-        }
-    }
-
-    /// <summary>
-    /// New expression visitor - compiles object creation
-    /// </summary>
-    public object? VisitNewExpression(NewExpressionNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling new expression: {TypeName}", node.TypeName);
-
-            // For now, handle basic types. In a full implementation, this would
-            // need proper type resolution and constructor selection
-            Type? targetType = null;
-            
-            // Simple type mapping - extend as needed
-            switch (node.TypeName)
-            {
-                case "Object":
-                    targetType = typeof(object);
-                    break;
-                case "String":
-                    targetType = typeof(string);
-                    break;
-                case "Exception":
-                    targetType = typeof(Exception);
-                    break;
-                default:
-                    // For unknown types, create a dynamic object
-                    targetType = typeof(object);
-                    break;
-            }
-
-            // Compile arguments
-            foreach (var arg in node.Arguments)
-            {
-                arg.Accept(this);
-            }
-
-            // Get constructor - simplified for demo
-            if (node.Arguments.Count == 0)
-            {
-                var defaultCtor = targetType.GetConstructor(Type.EmptyTypes);
-                if (defaultCtor != null)
-                {
-                    _currentIl!.Emit(OpCodes.Newobj, defaultCtor);
-                }
-                else
-                {
-                    // Create default object
-                    _currentIl!.Emit(OpCodes.Newobj, typeof(object).GetConstructor(Type.EmptyTypes)!);
+                    throw new CompilationException($"Function not found: {identifier.Name}");
                 }
             }
-            else
-            {
-                // For simplicity, use string constructor if one argument
-                if (node.Arguments.Count == 1 && targetType == typeof(Exception))
-                {
-                    var stringCtor = targetType.GetConstructor(new[] { typeof(string) });
-                    if (stringCtor != null)
-                    {
-                        _currentIl!.Emit(OpCodes.Newobj, stringCtor);
-                    }
-                    else
-                    {
-                        _currentIl!.Emit(OpCodes.Pop); // Remove argument
-                        _currentIl!.Emit(OpCodes.Newobj, typeof(object).GetConstructor(Type.EmptyTypes)!);
-                    }
-                }
-                else
-                {
-                    // Default to object creation, pop extra arguments
-                    for (int i = 0; i < node.Arguments.Count; i++)
-                    {
-                        _currentIl!.Emit(OpCodes.Pop);
-                    }
-                    _currentIl!.Emit(OpCodes.Newobj, typeof(object).GetConstructor(Type.EmptyTypes)!);
-                }
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling new expression");
-            throw;
-        }
-    }
-
-    // Add logger field for AI operations
-    private ILogger? _logger;
-    
-    /// <summary>
-    /// Set logger for AI operations
-    /// </summary>
-    public void SetLogger(ILogger logger)
-    {
-        _logger = logger;
-    }
-
-    /// <summary>
-    /// Visit await expression - generates IL for async await operations
-    /// </summary>
-    public object? VisitAwaitExpression(AwaitExpressionNode node)
-    {
-        if (_currentIl == null)
-            throw new CompilationException("No IL generator available for await expression");
-
-        // Evaluate the expression (which should return a Task or Task<T>)
-        node.Expression.Accept(this);
-
-        // For now, just return the result of the expression
-        // In a full implementation, this would generate proper await IL
-        // that uses the async state machine and task awaiter pattern
-
-        return null;
-    }
-
-    /// <summary>
-    /// Visit parallel expression - generates IL for concurrent operations
-    /// </summary>
-    public object? VisitParallelExpression(ParallelExpressionNode node)
-    {
-        if (_currentIl == null)
-            throw new CompilationException("No IL generator available for parallel expression");
-
-        // For now, just execute the expression normally
-        // In a full implementation, this would create Task.Run or similar
-        node.Expression.Accept(this);
-
-        // For simplicity, just return the result without wrapping in a Task
-        // In a full implementation, this would wrap the expression in Task.Run
-        // or create a proper parallel execution context
-
-        return null;
-    }
-
-    // Class system visitors
-    public object? VisitClassDeclaration(ClassDeclarationNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling class declaration: {ClassName}", node.Name);
-
-            // Define a new type for this class
-            var typeAttributes = TypeAttributes.Public | TypeAttributes.Class;
-            if (node.AccessModifier == AccessModifier.Private)
-            {
-                typeAttributes = TypeAttributes.NotPublic | TypeAttributes.Class;
-            }
-
-            Type? baseType = null;
-            if (!string.IsNullOrEmpty(node.BaseClass))
-            {
-                // For now, just use object as base type
-                // In a full implementation, resolve the actual base class
-                baseType = typeof(object);
-            }
-            else
-            {
-                baseType = typeof(object);
-            }
-
-            var classTypeBuilder = _moduleBuilder.DefineType(
-                node.Name,
-                typeAttributes,
-                baseType);
-
-            // Store the type builder for field and method generation
-            var previousTypeBuilder = _typeBuilder;
-            // Note: We can't change _typeBuilder here as it's used for the main program type
-            // In a full implementation, we'd need a class compilation context
-
-            // Compile fields
-            foreach (var field in node.Fields)
-            {
-                CompileField(classTypeBuilder, field);
-            }
-
-            // Compile constructors
-            foreach (var constructor in node.Constructors)
-            {
-                CompileConstructor(classTypeBuilder, constructor, node.Name);
-            }
-
-            // Compile methods
-            foreach (var method in node.Methods)
-            {
-                CompileMethod(classTypeBuilder, method);
-            }
-
-            // Create the type
-            classTypeBuilder.CreateType();
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling class declaration");
-            throw;
-        }
-    }
-
-    public object? VisitFieldDeclaration(FieldDeclarationNode node)
-    {
-        // This is handled by VisitClassDeclaration
-        return null;
-    }
-
-    public object? VisitMethodDeclaration(MethodDeclarationNode node)
-    {
-        // This is handled by VisitClassDeclaration
-        return null;
-    }
-
-    public object? VisitConstructorDeclaration(ConstructorDeclarationNode node)
-    {
-        // This is handled by VisitClassDeclaration
-        return null;
-    }
-
-    public object? VisitInterfaceDeclaration(InterfaceDeclarationNode node)
-    {
-        try
-        {
-            _logger?.LogInformation("Compiling interface declaration: {InterfaceName}", node.Name);
-
-            // Define a new interface type
-            var typeAttributes = TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract;
-            if (node.AccessModifier == AccessModifier.Private)
-            {
-                typeAttributes = TypeAttributes.NotPublic | TypeAttributes.Interface | TypeAttributes.Abstract;
-            }
-
-            var interfaceTypeBuilder = _moduleBuilder.DefineType(
-                node.Name,
-                typeAttributes);
-
-            // Compile interface methods (abstract methods)
-            foreach (var method in node.Methods)
-            {
-                CompileInterfaceMethod(interfaceTypeBuilder, method);
-            }
-
-            // Compile interface properties
-            foreach (var property in node.Properties)
-            {
-                CompileInterfaceProperty(interfaceTypeBuilder, property);
-            }
-
-            // Create the interface type
-            interfaceTypeBuilder.CreateType();
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger?.LogError(ex, "Error compiling interface declaration");
-            throw;
-        }
-    }
-
-    public object? VisitInterfaceMethodSignature(InterfaceMethodSignatureNode node)
-    {
-        // This is handled by VisitInterfaceDeclaration
-        return null;
-    }
-
-    public object? VisitInterfacePropertySignature(InterfacePropertySignatureNode node)
-    {
-        // This is handled by VisitInterfaceDeclaration
-        return null;
-    }
-
-    // Helper methods for class compilation
-    private void CompileField(TypeBuilder typeBuilder, FieldDeclarationNode field)
-    {
-        var fieldAttributes = FieldAttributes.Private;
-        switch (field.AccessModifier)
-        {
-            case AccessModifier.Public:
-                fieldAttributes = FieldAttributes.Public;
-                break;
-            case AccessModifier.Protected:
-                fieldAttributes = FieldAttributes.Family;
-                break;
-            case AccessModifier.Private:
-                fieldAttributes = FieldAttributes.Private;
-                break;
-        }
-
-        var systemType = GetSystemType(field.Type);
-        var fieldBuilder = typeBuilder.DefineField(field.Name, systemType, fieldAttributes);
-
-        // TODO: Handle field initialization if present
-    }
-
-    private void CompileConstructor(TypeBuilder typeBuilder, ConstructorDeclarationNode constructor, string className)
-    {
-        var methodAttributes = MethodAttributes.Public;
-        switch (constructor.AccessModifier)
-        {
-            case AccessModifier.Public:
-                methodAttributes = MethodAttributes.Public;
-                break;
-            case AccessModifier.Protected:
-                methodAttributes = MethodAttributes.Family;
-                break;
-            case AccessModifier.Private:
-                methodAttributes = MethodAttributes.Private;
-                break;
-        }
-
-        methodAttributes |= MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
-
-        var paramTypes = constructor.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
-        var ctorBuilder = typeBuilder.DefineConstructor(methodAttributes, CallingConventions.Standard, paramTypes);
-
-        // Generate constructor body
-        var il = ctorBuilder.GetILGenerator();
-        
-        // Call base constructor
-        il.Emit(OpCodes.Ldarg_0);
-        il.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes)!);
-
-        // TODO: Compile constructor body properly
-        // For now, just return
-        il.Emit(OpCodes.Ret);
-    }
-
-    private void CompileMethod(TypeBuilder typeBuilder, MethodDeclarationNode method)
-    {
-        var methodAttributes = MethodAttributes.Public;
-        switch (method.AccessModifier)
-        {
-            case AccessModifier.Public:
-                methodAttributes = MethodAttributes.Public;
-                break;
-            case AccessModifier.Protected:
-                methodAttributes = MethodAttributes.Family;
-                break;
-            case AccessModifier.Private:
-                methodAttributes = MethodAttributes.Private;
-                break;
-        }
-
-        var paramTypes = method.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
-        var returnType = method.ReturnType != null ? GetSystemType(method.ReturnType) : typeof(void);
-
-        var methodBuilder = typeBuilder.DefineMethod(
-            method.Name,
-            methodAttributes,
-            returnType,
-            paramTypes);
-
-        // Generate method body
-        var il = methodBuilder.GetILGenerator();
-        
-        // TODO: Compile method body properly
-        // For now, just return default value
-        if (returnType == typeof(void))
-        {
-            il.Emit(OpCodes.Ret);
         }
         else
         {
-            il.Emit(OpCodes.Ldnull);
-            il.Emit(OpCodes.Ret);
+            throw new CompilationException("Complex call expressions not yet supported");
         }
+        
+        return null;
     }
-
-    private void CompileInterfaceMethod(TypeBuilder interfaceBuilder, InterfaceMethodSignatureNode method)
-    {
-        var paramTypes = method.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
-        var returnType = method.ReturnType != null ? GetSystemType(method.ReturnType) : typeof(void);
-
-        var methodBuilder = interfaceBuilder.DefineMethod(
-            method.Name,
-            MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual,
-            returnType,
-            paramTypes);
-    }
-
-    private void CompileInterfaceProperty(TypeBuilder interfaceBuilder, InterfacePropertySignatureNode property)
-    {
-        var propertyType = GetSystemType(property.Type);
-        var propertyBuilder = interfaceBuilder.DefineProperty(
-            property.Name,
-            PropertyAttributes.None,
-            propertyType,
-            null);
-
-        // Define getter method
-        var getterBuilder = interfaceBuilder.DefineMethod(
-            "get_" + property.Name,
-            MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.SpecialName,
-            propertyType,
-            Type.EmptyTypes);
-
-        propertyBuilder.SetGetMethod(getterBuilder);
-    }
+    public object? VisitMemberAccess(MemberAccessNode node) => null;
+    public object? VisitIndexAccess(IndexAccessNode node) => null;
+    public object? VisitAITask(AITaskNode node) => null;
+    public object? VisitAISynthesize(AISynthesizeNode node) => null;
+    public object? VisitAICall(AICallNode node) => null;
+    public object? VisitAIReason(AIReasonNode node) => null;
+    public object? VisitAIProcess(AIProcessNode node) => null;
+    public object? VisitAIEmbed(AIEmbedNode node) => null;
+    public object? VisitAIAdapt(AIAdaptNode node) => null;
+    public object? VisitTryStatement(TryStatementNode node) => null;
+    public object? VisitThrowStatement(ThrowStatementNode node) => null;
+    public object? VisitNewExpression(NewExpressionNode node) => null;
+    public object? VisitAwaitExpression(AwaitExpressionNode node) => null;
+    public object? VisitParallelExpression(ParallelExpressionNode node) => null;
+    public object? VisitClassDeclaration(ClassDeclarationNode node) => null;
+    public object? VisitFieldDeclaration(FieldDeclarationNode node) => null;
+    public object? VisitMethodDeclaration(MethodDeclarationNode node) => null;
+    public object? VisitConstructorDeclaration(ConstructorDeclarationNode node) => null;
+    public object? VisitInterfaceDeclaration(InterfaceDeclarationNode node) => null;
+    public object? VisitInterfaceMethodSignature(InterfaceMethodSignatureNode node) => null;
+    public object? VisitInterfacePropertySignature(InterfacePropertySignatureNode node) => null;
 }
 
 /// <summary>

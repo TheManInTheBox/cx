@@ -1,60 +1,221 @@
-# Cx - AI-Native Scripting Language for Autonomous Workflows
-
-### CLI Usage
-```powershell
-# Test complete autonomous agent capabilities (ALL 5 FEATURES)
-dotnet run -- run examples/autonomous_agent_demo.cx
-
-# Test multi-agent swarm collaboration and coordination
-dotnet run -- run examples/agent_swarm_demo.cx
-
-# Test class system with inheritance and interfaces
-dotnet run -- run examples/test_class_system.cx
-
-# Test simple class inheritance  
-dotnet run -- run examples/test_simple_class.cx
-
-# Test minimal class grammar
-dotnet run -- parse examples/test_minimal_class.cx
-
-# Test native AI with async/await patterns
-dotnet run -- run examples/test_async_await.cx
-
-# Test Azure service imports
-dotnet run -- run examples/test_import_azure.cx
-
-# Test exception handling with try/catch/throw
-dotnet run -- run examples/test_exception_comprehensive.cx
-
-# Test for-in loop functionality
-dotnet run -- run examples/test_for_in_loop.cx
-
-# Test compound assignment operators
-dotnet run -- run examples/test_assignment_operators.cx
-
-# Test self-optimization with 'self' keyword in functions
-dotnet run -- run examples/test_self_optimization.cx
-
-# Run AI-powered workflow examples
-dotnet run -- run examples/08_agentic_ai.cx
-
-# Parse a script and show AST (development/debugging)
-dotnet run -- parse examples/ai_workflow.cx
-
-# Compile AI scripts to .NET assembly  
-dotnet run -- compile examples/test_async_await.cx --output async_ai.dll
-
-# Show help
-dotnet run -- --help
-```
+# Cx - AI-Native Programming Language
 
 [![CI](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml/badge.svg)](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ahebert-lt/cx)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
 
-## 🤖 The First Fully Autonomous Agentic Programming Language
+## 🚀 A Modern AI-Integrated Programming Language
 
-**Cx** is a revolutionary scripting language where **AI is native, not imported**. Built specifically for **Autonomous Agentic Runtime**, Cx enables agents to interpret goals, plan actions, interact with environments, learn from feedback, and modify their own behavior dynamically - all without human intervention.
+**Cx** is an innovative programming language designed for the AI era, featuring first-class support for AI functions and autonomous workflows. Built on .NET with JavaScript/TypeScript-like syntax, Cx combines familiar programming constructs with cutting-edge AI capabilities.
+
+### Quick Start
+
+```bash
+# Build the project
+dotnet build CxLanguage.sln
+
+# Run the comprehensive demo
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_working_demo.cx
+
+# Run other examples
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/test_arithmetic.cx
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/test_if_semicolons.cx
+```
+
+## ✨ Currently Working Features
+
+### Core Language Features ✅
+- **Variables and Data Types**: String, integer, and boolean support
+- **Arithmetic Operations**: Addition, subtraction, multiplication, division with proper precedence
+- **Compound Assignment**: `+=`, `-=`, `*=`, `/=` operators
+- **Comparison Operations**: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- **Logical Operators**: `&&`, `||`, `!` with boolean logic
+- **Control Flow**: If/else statements and while loops
+- **String Operations**: Concatenation and formatting
+
+### Language Examples
+
+```cx
+// Variable declarations and basic operations
+var message = "Hello, CX Language!";
+var count = 42;
+var isActive = true;
+
+// Arithmetic with proper precedence
+var a = 20;
+var b = 8;
+var result = a + b * 2;  // 36 (proper precedence)
+var result2 = (a + b) * 2;  // 56 (parentheses)
+
+// Compound assignments
+var total = 100;
+total += 50;  // 150
+total *= 2;   // 300
+
+// Logical operations
+var canProceed = (age >= 18) && hasPermission;
+
+// Control flow
+if (score >= 90) {
+    print("Excellent!");
+} else if (score >= 80) {
+    print("Good job!");
+} else {
+    print("Keep trying!");
+}
+
+// While loops
+var counter = 5;
+while (counter > 0) {
+    print("Count: " + counter);
+    counter = counter - 1;
+}
+```
+
+## 📁 Example Files
+
+### Core Examples
+- **`comprehensive_working_demo.cx`** - Complete showcase of all working features
+- **`test_arithmetic.cx`** - Arithmetic operations and precedence
+- **`test_if_semicolons.cx`** - If/else control flow
+- **`test_logical_semicolons.cx`** - Logical operators demonstration
+
+### Comprehensive Demo
+The `comprehensive_working_demo.cx` file demonstrates:
+1. Variable declarations and data types
+2. Arithmetic operations with precedence
+3. Compound assignment operators
+4. Comparison operations
+5. Logical operators and boolean logic
+6. If/else control structures
+7. While loops and iterative logic
+8. String concatenation and formatting
+9. Complex multi-step calculations
+10. Real-world programming examples
+
+## 🏗️ Architecture
+
+### Project Structure
+```
+CxLanguage.sln
+├── src/
+│   ├── CxLanguage.CLI/         # Command-line interface
+│   ├── CxLanguage.Compiler/    # IL code generation
+│   ├── CxLanguage.Parser/      # ANTLR4-based parser
+│   ├── CxLanguage.Core/        # AST and core types
+│   └── CxLanguage.Runtime/     # Runtime support
+├── grammar/
+│   └── Cx.g4                   # ANTLR4 grammar definition
+├── examples/                   # Example .cx files
+└── tests/                      # Unit tests
+```
+
+### Key Components
+- **Grammar**: ANTLR4-based parser with JavaScript/TypeScript-like syntax
+- **AST Builder**: Converts parse trees to abstract syntax trees
+- **IL Compiler**: Generates .NET IL code from AST nodes
+- **Runtime**: .NET-based execution environment
+
+## 🎯 Planned AI Features
+
+The language is designed with first-class AI integration in mind:
+
+```cx
+// AI functions (planned)
+var result = task("Analyze customer feedback and suggest improvements");
+var code = synthesize("Create a function to calculate compound interest");
+var decision = reason("Which approach would be most efficient?");
+var processed = process("raw data", "clean and structure");
+var content = generate("Create a marketing email for new product");
+var embedding = embed("Convert this text to vector representation");
+
+// Self-reflection (planned)
+function optimizeMe() {
+    var currentCode = self;  // Get own source code
+    var improved = task(currentCode, { optimize: true });
+    return improved;
+}
+```
+
+## 🚧 Development Status
+
+### Current Milestone: Core Language Features ✅
+- ✅ Basic syntax and parsing
+- ✅ Variables and data types
+- ✅ Arithmetic operations
+- ✅ Control flow (if/else, while)
+- ✅ Logical and comparison operators
+- ✅ String operations
+
+### Next Milestone: Advanced Features 🔄
+- 🔄 Function parameters and return values
+- 🔄 For-in loops and iterators
+- 🔄 Exception handling (try/catch)
+- 🔄 Class system and inheritance
+- 🔄 Module system and imports
+
+### Future Milestone: AI Integration 📋
+- 📋 AI function implementation
+- 📋 Self keyword for introspection
+- 📋 Autonomous workflow capabilities
+- 📋 Multi-agent coordination
+- 📋 Learning and adaptation
+
+## 🛠️ Building and Running
+
+### Prerequisites
+- .NET 8.0 SDK
+- Visual Studio 2022 or VS Code
+
+### Build Commands
+```bash
+# Build the solution
+dotnet build CxLanguage.sln
+
+# Run tests
+dotnet test
+
+# Run a CX script
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_working_demo.cx
+
+# Parse and show AST
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj parse examples/test_arithmetic.cx
+```
+
+## 🤝 Contributing
+
+We welcome contributions to the CX language! Here's how to get started:
+
+1. **Fork the repository**
+2. **Create a feature branch**: `git checkout -b feature/new-language-feature`
+3. **Follow the coding guidelines** in `.github/copilot-instructions.md`
+4. **Add tests** for new functionality
+5. **Place example files** in the `examples/` folder
+6. **Ensure all tests pass**: `dotnet test`
+7. **Submit a pull request**
+
+### Contribution Areas
+- **Core Language Features**: Parser improvements, new operators, control structures
+- **Compiler Enhancement**: IL generation optimization, error handling
+- **AI Integration**: Implementation of task, synthesize, reason functions
+- **Documentation**: Examples, tutorials, API documentation
+- **Testing**: Unit tests, integration tests, example verification
+
+### Coding Standards
+- Follow C# best practices for backend code
+- Use Allman-style brackets in CX example files
+- Add XML documentation for public APIs
+- All .cx files must be placed in the `examples/` folder
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+**Cx Language - Modern AI-Integrated Programming for the Future** 🚀
+
+*Building the foundation for AI-native programming with familiar syntax and powerful capabilities.*
 
 ### Autonomous Agentic Capabilities ✅
 
@@ -354,6 +515,32 @@ using cognitive from "azure-cognitive";
 // Now use imported services
 var result = storage.uploadBlob("data.txt", content);
 var analysis = cognitive.analyzeImage("photo.jpg");
+```
+
+**✅ Self Keyword for Function Introspection (NEW!)**
+The `self` keyword enables functions to access their own source code for AI-driven optimization:
+```cx
+function optimizeMe() 
+{
+    // Using task with the function's own source code
+    let optimized = task(self, {
+        instruction: "Optimize this function to use a mathematical formula instead of a loop",
+        model: "gpt-4",
+        temperature: 0.2
+    });
+    
+    print("Optimized version:");
+    print(optimized);
+    return optimized;
+}
+
+// Function can examine its own code
+function demonstrateIntrospection() 
+{
+    print("My own source code:");
+    print(self);
+    return self;
+}
 ```
 
 ### ⚡ Priority B: Advanced Language Features - Started!
@@ -1122,14 +1309,15 @@ dotnet run --project src/CxLanguage.CLI -- parse examples/enhanced_features.cx
 - ✅ **Native AI Functions**: `task()`, `generate()`, `reason()`, `synthesize()`, `embed()`, `adapt()`
 - ✅ **Async/Await**: Native async function declarations and await expressions
 - ✅ **Parallel Operations**: Concurrent execution patterns for AI functions
+- ✅ **Self Keyword**: Function introspection with `self` for AI-driven optimization ⚡ COMPLETE
 
-### 🔧 Technical Foundations Complete
-- ✅ **ANTLR Grammar**: Complete language specification
-- ✅ **AST Generation**: Full abstract syntax tree building
-- ✅ **IL Compilation**: Native .NET IL emission
-- ✅ **Runtime Integration**: Azure AI services integration
+### 🔧 Technical Foundations Status
+- ✅ **ANTLR Grammar**: Complete language specification with self keyword support
+- ✅ **AST Generation**: Full abstract syntax tree building including SelfReferenceNode
+- ⚡ **IL Compilation**: Native .NET IL emission (debugging runtime issues)
+- ⚡ **Runtime Integration**: Azure AI services integration (testing in progress)
 - ✅ **CLI Interface**: Parse, compile, and run commands
-- ✅ **Test Suite**: Comprehensive language feature validation
+- ⚡ **Test Suite**: Comprehensive language feature validation (fixing parser tests)
 
 ## 📊 Performance
 

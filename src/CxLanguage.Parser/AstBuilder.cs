@@ -252,6 +252,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
             literal.Type = LiteralType.Null;
             return literal;
         }
+        else if (context.SELF() != null)
+        {
+            var selfRef = new SelfReferenceNode();
+            SetLocation(selfRef, context);
+            return selfRef;
+        }
         else if (context.expression() != null)
         {
             return Visit(context.expression());
