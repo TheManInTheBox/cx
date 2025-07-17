@@ -72,6 +72,16 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         funcDecl.Name = context.IDENTIFIER().GetText();
         funcDecl.IsAsync = context.GetText().StartsWith("async");
         
+        // Store source position information for self keyword
+        funcDecl.StartLine = context.Start.Line;
+        funcDecl.EndLine = context.Stop.Line;
+        
+        // Parse access modifier if present
+        if (context.accessModifier() != null)
+        {
+            funcDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
+        }
+        
         // Parameters
         if (context.parameterList() != null)
         {
@@ -498,12 +508,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         SetLocation(aiCall, context);
         
         aiCall.FunctionName = "task";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
         
-        // Parse options from objectPropertyList if present
-        if (context.objectPropertyList() != null)
+        // If there's a second expression (options object), add it as an argument
+        if (context.expression().Length > 1)
         {
-            ParseAIOptions(aiCall, context.objectPropertyList());
+            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
         }
         
         return aiCall;
@@ -549,12 +559,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         SetLocation(aiCall, context);
         
         aiCall.FunctionName = "synthesize";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
         
-        // Parse options from objectPropertyList if present
-        if (context.objectPropertyList() != null)
+        // If there's a second expression (options object), add it as an argument
+        if (context.expression().Length > 1)
         {
-            ParseAIOptions(aiCall, context.objectPropertyList());
+            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
         }
         
         return aiCall;
@@ -566,12 +576,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         SetLocation(aiCall, context);
         
         aiCall.FunctionName = "reason";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
         
-        // Parse options from objectPropertyList if present
-        if (context.objectPropertyList() != null)
+        // If there's a second expression (options object), add it as an argument
+        if (context.expression().Length > 1)
         {
-            ParseAIOptions(aiCall, context.objectPropertyList());
+            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
         }
         
         return aiCall;
@@ -584,15 +594,15 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         
         aiCall.FunctionName = "process";
         
-        // ProcessFunction has two expressions
+        // ProcessFunction has two required expressions
         var expressions = context.expression();
         aiCall.Arguments.Add((ExpressionNode)Visit(expressions[0]));
         aiCall.Arguments.Add((ExpressionNode)Visit(expressions[1]));
         
-        // Parse options from objectPropertyList if present
-        if (context.objectPropertyList() != null)
+        // If there's a third expression (options object), add it as an argument
+        if (expressions.Length > 2)
         {
-            ParseAIOptions(aiCall, context.objectPropertyList());
+            aiCall.Arguments.Add((ExpressionNode)Visit(expressions[2]));
         }
         
         return aiCall;
@@ -604,12 +614,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         SetLocation(aiCall, context);
         
         aiCall.FunctionName = "generate";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
         
-        // Parse options from objectPropertyList if present
-        if (context.objectPropertyList() != null)
+        // If there's a second expression (options object), add it as an argument
+        if (context.expression().Length > 1)
         {
-            ParseAIOptions(aiCall, context.objectPropertyList());
+            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
         }
         
         return aiCall;
@@ -621,12 +631,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         SetLocation(aiCall, context);
         
         aiCall.FunctionName = "embed";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
         
-        // Parse options from objectPropertyList if present
-        if (context.objectPropertyList() != null)
+        // If there's a second expression (options object), add it as an argument
+        if (context.expression().Length > 1)
         {
-            ParseAIOptions(aiCall, context.objectPropertyList());
+            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
         }
         
         return aiCall;
@@ -638,12 +648,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         SetLocation(aiCall, context);
         
         aiCall.FunctionName = "adapt";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
         
-        // Parse options from objectPropertyList if present
-        if (context.objectPropertyList() != null)
+        // If there's a second expression (options object), add it as an argument
+        if (context.expression().Length > 1)
         {
-            ParseAIOptions(aiCall, context.objectPropertyList());
+            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
         }
         
         return aiCall;
@@ -691,5 +701,248 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
 
         return newExpr;
+    }
+
+    // Class system visitors
+    public override AstNode VisitClassDeclaration(ClassDeclarationContext context)
+    {
+        var classDecl = new ClassDeclarationNode();
+        SetLocation(classDecl, context);
+
+        classDecl.Name = context.IDENTIFIER(0).GetText();
+        
+        // Parse access modifier if present
+        if (context.accessModifier() != null)
+        {
+            classDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
+        }
+
+        // Parse base class if present
+        if (context.IDENTIFIER().Length > 1)
+        {
+            classDecl.BaseClass = context.IDENTIFIER(1).GetText();
+        }
+
+        // Parse interfaces if present
+        if (context.interfaceList() != null)
+        {
+            foreach (var interfaceContext in context.interfaceList().IDENTIFIER())
+            {
+                classDecl.Interfaces.Add(interfaceContext.GetText());
+            }
+        }
+
+        // Parse class body
+        if (context.classBody() != null)
+        {
+            foreach (var memberContext in context.classBody().classMember())
+            {
+                if (memberContext.fieldDeclaration() != null)
+                {
+                    classDecl.Fields.Add((FieldDeclarationNode)Visit(memberContext.fieldDeclaration()));
+                }
+                else if (memberContext.methodDeclaration() != null)
+                {
+                    classDecl.Methods.Add((MethodDeclarationNode)Visit(memberContext.methodDeclaration()));
+                }
+                else if (memberContext.constructorDeclaration() != null)
+                {
+                    classDecl.Constructors.Add((ConstructorDeclarationNode)Visit(memberContext.constructorDeclaration()));
+                }
+            }
+        }
+
+        return classDecl;
+    }
+
+    public override AstNode VisitFieldDeclaration(FieldDeclarationContext context)
+    {
+        var fieldDecl = new FieldDeclarationNode();
+        SetLocation(fieldDecl, context);
+
+        fieldDecl.Name = context.IDENTIFIER().GetText();
+        fieldDecl.Type = ParseType(context.type());
+        
+        // Parse access modifier if present
+        if (context.accessModifier() != null)
+        {
+            fieldDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
+        }
+
+        // Parse initializer if present
+        if (context.expression() != null)
+        {
+            fieldDecl.Initializer = (ExpressionNode)Visit(context.expression());
+        }
+
+        return fieldDecl;
+    }
+
+    public override AstNode VisitMethodDeclaration(MethodDeclarationContext context)
+    {
+        var methodDecl = new MethodDeclarationNode();
+        SetLocation(methodDecl, context);
+
+        methodDecl.Name = context.IDENTIFIER().GetText();
+        methodDecl.IsAsync = context.GetText().Contains("async");
+        
+        // Parse access modifier if present
+        if (context.accessModifier() != null)
+        {
+            methodDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
+        }
+
+        // Parameters
+        if (context.parameterList() != null)
+        {
+            foreach (var paramContext in context.parameterList().parameter())
+            {
+                var param = new ParameterNode
+                {
+                    Name = paramContext.IDENTIFIER().GetText(),
+                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
+                };
+                SetLocation(param, paramContext);
+                methodDecl.Parameters.Add(param);
+            }
+        }
+
+        // Return type
+        if (context.type() != null)
+        {
+            methodDecl.ReturnType = ParseType(context.type());
+        }
+
+        // Body
+        methodDecl.Body = (BlockStatementNode)Visit(context.blockStatement());
+
+        return methodDecl;
+    }
+
+    public override AstNode VisitConstructorDeclaration(ConstructorDeclarationContext context)
+    {
+        var ctorDecl = new ConstructorDeclarationNode();
+        SetLocation(ctorDecl, context);
+
+        // Parse access modifier if present
+        if (context.accessModifier() != null)
+        {
+            ctorDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
+        }
+
+        // Parameters
+        if (context.parameterList() != null)
+        {
+            foreach (var paramContext in context.parameterList().parameter())
+            {
+                var param = new ParameterNode
+                {
+                    Name = paramContext.IDENTIFIER().GetText(),
+                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
+                };
+                SetLocation(param, paramContext);
+                ctorDecl.Parameters.Add(param);
+            }
+        }
+
+        // Body
+        ctorDecl.Body = (BlockStatementNode)Visit(context.blockStatement());
+
+        return ctorDecl;
+    }
+
+    public override AstNode VisitInterfaceDeclaration(InterfaceDeclarationContext context)
+    {
+        var interfaceDecl = new InterfaceDeclarationNode();
+        SetLocation(interfaceDecl, context);
+
+        interfaceDecl.Name = context.IDENTIFIER().GetText();
+        
+        // Parse access modifier if present
+        if (context.accessModifier() != null)
+        {
+            interfaceDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
+        }
+
+        // Parse extended interfaces if present
+        if (context.interfaceList() != null)
+        {
+            foreach (var interfaceContext in context.interfaceList().IDENTIFIER())
+            {
+                interfaceDecl.ExtendedInterfaces.Add(interfaceContext.GetText());
+            }
+        }
+
+        // Parse interface body
+        if (context.interfaceBody() != null)
+        {
+            foreach (var memberContext in context.interfaceBody().interfaceMember())
+            {
+                if (memberContext.interfaceMethodSignature() != null)
+                {
+                    interfaceDecl.Methods.Add((InterfaceMethodSignatureNode)Visit(memberContext.interfaceMethodSignature()));
+                }
+                else if (memberContext.interfacePropertySignature() != null)
+                {
+                    interfaceDecl.Properties.Add((InterfacePropertySignatureNode)Visit(memberContext.interfacePropertySignature()));
+                }
+            }
+        }
+
+        return interfaceDecl;
+    }
+
+    public override AstNode VisitInterfaceMethodSignature(InterfaceMethodSignatureContext context)
+    {
+        var methodSig = new InterfaceMethodSignatureNode();
+        SetLocation(methodSig, context);
+
+        methodSig.Name = context.IDENTIFIER().GetText();
+
+        // Parameters
+        if (context.parameterList() != null)
+        {
+            foreach (var paramContext in context.parameterList().parameter())
+            {
+                var param = new ParameterNode
+                {
+                    Name = paramContext.IDENTIFIER().GetText(),
+                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
+                };
+                SetLocation(param, paramContext);
+                methodSig.Parameters.Add(param);
+            }
+        }
+
+        // Return type
+        if (context.type() != null)
+        {
+            methodSig.ReturnType = ParseType(context.type());
+        }
+
+        return methodSig;
+    }
+
+    public override AstNode VisitInterfacePropertySignature(InterfacePropertySignatureContext context)
+    {
+        var propSig = new InterfacePropertySignatureNode();
+        SetLocation(propSig, context);
+
+        propSig.Name = context.IDENTIFIER().GetText();
+        propSig.Type = ParseType(context.type());
+
+        return propSig;
+    }
+
+    private AccessModifier ParseAccessModifier(AccessModifierContext context)
+    {
+        var text = context.GetText();
+        return text switch
+        {
+            "public" => AccessModifier.Public,
+            "private" => AccessModifier.Private,
+            "protected" => AccessModifier.Protected,
+            _ => AccessModifier.Public
+        };
     }
 }

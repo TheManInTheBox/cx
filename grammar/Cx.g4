@@ -6,6 +6,8 @@ program: statement* EOF;
 // Statements
 statement
     : functionDeclaration
+    | classDeclaration
+    | interfaceDeclaration
     | variableDeclaration
     | expressionStatement
     | importStatement
@@ -23,8 +25,48 @@ importStatement: 'using' IDENTIFIER 'from' STRING_LITERAL ';';
 
 // Function declarations with optional async support
 functionDeclaration
-    : 'async'? 'function' IDENTIFIER '(' parameterList? ')' ('->' type)? blockStatement
+    : accessModifier? 'async'? 'function' IDENTIFIER '(' parameterList? ')' ('->' type)? blockStatement
     ;
+
+// Class declarations with inheritance support
+classDeclaration
+    : accessModifier? 'class' IDENTIFIER ('extends' IDENTIFIER)? ('implements' interfaceList)? classBody
+    ;
+
+classBody: '{' classMember* '}';
+
+classMember
+    : fieldDeclaration
+    | methodDeclaration
+    | constructorDeclaration
+    ;
+
+fieldDeclaration: accessModifier? IDENTIFIER ':' type ('=' expression)? ';';
+
+methodDeclaration: accessModifier? 'async'? 'function' IDENTIFIER '(' parameterList? ')' ('->' type)? blockStatement;
+
+constructorDeclaration: accessModifier? 'constructor' '(' parameterList? ')' blockStatement;
+
+// Interface declarations
+interfaceDeclaration
+    : accessModifier? 'interface' IDENTIFIER ('extends' interfaceList)? interfaceBody
+    ;
+
+interfaceBody: '{' interfaceMember* '}';
+
+interfaceMember
+    : interfaceMethodSignature
+    | interfacePropertySignature
+    ;
+
+interfaceMethodSignature: IDENTIFIER '(' parameterList? ')' ('->' type)? ';';
+
+interfacePropertySignature: IDENTIFIER ':' type ';';
+
+interfaceList: IDENTIFIER (',' IDENTIFIER)*;
+
+// Access modifiers
+accessModifier: 'public' | 'private' | 'protected';
 
 parameterList: parameter (',' parameter)*;
 parameter: IDENTIFIER (':' type)?;  // Make type optional
@@ -78,19 +120,21 @@ primary
     | NUMBER_LITERAL
     | BOOLEAN_LITERAL
     | NULL
+    | SELF
     | '(' expression ')'
     | aiFunction
+    | '{' objectPropertyList? '}'
     ;
 
 // AI-native functions
 aiFunction
-    : TASK '(' expression (',' objectPropertyList)? ')'           # TaskFunction
-    | SYNTHESIZE '(' expression (',' objectPropertyList)? ')'     # SynthesizeFunction
-    | REASON '(' expression (',' objectPropertyList)? ')'         # ReasonFunction
-    | PROCESS '(' expression ',' expression (',' objectPropertyList)? ')' # ProcessFunction
-    | GENERATE '(' expression (',' objectPropertyList)? ')'       # GenerateFunction
-    | EMBED '(' expression (',' objectPropertyList)? ')'          # EmbedFunction
-    | ADAPT '(' expression (',' objectPropertyList)? ')'          # AdaptFunction
+    : TASK '(' expression (',' expression)? ')'           # TaskFunction
+    | SYNTHESIZE '(' expression (',' expression)? ')'     # SynthesizeFunction
+    | REASON '(' expression (',' expression)? ')'         # ReasonFunction
+    | PROCESS '(' expression ',' expression (',' expression)? ')' # ProcessFunction
+    | GENERATE '(' expression (',' expression)? ')'       # GenerateFunction
+    | EMBED '(' expression (',' expression)? ')'          # EmbedFunction
+    | ADAPT '(' expression (',' expression)? ')'          # AdaptFunction
     ;
 
 // Types
@@ -101,10 +145,18 @@ type
     | 'array' '<' type '>'
     | 'object'
     | 'any'
-    | IDENTIFIER  // Custom types
+    | IDENTIFIER  // Custom types including classes and interfaces
     ;
 
 // Tokens
+CLASS: 'class';
+INTERFACE: 'interface';
+EXTENDS: 'extends';
+IMPLEMENTS: 'implements';
+CONSTRUCTOR: 'constructor';
+PUBLIC: 'public';
+PRIVATE: 'private';
+PROTECTED: 'protected';
 TASK: 'task';
 SYNTHESIZE: 'synthesize';
 REASON: 'reason';
@@ -117,6 +169,7 @@ CATCH: 'catch';
 THROW: 'throw';
 NEW: 'new';
 NULL: 'null';
+SELF: 'self';
 BOOLEAN_LITERAL: 'true' | 'false';
 IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';

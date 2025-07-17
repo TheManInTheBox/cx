@@ -1,0 +1,17 @@
+// Minimal class test for grammar validation
+print("=== Minimal Class Test ===");
+
+// Simple class declaration
+public class TestClass {
+    public name: string;
+    
+    public constructor(n: string) {
+        name = n;
+    }
+    
+    public function getName() -> string {
+        return name;
+    }
+}
+
+print("=== Grammar Test Complete ===");
