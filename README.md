@@ -6,6 +6,14 @@
 dotnet run -- run examples/08_agentic_ai.cx
 dotnet run -- run examples/09_advanced_ai.cx
 
+# Test new for-in loop functionality
+dotnet run -- run examples/test_for_in_loop.cx
+dotnet run -- run examples/test_for_in_simple.cx
+
+# Test compound assignment operators
+dotnet run -- run examples/test_assignment_operators.cx
+dotnet run -- run examples/simple_assignment_test.cx
+
 # Parse a script and show AST (development/debugging)
 dotnet run -- parse examples/ai_workflow.cx
 
@@ -55,18 +63,18 @@ dotnet run -- --help
 - ✅ **Variable System**: Full support for `var` keyword declarations and assignments
 - ✅ **Type System**: Integer, boolean, string, and null literals with type inference
 - ✅ **Arithmetic Operators**: `+`, `-`, `*`, `/` (with proper precedence)
-- ✅ **Assignment Operators**: `+=`, `-=`, `*=`, `/=` compound assignment operators
+- ✅ **Assignment Operators**: `=`, `+=`, `-=`, `*=`, `/=` (compound assignment operators) ⚡ NEW
 - ✅ **Comparison Operators**: `==`, `<`, `>`, `<=`, `>=`, `!=` 
 - ✅ **Logical Operators**: `&&`, `||`, `!` (AND, OR, NOT operators)
 - ✅ **Unary Operators**: `-x`, `+x`, `!x` (negation, positive, logical not)
-- ✅ **Control Flow**: `if/else` statements, `while` loops, and `for-in` loops
+- ✅ **Control Flow**: `if/else` statements, `while` loops, and `for-in` loops ⚡ NEW
+- ✅ **Array Literals**: `[1, 2, 3]` and `["apple", "banana"]` with full iteration support ⚡ NEW
 - ✅ **Exception Handling**: `try/catch/throw` statements with error propagation
 - ✅ **Function Declarations**: Typed and untyped functions with optional parameters
 - ✅ **Object Creation**: `new` expressions for object instantiation
 - ✅ **Import System**: Module importing with `using` statements
 - ✅ **Block Statements**: Proper scoping with nested blocks
 - ✅ **Member Access**: Property and method access with dot notation
-- ✅ **Array/Object Literals**: Basic support for `[1,2,3]` and `{key: value}` syntax
 
 **AI RUNTIME INTEGRATION:**
 - ✅ **AI Task Nodes**: `task()` for autonomous goal decomposition
@@ -83,6 +91,62 @@ dotnet run -- --help
 - ✅ **CLI Interface**: Command-line tools for parsing, compiling, and running
 - ✅ **Grammar Validation**: Comprehensive test suite covering 60+ language constructs
 - ✅ **AI Runtime**: Integrated Azure OpenAI and Cognitive Services support
+
+## 🎯 Recent Enhancements
+
+### ⚡ Assignment Operators (v2024.1)
+Compound assignment operators are now fully implemented with proper IL generation:
+
+```cx
+var total = 100;
+total += 50;    // Addition assignment: 150
+total -= 25;    // Subtraction assignment: 125  
+total *= 2;     // Multiplication assignment: 250
+total /= 4;     // Division assignment: 62
+print(total);   // Output: 62
+```
+
+### ⚡ For-In Loops (v2024.1)
+Complete iteration support over arrays and collections with proper IEnumerable pattern:
+
+```cx
+var fruits = ["apple", "banana", "cherry"];
+var numbers = [10, 20, 30];
+
+// String array iteration
+for (fruit in fruits) {
+    print(fruit);
+}
+
+// Number processing with compound assignments
+var total = 0;
+for (num in numbers) {
+    total += num;
+    print(total);    // Output: 10, 30, 60
+}
+
+// Empty arrays handled gracefully
+var empty = [];
+for (item in empty) {
+    print("This won't execute");
+}
+
+// Mixed-type arrays supported
+var mixed = [42, "hello", 99];
+for (item in mixed) {
+    print(item);    // Output: 42, hello, 99
+}
+```
+
+### 🔧 Array Literal Support
+Full array literal creation with IL generation:
+
+```cx
+var numbers = [1, 2, 3, 4, 5];        // Integer array
+var texts = ["hello", "world"];        // String array  
+var mixed = [42, "text", true, null];  // Mixed-type array
+var nested = [[1, 2], [3, 4]];        // Nested arrays
+```
 
 ## 🚀 Quick Start
 
@@ -147,6 +211,46 @@ print("AI workflow completed successfully!")
 ```
 
 ### Enhanced Language Features
+
+**Comprehensive For-In Loop Examples:**
+
+```cx
+// Basic iteration
+var items = ["apple", "banana", "cherry"];
+for (item in items) {
+    print("Processing: " + item);
+}
+
+// With compound assignments
+var numbers = [5, 10, 15];
+var sum = 0;
+for (num in numbers) {
+    sum += num;
+    print("Running total: " + sum);
+}
+
+// Nested loops
+var matrix = [[1, 2], [3, 4]];
+for (row in matrix) {
+    for (cell in row) {
+        print("Cell value: " + cell);
+    }
+}
+```
+
+**Compound Assignment Operations:**
+
+```cx
+var counter = 10;
+
+// All assignment operators
+counter += 5;   // counter = 15
+counter -= 3;   // counter = 12
+counter *= 2;   // counter = 24
+counter /= 4;   // counter = 6
+
+print("Final counter: " + counter);
+```
 
 ```cx
 // Import statements
@@ -334,6 +438,7 @@ while (i < 5)
 
 **For-In Loops:**
 ```cx
+// Array iteration with for-in loops
 var items = ["apple", "banana", "cherry"];
 
 // For-in with variable declaration
@@ -348,6 +453,54 @@ for (element in items)
 {
     print("Current: " + element);
 }
+
+// Numeric processing
+var numbers = [10, 20, 30];
+var total = 0;
+for (num in numbers) {
+    total += num;    // Using compound assignment
+    print("Total: " + total);
+}
+
+// Empty arrays (no iterations)
+var empty = [];
+for (item in empty) {
+    print("This won't execute");
+}
+
+// Mixed-type arrays
+var mixed = [42, "hello", true];
+for (item in mixed) {
+    print(item);    // Outputs: 42, hello, True
+}
+```
+
+### Advanced Examples
+
+**Nested For-In Loops:**
+```cx
+var matrix = [[1, 2], [3, 4], [5, 6]];
+for (row in matrix) {
+    print("Processing row...");
+    for (cell in row) {
+        print("  Cell: " + cell);
+    }
+}
+```
+
+**For-In with Compound Assignments:**
+```cx
+var scores = [85, 92, 78, 96];
+var total = 0;
+var count = 0;
+
+for (score in scores) {
+    total += score;
+    count += 1;
+}
+
+var average = total / count;
+print("Average score: " + average);
 ```
 
 ### Exception Handling
@@ -437,6 +590,64 @@ x = 10
 print(x)
 ```
 
+### Compound Assignment Operators (`test_assignment_operators.cx`)
+```cx
+var total = 100;
+
+print("Initial value:");
+print(total);
+
+total += 50;
+print("After += 50:");
+print(total);
+
+total -= 25;
+print("After -= 25:");  
+print(total);
+
+total *= 2;
+print("After *= 2:");
+print(total);
+
+total /= 4;
+print("After /= 4:");
+print(total);
+
+print("Final value:");
+print(total);
+```
+
+### For-In Loop Examples (`test_for_in_simple.cx`)
+```cx
+var fruits = ["apple", "banana", "cherry"];
+var numbers = [10, 20, 30];
+
+print("=== Fruit Iteration ===");
+for (fruit in fruits) {
+    print(fruit);
+}
+
+print("=== Number Processing ===");
+var total = 0;
+for (num in numbers) {
+    total += num;
+    print(total);
+}
+
+print("=== Empty Array Test ===");
+var empty = [];
+for (item in empty) {
+    print("This should not print");
+}
+print("Empty array iteration completed");
+
+print("=== Mixed Types ===");
+var mixed = [42, "hello", 99];
+for (item in mixed) {
+    print(item);
+}
+```
+
 ### Arithmetic Operations
 ```cx
 var a = 10
@@ -517,22 +728,30 @@ dotnet run --project src/CxLanguage.CLI -- parse examples/enhanced_features.cx
 ## 🎯 Roadmap
 
 ### Recently Completed ✅
-- ✅ **Assignment Operators**: `+=`, `-=`, `*=`, `/=` operators implemented
+- ✅ **Assignment Operators**: `+=`, `-=`, `*=`, `/=` operators with full IL generation
+- ✅ **For-In Loops**: Complete iteration support over arrays with proper IEnumerable pattern
+- ✅ **Array Literals**: `[1, 2, 3]` syntax with full IL compilation support
 - ✅ **Unary Operators**: `-x`, `+x`, `!x` support added
 - ✅ **Exception Handling**: `try/catch/throw` statements implemented
-- ✅ **For-In Loops**: `for (var item in collection)` syntax added
 - ✅ **Enhanced Functions**: Optional typed parameters and return types
 - ✅ **Object Creation**: `new` expressions for object instantiation
 - ✅ **Import System**: `using` statements for module imports
 - ✅ **Null Literals**: Proper `null` value support
 - ✅ **Comprehensive Grammar**: Full language construct validation
 
+### Priority A: IL Generation Enhancement (In Progress)
+- ✅ **Assignment Operators**: Compound assignments (+=, -=, *=, /=) **COMPLETE**
+- ✅ **For-In Loop Implementation**: Iterator patterns for collections **COMPLETE**
+- ⏳ **Exception Handling Runtime**: Try-catch-finally blocks with proper IL exception handling
+- ⏳ **Import Statement Processing**: Module system for Azure services integration
+
 ### Immediate Next Features
+- ⏳ **Exception Handling Runtime**: Connect try-catch-finally to proper IL exception handling  
+- ⏳ **Import Processing**: Enable Azure service imports with runtime resolution
 - ⏳ **Modulo Operator**: Add `%` operator support  
 - ⏳ **String Operations**: Enhanced string concatenation and methods
 - ⏳ **Array Indexing**: Improved `arr[index]` access patterns
 - ⏳ **Object Literals**: Enhanced `{ key: value }` syntax support
-- ⏳ **Runtime Integration**: Connect enhanced grammar to IL generation
 
 ### Medium-term Goals  
 - ⏳ **Enhanced For Loops**: Traditional `for (i = 0; i < 10; i++)` syntax

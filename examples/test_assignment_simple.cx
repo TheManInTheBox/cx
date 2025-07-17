@@ -1,0 +1,18 @@
+// Test compound assignment operators without string concatenation
+var total = 100;
+
+print(total);
+
+total += 50;
+print(total);
+
+total -= 25;
+print(total);
+
+total *= 2;
+print(total);
+
+total /= 4;
+print(total);
+
+print(total);
