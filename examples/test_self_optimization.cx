@@ -2,11 +2,13 @@
 print("=== Testing Self-Optimization with 'self' keyword ===");
 
 // Built-in functions modify behavior and code at runtime based on conditions
-async function selfOptimizingProcess() {
+async function selfOptimizingProcess() 
+{
     // Built-in reason() function measures current performance
     var currentPerformance = await reason("Analyze current function performance and accuracy");
     
-    if (currentPerformance.accuracy < 0.9) {
+    if (currentPerformance.accuracy < 0.9) 
+    {
         // Built-in synthesize() function generates improved version
         
         var improvedCode = await synthesize(
@@ -33,7 +35,8 @@ async function selfOptimizingProcess() {
 }
 
 // Test function that uses self for introspection
-async function demonstrateSelfIntrospection() {
+async function demonstrateSelfIntrospection() 
+{
     print("Current function code:");
     print(self);
     
@@ -46,7 +49,8 @@ async function demonstrateSelfIntrospection() {
 }
 
 // Another test function showing self usage
-function basicSelfTest() {
+function basicSelfTest() 
+{
     print("This function contains: " + self);
     return self;
 }

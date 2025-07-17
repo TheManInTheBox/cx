@@ -1,0 +1,12 @@
+// Test self keyword with minimal functionality
+print("=== Simple Self Test ===");
+
+function simpleSelf() 
+{
+    print("Function: simpleSelf");
+    return "self-result";
+}
+
+// Test without using self keyword first
+var result = simpleSelf();
+print("Result: " + result);

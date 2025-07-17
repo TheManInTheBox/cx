@@ -47,6 +47,7 @@ Implementation details:
 - Source tracking: Functions need position and source code tracking
 
 ## Testing Guidelines
+- **IMPORTANT:** All CX language files (.cx) MUST be placed in the `examples/` folder
 - Create test files in `examples/` directory for new features
 - Follow naming convention: `test_<feature_name>.cx`
 - Include basic examples and edge cases

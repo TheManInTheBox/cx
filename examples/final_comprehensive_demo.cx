@@ -1,0 +1,329 @@
+// ========================================================================
+// CX Language - Complete Comprehensive Demo
+// A showcase of all working CX language core features
+// ========================================================================
+
+print("=== CX Language Comprehensive Demo ===");
+print("");
+
+// ----------------------
+// Part 1: Basic Variables and Data Types
+// ----------------------
+
+print("--- Basic Variables and Data Types ---");
+
+// Variable declarations with var keyword
+var message = "Hello, CX Language!";
+var count = 42;
+var isActive = true;
+
+// Print the variables
+print("message: " + message);
+print("count: " + count);
+print("isActive: " + isActive);
+
+// Variable reassignment
+count = 100;
+message = "Updated message";
+print("Updated count: " + count);
+print("Updated message: " + message);
+print("");
+
+// ----------------------
+// Part 2: Arithmetic Operations
+// ----------------------
+
+print("--- Arithmetic Operations ---");
+
+var a = 20;
+var b = 8;
+
+print("a = " + a + ", b = " + b);
+
+// Basic operations
+var sum = a + b;
+print("Addition (a + b): " + sum);
+
+var diff = a - b;
+print("Subtraction (a - b): " + diff);
+
+var product = a * b;
+print("Multiplication (a * b): " + product);
+
+var quotient = a / b;
+print("Division (a / b): " + quotient);
+
+// Complex expressions with precedence
+var expr1 = a + b * 2;    // 20 + (8 * 2) = 36
+var expr2 = (a + b) * 2;  // (20 + 8) * 2 = 56
+
+print("a + b * 2 = " + expr1);
+print("(a + b) * 2 = " + expr2);
+print("");
+
+// ----------------------
+// Part 3: Compound Assignment Operators
+// ----------------------
+
+print("--- Compound Assignment Operators ---");
+
+var total = 100;
+print("Starting value: " + total);
+
+total += 50;
+print("After += 50: " + total);
+
+total -= 25;
+print("After -= 25: " + total);
+
+total *= 2;
+print("After *= 2: " + total);
+
+total /= 4;
+print("After /= 4: " + total);
+print("");
+
+// ----------------------
+// Part 4: Comparison Operations
+// ----------------------
+
+print("--- Comparison Operations ---");
+
+var x = 10;
+var y = 15;
+var z = 10;
+
+print("x = " + x + ", y = " + y + ", z = " + z);
+
+// Equality comparisons
+var equal1 = x == y;
+var equal2 = x == z;
+var notEqual1 = x != y;
+
+print("x == y: " + equal1);
+print("x == z: " + equal2);
+print("x != y: " + notEqual1);
+
+// Relational comparisons
+var less = x < y;
+var greater = y > x;
+var lessEqual = x <= z;
+var greaterEqual = y >= x;
+
+print("x < y: " + less);
+print("y > x: " + greater);
+print("x <= z: " + lessEqual);
+print("y >= x: " + greaterEqual);
+print("");
+
+// ----------------------
+// Part 5: Logical Operators
+// ----------------------
+
+print("--- Logical Operators ---");
+
+var isTrue = true;
+var isFalse = false;
+
+print("Logical AND (&&):");
+var and1 = isTrue && isTrue;
+var and2 = isTrue && isFalse;
+var and3 = isFalse && isFalse;
+
+print("true && true: " + and1);
+print("true && false: " + and2);
+print("false && false: " + and3);
+
+print("Logical OR (||):");
+var or1 = isTrue || isTrue;
+var or2 = isTrue || isFalse;
+var or3 = isFalse || isFalse;
+
+print("true || true: " + or1);
+print("true || false: " + or2);
+print("false || false: " + or3);
+
+print("Logical NOT (!):");
+var not1 = !isTrue;
+var not2 = !isFalse;
+print("!true: " + not1);
+print("!false: " + not2);
+print("");
+
+// ----------------------
+// Part 6: Control Flow - If Statements
+// ----------------------
+
+print("--- Control Flow: If/Else Statements ---");
+
+var age = 25;
+var score = 85;
+
+// Simple if statement
+if (age >= 18) {
+    print("You are an adult");
+}
+
+// If/else statement
+if (score >= 90) {
+    print("Grade: A");
+} else {
+    print("Grade: B or lower");
+}
+
+// Nested if/else statements
+print("Performance evaluation:");
+if (score >= 90) {
+    print("Excellent!");
+} else {
+    if (score >= 80) {
+        print("Good job!");
+    } else {
+        if (score >= 70) {
+            print("Passing grade");
+        } else {
+            print("Needs improvement");
+        }
+    }
+}
+print("");
+
+// ----------------------
+// Part 7: Control Flow - While Loops
+// ----------------------
+
+print("--- Control Flow: While Loops ---");
+
+// Simple countdown
+print("Countdown:");
+var counter = 5;
+while (counter > 0) {
+    print("Count: " + counter);
+    counter = counter - 1;
+}
+print("Launch!");
+
+// Calculating factorial using while loop
+var n = 5;
+var factorial = 1;
+var i = 1;
+
+print("Calculating factorial of " + n + ":");
+while (i <= n) {
+    factorial = factorial * i;
+    print("Step " + i + ": " + factorial);
+    i = i + 1;
+}
+
+print("Final result: Factorial of " + n + " = " + factorial);
+print("");
+
+// ----------------------
+// Part 8: Practical Example - Sum of Numbers
+// ----------------------
+
+print("--- Practical Example: Sum of Numbers ---");
+
+// Sum of first N numbers using a formula
+var num = 10;
+print("Calculating sum of first " + num + " numbers:");
+
+var sum_result = 0;
+var k = 1;
+
+while (k <= num) {
+    sum_result = sum_result + k;
+    print("Adding " + k + ", running total: " + sum_result);
+    k = k + 1;
+}
+
+print("Final sum of first " + num + " numbers: " + sum_result);
+print("");
+
+// ----------------------
+// Part 9: String Operations
+// ----------------------
+
+print("--- String Operations ---");
+
+var firstName = "John";
+var lastName = "Doe";
+var fullName = firstName + " " + lastName;
+
+print("First name: " + firstName);
+print("Last name: " + lastName);
+print("Full name: " + fullName);
+
+// Build a formatted message
+var greeting = "Hello, " + fullName + "!";
+print(greeting);
+
+var welcome = "Welcome to CX Language, " + fullName + ". Your score is " + score + ".";
+print(welcome);
+print("");
+
+// ----------------------
+// Part 10: Complex Example - Grade Calculator
+// ----------------------
+
+print("--- Complex Example: Grade Calculator ---");
+
+var student1Score = 95;
+var student2Score = 78;
+var student3Score = 82;
+
+print("Student 1 score: " + student1Score);
+print("Student 2 score: " + student2Score);
+print("Student 3 score: " + student3Score);
+
+var totalScore = student1Score + student2Score + student3Score;
+var averageScore = totalScore / 3;
+
+print("Total score: " + totalScore);
+print("Average score: " + averageScore);
+
+print("Individual grades:");
+
+if (student1Score >= 90) {
+    print("Student 1: A");
+} else {
+    if (student1Score >= 80) {
+        print("Student 1: B");
+    } else {
+        print("Student 1: C");
+    }
+}
+
+if (student2Score >= 90) {
+    print("Student 2: A");
+} else {
+    if (student2Score >= 80) {
+        print("Student 2: B");
+    } else {
+        print("Student 2: C");
+    }
+}
+
+if (student3Score >= 90) {
+    print("Student 3: A");
+} else {
+    if (student3Score >= 80) {
+        print("Student 3: B");
+    } else {
+        print("Student 3: C");
+    }
+}
+
+print("");
+print("=== CX Language Comprehensive Demo Complete ===");
+print("This demo showcased:");
+print("- Variable declarations and assignments");
+print("- Arithmetic operations and operator precedence");
+print("- Compound assignment operators");
+print("- Comparison operations");
+print("- Logical operators");
+print("- If/else control flow");
+print("- While loops");
+print("- String concatenation");
+print("- Complex multi-step calculations");
+print("Thank you for exploring the CX Language!");

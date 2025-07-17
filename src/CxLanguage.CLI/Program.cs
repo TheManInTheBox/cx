@@ -86,8 +86,9 @@ class Program
             }
 
             // Compile the script
-            var compiler = new CxCompiler();
-            var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(file.Name));
+            var options = new CompilerOptions();
+            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(file.Name), options);
+            var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(file.Name), source);
 
             if (!compilationResult.IsSuccess)
             {
@@ -96,12 +97,14 @@ class Program
             }
 
             // Execute the compiled assembly
-            var mainMethod = compilationResult.ProgramType!.GetMethod("Main");
-            if (mainMethod != null)
+            var runMethod = compilationResult.ProgramType!.GetMethod("Run");
+            if (runMethod != null)
             {
                 try
                 {
-                    mainMethod.Invoke(null, null);
+                    // Create instance and run
+                    var instance = Activator.CreateInstance(compilationResult.ProgramType, new object());
+                    runMethod.Invoke(instance, null);
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {
@@ -114,7 +117,7 @@ class Program
             }
             else
             {
-                Console.Error.WriteLine("No Main method found in compiled assembly.");
+                Console.Error.WriteLine("No Run method found in compiled assembly.");
             }
         }
         catch (Exception ex)
@@ -154,9 +157,11 @@ class Program
             }
 
             // Compile the script
-            var compiler = new CxCompiler();
             var assemblyName = output?.Name ?? Path.ChangeExtension(source.Name, ".dll");
-            var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(assemblyName));
+            var options = new CompilerOptions();
+            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(assemblyName), options);
+            var sourceText = File.ReadAllText(source.FullName);
+            var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(assemblyName), sourceText);
 
             if (!compilationResult.IsSuccess)
             {

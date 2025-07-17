@@ -1,0 +1,4 @@
+// Very simple test
+print("Hello World!");
+var x = 42;
+print("x = " + x);
