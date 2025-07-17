@@ -10,7 +10,7 @@ print("Showcasing quality, intelligent, autonomous workflows");
 print("--- Intelligent Task Planning ---");
 
 // Use AI to autonomously plan and execute complex workflows with quality assurance
-var taskResult = ai_task("Analyze sales data and create a comprehensive marketing strategy report", {
+var taskResult = task("Analyze sales data and create a comprehensive marketing strategy report", {
     quality_threshold: 90.0,
     validation_steps: ["data_integrity", "analysis_accuracy", "strategy_coherence"],
     autonomous_execution: true
@@ -30,7 +30,7 @@ if (taskResult != null) {
 print("--- Code Synthesis Example ---");
 
 // Generate a function at runtime based on requirements
-var generatedFunction = ai_synthesize("Create a function that calculates compound interest");
+var generatedFunction = synthesize("Create a function that calculates compound interest");
 
 if (generatedFunction != null && generatedFunction.isSuccess) {
     print("✓ Code synthesis successful");
@@ -48,7 +48,7 @@ if (generatedFunction != null && generatedFunction.isSuccess) {
 print("--- AI Reasoning Example ---");
 
 // Let AI reason about a complex problem through multiple iterations
-var reasoningResult = ai_reason(
+var reasoningResult = reason(
     "How can we optimize our application's performance?",
     maxIterations: 3,
     satisfactionThreshold: 85.0
@@ -70,27 +70,27 @@ if (reasoningResult != null && reasoningResult.isSuccess) {
 print("--- Multi-modal AI Example ---");
 
 // Process different types of input
-var textAnalysis = ai_process("text", "Analyze this customer feedback: 'Great product but slow delivery'");
+var textAnalysis = process("text", "Analyze this customer feedback: 'Great product but slow delivery'");
 print("Text analysis: " + textAnalysis.content);
 
 // Simulate image analysis (would work with actual image data)
-var imageAnalysis = ai_process("image", loadImageData("product_photo.jpg"));
+var imageAnalysis = process("image", loadImageData("product_photo.jpg"));
 print("Image analysis: " + imageAnalysis.content);
 
 // Example 5: AI Function Calling
 print("--- AI Function Calling Example ---");
 
 // Call AI functions with natural language
-var weatherInfo = ai_call("get_weather", ["New York", "current"]);
+var weatherInfo = generate("get_weather", ["New York", "current"]);
 print("Weather info: " + weatherInfo);
 
-var translation = ai_call("translate", ["Hello world", "spanish"]);
+var translation = generate("translate", ["Hello world", "spanish"]);
 print("Translation: " + translation);
 
 // Example 6: Embedding Generation
 print("--- Embedding Generation Example ---");
 
-var embedding = ai_embed("This is a sample text for embedding generation");
+var embedding = embed("This is a sample text for embedding generation");
 if (embedding != null) {
     print("✓ Embedding generated with " + embedding.dimensions + " dimensions");
     print("Sample values: [" + embedding.values[0] + ", " + embedding.values[1] + ", ...]");
@@ -107,7 +107,7 @@ function processUserData(userData) {
     var result = userData.name + " - " + userData.email;
     
     // AI can adapt this path based on performance data
-    ai_adapt("processUserData", {
+    adapt("processUserData", {
         performance: "slow",
         usage_pattern: "high_frequency",
         data_size: "large"
