@@ -1,0 +1,2 @@
+// Test printing logical expression directly
+print(true && false)
