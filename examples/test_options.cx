@@ -1,0 +1,7 @@
+// Test AI functions with options
+var taskWithOptions = task("Create a report", {
+    quality_threshold: 90.0,
+    validation_steps: ["check1", "check2"]
+})
+
+var simpleTask = task("Simple task without options")

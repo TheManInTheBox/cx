@@ -3,127 +3,127 @@
 // Autonomous Task Planning Demo: Quality, Intelligent, Autonomous Workflows
 // =================================================================
 
-print("=== Cx Agentic AI Runtime Demo ===");
-print("Showcasing quality, intelligent, autonomous workflows");
+print("=== Cx Agentic AI Runtime Demo ===")
+print("Showcasing quality, intelligent, autonomous workflows")
 
 // Example 1: Autonomous Task Planning with Quality Metrics
-print("--- Intelligent Task Planning ---");
+print("--- Intelligent Task Planning ---")
 
 // Use AI to autonomously plan and execute complex workflows with quality assurance
 var taskResult = task("Analyze sales data and create a comprehensive marketing strategy report", {
     quality_threshold: 90.0,
     validation_steps: ["data_integrity", "analysis_accuracy", "strategy_coherence"],
     autonomous_execution: true
-});
+})
 
 if (taskResult != null) {
-    print("✓ Autonomous workflow completed with quality assurance");
-    print("Task ID: " + taskResult.id);
-    print("Quality Score: " + taskResult.qualityScore + "%");
-    print("Sub-tasks created: " + taskResult.subTaskCount);
-    print("Autonomous optimizations applied: " + taskResult.optimizationCount);
+    print("✓ Autonomous workflow completed with quality assurance")
+    print("Task ID: " + taskResult.id)
+    print("Quality Score: " + taskResult.qualityScore + "%")
+    print("Sub-tasks created: " + taskResult.subTaskCount)
+    print("Autonomous optimizations applied: " + taskResult.optimizationCount)
 } else {
-    print("✗ Task planning failed - reviewing for quality improvements");
+    print("✗ Task planning failed - reviewing for quality improvements")
 }
 
 // Example 2: Dynamic Code Synthesis
-print("--- Code Synthesis Example ---");
+print("--- Code Synthesis Example ---")
 
 // Generate a function at runtime based on requirements
-var generatedFunction = synthesize("Create a function that calculates compound interest");
+var generatedFunction = synthesize("Create a function that calculates compound interest")
 
 if (generatedFunction != null && generatedFunction.isSuccess) {
-    print("✓ Code synthesis successful");
-    print("Generated code:");
-    print(generatedFunction.code);
+    print("✓ Code synthesis successful")
+    print("Generated code:")
+    print(generatedFunction.code)
     
     // The generated function can be called immediately
-    // var result = generatedFunction.invoke([1000, 0.05, 10]);
-    // print("Compound interest result: " + result);
+    // var result = generatedFunction.invoke([1000, 0.05, 10])
+    // print("Compound interest result: " + result)
 } else {
-    print("✗ Code synthesis failed");
+    print("✗ Code synthesis failed")
 }
 
 // Example 3: AI Reasoning Loop
-print("--- AI Reasoning Example ---");
+print("--- AI Reasoning Example ---")
 
 // Let AI reason about a complex problem through multiple iterations
 var reasoningResult = reason(
     "How can we optimize our application's performance?",
     maxIterations: 3,
     satisfactionThreshold: 85.0
-);
+)
 
 if (reasoningResult != null && reasoningResult.isSuccess) {
-    print("✓ AI reasoning completed");
-    print("Iterations used: " + reasoningResult.iterations);
-    print("Final score: " + reasoningResult.score + "%");
-    print("Recommendations:");
-    for (var i = 0; i < reasoningResult.recommendations.length; i++) {
-        print("  " + (i + 1) + ". " + reasoningResult.recommendations[i]);
+    print("✓ AI reasoning completed")
+    print("Iterations used: " + reasoningResult.iterations)
+    print("Final score: " + reasoningResult.score + "%")
+    print("Recommendations:")
+    for (var i = 0 i < reasoningResult.recommendations.length i++) {
+        print("  " + (i + 1) + ". " + reasoningResult.recommendations[i])
     }
 } else {
-    print("✗ AI reasoning failed");
+    print("✗ AI reasoning failed")
 }
 
 // Example 4: Multi-modal AI Integration
-print("--- Multi-modal AI Example ---");
+print("--- Multi-modal AI Example ---")
 
 // Process different types of input
-var textAnalysis = process("text", "Analyze this customer feedback: 'Great product but slow delivery'");
-print("Text analysis: " + textAnalysis.content);
+var textAnalysis = process("text", "Analyze this customer feedback: 'Great product but slow delivery'")
+print("Text analysis: " + textAnalysis.content)
 
 // Simulate image analysis (would work with actual image data)
-var imageAnalysis = process("image", loadImageData("product_photo.jpg"));
-print("Image analysis: " + imageAnalysis.content);
+var imageAnalysis = process("image", loadImageData("product_photo.jpg"))
+print("Image analysis: " + imageAnalysis.content)
 
 // Example 5: AI Function Calling
-print("--- AI Function Calling Example ---");
+print("--- AI Function Calling Example ---")
 
 // Call AI functions with natural language
-var weatherInfo = generate("get_weather", ["New York", "current"]);
-print("Weather info: " + weatherInfo);
+var weatherInfo = generate("get_weather", ["New York", "current"])
+print("Weather info: " + weatherInfo)
 
-var translation = generate("translate", ["Hello world", "spanish"]);
-print("Translation: " + translation);
+var translation = generate("translate", ["Hello world", "spanish"])
+print("Translation: " + translation)
 
 // Example 6: Embedding Generation
-print("--- Embedding Generation Example ---");
+print("--- Embedding Generation Example ---")
 
-var embedding = embed("This is a sample text for embedding generation");
+var embedding = embed("This is a sample text for embedding generation")
 if (embedding != null) {
-    print("✓ Embedding generated with " + embedding.dimensions + " dimensions");
-    print("Sample values: [" + embedding.values[0] + ", " + embedding.values[1] + ", ...]");
+    print("✓ Embedding generated with " + embedding.dimensions + " dimensions")
+    print("Sample values: [" + embedding.values[0] + ", " + embedding.values[1] + ", ...]")
 } else {
-    print("✗ Embedding generation failed");
+    print("✗ Embedding generation failed")
 }
 
 // Example 7: Adaptive Code Paths
-print("--- Adaptive Code Path Example ---");
+print("--- Adaptive Code Path Example ---")
 
 // Define a code path that can be optimized at runtime
 function processUserData(userData) {
     // Original implementation
-    var result = userData.name + " - " + userData.email;
+    var result = userData.name + " - " + userData.email
     
     // AI can adapt this path based on performance data
     adapt("processUserData", {
         performance: "slow",
         usage_pattern: "high_frequency",
         data_size: "large"
-    });
+    })
     
-    return result;
+    return result
 }
 
-var userData = { name: "John Doe", email: "john@example.com" };
-var processed = processUserData(userData);
-print("Processed user data: " + processed);
+var userData = { name: "John Doe", email: "john@example.com" }
+var processed = processUserData(userData)
+print("Processed user data: " + processed)
 
-print("=== Agentic AI Demo Complete ===");
+print("=== Agentic AI Demo Complete ===")
 
 // Helper function to simulate loading image data
 function loadImageData(filename) {
     // In a real implementation, this would load actual image bytes
-    return "simulated_image_data_for_" + filename;
+    return "simulated_image_data_for_" + filename
 }
