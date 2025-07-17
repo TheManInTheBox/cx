@@ -1,0 +1,6 @@
+// Test boolean comparisons
+var isTrue = true
+var isFalse = false
+
+var boolEqual1 = isTrue == true
+print(boolEqual1)

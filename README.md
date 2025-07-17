@@ -1,18 +1,52 @@
-# Cx Language - Modern Scripting Language for .NET
+# Cx - Scripting Language for Agentic AI Runtime
 
-[![CI](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml/badge.svg)](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml)
+[![CI](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml/badge.svg)](https://### CLI Usage
+```powershell
+# Run AI-powered workflow examples
+dotnet run -- run examples/08_agentic_ai.cx
+dotnet run -- run examples/09_advanced_ai.cx
+
+# Parse a script and show AST (development/debugging)
+dotnet run -- parse examples/ai_workflow.cx
+
+# Compile AI scripts to .NET assembly  
+dotnet run -- compile examples/agentic_ai.cx --output ai_workflow.dll
+
+# Show help
+dotnet run -- --help
+```
+
+## 🤖 AI-First Language Featuresert-lt/cx/actions/workflows/ci.yml)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ahebert-lt/cx)
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
 
-🎉 **A fully working modern scripting language implementation for .NET!**
+🤖 **The first AI-native scripting language for quality, intelligent, autonomous workflows!**
 
 ## Overview
 
-Cx is a modern, strongly-typed scripting language that compiles to .NET IL and runs on any .NET 8+ runtime. It features a clean C-style syntax with modern language constructs, comprehensive type system, and full IL compilation for maximum performance.
+**Cx** is a revolutionary scripting language designed specifically for **Agentic AI Runtime** - enabling the creation of quality, intelligent, and autonomous workflows. Built on .NET 8+, Cx features native AI capabilities, autonomous task planning, dynamic code synthesis, and multi-modal AI integration, making it the perfect choice for building next-generation AI-driven applications.
 
-## ✅ Current Working Features
+### Why Cx for AI Workflows?
 
-**CORE LANGUAGE:**
+- 🎯 **Quality-First**: Built-in validation, error handling, and quality metrics for all AI operations
+- 🧠 **Intelligent**: Native reasoning loops with plan-execute-evaluate-refine capabilities
+- 🤖 **Autonomous**: Scripts that adapt, learn, and optimize themselves at runtime
+- 🔄 **Workflow-Focused**: Designed for orchestrating complex AI-driven processes
+- ⚡ **Performance**: Compiles to native .NET IL for maximum execution speed
+
+## ✨ AI-Native Features
+
+**AGENTIC AI RUNTIME:**
+- 🤖 **Autonomous Task Planning**: AI agents that break down goals and orchestrate execution
+- 🔧 **Dynamic Code Synthesis**: Generate functions and modules from natural language
+- 🎭 **Multi-Modal Processing**: Native support for text, image, audio, and video processing
+- 🧠 **Reasoning Engine**: Built-in PEAR loops (Plan-Execute-Evaluate-Refine)
+- 🔄 **Adaptive Code Paths**: Self-optimizing code based on runtime feedback
+- ☁️ **Azure Integration**: Seamless Azure OpenAI and Cognitive Services integration
+
+## ✅ Language Foundation
+
+**CORE SCRIPTING LANGUAGE:**
 - ✅ **Variable System**: Full support for `var` keyword declarations and assignments
 - ✅ **Type System**: Integer, boolean, and string literals with type inference
 - ✅ **Arithmetic Operators**: `+`, `-`, `*`, `/` (with proper precedence)
@@ -22,12 +56,20 @@ Cx is a modern, strongly-typed scripting language that compiles to .NET IL and r
 - ✅ **Assignment Expressions**: `x = x + 1` style updates
 - ✅ **Error Handling**: Proper error messages for undeclared variables
 
+**AI RUNTIME INTEGRATION:**
+- ✅ **AI Task Nodes**: `ai_task()` for autonomous goal decomposition
+- ✅ **Code Synthesis**: `ai_synthesize()` for runtime code generation
+- ✅ **Multi-Modal Calls**: `ai_call()` for text, image, audio, video processing
+- ✅ **Reasoning Loops**: `ai_reason()` for plan-execute-evaluate-refine cycles
+- ✅ **Content Processing**: `ai_process()` for intelligent data transformation
+- ✅ **Adaptive Execution**: `ai_adapt()` for self-optimizing code paths
+
 **COMPILATION & EXECUTION:**
 - ✅ **IL Compilation**: Full .NET IL emission using System.Reflection.Emit
 - ✅ **Runtime Execution**: Native .NET assembly generation and execution  
 - ✅ **ANTLR Parser**: Complete grammar definition with AST generation
 - ✅ **CLI Interface**: Command-line tools for parsing, compiling, and running
-- ✅ **Built-in Functions**: `print()` function for output
+- ✅ **AI Runtime**: Integrated Azure OpenAI and Cognitive Services support
 
 ## 🚀 Quick Start
 
@@ -36,49 +78,76 @@ Cx is a modern, strongly-typed scripting language that compiles to .NET IL and r
 dotnet build
 ```
 
-### Run Your First Cx Program
+### Run Your First AI-Powered Cx Script
 ```powershell
 # Navigate to the CLI directory
 cd src/CxLanguage.CLI
 
-# Run a simple script
-dotnet run -- run ../../var_minimal.cx
+# Run an AI workflow example
+dotnet run -- run ../../examples/08_agentic_ai.cx
 ```
 
-### Basic Cx Syntax
+### AI-Native Cx Syntax
 
-Create a file called `hello.cx`:
+Create a file called `ai_workflow.cx`:
 
 ```cx
-// Variable declarations require 'var' keyword
-var message = "Hello, Cx World!"
-var x = 42
-var y = 24
+// Traditional scripting capabilities
+var message = "Analyzing customer data..."
+var threshold = 85.0
 
-// Print output
 print(message)
 
-// Arithmetic and assignment
-var result = x + y
-print("The answer is:")
-print(result)
+// AI-powered autonomous task planning
+var analysis_result = ai_task("Analyze customer sentiment and generate insights", {
+    data_source: "customer_feedback.json",
+    quality_threshold: threshold
+})
 
-// Control flow
-if (x > y)
+// Dynamic code synthesis at runtime
+var calculator = ai_synthesize(
+    "Create a compound interest calculator with validation",
+    language: "cx",
+    features: ["input_validation", "error_handling"]
+)
+
+// Multi-modal AI processing
+var insights = ai_process("marketing_video.mp4", {
+    extract: ["key_messages", "sentiment", "demographics"],
+    format: "structured_report"
+})
+
+// Reasoning loops for complex problem solving
+var strategy = ai_reason("Optimize marketing campaign performance", {
+    data: analysis_result,
+    constraints: ["budget_limit", "timeline"],
+    iterations: 3
+})
+
+// Adaptive execution - code that improves itself
+ai_adapt("campaign_optimization", {
+    feedback: strategy.results,
+    optimize_for: "conversion_rate"
+})
+
+print("AI workflow completed successfully!")
+```
+
+### Traditional Scripting + AI Power
+```cx
+// Standard control flow works seamlessly with AI features
+if (analysis_result.confidence > threshold)
 {
-    print("x is greater than y")
+    var next_task = ai_task("Execute high-confidence recommendations")
+    print("Executing recommendations with " + analysis_result.confidence + "% confidence")
 }
 else
 {
-    print("y is greater than or equal to x")
-}
-
-// While loops with assignment expressions
-var counter = 0
-while (counter < 5)
-{
-    print(counter)
-    counter = counter + 1
+    var refinement = ai_reason("Improve analysis quality", {
+        current_confidence: analysis_result.confidence,
+        target_confidence: threshold
+    })
+    print("Refining analysis to reach target confidence")
 }
 ```
 

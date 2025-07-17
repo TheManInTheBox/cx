@@ -27,6 +27,15 @@ public interface IAstVisitor<T>
     T VisitMemberAccess(MemberAccessNode node);
     T VisitIndexAccess(IndexAccessNode node);
     T VisitFunctionCall(FunctionCallNode node);
+    
+    // AI-specific visitor methods
+    T VisitAITask(AITaskNode node);
+    T VisitAISynthesize(AISynthesizeNode node);
+    T VisitAICall(AICallNode node);
+    T VisitAIReason(AIReasonNode node);
+    T VisitAIProcess(AIProcessNode node);
+    T VisitAIEmbed(AIEmbedNode node);
+    T VisitAIAdapt(AIAdaptNode node);
 }
 
 /// <summary>
@@ -303,4 +312,91 @@ public enum UnaryOperator
 public enum LiteralType
 {
     String, Number, Boolean, Null
+}
+
+/// <summary>
+/// AI task planning statement
+/// </summary>
+public class AITaskNode : StatementNode
+{
+    public string Goal { get; set; } = string.Empty;
+    public Dictionary<string, object> Options { get; set; } = new();
+    public string? AssignTo { get; set; } // Variable to assign the result to
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAITask(this);
+}
+
+/// <summary>
+/// AI code synthesis statement
+/// </summary>
+public class AISynthesizeNode : StatementNode
+{
+    public string Specification { get; set; } = string.Empty;
+    public string? TargetLanguage { get; set; } = "cx";
+    public Dictionary<string, object> Options { get; set; } = new();
+    public string? AssignTo { get; set; } // Variable to assign the generated code to
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAISynthesize(this);
+}
+
+/// <summary>
+/// AI function call expression
+/// </summary>
+public class AICallNode : ExpressionNode
+{
+    public string FunctionName { get; set; } = string.Empty;
+    public List<ExpressionNode> Arguments { get; set; } = new();
+    public Dictionary<string, object> Options { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAICall(this);
+}
+
+/// <summary>
+/// AI reasoning loop statement
+/// </summary>
+public class AIReasonNode : StatementNode
+{
+    public string Goal { get; set; } = string.Empty;
+    public int MaxIterations { get; set; } = 3;
+    public double SatisfactionThreshold { get; set; } = 80.0;
+    public Dictionary<string, object> Options { get; set; } = new();
+    public string? AssignTo { get; set; } // Variable to assign the reasoning result to
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAIReason(this);
+}
+
+/// <summary>
+/// Multi-modal AI processing statement
+/// </summary>
+public class AIProcessNode : StatementNode
+{
+    public string InputType { get; set; } = "text"; // text, image, audio, video
+    public ExpressionNode Input { get; set; } = new LiteralNode { Type = LiteralType.Null, Value = null };
+    public Dictionary<string, object> Options { get; set; } = new();
+    public string? AssignTo { get; set; } // Variable to assign the result to
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAIProcess(this);
+}
+
+/// <summary>
+/// AI embedding generation expression
+/// </summary>
+public class AIEmbedNode : ExpressionNode
+{
+    public ExpressionNode Text { get; set; } = new LiteralNode { Type = LiteralType.String, Value = "" };
+    public Dictionary<string, object> Options { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAIEmbed(this);
+}
+
+/// <summary>
+/// Adaptive code path statement
+/// </summary>
+public class AIAdaptNode : StatementNode
+{
+    public string CodePath { get; set; } = string.Empty;
+    public ExpressionNode Context { get; set; } = new LiteralNode { Type = LiteralType.Null, Value = null };
+    public Dictionary<string, object> Options { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAIAdapt(this);
 }
