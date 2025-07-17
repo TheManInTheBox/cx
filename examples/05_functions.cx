@@ -2,11 +2,13 @@
 // Demonstrates basic function declaration and calling
 
 // Simple function with no parameters
-function sayHello() {
+function sayHello()
+{
     print("Hello from a function!")
 }
 
-function showNumbers() {
+function showNumbers()
+{
     var x = 1
     var y = 2
     var sum = x + y
@@ -14,9 +16,11 @@ function showNumbers() {
     print(sum)
 }
 
-function countdown() {
+function countdown()
+{
     var i = 3
-    while (i > 0) {
+    while (i > 0)
+    {
         print(i)
         i = i - 1
     }
@@ -31,7 +35,8 @@ showNumbers()
 countdown()
 
 // Function with local variables
-function calculateArea() {
+function calculateArea()
+{
     var length = 10
     var width = 5
     var area = length * width
@@ -42,7 +47,8 @@ function calculateArea() {
 calculateArea()
 
 // Function that demonstrates variable scope
-function scopeExample() {
+function scopeExample()
+{
     var localVar = 100
     print("Local variable in function:")
     print(localVar)

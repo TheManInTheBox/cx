@@ -3,16 +3,22 @@
 
 var x = 5
 
-if (x > 0) {
+if (x > 0)
+{
     print("positive")
-} else {
+}
+else
+{
     print("not positive")
 }
 
 var y = 5
 
-if (x == y) {
+if (x == y)
+{
     print("equal")
-} else {
+}
+else
+{
     print("not equal")
 }

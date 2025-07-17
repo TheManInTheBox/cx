@@ -48,6 +48,7 @@ expression
     | expression '[' expression ']'                     # IndexAccess
     | 'await' expression                                # AwaitExpression
     | 'parallel' expression                             # ParallelExpression
+    | ('!' | '-' | '+') expression                      # UnaryExpression
     | expression ('*' | '/' | '%') expression           # MultiplicativeExpression
     | expression ('+' | '-') expression                 # AdditiveExpression
     | expression ('<' | '>' | '<=' | '>=' | '==' | '!=') expression # RelationalExpression

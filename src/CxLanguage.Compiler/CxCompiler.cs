@@ -578,6 +578,28 @@ public class IlEmitter : IAstVisitor<object?>
                 _currentIl.Emit(OpCodes.Box, typeof(bool));
                 break;
                 
+            case BinaryOperator.And:
+            case BinaryOperator.Or:
+                // Logical operations - both operands should be boolean
+                node.Left.Accept(this);
+                _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
+                
+                node.Right.Accept(this);
+                _currentIl.Emit(OpCodes.Unbox_Any, typeof(bool));
+                
+                switch (node.Operator)
+                {
+                    case BinaryOperator.And:
+                        _currentIl.Emit(OpCodes.And);
+                        break;
+                    case BinaryOperator.Or:
+                        _currentIl.Emit(OpCodes.Or);
+                        break;
+                }
+                
+                _currentIl.Emit(OpCodes.Box, typeof(bool));
+                break;
+                
             default:
                 // For other operators, use the old approach for now
                 node.Left.Accept(this);
@@ -649,16 +671,24 @@ public class IlEmitter : IAstVisitor<object?>
 
     public object? VisitUnaryExpression(UnaryExpressionNode node)
     {
-        node.Operand.Accept(this);
-
         switch (node.Operator)
         {
             case UnaryOperator.Minus:
-                _currentIl!.Emit(OpCodes.Neg);
+                node.Operand.Accept(this);
+                _currentIl!.Emit(OpCodes.Unbox_Any, typeof(int));
+                _currentIl.Emit(OpCodes.Neg);
+                _currentIl.Emit(OpCodes.Box, typeof(int));
+                break;
+            case UnaryOperator.Plus:
+                // Unary plus is essentially a no-op, just evaluate the operand
+                node.Operand.Accept(this);
                 break;
             case UnaryOperator.Not:
-                _currentIl!.Emit(OpCodes.Ldc_I4_0);
+                node.Operand.Accept(this);
+                _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
+                _currentIl.Emit(OpCodes.Ldc_I4_0);
                 _currentIl.Emit(OpCodes.Ceq);
+                _currentIl.Emit(OpCodes.Box, typeof(bool));
                 break;
         }
 

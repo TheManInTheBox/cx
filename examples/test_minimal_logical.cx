@@ -1,0 +1,9 @@
+// Minimal logical test
+
+var a = true
+var b = false
+
+print("Testing:")
+print(a && b)
+print(a || b)
+print(!a)
