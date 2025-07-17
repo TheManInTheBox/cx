@@ -77,11 +77,14 @@ public class IlEmitter : IAstVisitor<object?>
     private readonly Dictionary<string, FieldBuilder> _globalFields;
     private readonly Dictionary<string, MethodBuilder> _methods;
     private readonly Dictionary<string, Type> _methodReturnTypes;
+    private readonly Dictionary<string, string> _functionSourceCode;
     private readonly Dictionary<string, LocalBuilder> _currentLocals;
     private readonly IModuleResolver _moduleResolver;
+    private string? _sourceText;
     private ILGenerator? _currentIl;
     private MethodBuilder? _currentMethod;
     private Type? _currentReturnType;
+    private string? _currentFunctionName;
     
     // AI Runtime integration
     private FieldBuilder? _agenticRuntimeField;
@@ -98,6 +101,7 @@ public class IlEmitter : IAstVisitor<object?>
         _globalFields = new Dictionary<string, FieldBuilder>();
         _methods = new Dictionary<string, MethodBuilder>();
         _methodReturnTypes = new Dictionary<string, Type>();
+        _functionSourceCode = new Dictionary<string, string>();
         _currentLocals = new Dictionary<string, LocalBuilder>();
         _moduleResolver = new CompositeModuleResolver();
         _scopes.Push(_globalScope);
@@ -109,8 +113,11 @@ public class IlEmitter : IAstVisitor<object?>
     // Store global variable initializations for later processing
     private List<VariableDeclarationNode> _globalVariableInits = new List<VariableDeclarationNode>();
 
-    public void CompileProgram(ProgramNode program)
+    public void CompileProgram(ProgramNode program, string sourceText = null)
     {
+        // Store the source text for later use with the 'self' keyword
+        _sourceText = sourceText;
+
         // First pass: Process function declarations and collect global variables
         var nonVariableStatements = new List<AstNode>();
         
@@ -237,10 +244,23 @@ public class IlEmitter : IAstVisitor<object?>
         var previousMethod = _currentMethod;
         var previousIl = _currentIl;
         var previousReturnType = _currentReturnType;
+        var previousFunctionName = _currentFunctionName;
 
         _currentMethod = method;
         _currentIl = method.GetILGenerator();
         _currentReturnType = returnType;
+        _currentFunctionName = node.Name;
+
+        // Store the function's source code if available
+        if (_sourceText != null && node.StartLine > 0 && node.EndLine > 0)
+        {
+            var lines = _sourceText.Split('\n');
+            if (node.StartLine <= lines.Length && node.EndLine <= lines.Length)
+            {
+                var funcSourceLines = lines.Skip(node.StartLine - 1).Take(node.EndLine - node.StartLine + 1).ToArray();
+                _functionSourceCode[node.Name] = string.Join("\n", funcSourceLines);
+            }
+        }
 
         // Clear locals for new function
         _currentLocals.Clear();
@@ -279,6 +299,7 @@ public class IlEmitter : IAstVisitor<object?>
         _currentMethod = previousMethod;
         _currentIl = previousIl;
         _currentReturnType = previousReturnType;
+        _currentFunctionName = previousFunctionName;
 
         return null;
     }
@@ -1197,6 +1218,25 @@ public class IlEmitter : IAstVisitor<object?>
         return null;
     }
 
+    public object? VisitSelfReference(SelfReferenceNode node)
+    {
+        string selfString;
+        
+        if (_currentFunctionName != null && _functionSourceCode.TryGetValue(_currentFunctionName, out var sourceCode))
+        {
+            // Use the stored source code
+            selfString = sourceCode;
+        }
+        else
+        {
+            // Fallback if source code is not available
+            selfString = $"[Function: {_currentFunctionName ?? "unknown"}]";
+        }
+        
+        _currentIl!.Emit(OpCodes.Ldstr, selfString);
+        return null;
+    }
+
     private Type GetSystemType(CxType cxType)
     {
         return cxType.Name switch
@@ -1837,6 +1877,271 @@ public class IlEmitter : IAstVisitor<object?>
         // or create a proper parallel execution context
 
         return null;
+    }
+
+    // Class system visitors
+    public object? VisitClassDeclaration(ClassDeclarationNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling class declaration: {ClassName}", node.Name);
+
+            // Define a new type for this class
+            var typeAttributes = TypeAttributes.Public | TypeAttributes.Class;
+            if (node.AccessModifier == AccessModifier.Private)
+            {
+                typeAttributes = TypeAttributes.NotPublic | TypeAttributes.Class;
+            }
+
+            Type? baseType = null;
+            if (!string.IsNullOrEmpty(node.BaseClass))
+            {
+                // For now, just use object as base type
+                // In a full implementation, resolve the actual base class
+                baseType = typeof(object);
+            }
+            else
+            {
+                baseType = typeof(object);
+            }
+
+            var classTypeBuilder = _moduleBuilder.DefineType(
+                node.Name,
+                typeAttributes,
+                baseType);
+
+            // Store the type builder for field and method generation
+            var previousTypeBuilder = _typeBuilder;
+            // Note: We can't change _typeBuilder here as it's used for the main program type
+            // In a full implementation, we'd need a class compilation context
+
+            // Compile fields
+            foreach (var field in node.Fields)
+            {
+                CompileField(classTypeBuilder, field);
+            }
+
+            // Compile constructors
+            foreach (var constructor in node.Constructors)
+            {
+                CompileConstructor(classTypeBuilder, constructor, node.Name);
+            }
+
+            // Compile methods
+            foreach (var method in node.Methods)
+            {
+                CompileMethod(classTypeBuilder, method);
+            }
+
+            // Create the type
+            classTypeBuilder.CreateType();
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling class declaration");
+            throw;
+        }
+    }
+
+    public object? VisitFieldDeclaration(FieldDeclarationNode node)
+    {
+        // This is handled by VisitClassDeclaration
+        return null;
+    }
+
+    public object? VisitMethodDeclaration(MethodDeclarationNode node)
+    {
+        // This is handled by VisitClassDeclaration
+        return null;
+    }
+
+    public object? VisitConstructorDeclaration(ConstructorDeclarationNode node)
+    {
+        // This is handled by VisitClassDeclaration
+        return null;
+    }
+
+    public object? VisitInterfaceDeclaration(InterfaceDeclarationNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling interface declaration: {InterfaceName}", node.Name);
+
+            // Define a new interface type
+            var typeAttributes = TypeAttributes.Public | TypeAttributes.Interface | TypeAttributes.Abstract;
+            if (node.AccessModifier == AccessModifier.Private)
+            {
+                typeAttributes = TypeAttributes.NotPublic | TypeAttributes.Interface | TypeAttributes.Abstract;
+            }
+
+            var interfaceTypeBuilder = _moduleBuilder.DefineType(
+                node.Name,
+                typeAttributes);
+
+            // Compile interface methods (abstract methods)
+            foreach (var method in node.Methods)
+            {
+                CompileInterfaceMethod(interfaceTypeBuilder, method);
+            }
+
+            // Compile interface properties
+            foreach (var property in node.Properties)
+            {
+                CompileInterfaceProperty(interfaceTypeBuilder, property);
+            }
+
+            // Create the interface type
+            interfaceTypeBuilder.CreateType();
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling interface declaration");
+            throw;
+        }
+    }
+
+    public object? VisitInterfaceMethodSignature(InterfaceMethodSignatureNode node)
+    {
+        // This is handled by VisitInterfaceDeclaration
+        return null;
+    }
+
+    public object? VisitInterfacePropertySignature(InterfacePropertySignatureNode node)
+    {
+        // This is handled by VisitInterfaceDeclaration
+        return null;
+    }
+
+    // Helper methods for class compilation
+    private void CompileField(TypeBuilder typeBuilder, FieldDeclarationNode field)
+    {
+        var fieldAttributes = FieldAttributes.Private;
+        switch (field.AccessModifier)
+        {
+            case AccessModifier.Public:
+                fieldAttributes = FieldAttributes.Public;
+                break;
+            case AccessModifier.Protected:
+                fieldAttributes = FieldAttributes.Family;
+                break;
+            case AccessModifier.Private:
+                fieldAttributes = FieldAttributes.Private;
+                break;
+        }
+
+        var systemType = GetSystemType(field.Type);
+        var fieldBuilder = typeBuilder.DefineField(field.Name, systemType, fieldAttributes);
+
+        // TODO: Handle field initialization if present
+    }
+
+    private void CompileConstructor(TypeBuilder typeBuilder, ConstructorDeclarationNode constructor, string className)
+    {
+        var methodAttributes = MethodAttributes.Public;
+        switch (constructor.AccessModifier)
+        {
+            case AccessModifier.Public:
+                methodAttributes = MethodAttributes.Public;
+                break;
+            case AccessModifier.Protected:
+                methodAttributes = MethodAttributes.Family;
+                break;
+            case AccessModifier.Private:
+                methodAttributes = MethodAttributes.Private;
+                break;
+        }
+
+        methodAttributes |= MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
+
+        var paramTypes = constructor.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
+        var ctorBuilder = typeBuilder.DefineConstructor(methodAttributes, CallingConventions.Standard, paramTypes);
+
+        // Generate constructor body
+        var il = ctorBuilder.GetILGenerator();
+        
+        // Call base constructor
+        il.Emit(OpCodes.Ldarg_0);
+        il.Emit(OpCodes.Call, typeof(object).GetConstructor(Type.EmptyTypes)!);
+
+        // TODO: Compile constructor body properly
+        // For now, just return
+        il.Emit(OpCodes.Ret);
+    }
+
+    private void CompileMethod(TypeBuilder typeBuilder, MethodDeclarationNode method)
+    {
+        var methodAttributes = MethodAttributes.Public;
+        switch (method.AccessModifier)
+        {
+            case AccessModifier.Public:
+                methodAttributes = MethodAttributes.Public;
+                break;
+            case AccessModifier.Protected:
+                methodAttributes = MethodAttributes.Family;
+                break;
+            case AccessModifier.Private:
+                methodAttributes = MethodAttributes.Private;
+                break;
+        }
+
+        var paramTypes = method.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
+        var returnType = method.ReturnType != null ? GetSystemType(method.ReturnType) : typeof(void);
+
+        var methodBuilder = typeBuilder.DefineMethod(
+            method.Name,
+            methodAttributes,
+            returnType,
+            paramTypes);
+
+        // Generate method body
+        var il = methodBuilder.GetILGenerator();
+        
+        // TODO: Compile method body properly
+        // For now, just return default value
+        if (returnType == typeof(void))
+        {
+            il.Emit(OpCodes.Ret);
+        }
+        else
+        {
+            il.Emit(OpCodes.Ldnull);
+            il.Emit(OpCodes.Ret);
+        }
+    }
+
+    private void CompileInterfaceMethod(TypeBuilder interfaceBuilder, InterfaceMethodSignatureNode method)
+    {
+        var paramTypes = method.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
+        var returnType = method.ReturnType != null ? GetSystemType(method.ReturnType) : typeof(void);
+
+        var methodBuilder = interfaceBuilder.DefineMethod(
+            method.Name,
+            MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual,
+            returnType,
+            paramTypes);
+    }
+
+    private void CompileInterfaceProperty(TypeBuilder interfaceBuilder, InterfacePropertySignatureNode property)
+    {
+        var propertyType = GetSystemType(property.Type);
+        var propertyBuilder = interfaceBuilder.DefineProperty(
+            property.Name,
+            PropertyAttributes.None,
+            propertyType,
+            null);
+
+        // Define getter method
+        var getterBuilder = interfaceBuilder.DefineMethod(
+            "get_" + property.Name,
+            MethodAttributes.Public | MethodAttributes.Abstract | MethodAttributes.Virtual | MethodAttributes.SpecialName,
+            propertyType,
+            Type.EmptyTypes);
+
+        propertyBuilder.SetGetMethod(getterBuilder);
     }
 }
 

@@ -1,0 +1,42 @@
+// Simple Class System Test
+// Basic class with inheritance and access modifiers
+
+print("=== Simple Class Test ===");
+
+// Define a simple base class
+public class Animal {
+    protected name: string;
+    
+    public constructor(animalName: string) {
+        name = animalName;
+    }
+    
+    public function speak() -> string {
+        return name + " makes a sound";
+    }
+}
+
+// Define a derived class
+public class Dog extends Animal {
+    public constructor(dogName: string) {
+        super(dogName);
+    }
+    
+    public function speak() -> string {
+        return name + " barks!";
+    }
+    
+    public function wagTail() -> string {
+        return name + " wags tail";
+    }
+}
+
+// Test basic inheritance
+var animal = new Animal("Generic Animal");
+var dog = new Dog("Buddy");
+
+print(animal.speak());
+print(dog.speak());
+print(dog.wagTail());
+
+print("=== Simple Class Test Complete ===");
