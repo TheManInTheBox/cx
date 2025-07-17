@@ -1,12 +1,24 @@
 using System.Reflection;
 using System.Reflection.Emit;
 using CxLanguage.Core.Ast;
+using CxLanguage.Core.Modules;
 using CxLanguage.Core.Symbols;
 using CxLanguage.Core.Types;
 using CxLanguage.Core.AI;
+using CxLanguage.Compiler.Modules;
+using CxLanguage.Compiler.Services;
 using Microsoft.Extensions.Logging;
 
 namespace CxLanguage.Compiler;
+
+/// <summary>
+/// Exception thrown during compilation when IL generation fails
+/// </summary>
+public class CompilationException : Exception
+{
+    public CompilationException(string message) : base(message) { }
+    public CompilationException(string message, Exception innerException) : base(message, innerException) { }
+}
 
 /// <summary>
 /// Compiles Cx AST to .NET assemblies using IL emission
@@ -66,6 +78,7 @@ public class IlEmitter : IAstVisitor<object?>
     private readonly Dictionary<string, MethodBuilder> _methods;
     private readonly Dictionary<string, Type> _methodReturnTypes;
     private readonly Dictionary<string, LocalBuilder> _currentLocals;
+    private readonly IModuleResolver _moduleResolver;
     private ILGenerator? _currentIl;
     private MethodBuilder? _currentMethod;
     private Type? _currentReturnType;
@@ -86,6 +99,7 @@ public class IlEmitter : IAstVisitor<object?>
         _methods = new Dictionary<string, MethodBuilder>();
         _methodReturnTypes = new Dictionary<string, Type>();
         _currentLocals = new Dictionary<string, LocalBuilder>();
+        _moduleResolver = new CompositeModuleResolver();
         _scopes.Push(_globalScope);
         
         // Initialize AI runtime fields
@@ -189,7 +203,25 @@ public class IlEmitter : IAstVisitor<object?>
     {
         // Determine parameter types
         var paramTypes = node.Parameters.Select(p => GetSystemType(p.Type)).ToArray();
-        var returnType = node.ReturnType != null ? GetSystemType(node.ReturnType) : typeof(void);
+        var baseReturnType = node.ReturnType != null ? GetSystemType(node.ReturnType) : typeof(void);
+        
+        // For async functions, wrap return type in Task or Task<T>
+        Type returnType;
+        if (node.IsAsync)
+        {
+            if (baseReturnType == typeof(void))
+            {
+                returnType = typeof(Task);
+            }
+            else
+            {
+                returnType = typeof(Task<>).MakeGenericType(baseReturnType);
+            }
+        }
+        else
+        {
+            returnType = baseReturnType;
+        }
 
         // Create method
         var method = _typeBuilder.DefineMethod(
@@ -225,13 +257,21 @@ public class IlEmitter : IAstVisitor<object?>
             functionScope.TryDefine(symbol);
         }
 
-        // Compile function body
-        node.Body.Accept(this);
-
-        // Add return if void function
-        if (returnType == typeof(void))
+        // For async functions, we need to generate an async method body
+        if (node.IsAsync)
         {
-            _currentIl.Emit(OpCodes.Ret);
+            GenerateAsyncFunctionBody(node, baseReturnType);
+        }
+        else
+        {
+            // Compile function body normally
+            node.Body.Accept(this);
+            
+            // Add return if void function
+            if (returnType == typeof(void))
+            {
+                _currentIl.Emit(OpCodes.Ret);
+            }
         }
 
         // Restore previous context
@@ -241,6 +281,42 @@ public class IlEmitter : IAstVisitor<object?>
         _currentReturnType = previousReturnType;
 
         return null;
+    }
+
+    /// <summary>
+    /// Generate IL for async function body using simplified Task.Run approach
+    /// </summary>
+    private void GenerateAsyncFunctionBody(FunctionDeclarationNode node, Type baseReturnType)
+    {
+        if (_currentIl == null)
+            throw new CompilationException("No IL generator available for async function");
+
+        // For simplicity, we'll use Task.Run to wrap the function body
+        // In a full implementation, this would generate proper async state machine IL
+        
+        // Create a lambda that contains the function body
+        var delegateType = baseReturnType == typeof(void) ? typeof(Action) : typeof(Func<>).MakeGenericType(baseReturnType);
+        
+        // For now, generate a simple synchronous version and wrap in Task.FromResult
+        if (baseReturnType == typeof(void))
+        {
+            // Compile the function body
+            node.Body.Accept(this);
+            
+            // Return Task.CompletedTask
+            _currentIl.Emit(OpCodes.Call, typeof(Task).GetProperty("CompletedTask")!.GetMethod!);
+            _currentIl.Emit(OpCodes.Ret);
+        }
+        else
+        {
+            // For functions with return values, compile body and wrap result
+            node.Body.Accept(this);
+            
+            // The result should be on the stack, wrap it in Task.FromResult
+            var fromResultMethod = typeof(Task).GetMethod("FromResult")!.MakeGenericMethod(baseReturnType);
+            _currentIl.Emit(OpCodes.Call, fromResultMethod);
+            _currentIl.Emit(OpCodes.Ret);
+        }
     }
 
     public object? VisitVariableDeclaration(VariableDeclarationNode node)
@@ -518,10 +594,86 @@ public class IlEmitter : IAstVisitor<object?>
 
     public object? VisitImportStatement(ImportStatementNode node)
     {
-        // For now, just record the import in the symbol table
-        var symbol = new ImportSymbol(node.Alias, node.ModulePath);
-        _scopes.Peek().TryDefine(symbol);
+        // Resolve the module
+        var resolution = _moduleResolver.ResolveModule(node.ModulePath);
+        
+        if (!resolution.IsSuccess)
+        {
+            throw new CompilationException($"Failed to resolve module '{node.ModulePath}': {resolution.ErrorMessage}");
+        }
+        
+        // Create import symbol with resolution results
+        var importSymbol = new ImportSymbol(node.Alias, node.ModulePath)
+        {
+            ResolutionResult = resolution
+        };
+        
+        // Add to symbol table
+        if (!_scopes.Peek().TryDefine(importSymbol))
+        {
+            throw new CompilationException($"Import alias '{node.Alias}' is already defined");
+        }
+        
+        // Generate IL for different module types
+        switch (resolution.ModuleType)
+        {
+            case ModuleType.AzureService:
+                GenerateAzureServiceImport(node.Alias, resolution);
+                break;
+                
+            case ModuleType.CxModule:
+                GenerateCxModuleImport(node.Alias, resolution);
+                break;
+                
+            case ModuleType.DotNetAssembly:
+                GenerateDotNetAssemblyImport(node.Alias, resolution);
+                break;
+                
+            default:
+                throw new CompilationException($"Unsupported module type: {resolution.ModuleType}");
+        }
+        
         return null;
+    }
+
+    /// <summary>
+    /// Generate IL for Azure service imports (create service wrapper object)
+    /// </summary>
+    private void GenerateAzureServiceImport(string alias, ModuleResolutionResult resolution)
+    {
+        // Create a field to hold the service wrapper
+        var wrapperType = typeof(object); // We'll use dynamic object for now
+        var serviceField = _typeBuilder.DefineField($"_{alias}Service", wrapperType, FieldAttributes.Private);
+        _globalFields[alias] = serviceField;
+        
+        // For now, create a simple object that represents the service
+        // In a full implementation, this would create a proper service wrapper
+        // with methods that delegate to the actual Azure service
+        
+        // Add exported functions as symbols
+        foreach (var export in resolution.ExportedSymbols)
+        {
+            var functionSymbol = new FunctionSymbol(export.Key, export.Value, new List<ParameterSymbol>());
+            _scopes.Peek().TryDefine(functionSymbol);
+        }
+    }
+    
+    /// <summary>
+    /// Generate IL for Cx module imports (load and execute other .cx files)
+    /// </summary>
+    private void GenerateCxModuleImport(string alias, ModuleResolutionResult resolution)
+    {
+        // TODO: Implement Cx module loading
+        throw new CompilationException("Cx module imports not yet implemented");
+    }
+    
+    /// <summary>
+    /// Generate IL for .NET assembly imports (reflection-based loading)
+    /// </summary>
+    private void GenerateDotNetAssemblyImport(string alias, ModuleResolutionResult resolution)
+    {
+        // TODO: Implement .NET assembly loading
+        throw new CompilationException(".NET assembly imports not yet implemented");
     }
 
     public object? VisitBinaryExpression(BinaryExpressionNode node)
@@ -1440,7 +1592,7 @@ public class IlEmitter : IAstVisitor<object?>
     }
 
     /// <summary>
-    /// Try statement visitor - compiles try-catch blocks
+    /// Try statement visitor - compiles try-catch blocks with proper .NET exception handling
     /// </summary>
     public object? VisitTryStatement(TryStatementNode node)
     {
@@ -1448,23 +1600,38 @@ public class IlEmitter : IAstVisitor<object?>
         {
             _logger?.LogInformation("Compiling try-catch statement");
 
-            // Begin exception handling block
-            var tryBlock = _currentIl!.BeginExceptionBlock();
+            // Begin exception handling block - this sets up the protected region
+            _currentIl!.BeginExceptionBlock();
+
+            // Create new scope for try block variables
+            var tryScope = new SymbolTable(_scopes.Peek());
+            _scopes.Push(tryScope);
 
             // Compile the try block
             node.TryBlock.Accept(this);
 
-            // If there's a catch block
+            // Restore scope
+            _scopes.Pop();
+
+            // If there's a catch block, set up exception handling
             if (node.CatchBlock != null)
             {
-                // Begin catch block for general Exception
+                // Begin catch block for general Exception type
                 _currentIl.BeginCatchBlock(typeof(Exception));
 
+                // Create new scope for catch block variables
+                var catchScope = new SymbolTable(_scopes.Peek());
+                _scopes.Push(catchScope);
+
                 // If there's a catch variable, store the exception
-                if (node.CatchVariableName != null)
+                if (!string.IsNullOrEmpty(node.CatchVariableName))
                 {
-                    var exceptionLocal = _currentIl.DeclareLocal(typeof(Exception));
+                    // Declare local variable for the exception
+                    var exceptionLocal = _currentIl.DeclareLocal(typeof(object));
                     _currentLocals[node.CatchVariableName] = exceptionLocal;
+                    
+                    // Store the exception in the catch variable (box it as object)
+                    _currentIl.Emit(OpCodes.Box, typeof(Exception));
                     _currentIl.Emit(OpCodes.Stloc, exceptionLocal);
                 }
                 else
@@ -1475,9 +1642,12 @@ public class IlEmitter : IAstVisitor<object?>
 
                 // Compile the catch block
                 node.CatchBlock.Accept(this);
+
+                // Restore scope
+                _scopes.Pop();
             }
 
-            // End exception handling
+            // End exception handling block
             _currentIl.EndExceptionBlock();
 
             return null;
@@ -1485,12 +1655,12 @@ public class IlEmitter : IAstVisitor<object?>
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Error compiling try statement");
-            throw;
+            throw new CompilationException("Failed to compile try-catch statement", ex);
         }
     }
 
     /// <summary>
-    /// Throw statement visitor - compiles throw expressions
+    /// Throw statement visitor - compiles throw expressions with proper exception handling
     /// </summary>
     public object? VisitThrowStatement(ThrowStatementNode node)
     {
@@ -1501,15 +1671,26 @@ public class IlEmitter : IAstVisitor<object?>
             // Evaluate the expression to throw
             node.Expression.Accept(this);
 
-            // If it's not already an Exception, wrap it in a RuntimeException
-            _currentIl!.Emit(OpCodes.Isinst, typeof(Exception));
-            var isException = _currentIl.DefineLabel();
-            _currentIl.Emit(OpCodes.Brtrue, isException);
+            // Check if the result is already an Exception
+            _currentIl!.Emit(OpCodes.Dup);
+            _currentIl.Emit(OpCodes.Isinst, typeof(Exception));
+            
+            var alreadyException = _currentIl.DefineLabel();
+            _currentIl.Emit(OpCodes.Brtrue_S, alreadyException);
 
-            // Not an exception, create a RuntimeException
+            // Not an Exception - convert to string and create new Exception
+            _currentIl.Emit(OpCodes.Callvirt, typeof(object).GetMethod("ToString")!);
             _currentIl.Emit(OpCodes.Newobj, typeof(Exception).GetConstructor(new[] { typeof(string) })!);
             
-            _currentIl.MarkLabel(isException);
+            var throwLabel = _currentIl.DefineLabel();
+            _currentIl.Emit(OpCodes.Br_S, throwLabel);
+            
+            // Already an Exception - just cast it
+            _currentIl.MarkLabel(alreadyException);
+            _currentIl.Emit(OpCodes.Pop); // Remove the duplicate
+            _currentIl.Emit(OpCodes.Castclass, typeof(Exception));
+            
+            _currentIl.MarkLabel(throwLabel);
             
             // Throw the exception
             _currentIl.Emit(OpCodes.Throw);
@@ -1519,7 +1700,7 @@ public class IlEmitter : IAstVisitor<object?>
         catch (Exception ex)
         {
             _logger?.LogError(ex, "Error compiling throw statement");
-            throw;
+            throw new CompilationException("Failed to compile throw statement", ex);
         }
     }
 
@@ -1619,6 +1800,43 @@ public class IlEmitter : IAstVisitor<object?>
     public void SetLogger(ILogger logger)
     {
         _logger = logger;
+    }
+
+    /// <summary>
+    /// Visit await expression - generates IL for async await operations
+    /// </summary>
+    public object? VisitAwaitExpression(AwaitExpressionNode node)
+    {
+        if (_currentIl == null)
+            throw new CompilationException("No IL generator available for await expression");
+
+        // Evaluate the expression (which should return a Task or Task<T>)
+        node.Expression.Accept(this);
+
+        // For now, just return the result of the expression
+        // In a full implementation, this would generate proper await IL
+        // that uses the async state machine and task awaiter pattern
+
+        return null;
+    }
+
+    /// <summary>
+    /// Visit parallel expression - generates IL for concurrent operations
+    /// </summary>
+    public object? VisitParallelExpression(ParallelExpressionNode node)
+    {
+        if (_currentIl == null)
+            throw new CompilationException("No IL generator available for parallel expression");
+
+        // For now, just execute the expression normally
+        // In a full implementation, this would create Task.Run or similar
+        node.Expression.Accept(this);
+
+        // For simplicity, just return the result without wrapping in a Task
+        // In a full implementation, this would wrap the expression in Task.Run
+        // or create a proper parallel execution context
+
+        return null;
     }
 }
 

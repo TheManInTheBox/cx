@@ -297,14 +297,22 @@ public class AstBuilder : CxBaseVisitor<AstNode>
 
     public override AstNode VisitAwaitExpression(AwaitExpressionContext context)
     {
-        // For now, just return the inner expression
-        return Visit(context.expression());
+        var awaitExpr = new AwaitExpressionNode();
+        SetLocation(awaitExpr, context);
+        
+        awaitExpr.Expression = (ExpressionNode)Visit(context.expression());
+        
+        return awaitExpr;
     }
 
     public override AstNode VisitParallelExpression(ParallelExpressionContext context)
     {
-        // For now, just return the inner expression  
-        return Visit(context.expression());
+        var parallelExpr = new ParallelExpressionNode();
+        SetLocation(parallelExpr, context);
+        
+        parallelExpr.Expression = (ExpressionNode)Visit(context.expression());
+        
+        return parallelExpr;
     }
 
     public override AstNode VisitAdditiveExpression(AdditiveExpressionContext context)

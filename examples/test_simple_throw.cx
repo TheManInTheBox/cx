@@ -1,0 +1,10 @@
+// Simple throw test
+print("Before throw");
+
+try {
+    throw "Test exception";
+} catch (error) {
+    print("Caught: " + error);
+}
+
+print("After throw");

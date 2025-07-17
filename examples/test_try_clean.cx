@@ -1,0 +1,12 @@
+// Test try without exception - no string concatenation
+print("Before try");
+
+try {
+    print("Inside try");
+    var x = 5;
+    print(x);
+} catch (error) {
+    print("This should not execute!");
+}
+
+print("After try");

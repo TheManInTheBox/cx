@@ -1,4 +1,5 @@
 using CxLanguage.Core.Ast;
+using CxLanguage.Core.Modules;
 using CxLanguage.Core.Types;
 
 namespace CxLanguage.Core.Symbols;
@@ -111,6 +112,7 @@ public class ImportSymbol : Symbol
 {
     public string ModulePath { get; }
     public Dictionary<string, Symbol> ExportedSymbols { get; } = new();
+    public ModuleResolutionResult? ResolutionResult { get; set; }
 
     public ImportSymbol(string name, string modulePath)
         : base(name, CxType.Object, SymbolKind.Import)
