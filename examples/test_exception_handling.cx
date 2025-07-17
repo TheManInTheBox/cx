@@ -1,0 +1,48 @@
+// Test exception handling runtime
+var message = "Testing exception handling";
+print(message);
+
+// Test basic try-catch
+try {
+    var result = 10 / 2;
+    print("Division successful: " + result);
+} catch (error) {
+    print("Caught error: " + error);
+}
+
+// Test throwing string
+try {
+    throw "Something went wrong!";
+} catch (error) {
+    print("Caught string error: " + error);
+}
+
+// Test throwing number
+try {
+    throw 404;
+} catch (error) {
+    print("Caught numeric error: " + error);
+}
+
+// Test throwing null
+try {
+    throw null;
+} catch (error) {
+    print("Caught null error: " + error);
+}
+
+// Test nested try-catch
+try {
+    print("Outer try block");
+    try {
+        print("Inner try block");
+        throw "Inner exception";
+    } catch (innerError) {
+        print("Inner catch: " + innerError);
+        throw "Re-throwing from inner";
+    }
+} catch (outerError) {
+    print("Outer catch: " + outerError);
+}
+
+print("Exception handling test completed!");

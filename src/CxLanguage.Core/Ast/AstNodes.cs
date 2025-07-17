@@ -44,6 +44,10 @@ public interface IAstVisitor<T>
     
     // Object creation visitor method
     T VisitNewExpression(NewExpressionNode node);
+    
+    // Async/await visitor methods
+    T VisitAwaitExpression(AwaitExpressionNode node);
+    T VisitParallelExpression(ParallelExpressionNode node);
 }
 
 /// <summary>
@@ -463,4 +467,24 @@ public class NewExpressionNode : ExpressionNode
     public List<ExpressionNode> Arguments { get; set; } = new();
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitNewExpression(this);
+}
+
+/// <summary>
+/// Await expression for async operations
+/// </summary>
+public class AwaitExpressionNode : ExpressionNode
+{
+    public ExpressionNode Expression { get; set; } = new LiteralNode();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAwaitExpression(this);
+}
+
+/// <summary>
+/// Parallel expression for concurrent operations
+/// </summary>
+public class ParallelExpressionNode : ExpressionNode
+{
+    public ExpressionNode Expression { get; set; } = new LiteralNode();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitParallelExpression(this);
 }
