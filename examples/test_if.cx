@@ -1,6 +1,8 @@
 // Test if statement
-var x = true
-if (x)
-{
-    print("x is true")
+var age = 25;
+print("Testing if statement:");
+print(age);
+
+if (age >= 18) {
+    print("You are an adult");
 }
