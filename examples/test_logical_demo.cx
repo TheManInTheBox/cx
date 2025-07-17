@@ -1,0 +1,49 @@
+// Simple logical operators demo for examples
+
+print("=== Cx Language Logical Operators ===")
+
+// Basic boolean variables
+var a = true
+var b = false
+
+// Test AND operator
+print("AND operator (&&):")
+print("true && false:")
+print(a && b)
+print("true && true:")
+print(a && a)
+
+// Test OR operator  
+print("OR operator (||):")
+print("true || false:")
+print(a || b)
+print("false || false:")
+print(b || b)
+
+// Test NOT operator
+print("NOT operator (!):")
+print("!true:")
+print(!a)
+print("!false:")
+print(!b)
+
+// Use in conditions
+print("Using in conditions:")
+var score = 85
+var passed = true
+
+if (score >= 80 && passed)
+{
+    print("Student passed with good score")
+}
+
+if (score < 60 || !passed)
+{
+    print("Student needs help")
+}
+else
+{
+    print("Student is doing well")
+}
+
+print("=== Demo Complete ===")

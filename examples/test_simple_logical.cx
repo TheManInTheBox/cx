@@ -1,0 +1,21 @@
+// Simple logical operators test
+
+var a = true
+var b = false
+
+print("Testing basic logical operators:")
+
+// Test simple AND
+var result1 = a && b
+print("true && false:")
+print(result1)
+
+// Test simple OR
+var result2 = a || b
+print("true || false:")
+print(result2)
+
+// Test simple NOT
+var result3 = !a
+print("!true:")
+print(result3)

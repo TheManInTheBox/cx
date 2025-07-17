@@ -1,0 +1,50 @@
+// Test logical operators with numeric comparisons
+
+var x = 10
+var y = 5
+var z = 15
+
+// Test logical AND with comparisons
+print("Testing logical AND with comparisons:")
+if (x > y && x < z) {
+    print("x is between y and z")
+}
+
+if (x > y && y > 0) {
+    print("x is greater than y and y is positive")
+}
+
+// Test logical OR with comparisons
+print("\nTesting logical OR with comparisons:")
+if (x == 10 || x == 20) {
+    print("x is either 10 or 20")
+}
+
+if (y < 0 || y > 3) {
+    print("y is either negative or greater than 3")
+}
+
+// Test NOT with comparisons
+print("\nTesting NOT with comparisons:")
+if (!(x < y)) {
+    print("x is NOT less than y")
+}
+
+// Complex logical expressions
+print("\nTesting complex expressions:")
+if ((x > y && y > 0) || z < 10) {
+    print("Complex condition 1 is true")
+}
+
+if (!(x == y) && (z > x || y == 5)) {
+    print("Complex condition 2 is true")
+}
+
+// While loop with logical operators
+print("\nTesting while loop with logical operators:")
+var counter = 0
+while (counter < 3 && x > y) {
+    print("Counter:")
+    print(counter)
+    counter = counter + 1
+}

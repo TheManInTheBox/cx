@@ -1,11 +1,13 @@
 // Test: Basic Functions
 // Expected Output: "Hello from function!", 42
 
-function sayHello() {
+function sayHello()
+{
     print("Hello from function!")
 }
 
-function showNumber() {
+function showNumber()
+{
     var x = 42
     print(x)
 }
