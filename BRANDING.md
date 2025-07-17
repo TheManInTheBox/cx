@@ -42,7 +42,7 @@
 
 Unlike traditional programming languages that treat AI as external services:
 
-- **AI-Native Syntax**: First-class language support for AI operations (`ai_task`, `ai_synthesize`, `ai_reason`)
+- **AI-Native Syntax**: First-class language support for AI operations (`task`, `synthesize`, `reason`)
 - **Built-in Quality Assurance**: Every AI operation includes quality metrics and validation
 - **Autonomous Adaptation**: Code that writes and optimizes itself at runtime
 - **Integrated Reasoning**: Native support for complex reasoning loops and planning

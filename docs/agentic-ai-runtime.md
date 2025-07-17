@@ -19,7 +19,7 @@ The Cx language can autonomously break down high-level goals into executable sub
 
 ```cx
 // Define a high-level goal
-var result = ai_task("Analyze customer data and generate marketing insights");
+var result = task("Analyze customer data and generate marketing insights");
 
 // The AI runtime will:
 // 1. Decompose the goal into specific sub-tasks
@@ -41,7 +41,7 @@ Generate new functions, modules, or entire classes at runtime based on natural l
 
 ```cx
 // Generate code from specifications
-var calculator = ai_synthesize(
+var calculator = synthesize(
     "Create a compound interest calculator with validation",
     language: "cx",
     features: ["input_validation", "error_handling"]

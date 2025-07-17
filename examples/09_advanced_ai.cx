@@ -24,7 +24,7 @@ var duration = now() - startTime;
 print("Original fibonacci(35) = " + result + " (took " + duration + "ms)");
 
 // AI adapts the code path for better performance
-ai_adapt("fibonacci", {
+adapt("fibonacci", {
     performance_data: { duration: duration, input_size: 35 },
     optimization_target: "speed",
     constraints: ["memory_efficient", "recursive_to_iterative"]
@@ -42,7 +42,7 @@ print("Performance improvement: " + ((duration - newDuration) / duration * 100) 
 print("--- Dynamic API Generation ---");
 
 // AI generates API endpoints based on requirements
-var apiSpec = ai_synthesize(
+var apiSpec = synthesize(
     "Create a REST API for user management with CRUD operations",
     language: "cx",
     framework: "web",
@@ -59,7 +59,7 @@ if (apiSpec.isSuccess) {
 // Example 3: Intelligent Data Processing Pipeline
 print("--- Intelligent Data Processing ---");
 
-var dataProcessor = ai_task(
+var dataProcessor = task(
     "Create a data processing pipeline for customer analytics",
     requirements: {
         input_format: "csv",
@@ -106,7 +106,7 @@ function calculateTax(income, deductions) {
 }
 
 // AI generates comprehensive test cases
-var testSuite = ai_synthesize(
+var testSuite = synthesize(
     "Generate comprehensive test cases for the calculateTax function",
     target_function: "calculateTax",
     test_types: ["boundary", "edge_cases", "negative", "stress"],
@@ -140,7 +140,7 @@ if (testSuite.isSuccess) {
 // Example 5: Natural Language to Code
 print("--- Natural Language to Code ---");
 
-var nlToCode = ai_synthesize(
+var nlToCode = synthesize(
     "Write a function that finds the most frequent word in a text, ignoring case and punctuation",
     style: "functional",
     optimization: "readability"
@@ -166,7 +166,7 @@ function riskyOperation(data) {
     }
     
     // AI can predict potential failure points and add resilience
-    ai_adapt("riskyOperation", {
+    adapt("riskyOperation", {
         error_history: ["NullReferenceException", "ArgumentException"],
         resilience_strategy: "retry_with_backoff",
         fallback_behavior: "return_default_value"
