@@ -1,0 +1,45 @@
+// Comprehensive exception handling test
+print("=== Exception Handling Tests ===");
+
+// Test 1: Basic try-catch without exception
+print("Test 1: No exception");
+try {
+    var x = 5 + 3;
+    print("Result: " + x);
+} catch (error) {
+    print("This should not execute");
+}
+
+// Test 2: String exception
+print("\nTest 2: String exception");
+try {
+    throw "String error message";
+} catch (error) {
+    print("Caught:");
+    print(error);
+}
+
+// Test 3: Number exception  
+print("\nTest 3: Number exception");
+try {
+    throw 404;
+} catch (error) {
+    print("Caught:");
+    print(error);
+}
+
+// Test 4: Catch variable scoping
+print("\nTest 4: Variable scoping");
+var outerVar = "I am outside";
+try {
+    print(outerVar);
+    throw "Testing scope";
+} catch (error) {
+    print("Inside catch:");
+    print(outerVar);
+    print(error);
+}
+print("Back outside:");
+print(outerVar);
+
+print("\n=== All tests completed ===");

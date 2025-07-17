@@ -1,0 +1,81 @@
+// Test async/await functionality with native AI capabilities
+// AI functions are built into Cx - no imports needed!
+
+print("Testing async/await patterns with native AI");
+
+// Test basic async function
+async function greetAsync(name) -> string {
+    print("Processing greeting for: " + name);
+    return "Hello, " + name + "!";
+}
+
+// Test async function using native AI
+async function processWithAIAsync(text) -> string {
+    print("Processing with native AI: " + text);
+    
+    // Use native AI functions - these are built into Cx
+    var enhanced = await task("Enhance this text: " + text);
+    var analyzed = await reason("What is the sentiment of: " + enhanced);
+    
+    return "AI Result: " + analyzed;
+}
+
+// Test async function with native generation
+async function generateContentAsync(topic) -> string {
+    print("Generating content for: " + topic);
+    
+    // Native AI generation - no imports needed
+    var content = await generate("Write a brief summary about: " + topic);
+    var processed = await synthesize(content);
+    
+    return processed;
+}
+
+// Test await expression with native AI
+async function testNativeAIAsync() {
+    print("Starting native AI async operations...");
+    
+    var greeting = await greetAsync("AI World");
+    print(greeting);
+    
+    var aiResult = await processWithAIAsync("Hello native AI");
+    print(aiResult);
+    
+    var content = await generateContentAsync("async programming");
+    print(content);
+    
+    print("Native AI async operations completed!");
+}
+
+// Test parallel expression with native AI
+function testParallelAI() {
+    print("Testing parallel AI operations");
+    
+    // Run AI operations concurrently using native functions
+    var task1 = parallel task("Analyze sentiment of: Great day!");
+    var task2 = parallel generate("Brief fact about programming");
+    var task3 = parallel reason("Why is async programming important?");
+    
+    print("Parallel AI operations initiated");
+}
+
+// Test embedding with async
+async function testEmbedAsync() {
+    print("Testing async embeddings");
+    
+    var embedding1 = await embed("Hello world");
+    var embedding2 = await embed("Async programming");
+    
+    print("Embeddings generated successfully");
+}
+
+print("=== Testing Native AI Async Functions ===");
+testNativeAIAsync();
+
+print("=== Testing Parallel AI Operations ===");
+testParallelAI();
+
+print("=== Testing Async Embeddings ===");
+testEmbedAsync();
+
+print("Native AI async/await tests completed!");
