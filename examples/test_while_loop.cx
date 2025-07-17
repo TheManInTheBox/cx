@@ -1,8 +1,10 @@
-function main() {
+function main() 
+{
     print("Testing while loop:")
     
     i = 0
-    while (i < 3) {
+    while (i < 3) 
+    {
         print("Loop iteration:")
         print(i)
         i = i + 1

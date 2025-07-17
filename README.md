@@ -45,7 +45,8 @@ var content = generate("Create a marketing email for new product launch");
 var embedding = embed("Convert this text to vector representation");
 
 // Self-optimizing code adaptation
-function slowFunction() {
+function slowFunction() 
+{
     // Function can examine and optimize itself
     adapt(self, { performance: "optimize_for_speed" });
 }
@@ -55,7 +56,8 @@ function slowFunction() {
 
 ```cx
 // Complete autonomous workflow - no human intervention required
-async function autonomousAgent() {
+async function autonomousAgent() 
+{
     // 1. Goal interpretation and planning
     var goal = "Improve customer satisfaction scores by 15% within 30 days";
     var plan = await task(goal, {
@@ -68,11 +70,13 @@ async function autonomousAgent() {
     var tools = await reason("Discover available customer service tools and APIs");
     
     // 3. Multi-step execution with adaptation
-    for (step in plan.steps) {
+    for (step in plan.steps) 
+    {
         var result = await process(step.data, step.action);
         
         // 4. Learning and performance optimization
-        if (result.performance < 0.8) {
+        if (result.performance < 0.8) 
+        {
             adapt(step.action, {
                 feedback: result,
                 optimize_for: "accuracy"
@@ -159,15 +163,19 @@ total += 50;  // 150
 total *= 2;   // 300
 
 // Control flow
-if (score >= 90) {
+if (score >= 90) 
+{
     print("Excellent!");
-} else if (score >= 80) {
+} 
+else if (score >= 80) 
+{
     print("Good job!");
 }
 
 // While loops
 var counter = 5;
-while (counter > 0) {
+while (counter > 0) 
+{
     print("Count: " + counter);
     counter = counter - 1;
 }

@@ -57,7 +57,9 @@ The CX Language is an AI-native agentic programming language designed for autono
 - Use descriptive naming for functions, variables, and classes
 - Add XML documentation comments for public APIs and complex logic
 - Use consistent formatting with 4-space indentation
-- Do not use K&R-style brackets in CX code examples (opening bracket on same line as control statement)
+- **ALWAYS use Allman-style brackets in ALL CX code examples and documentation** (opening bracket on new line)
+- **NEVER use K&R-style brackets** (opening bracket on same line as control statement)
+- Apply Allman formatting to all function declarations, if statements, loops, and code blocks
 
 ### Grammar and Parser
 - All grammar changes must be made in `grammar/Cx.g4`
@@ -105,17 +107,28 @@ Implementation details:
 - Include basic examples and edge cases
 - Verify both parsing and runtime behavior
 - Focus on testing current phase features (Phase 1 complete, Phase 2 in progress)
-- Always use Allman-style brackets (opening bracket on a new line) in test examples:
+- **ALWAYS use Allman-style brackets (opening bracket on a new line) in ALL test examples and documentation:**
   ```
-  // Correct
+  // Correct - ALWAYS use this format
   function example() 
   {
-      // code
+      if (condition)
+      {
+          // code here
+      }
+      else
+      {
+          // alternative code
+      }
   }
   
-  // Incorrect - Do not use
+  // Incorrect - NEVER use this format
   function example() {
-      // code
+      if (condition) {
+          // code here
+      } else {
+          // alternative code
+      }
   }
   ```
 
