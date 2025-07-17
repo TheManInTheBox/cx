@@ -1307,6 +1307,177 @@ public class IlEmitter : IAstVisitor<object?>
         }
     }
 
+    /// <summary>
+    /// Try statement visitor - compiles try-catch blocks
+    /// </summary>
+    public object? VisitTryStatement(TryStatementNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling try-catch statement");
+
+            // Begin exception handling block
+            var tryBlock = _currentIl!.BeginExceptionBlock();
+
+            // Compile the try block
+            node.TryBlock.Accept(this);
+
+            // If there's a catch block
+            if (node.CatchBlock != null)
+            {
+                // Begin catch block for general Exception
+                _currentIl.BeginCatchBlock(typeof(Exception));
+
+                // If there's a catch variable, store the exception
+                if (node.CatchVariableName != null)
+                {
+                    var exceptionLocal = _currentIl.DeclareLocal(typeof(Exception));
+                    _currentLocals[node.CatchVariableName] = exceptionLocal;
+                    _currentIl.Emit(OpCodes.Stloc, exceptionLocal);
+                }
+                else
+                {
+                    // Pop the exception off the stack if not using it
+                    _currentIl.Emit(OpCodes.Pop);
+                }
+
+                // Compile the catch block
+                node.CatchBlock.Accept(this);
+            }
+
+            // End exception handling
+            _currentIl.EndExceptionBlock();
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling try statement");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Throw statement visitor - compiles throw expressions
+    /// </summary>
+    public object? VisitThrowStatement(ThrowStatementNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling throw statement");
+
+            // Evaluate the expression to throw
+            node.Expression.Accept(this);
+
+            // If it's not already an Exception, wrap it in a RuntimeException
+            _currentIl!.Emit(OpCodes.Isinst, typeof(Exception));
+            var isException = _currentIl.DefineLabel();
+            _currentIl.Emit(OpCodes.Brtrue, isException);
+
+            // Not an exception, create a RuntimeException
+            _currentIl.Emit(OpCodes.Newobj, typeof(Exception).GetConstructor(new[] { typeof(string) })!);
+            
+            _currentIl.MarkLabel(isException);
+            
+            // Throw the exception
+            _currentIl.Emit(OpCodes.Throw);
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling throw statement");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// New expression visitor - compiles object creation
+    /// </summary>
+    public object? VisitNewExpression(NewExpressionNode node)
+    {
+        try
+        {
+            _logger?.LogInformation("Compiling new expression: {TypeName}", node.TypeName);
+
+            // For now, handle basic types. In a full implementation, this would
+            // need proper type resolution and constructor selection
+            Type? targetType = null;
+            
+            // Simple type mapping - extend as needed
+            switch (node.TypeName)
+            {
+                case "Object":
+                    targetType = typeof(object);
+                    break;
+                case "String":
+                    targetType = typeof(string);
+                    break;
+                case "Exception":
+                    targetType = typeof(Exception);
+                    break;
+                default:
+                    // For unknown types, create a dynamic object
+                    targetType = typeof(object);
+                    break;
+            }
+
+            // Compile arguments
+            foreach (var arg in node.Arguments)
+            {
+                arg.Accept(this);
+            }
+
+            // Get constructor - simplified for demo
+            if (node.Arguments.Count == 0)
+            {
+                var defaultCtor = targetType.GetConstructor(Type.EmptyTypes);
+                if (defaultCtor != null)
+                {
+                    _currentIl!.Emit(OpCodes.Newobj, defaultCtor);
+                }
+                else
+                {
+                    // Create default object
+                    _currentIl!.Emit(OpCodes.Newobj, typeof(object).GetConstructor(Type.EmptyTypes)!);
+                }
+            }
+            else
+            {
+                // For simplicity, use string constructor if one argument
+                if (node.Arguments.Count == 1 && targetType == typeof(Exception))
+                {
+                    var stringCtor = targetType.GetConstructor(new[] { typeof(string) });
+                    if (stringCtor != null)
+                    {
+                        _currentIl!.Emit(OpCodes.Newobj, stringCtor);
+                    }
+                    else
+                    {
+                        _currentIl!.Emit(OpCodes.Pop); // Remove argument
+                        _currentIl!.Emit(OpCodes.Newobj, typeof(object).GetConstructor(Type.EmptyTypes)!);
+                    }
+                }
+                else
+                {
+                    // Default to object creation, pop extra arguments
+                    for (int i = 0; i < node.Arguments.Count; i++)
+                    {
+                        _currentIl!.Emit(OpCodes.Pop);
+                    }
+                    _currentIl!.Emit(OpCodes.Newobj, typeof(object).GetConstructor(Type.EmptyTypes)!);
+                }
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogError(ex, "Error compiling new expression");
+            throw;
+        }
+    }
+
     // Add logger field for AI operations
     private ILogger? _logger;
     

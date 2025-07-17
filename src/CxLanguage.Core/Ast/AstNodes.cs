@@ -36,6 +36,13 @@ public interface IAstVisitor<T>
     T VisitAIProcess(AIProcessNode node);
     T VisitAIEmbed(AIEmbedNode node);
     T VisitAIAdapt(AIAdaptNode node);
+    
+    // Exception handling visitor methods
+    T VisitTryStatement(TryStatementNode node);
+    T VisitThrowStatement(ThrowStatementNode node);
+    
+    // Object creation visitor method
+    T VisitNewExpression(NewExpressionNode node);
 }
 
 /// <summary>
@@ -399,4 +406,37 @@ public class AIAdaptNode : StatementNode
     public Dictionary<string, object> Options { get; set; } = new();
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAIAdapt(this);
+}
+
+/// <summary>
+/// Try-catch statement
+/// </summary>
+public class TryStatementNode : StatementNode
+{
+    public StatementNode TryBlock { get; set; } = null!;
+    public string? CatchVariableName { get; set; }
+    public StatementNode? CatchBlock { get; set; }
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitTryStatement(this);
+}
+
+/// <summary>
+/// Throw statement
+/// </summary>
+public class ThrowStatementNode : StatementNode
+{
+    public ExpressionNode Expression { get; set; } = null!;
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitThrowStatement(this);
+}
+
+/// <summary>
+/// New expression (object creation)
+/// </summary>
+public class NewExpressionNode : ExpressionNode
+{
+    public string TypeName { get; set; } = string.Empty;
+    public List<ExpressionNode> Arguments { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitNewExpression(this);
 }

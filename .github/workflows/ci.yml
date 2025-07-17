@@ -38,6 +38,10 @@ jobs:
         dotnet run --no-build --configuration Release -- run ../../examples/02_arithmetic.cx
         echo "✅ Arithmetic test passed"
         
+        echo "Testing comprehensive grammar test (validates all language constructs)..."
+        dotnet run --no-build --configuration Release -- parse ../../examples/comprehensive_grammar_test.cx
+        echo "✅ Comprehensive grammar test passed - all 60+ language constructs validated"
+        
         echo "Testing example scripts - allowing some known issues..."
         set +e  # Allow failures for known issues
         

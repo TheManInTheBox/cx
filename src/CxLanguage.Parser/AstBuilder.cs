@@ -31,10 +31,26 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         foreach (var stmtContext in context.statement())
         {
             var statement = (StatementNode)Visit(stmtContext);
-            program.Statements.Add(statement);
+            if (statement != null)
+            {
+                program.Statements.Add(statement);
+            }
         }
 
         return program;
+    }
+
+    public override AstNode VisitStatement(StatementContext context)
+    {
+        // Get the first child of the statement (the actual statement type)
+        if (context.ChildCount > 0)
+        {
+            var child = context.GetChild(0);
+            var result = Visit(child);
+            return result;
+        }
+        
+        throw new InvalidOperationException("Statement context has no children");
     }
 
     public override AstNode VisitVariableDeclaration(VariableDeclarationContext context)
@@ -64,7 +80,7 @@ public class AstBuilder : CxBaseVisitor<AstNode>
                 var param = new ParameterNode
                 {
                     Name = paramContext.IDENTIFIER().GetText(),
-                    Type = ParseType(paramContext.type())
+                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
                 };
                 SetLocation(param, paramContext);
                 funcDecl.Parameters.Add(param);
@@ -218,9 +234,21 @@ public class AstBuilder : CxBaseVisitor<AstNode>
             literal.Type = LiteralType.Boolean;
             return literal;
         }
+        else if (context.NULL() != null)
+        {
+            var literal = new LiteralNode();
+            SetLocation(literal, context);
+            literal.Value = null;
+            literal.Type = LiteralType.Null;
+            return literal;
+        }
         else if (context.expression() != null)
         {
             return Visit(context.expression());
+        }
+        else if (context.aiFunction() != null)
+        {
+            return Visit(context.aiFunction());
         }
 
         throw new InvalidOperationException($"Unknown primary expression: {context.GetText()}");
@@ -433,5 +461,207 @@ public class AstBuilder : CxBaseVisitor<AstNode>
             node.Column = ruleContext.Start.Column;
             node.SourceFile = _fileName;
         }
+    }
+
+    // AI Function visitors
+    public override AstNode VisitTaskFunction(TaskFunctionContext context)
+    {
+        var aiCall = new AICallNode();
+        SetLocation(aiCall, context);
+        
+        aiCall.FunctionName = "task";
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        
+        // Parse options from objectPropertyList if present
+        if (context.objectPropertyList() != null)
+        {
+            ParseAIOptions(aiCall, context.objectPropertyList());
+        }
+        
+        return aiCall;
+    }
+
+    private void ParseAIOptions(AICallNode aiCall, ObjectPropertyListContext optionsContext)
+    {
+        foreach (var property in optionsContext.objectProperty())
+        {
+            string key;
+            if (property.IDENTIFIER() != null)
+            {
+                key = property.IDENTIFIER().GetText();
+            }
+            else if (property.STRING_LITERAL() != null)
+            {
+                key = property.STRING_LITERAL().GetText().Trim('"');
+            }
+            else
+            {
+                continue; // Skip invalid property names
+            }
+
+            var valueExpr = (ExpressionNode)Visit(property.expression());
+            
+            // For now, store the expression directly
+            // In a more complete implementation, we might want to evaluate literals
+            if (valueExpr is LiteralNode literal)
+            {
+                aiCall.Options[key] = literal.Value ?? "";
+            }
+            else
+            {
+                // Store complex expressions as-is for later evaluation
+                aiCall.Options[key] = valueExpr;
+            }
+        }
+    }
+
+    public override AstNode VisitSynthesizeFunction(SynthesizeFunctionContext context)
+    {
+        var aiCall = new AICallNode();
+        SetLocation(aiCall, context);
+        
+        aiCall.FunctionName = "synthesize";
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        
+        // Parse options from objectPropertyList if present
+        if (context.objectPropertyList() != null)
+        {
+            ParseAIOptions(aiCall, context.objectPropertyList());
+        }
+        
+        return aiCall;
+    }
+
+    public override AstNode VisitReasonFunction(ReasonFunctionContext context)
+    {
+        var aiCall = new AICallNode();
+        SetLocation(aiCall, context);
+        
+        aiCall.FunctionName = "reason";
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        
+        // Parse options from objectPropertyList if present
+        if (context.objectPropertyList() != null)
+        {
+            ParseAIOptions(aiCall, context.objectPropertyList());
+        }
+        
+        return aiCall;
+    }
+
+    public override AstNode VisitProcessFunction(ProcessFunctionContext context)
+    {
+        var aiCall = new AICallNode();
+        SetLocation(aiCall, context);
+        
+        aiCall.FunctionName = "process";
+        
+        // ProcessFunction has two expressions
+        var expressions = context.expression();
+        aiCall.Arguments.Add((ExpressionNode)Visit(expressions[0]));
+        aiCall.Arguments.Add((ExpressionNode)Visit(expressions[1]));
+        
+        // Parse options from objectPropertyList if present
+        if (context.objectPropertyList() != null)
+        {
+            ParseAIOptions(aiCall, context.objectPropertyList());
+        }
+        
+        return aiCall;
+    }
+
+    public override AstNode VisitGenerateFunction(GenerateFunctionContext context)
+    {
+        var aiCall = new AICallNode();
+        SetLocation(aiCall, context);
+        
+        aiCall.FunctionName = "generate";
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        
+        // Parse options from objectPropertyList if present
+        if (context.objectPropertyList() != null)
+        {
+            ParseAIOptions(aiCall, context.objectPropertyList());
+        }
+        
+        return aiCall;
+    }
+
+    public override AstNode VisitEmbedFunction(EmbedFunctionContext context)
+    {
+        var aiCall = new AICallNode();
+        SetLocation(aiCall, context);
+        
+        aiCall.FunctionName = "embed";
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        
+        // Parse options from objectPropertyList if present
+        if (context.objectPropertyList() != null)
+        {
+            ParseAIOptions(aiCall, context.objectPropertyList());
+        }
+        
+        return aiCall;
+    }
+
+    public override AstNode VisitAdaptFunction(AdaptFunctionContext context)
+    {
+        var aiCall = new AICallNode();
+        SetLocation(aiCall, context);
+        
+        aiCall.FunctionName = "adapt";
+        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression()));
+        
+        // Parse options from objectPropertyList if present
+        if (context.objectPropertyList() != null)
+        {
+            ParseAIOptions(aiCall, context.objectPropertyList());
+        }
+        
+        return aiCall;
+    }
+
+    public override AstNode VisitTryStatement(TryStatementContext context)
+    {
+        var tryStmt = new TryStatementNode();
+        SetLocation(tryStmt, context);
+
+        tryStmt.TryBlock = (StatementNode)Visit(context.blockStatement(0));
+
+        if (context.blockStatement().Length > 1)
+        {
+            tryStmt.CatchVariableName = context.IDENTIFIER()?.GetText();
+            tryStmt.CatchBlock = (StatementNode)Visit(context.blockStatement(1));
+        }
+
+        return tryStmt;
+    }
+
+    public override AstNode VisitThrowStatement(ThrowStatementContext context)
+    {
+        var throwStmt = new ThrowStatementNode();
+        SetLocation(throwStmt, context);
+
+        throwStmt.Expression = (ExpressionNode)Visit(context.expression());
+
+        return throwStmt;
+    }
+
+    public override AstNode VisitNewExpression(NewExpressionContext context)
+    {
+        var newExpr = new NewExpressionNode();
+        SetLocation(newExpr, context);
+
+        newExpr.TypeName = context.IDENTIFIER().GetText();
+
+        if (context.argumentList() != null)
+        {
+            foreach (var argContext in context.argumentList().expression())
+            {
+                newExpr.Arguments.Add((ExpressionNode)Visit(argContext));
+            }
+        }
+
+        return newExpr;
     }
 }
