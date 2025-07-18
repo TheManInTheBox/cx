@@ -224,23 +224,116 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
         }
     }
 
-    public async Task<CxLanguage.Core.AI.AiStreamResponse> StreamGenerateTextAsync(string prompt, CxLanguage.Core.AI.AiRequestOptions? options = null)
+    public Task<CxLanguage.Core.AI.AiStreamResponse> StreamGenerateTextAsync(string prompt, CxLanguage.Core.AI.AiRequestOptions? options = null)
     {
-        await Task.CompletedTask;
         try
         {
             _logger.LogInformation("Starting stream generation for prompt length: {Length}", prompt.Length);
 
-            // TODO: Implement with correct Azure OpenAI SDK APIs
-            // Placeholder streaming implementation
-            var tokens = GenerateTokens(prompt);
-            return new AzureOpenAIStreamResponse(tokens);
+            // Create streaming tokens using Azure OpenAI streaming API
+            var tokens = StreamTokensFromAzureOpenAI(prompt, options);
+            return Task.FromResult<CxLanguage.Core.AI.AiStreamResponse>(new AzureOpenAIStreamResponse(tokens));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error starting stream generation");
             throw;
         }
+    }
+
+    private async IAsyncEnumerable<string> StreamTokensFromAzureOpenAI(string prompt, CxLanguage.Core.AI.AiRequestOptions? options = null)
+    {
+        var operation = "StreamGenerateText";
+        var stopwatch = Stopwatch.StartNew();
+        
+        using var httpClient = new HttpClient();
+        
+        // Add the API key if available
+        if (!string.IsNullOrEmpty(_config.ApiKey))
+        {
+            httpClient.DefaultRequestHeaders.Add("api-key", _config.ApiKey);
+        }
+        
+        // Create the streaming request content
+        var requestContent = new
+        {
+            messages = new[]
+            {
+                new { role = "system", content = options?.SystemPrompt ?? "You are a helpful AI assistant in a programming language." },
+                new { role = "user", content = prompt }
+            },
+            temperature = options?.Temperature ?? 0.7,
+            max_tokens = options?.MaxTokens ?? 1000,
+            stream = true // Enable streaming
+        };
+        
+        var requestJson = JsonSerializer.Serialize(requestContent);
+        var requestBody = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
+        
+        // Send the streaming request
+        var requestUriString = $"{_config.Endpoint}openai/deployments/{_config.DeploymentName}/chat/completions?api-version={_config.ApiVersion}";
+        using var response = await httpClient.PostAsync(requestUriString, requestBody);
+        
+        if (response.IsSuccessStatusCode)
+        {
+            using var stream = await response.Content.ReadAsStreamAsync();
+            using var reader = new StreamReader(stream);
+            
+            string? line;
+            while ((line = await reader.ReadLineAsync()) != null)
+            {
+                if (line.StartsWith("data: "))
+                {
+                    var data = line.Substring(6); // Remove "data: " prefix
+                    
+                    if (data == "[DONE]")
+                    {
+                        _logger.LogInformation("Streaming completed successfully");
+                        _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, true);
+                        break;
+                    }
+                    
+                    // Parse streaming data and yield token if found
+                    var token = ParseStreamingToken(data);
+                    if (!string.IsNullOrEmpty(token))
+                    {
+                        yield return token;
+                    }
+                }
+            }
+        }
+        else
+        {
+            var errorContent = await response.Content.ReadAsStringAsync();
+            _logger.LogError("Streaming request failed with status: {StatusCode}, Content: {Content}", 
+                response.StatusCode, errorContent);
+            _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, $"{response.StatusCode} - {errorContent}");
+            yield return $"[ERROR] Streaming failed: {response.StatusCode} - {errorContent}";
+        }
+    }
+
+    private string? ParseStreamingToken(string data)
+    {
+        try
+        {
+            var jsonData = JsonSerializer.Deserialize<JsonElement>(data);
+            
+            if (jsonData.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+            {
+                var firstChoice = choices.EnumerateArray().First();
+                if (firstChoice.TryGetProperty("delta", out var delta) && 
+                    delta.TryGetProperty("content", out var content))
+                {
+                    return content.GetString();
+                }
+            }
+        }
+        catch (JsonException jsonEx)
+        {
+            _logger.LogWarning(jsonEx, "Error parsing streaming JSON: {Data}", data);
+        }
+        
+        return null;
     }
 
     public async Task<CxLanguage.Core.AI.AiResponse[]> ProcessBatchAsync(string[] prompts, CxLanguage.Core.AI.AiRequestOptions? options = null)
@@ -261,23 +354,101 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
         }
     }
 
-    public Task<CxLanguage.Core.AI.AiEmbeddingResponse> GenerateEmbeddingAsync(string text, CxLanguage.Core.AI.AiRequestOptions? options = null)
+    public async Task<CxLanguage.Core.AI.AiEmbeddingResponse> GenerateEmbeddingAsync(string text, CxLanguage.Core.AI.AiRequestOptions? options = null)
     {
+        var stopwatch = Stopwatch.StartNew();
+        var operation = "GenerateEmbedding";
+        
         try
         {
-            _logger.LogInformation("Generating embedding for text: {Text}", text);
+            _logger.LogInformation("Generating embedding for text length: {Length}", text.Length);
 
-            // Note: This is a placeholder implementation
-            // In a real implementation, you would use Azure OpenAI's embedding API
-            _logger.LogWarning("Embedding generation not yet implemented for Azure OpenAI service");
+            // Use Azure OpenAI's text-embedding-ada-002 API endpoint
+            var embeddingDeployment = options?.Model ?? "text-embedding-ada-002";
+            var requestUri = new Uri($"{_config.Endpoint}openai/deployments/{embeddingDeployment}/embeddings?api-version={_config.ApiVersion}");
             
-            // Return a failure response for now
-            return Task.FromResult(CxLanguage.Core.AI.AiEmbeddingResponse.Failure("Embedding generation not implemented for Azure OpenAI service"));
+            // Create an HttpClient
+            using var httpClient = new HttpClient();
+            
+            // Add the API key if available
+            if (!string.IsNullOrEmpty(_config.ApiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add("api-key", _config.ApiKey);
+            }
+            
+            // Create the request content for embeddings
+            var requestContent = new
+            {
+                input = text,
+                user = "cx-language-runtime"
+            };
+            
+            // Serialize the request content
+            var requestJson = JsonSerializer.Serialize(requestContent);
+            var requestBody = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
+            
+            // Send the request
+            var response = await httpClient.PostAsync(requestUri, requestBody);
+            
+            // Read the complete response content
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            // Log the response for debugging
+            _logger.LogInformation("Embedding API Response Status: {StatusCode}", response.StatusCode);
+            
+            // Check if the request was successful
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    // Parse the response
+                    var responseJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                    
+                    // Extract the embedding data from the response
+                    var dataArray = responseJson.GetProperty("data");
+                    var firstEmbedding = dataArray.EnumerateArray().First();
+                    var embeddingArray = firstEmbedding.GetProperty("embedding");
+                    
+                    // Convert JsonElement array to float array
+                    var embedding = embeddingArray.EnumerateArray()
+                        .Select(e => (float)e.GetDouble())
+                        .ToArray();
+                    
+                    // Extract usage information if available
+                    var usage = new CxLanguage.Core.AI.AiUsage();
+                    if (responseJson.TryGetProperty("usage", out var usageJson))
+                    {
+                        usage.PromptTokens = usageJson.GetProperty("prompt_tokens").GetInt32();
+                        usage.TotalTokens = usageJson.GetProperty("total_tokens").GetInt32();
+                        usage.CompletionTokens = 0; // Embeddings don't have completion tokens
+                    }
+                    
+                    // Track successful telemetry
+                    _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, true, usage.TotalTokens);
+                    
+                    _logger.LogInformation("Embedding generation successful. Vector size: {Size}", embedding.Length);
+                    return CxLanguage.Core.AI.AiEmbeddingResponse.Success(embedding, usage);
+                }
+                catch (Exception parseEx)
+                {
+                    _logger.LogError(parseEx, "Error parsing embedding response: {ResponseContent}", responseContent);
+                    _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, parseEx.Message);
+                    return CxLanguage.Core.AI.AiEmbeddingResponse.Failure($"Error parsing response: {parseEx.Message}");
+                }
+            }
+            else
+            {
+                _logger.LogError("Embedding API request failed with status: {StatusCode}, Content: {Content}", 
+                    response.StatusCode, responseContent);
+                _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, $"{response.StatusCode} - {responseContent}");
+                return CxLanguage.Core.AI.AiEmbeddingResponse.Failure($"Azure OpenAI Embedding Error: {response.StatusCode} - {responseContent}");
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating embedding");
-            return Task.FromResult(CxLanguage.Core.AI.AiEmbeddingResponse.Failure($"Error: {ex.Message}"));
+            _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, ex.Message);
+            return CxLanguage.Core.AI.AiEmbeddingResponse.Failure($"Error: {ex.Message}");
         }
     }
 
@@ -416,17 +587,75 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
         {
             _logger.LogInformation("Analyzing image: {ImageUrl}", imageUrl);
 
-            // For now, use a simple mock implementation
-            // TODO: Implement actual Azure Computer Vision API integration
-            await Task.Delay(500); // Simulate processing time
-
-            var description = $"Mock analysis of image: {imageUrl}";
-            var extractedText = "Mock extracted text from image";
-            var tags = new[] { "mock", "analysis", "image" };
-            var objects = new[] { "mock-object" };
-
-            _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, true, null, null);
-            return CxLanguage.Core.AI.AiImageAnalysisResponse.Success(description, extractedText, tags, objects);
+            // Use GPT-4 Vision API for image analysis
+            var requestUri = $"{_config.Endpoint}openai/deployments/{_config.DeploymentName}/chat/completions?api-version={_config.ApiVersion}";
+            
+            using var httpClient = new HttpClient();
+            
+            // Add the API key if available
+            if (!string.IsNullOrEmpty(_config.ApiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add("api-key", _config.ApiKey);
+            }
+            
+            // Build analysis prompt based on options
+            var analysisPrompt = BuildImageAnalysisPrompt(options);
+            
+            // Create the request content for image analysis using vision model
+            var requestContent = new
+            {
+                messages = new[]
+                {
+                    new 
+                    { 
+                        role = "user", 
+                        content = new object[]
+                        {
+                            new { type = "text", text = analysisPrompt },
+                            new { type = "image_url", image_url = new { url = imageUrl } }
+                        }
+                    }
+                },
+                temperature = 0.1, // Low temperature for consistent analysis
+                max_tokens = 1000,
+                model = "gpt-4-vision-preview" // Use vision model
+            };
+            
+            var requestJson = JsonSerializer.Serialize(requestContent);
+            var requestBody = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
+            
+            // Send the request
+            var response = await httpClient.PostAsync(requestUri, requestBody);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    var responseJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                    var content = responseJson.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? "";
+                    
+                    // Parse the structured response
+                    var analysisResult = ParseImageAnalysisResponse(content, options);
+                    
+                    // Track successful telemetry
+                    _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, true, null, null);
+                    return analysisResult;
+                }
+                catch (Exception parseEx)
+                {
+                    _logger.LogError(parseEx, "Error parsing image analysis response: {ResponseContent}", responseContent);
+                    _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, parseEx.Message);
+                    return CxLanguage.Core.AI.AiImageAnalysisResponse.Failure($"Error parsing response: {parseEx.Message}");
+                }
+            }
+            else
+            {
+                _logger.LogError("Image analysis request failed with status: {StatusCode}, Content: {Content}", 
+                    response.StatusCode, responseContent);
+                _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, $"{response.StatusCode} - {responseContent}");
+                return CxLanguage.Core.AI.AiImageAnalysisResponse.Failure($"Image Analysis Error: {response.StatusCode} - {responseContent}");
+            }
         }
         catch (Exception ex)
         {
@@ -434,6 +663,78 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
             _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, ex.Message);
             return CxLanguage.Core.AI.AiImageAnalysisResponse.Failure($"Error: {ex.Message}");
         }
+    }
+
+    private string BuildImageAnalysisPrompt(CxLanguage.Core.AI.AiImageAnalysisOptions? options)
+    {
+        var promptParts = new List<string>
+        {
+            "Analyze this image and provide a structured response in JSON format with the following fields:"
+        };
+
+        if (options?.EnableDescription == true)
+        {
+            promptParts.Add("- description: A detailed description of the image");
+        }
+
+        if (options?.EnableTags == true)
+        {
+            promptParts.Add("- tags: An array of relevant tags or keywords");
+        }
+
+        if (options?.EnableObjects == true)
+        {
+            promptParts.Add("- objects: An array of objects or items visible in the image");
+        }
+
+        if (options?.EnableOCR == true)
+        {
+            promptParts.Add("- extractedText: Any text visible in the image");
+        }
+
+        promptParts.Add("Respond only with valid JSON.");
+
+        return string.Join("\n", promptParts);
+    }
+
+    private CxLanguage.Core.AI.AiImageAnalysisResponse ParseImageAnalysisResponse(string content, CxLanguage.Core.AI.AiImageAnalysisOptions? options)
+    {
+        try
+        {
+            // Try to extract JSON from the response
+            var jsonStart = content.IndexOf('{');
+            var jsonEnd = content.LastIndexOf('}');
+            
+            if (jsonStart >= 0 && jsonEnd > jsonStart)
+            {
+                var jsonContent = content.Substring(jsonStart, jsonEnd - jsonStart + 1);
+                var analysisJson = JsonSerializer.Deserialize<JsonElement>(jsonContent);
+                
+                var description = analysisJson.TryGetProperty("description", out var descElement) ? descElement.GetString() ?? "" : "";
+                var extractedText = analysisJson.TryGetProperty("extractedText", out var textElement) ? textElement.GetString() ?? "" : "";
+                
+                var tags = new List<string>();
+                if (analysisJson.TryGetProperty("tags", out var tagsElement) && tagsElement.ValueKind == JsonValueKind.Array)
+                {
+                    tags.AddRange(tagsElement.EnumerateArray().Select(t => t.GetString() ?? ""));
+                }
+                
+                var objects = new List<string>();
+                if (analysisJson.TryGetProperty("objects", out var objectsElement) && objectsElement.ValueKind == JsonValueKind.Array)
+                {
+                    objects.AddRange(objectsElement.EnumerateArray().Select(o => o.GetString() ?? ""));
+                }
+                
+                return CxLanguage.Core.AI.AiImageAnalysisResponse.Success(description, extractedText, tags.ToArray(), objects.ToArray());
+            }
+        }
+        catch (JsonException jsonEx)
+        {
+            _logger.LogWarning(jsonEx, "Failed to parse JSON response, using fallback parsing");
+        }
+        
+        // Fallback: Use the raw content as description
+        return CxLanguage.Core.AI.AiImageAnalysisResponse.Success(content, "", new[] { "ai-generated" }, new[] { "analysis" });
     }
 
     private async IAsyncEnumerable<string> GenerateTokens(string prompt)

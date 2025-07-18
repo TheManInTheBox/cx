@@ -1,17 +1,16 @@
-// Minimal class test for grammar validation
-print("=== Minimal Class Test ===");
+// Minimal class test - just creation
+// Following Allman-style brackets
 
-// Simple class declaration
-public class TestClass {
-    public name: string;
-    
-    public constructor(n: string) {
-        name = n;
-    }
-    
-    public function getName() -> string {
-        return name;
+class TestClass
+{
+    constructor()
+    {
+        print("TestClass constructor called");
     }
 }
 
-print("=== Grammar Test Complete ===");
+print("=== Minimal Class Test ===");
+print("Creating TestClass...");
+var obj = new TestClass();
+print("TestClass created successfully");
+print("=== Test Complete ===");

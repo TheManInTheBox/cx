@@ -1,3 +1,0 @@
-// Simple test for task function
-var result = task("hello world");
-print(result);

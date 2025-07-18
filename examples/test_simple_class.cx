@@ -1,42 +1,26 @@
-// Simple Class System Test
-// Basic class with inheritance and access modifiers
+// Simple class test - minimal functionality
+// Following Allman-style brackets
+
+class SimpleClass
+{
+    value: string;
+    
+    constructor(val)
+    {
+        value = val;
+        print("SimpleClass created with: " + value);
+    }
+    
+    function getValue()
+    {
+        return value;
+    }
+}
 
 print("=== Simple Class Test ===");
 
-// Define a simple base class
-public class Animal {
-    protected name: string;
-    
-    public constructor(animalName: string) {
-        name = animalName;
-    }
-    
-    public function speak() -> string {
-        return name + " makes a sound";
-    }
-}
+var obj = new SimpleClass("Hello World");
+var result = obj.getValue();
+print("Got value: " + result);
 
-// Define a derived class
-public class Dog extends Animal {
-    public constructor(dogName: string) {
-        super(dogName);
-    }
-    
-    public function speak() -> string {
-        return name + " barks!";
-    }
-    
-    public function wagTail() -> string {
-        return name + " wags tail";
-    }
-}
-
-// Test basic inheritance
-var animal = new Animal("Generic Animal");
-var dog = new Dog("Buddy");
-
-print(animal.speak());
-print(dog.speak());
-print(dog.wagTail());
-
-print("=== Simple Class Test Complete ===");
+print("=== Test Complete ===");

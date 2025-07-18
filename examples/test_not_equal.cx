@@ -1,5 +1,0 @@
-// Test != operator
-var x = 10
-var y = 15
-var notEqual = x != y
-print(notEqual)

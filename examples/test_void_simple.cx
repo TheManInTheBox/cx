@@ -1,8 +1,0 @@
-// Test function without explicit return, no assignment
-function greet(name) 
-{
-    print("Hello, " + name);
-}
-
-greet("World");
-print("Done");

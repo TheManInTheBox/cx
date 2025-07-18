@@ -1,4 +1,0 @@
-function main() {
-    y = "Test123"
-    print(y)
-}

@@ -1,4 +1,0 @@
-function main() {
-    message = "This works!"
-    print(message)
-}

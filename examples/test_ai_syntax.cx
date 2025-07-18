@@ -1,3 +1,0 @@
-var result = task("Complete a basic AI task")
-var summary = synthesize("This is some data to summarize")
-var answer = reason("What is 2 + 2?")

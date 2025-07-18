@@ -1,7 +1,0 @@
-// Test string concatenation and self keyword
-var name = "World";
-var greeting = "Hello " + name + "!";
-print(greeting);
-
-// Test self keyword  
-print(self);

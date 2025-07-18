@@ -1,4 +1,0 @@
-function main() {
-    y = "Hello, World!"
-    print(y)
-}

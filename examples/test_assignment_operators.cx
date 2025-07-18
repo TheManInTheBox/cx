@@ -1,24 +1,37 @@
-// Test compound assignment operators
-var total = 100;
+// Test incrementers and assignment operators
+print("=== Testing Assignment Operators ===");
 
-print("Initial value:");
-print(total);
+// Test basic assignment
+var a = 5;
+print("Initial a: " + a);
 
-total += 50;
-print("After += 50:");
-print(total);
+a = 10;
+print("After a = 10: " + a);
 
-total -= 25;
-print("After -= 25:");
-print(total);
+// Test += operator
+a += 3;
+print("After a += 3: " + a);
 
-total *= 2;
-print("After *= 2:");
-print(total);
+// Test -= operator  
+a -= 2;
+print("After a -= 2: " + a);
 
-total /= 4;
-print("After /= 4:");
-print(total);
+// Test *= operator
+a *= 2;
+print("After a *= 2: " + a);
 
-print("Final value:");
-print(total);
+// Test /= operator
+a /= 4;
+print("After a /= 4: " + a);
+
+// Test with different variable
+var counter = 0;
+print("Initial counter: " + counter);
+
+counter += 1;
+print("After counter += 1: " + counter);
+
+counter += 1;
+print("After second counter += 1: " + counter);
+
+print("=== Assignment Operator Test Complete ===");
