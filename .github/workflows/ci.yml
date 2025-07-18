@@ -8,10 +8,14 @@ on:
 
 env:
   DOTNET_VERSION: '8.0.x'
-  CONFIGURATION: Release
+  CONFIGURATION: Debug
+  # Mock all external services for CI/CD
+  USE_MOCK_SERVICES: true
+  AZURE_OPENAI_MOCK: true
+  APPLICATION_INSIGHTS_MOCK: true
 
 jobs:
-  build-and-test:
+  build-and-test-debug:
     runs-on: ubuntu-latest
     
     steps:
@@ -36,14 +40,26 @@ jobs:
     
     - name: Build solution
       run: dotnet build --no-restore --configuration ${{ env.CONFIGURATION }}
+      env:
+        USE_MOCK_SERVICES: true
+        AZURE_OPENAI_MOCK: true
+        APPLICATION_INSIGHTS_MOCK: true
     
     - name: Run unit tests
       run: dotnet test --no-build --configuration ${{ env.CONFIGURATION }} --verbosity normal --collect:"XPlat Code Coverage" --logger trx --results-directory TestResults
+      env:
+        USE_MOCK_SERVICES: true
+        AZURE_OPENAI_MOCK: true
+        APPLICATION_INSIGHTS_MOCK: true
     
     - name: Test Core Language Features
+      env:
+        USE_MOCK_SERVICES: true
+        AZURE_OPENAI_MOCK: true
+        APPLICATION_INSIGHTS_MOCK: true
       run: |
         cd src/CxLanguage.CLI
-        echo "🧪 Testing CX Language Core Features..."
+        echo "🧪 Testing CX Language Core Features with Mock Services..."
         
         echo "Testing Phase 1-2 Features (Variables, Functions, Control Flow)..."
         dotnet run --no-build --configuration ${{ env.CONFIGURATION }} -- run ../../examples/comprehensive_working_demo.cx
@@ -57,10 +73,14 @@ jobs:
         dotnet run --no-build --configuration ${{ env.CONFIGURATION }} -- parse ../../examples/comprehensive_grammar_test.cx
         echo "✅ Grammar validation passed - all language constructs validated"
     
-    - name: Test AI Integration (Phase 4)
+    - name: Test AI Integration (Phase 4) with Mock Services
+      env:
+        USE_MOCK_SERVICES: true
+        AZURE_OPENAI_MOCK: true
+        APPLICATION_INSIGHTS_MOCK: true
       run: |
         cd src/CxLanguage.CLI
-        echo "🤖 Testing CX Language AI Integration..."
+        echo "🤖 Testing CX Language AI Integration with Mock Services..."
         
         echo "Testing AI function parsing and compilation..."
         dotnet run --no-build --configuration ${{ env.CONFIGURATION }} -- parse ../../examples/phase4_complete_ai_test.cx
@@ -74,13 +94,24 @@ jobs:
         dotnet run --no-build --configuration ${{ env.CONFIGURATION }} -- parse ../../examples/ai_showcase.cx
         echo "✅ AI showcase examples validated"
         
-        echo "Note: Live AI service tests require Azure OpenAI configuration"
-        echo "Phase 4 AI integration compilation and parsing validated successfully"
+        echo "Testing runtime function injection with mocks..."
+        dotnet run --no-build --configuration ${{ env.CONFIGURATION }} -- run ../../examples/proof_injection_demo.cx
+        echo "✅ Runtime function injection test passed with mock services"
+        
+        echo "Testing AI functions with mock responses..."
+        dotnet run --no-build --configuration ${{ env.CONFIGURATION }} -- run ../../examples/test_ai_functions.cx
+        echo "✅ AI functions test passed with mock services"
+        
+        echo "Phase 4 AI integration with mock services validated successfully"
     
     - name: Test Individual Language Components
+      env:
+        USE_MOCK_SERVICES: true
+        AZURE_OPENAI_MOCK: true
+        APPLICATION_INSIGHTS_MOCK: true
       run: |
         cd src/CxLanguage.CLI
-        echo "🔧 Testing Individual Language Components..."
+        echo "🔧 Testing Individual Language Components with Mock Services..."
         
         # Test basic language features
         echo "Testing basic variables..."
@@ -140,21 +171,28 @@ jobs:
     
     - name: Test Results Summary
       run: |
-        echo "🎉 CX Language CI Test Summary"
-        echo "================================"
+        echo "🎉 CX Language CI Test Summary (Debug Build with Mock Services)"
+        echo "==============================================================="
         echo "✅ Core Language Features: Passed"
-        echo "✅ AI Integration (Phase 4): Compilation & Parsing Validated"
+        echo "✅ AI Integration (Phase 4): Validated with Mock Services"
+        echo "✅ Runtime Function Injection: Tested with Mock Services"
         echo "✅ Individual Components: Passed"
         echo "✅ Project Structure: Validated"
         echo ""
         echo "🚀 Phase Status:"
         echo "  Phase 1-2 (Variables, Functions): ✅ Complete"
         echo "  Phase 3 (Advanced Features): ✅ Complete"
-        echo "  Phase 4 (AI Integration): ✅ Complete"
+        echo "  Phase 4 (AI Integration): ✅ Complete (with Mock Services)"
         echo "  Phase 5 (Autonomous Features): 🔄 Ready"
         echo ""
-        echo "Note: Live AI service tests require Azure OpenAI configuration"
-        echo "All compilation and parsing tests passed successfully!"
+        echo "🧪 Test Configuration:"
+        echo "  Build Type: Debug"
+        echo "  Mock Services: Enabled"
+        echo "  Azure OpenAI: Mocked"
+        echo "  Application Insights: Mocked"
+        echo ""
+        echo "All tests passed successfully with mock services!"
+        echo "Production deployment requires live Azure OpenAI configuration"
     
     - name: Upload test results
       uses: actions/upload-artifact@v3
@@ -169,3 +207,56 @@ jobs:
       with:
         file: '**/coverage.cobertura.xml'
         fail_ci_if_error: false
+
+  build-and-test-release:
+    runs-on: ubuntu-latest
+    needs: build-and-test-debug
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+    
+    - name: Cache NuGet packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: Restore dependencies
+      run: dotnet restore
+    
+    - name: Build solution (Release)
+      run: dotnet build --no-restore --configuration Release
+    
+    - name: Run unit tests (Release)
+      run: dotnet test --no-build --configuration Release --verbosity normal
+    
+    - name: Test Core Language Features (Release)
+      run: |
+        cd src/CxLanguage.CLI
+        echo "🧪 Testing CX Language Core Features (Release Build)..."
+        
+        echo "Testing Phase 1-2 Features..."
+        dotnet run --no-build --configuration Release -- run ../../examples/comprehensive_working_demo.cx
+        echo "✅ Core language features test passed"
+        
+        echo "Testing Phase 3 Features..."
+        dotnet run --no-build --configuration Release -- run ../../examples/phase3_complete.cx
+        echo "✅ Phase 3 features test passed"
+    
+    - name: Release Build Summary
+      run: |
+        echo "🎉 CX Language Release Build Summary"
+        echo "===================================="
+        echo "✅ Release Build: Passed"
+        echo "✅ Core Language Features: Passed"
+        echo "✅ Unit Tests: Passed"
+        echo ""
+        echo "Release build ready for deployment!"
