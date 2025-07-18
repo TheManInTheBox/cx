@@ -1,0 +1,10 @@
+// Simple AI Function Test
+// This test specifically focuses on calling the live Azure OpenAI service
+
+print("=== Live Azure OpenAI Test ===");
+
+// Test a simple AI call
+var result = task("Write a simple 'Hello World' program in Python");
+print("AI Response: " + result);
+
+print("=== Test Complete ===");

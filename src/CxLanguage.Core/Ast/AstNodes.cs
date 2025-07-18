@@ -28,6 +28,8 @@ public interface IAstVisitor<T>
     T VisitIndexAccess(IndexAccessNode node);
     T VisitFunctionCall(FunctionCallNode node);
     T VisitArrayLiteral(ArrayLiteralNode node);
+    T VisitObjectLiteral(ObjectLiteralNode node);
+    T VisitObjectProperty(ObjectPropertyNode node);
     T VisitSelfReference(SelfReferenceNode node);
     
     // AI-specific visitor methods
@@ -321,6 +323,27 @@ public class ArrayLiteralNode : ExpressionNode
     public List<ExpressionNode> Elements { get; set; } = new();
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitArrayLiteral(this);
+}
+
+/// <summary>
+/// Object literal expression (e.g., { name: "John", age: 30 })
+/// </summary>
+public class ObjectLiteralNode : ExpressionNode
+{
+    public List<ObjectPropertyNode> Properties { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitObjectLiteral(this);
+}
+
+/// <summary>
+/// Object property within an object literal
+/// </summary>
+public class ObjectPropertyNode : AstNode
+{
+    public string Key { get; set; } = string.Empty;
+    public ExpressionNode Value { get; set; } = null!;
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitObjectProperty(this);
 }
 
 /// <summary>

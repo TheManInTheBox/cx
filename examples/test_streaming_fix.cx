@@ -1,0 +1,22 @@
+// Test to verify streaming responses are fixed
+// This should return a complete response, not a partial one
+
+function testStreamingFix()
+{
+    print("=== Testing Streaming Fix ===");
+    
+    // Test a simple task that should return a complete response
+    var response = task("Write a complete haiku about programming");
+    print("Task response:");
+    print(response);
+    
+    // Test another AI function
+    var reasoning = reason("What are the benefits of non-streaming responses?");
+    print("\nReason response:");
+    print(reasoning);
+    
+    print("\n=== Streaming Test Complete ===");
+}
+
+// Run the test
+testStreamingFix();

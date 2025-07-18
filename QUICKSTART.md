@@ -1,11 +1,14 @@
 # Cx Language Quick Start Guide
 
-Welcome to Cx Language! This guide will get you up and running in just a few minutes.
+Welcome to Cx Language - **the world's first AI-native agentic programming language!** 🤖
+
+**🎉 Phase 4 Complete**: All AI functions are now operational with enterprise-grade monitoring and **revolutionary runtime function injection**!
 
 ## Prerequisites
 
 - .NET 8 SDK or later
 - Windows, macOS, or Linux
+- Azure OpenAI API key (for AI features)
 
 ## Installation
 
@@ -23,14 +26,10 @@ Welcome to Cx Language! This guide will get you up and running in just a few min
 3. **Verify installation:**
    ```powershell
    cd src/CxLanguage.CLI
-   dotnet run -- run ../../var_minimal.cx
+   dotnet run -- run ../../examples/comprehensive_working_demo.cx
    ```
    
-   You should see:
-   ```
-   5
-   10
-   ```
+   You should see a comprehensive demo of all working features!
 
 ## Your First Cx Program
 
@@ -44,7 +43,8 @@ print(message)
 print("The answer is:")
 print(number)
 
-if (number > 40) {
+if (number > 40) 
+{
     print("That's a big number!")
 }
 ```
@@ -52,6 +52,94 @@ if (number > 40) {
 Run it:
 ```powershell
 dotnet run -- run hello.cx
+```
+
+## AI Functions - What Makes Cx Special ✨
+
+Cx Language features **7 native AI functions** built into the language core, including **revolutionary runtime function injection**:
+
+### Your First AI Program
+
+Create `my_first_ai.cx`:
+```cx
+// AI functions are built into the language!
+var analysis = reason("What are the benefits of renewable energy?")
+print("AI Analysis:")
+print(analysis)
+
+var summary = synthesize("Create a brief summary of artificial intelligence")
+print("AI Summary:")
+print(summary)
+
+var creative = generate("Write a short poem about programming")
+print("AI Creativity:")
+print(creative)
+```
+
+### **REVOLUTIONARY: Runtime Function Injection**
+
+Create `function_injection_demo.cx`:
+```cx
+// AI generates, compiles, and injects functions at runtime!
+var result = adapt("Create a function to add two numbers", {
+    type: "function",
+    name: "add",
+    parameters: ["a", "b"],
+    returnType: "number"
+})
+
+// Generated function is now available for immediate use
+var sum = add(7, 3)  // Returns 10
+print("Sum: " + sum)
+
+// Generate complex mathematical functions
+var squareResult = adapt("Create a function to square a number", {
+    type: "function",
+    name: "square",
+    parameters: ["x"],
+    returnType: "number"
+})
+
+var squared = square(6)  // Returns 36
+print("Squared: " + squared)
+
+// Functions persist throughout execution
+var anotherSum = add(10, 20)  // Still works: returns 30
+var anotherSquare = square(4)  // Still works: returns 16
+
+print("Another Sum: " + anotherSum)
+print("Another Square: " + anotherSquare)
+```
+
+#### What Just Happened?
+1. **AI Generated Code**: The `adapt()` function used AI to generate CX functions
+2. **Runtime Compilation**: Generated code was compiled to IL and loaded into memory
+3. **Immediate Execution**: Functions became available for use instantly
+4. **Persistent Functions**: Generated functions remain available throughout the program
+
+This is the world's first programming language with **runtime function injection** - where AI doesn't just help you write code, but actively writes and executes new functions as your program runs!
+
+### AI Configuration Setup
+
+Create `appsettings.json`:
+```json
+{
+  "AzureOpenAI": {
+    "ApiKey": "your-api-key-here",
+    "Endpoint": "https://your-resource.openai.azure.com/",
+    "DeploymentName": "gpt-4o-mini"
+  }
+}
+```
+
+Run your AI program:
+```powershell
+dotnet run -- run my_first_ai.cx
+```
+
+Run the **REVOLUTIONARY** runtime function injection demo:
+```powershell
+dotnet run -- run examples/proof_injection_demo.cx
 ```
 
 ## Language Basics
@@ -92,9 +180,12 @@ var greater = x > y    // false
 ### Control Flow
 ```cx
 // If/else statements
-if (age >= 18) {
+if (age >= 18) 
+{
     print("Adult")
-} else {
+} 
+else 
+{
     print("Minor")
 }
 

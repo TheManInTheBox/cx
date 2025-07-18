@@ -1,0 +1,25 @@
+// Test to demonstrate JSON deserialization working
+// This test specifically asks for JSON responses to show object conversion
+
+var message = "Testing JSON deserialization in AI functions";
+print(message);
+
+print("=== JSON Object Deserialization Test ===");
+
+// Test 1: Request explicit JSON response
+var jsonResult = task("Please respond with this exact JSON: {\"name\": \"Alice\", \"age\": 25, \"city\": \"New York\"}");
+print("JSON Task Result: " + jsonResult);
+
+// Test 2: Request JSON array response
+var arrayResult = synthesize("Please respond with this JSON array: [\"item1\", \"item2\", \"item3\"]");
+print("JSON Array Result: " + arrayResult);
+
+// Test 3: Request complex JSON structure
+var complexResult = reason("Please respond with this JSON structure: {\"analysis\": {\"confidence\": 0.95, \"findings\": [\"pattern1\", \"pattern2\"]}, \"status\": \"complete\"}");
+print("Complex JSON Result: " + complexResult);
+
+print("=== JSON Deserialization Test Complete ===");
+
+// Note: If AI responses contain valid JSON, they should be automatically
+// converted to native CX objects (Dictionary<string, object> for objects,
+// object[] for arrays). If not valid JSON, they remain as strings.

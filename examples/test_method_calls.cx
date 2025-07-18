@@ -1,0 +1,26 @@
+// Test method calls specifically
+print("=== Method Call Test ===");
+
+class TestClass
+{
+    value: number;
+    
+    constructor(value: number)
+    {
+        this.value = value;
+    }
+    
+    function simple()
+    {
+        print("Simple method called");
+    }
+}
+
+var obj = new TestClass(42);
+print("Object created");
+
+print("About to call method...");
+obj.simple();
+print("Method called");
+
+print("=== Method Call Test Complete ===");

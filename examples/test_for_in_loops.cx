@@ -1,0 +1,29 @@
+// For-in loops test
+print("=== For-in Loops Test ===");
+
+// Test with array
+var numbers = [1, 2, 3, 4, 5];
+print("Array: " + numbers);
+
+print("For-in loop over array:");
+for (var num in numbers)
+{
+    print("Number: " + num);
+}
+
+// Test with object
+var person = {
+    name: "Alice",
+    age: 30,
+    city: "New York"
+};
+
+print("Object: " + person);
+
+print("For-in loop over object:");
+for (var key in person)
+{
+    print("Key: " + key + ", Value: " + person[key]);
+}
+
+print("=== For-in Loops Test Complete ===");

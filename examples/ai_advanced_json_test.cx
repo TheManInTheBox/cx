@@ -1,0 +1,57 @@
+// Advanced AI JSON Object Handling Example
+// This demonstrates working with structured AI responses as native CX objects
+
+print("=== Advanced AI JSON Object Handling ===");
+
+// Example 1: AI returns user profile data
+print("1. User Profile Analysis:");
+var userProfile = task("Please return user profile data in JSON format: {\"id\": 123, \"name\": \"John Doe\", \"email\": \"john@example.com\", \"preferences\": {\"theme\": \"dark\", \"notifications\": true}, \"scores\": [95, 87, 92]}");
+print("User Profile: " + userProfile);
+
+// Example 2: AI returns analysis results
+print("\n2. Data Analysis Results:");
+var analysisResult = reason("Analyze sales data and return JSON: {\"totalRevenue\": 125000, \"growthRate\": 0.15, \"topProducts\": [\"Product A\", \"Product B\", \"Product C\"], \"insights\": {\"bestMonth\": \"March\", \"trend\": \"increasing\"}}");
+print("Analysis: " + analysisResult);
+
+// Example 3: AI returns code structure
+print("\n3. Code Generation:");
+var codeStructure = synthesize("Generate a class structure in JSON: {\"className\": \"Customer\", \"properties\": [{\"name\": \"id\", \"type\": \"number\"}, {\"name\": \"name\", \"type\": \"string\"}, {\"name\": \"active\", \"type\": \"boolean\"}], \"methods\": [\"save\", \"delete\", \"validate\"]}");
+print("Code Structure: " + codeStructure);
+
+// Example 4: AI returns processing results
+print("\n4. Data Processing:");
+var processedData = process("customer_feedback.csv", "Process and summarize as JSON: {\"totalFeedback\": 500, \"averageRating\": 4.2, \"sentiment\": {\"positive\": 75, \"neutral\": 20, \"negative\": 5}, \"keywords\": [\"excellent\", \"fast\", \"helpful\"]}");
+print("Processed Data: " + processedData);
+
+// Example 5: AI returns creative content
+print("\n5. Content Generation:");
+var contentData = generate("Create blog post metadata in JSON: {\"title\": \"AI-Native Programming\", \"author\": \"CX Language Team\", \"publishDate\": \"2025-01-17\", \"tags\": [\"AI\", \"Programming\", \"Innovation\"], \"estimatedReadTime\": 5}");
+print("Content Data: " + contentData);
+
+// Example 6: AI returns embedding data
+print("\n6. Embedding Generation:");
+var embeddingData = embed("Generate embedding metadata as JSON: {\"text\": \"AI-native programming language\", \"embedding\": [0.1, 0.2, 0.3, 0.4, 0.5], \"dimension\": 5, \"model\": \"text-embedding-3-small\"}");
+print("Embedding Data: " + embeddingData);
+
+// Example 7: AI returns optimization suggestions
+print("\n7. Code Adaptation:");
+var optimizationData = adapt("function slowOperation() { return data; }", "Return optimization analysis as JSON: {\"currentPerformance\": \"slow\", \"suggestions\": [{\"type\": \"caching\", \"impact\": \"high\"}, {\"type\": \"async\", \"impact\": \"medium\"}], \"estimatedImprovement\": \"40%\"}");
+print("Optimization Data: " + optimizationData);
+
+// Example 8: Complex nested JSON structure
+print("\n8. Complex Nested Data:");
+var complexData = task("Return complex nested JSON: {\"project\": {\"name\": \"CX Language\", \"version\": \"1.0\", \"features\": {\"core\": [\"variables\", \"functions\", \"objects\"], \"ai\": [\"task\", \"reason\", \"synthesize\", \"process\", \"generate\", \"embed\", \"adapt\"]}, \"metrics\": {\"linesOfCode\": 15000, \"testCoverage\": 85, \"performance\": {\"startupTime\": \"250ms\", \"memoryUsage\": \"45MB\"}}}}");
+print("Complex Data: " + complexData);
+
+// Example 9: Array of objects
+print("\n9. Array of Objects:");
+var arrayData = reason("Return an array of team members as JSON: [{\"name\": \"Alice\", \"role\": \"Developer\", \"experience\": 5}, {\"name\": \"Bob\", \"role\": \"Designer\", \"experience\": 3}, {\"name\": \"Charlie\", \"role\": \"Manager\", \"experience\": 8}]");
+print("Array Data: " + arrayData);
+
+// Example 10: Mixed data types
+print("\n10. Mixed Data Types:");
+var mixedData = generate("Return mixed data types as JSON: {\"stringField\": \"Hello World\", \"numberField\": 42, \"booleanField\": true, \"nullField\": null, \"arrayField\": [1, 2, 3], \"objectField\": {\"nested\": \"value\"}}");
+print("Mixed Data: " + mixedData);
+
+print("\n=== AI JSON Object Handling Complete ===");
+print("All AI functions now support automatic JSON deserialization to native CX objects!");

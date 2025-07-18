@@ -1,0 +1,23 @@
+// Simple class test without method calls
+print("Testing class creation...");
+
+class Person 
+{
+    name: string;
+    age: number;
+    
+    constructor(name: string, age: number) 
+    {
+        this.name = name;
+        this.age = age;
+    }
+    
+    function greet() 
+    {
+        print("Hello from " + this.name);
+    }
+}
+
+print("Creating person...");
+var alice = new Person("Alice", 30);
+print("Person created successfully!");

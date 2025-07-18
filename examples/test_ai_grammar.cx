@@ -1,0 +1,20 @@
+// Phase 4 Simple AI Test
+print("=== Testing AI Function Grammar ===");
+
+// Test if AI functions can be called (even if they don't work yet)
+print("Testing AI function calls...");
+
+// Test basic syntax recognition
+print("1. Basic AI functions should parse:");
+print("   - task()");
+print("   - synthesize()");
+print("   - reason()");
+print("   - process()");
+print("   - generate()");
+print("   - embed()");
+print("   - adapt()");
+
+print("2. Testing self keyword:");
+print("   - self reference");
+
+print("=== Grammar Test Complete ===");

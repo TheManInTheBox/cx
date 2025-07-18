@@ -271,6 +271,7 @@ Always respond with valid JSON that can be parsed programmatically.
 
     private async Task<List<SubTask>> ParsePlanningResponse(string response)
     {
+        await Task.CompletedTask;
         try
         {
             // Extract JSON from the response (it might contain other text)
@@ -318,6 +319,7 @@ Always respond with valid JSON that can be parsed programmatically.
 
     private async Task<ValidationResult> ValidatePlan(TaskPlan plan)
     {
+        await Task.CompletedTask;
         // Basic validation logic
         if (plan.SubTasks.Count == 0)
         {

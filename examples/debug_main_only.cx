@@ -1,0 +1,5 @@
+// Test without function wrapper
+print("Before AI call");
+var result = task("hello world");
+print("After AI call");
+print(result);

@@ -1,0 +1,46 @@
+// Test AI Functions with Native CX Objects
+// This tests that AI functions return proper CX objects instead of strings
+
+print("=== Testing AI Functions with Native CX Objects ===");
+print("Testing that AI functions return Dictionary<string, object> objects");
+print("");
+
+// Test 1: task() function should return an object
+print("Test 1: task() function");
+var taskResult = task("Create a simple hello world program");
+print("Task result type: " + typeof(taskResult));
+print("Task result: " + taskResult);
+print("");
+
+// Test 2: synthesize() function should return an object
+print("Test 2: synthesize() function");
+var synthesizeResult = synthesize("Generate a function that adds two numbers");
+print("Synthesize result type: " + typeof(synthesizeResult));
+print("Synthesize result: " + synthesizeResult);
+print("");
+
+// Test 3: reason() function should return an object
+print("Test 3: reason() function");
+var reasonResult = reason("Why is the sky blue?");
+print("Reason result type: " + typeof(reasonResult));
+print("Reason result: " + reasonResult);
+print("");
+
+// Test 4: generate() function should return an object
+print("Test 4: generate() function");
+var generateResult = generate("Create a poem about programming");
+print("Generate result type: " + typeof(generateResult));
+print("Generate result: " + generateResult);
+print("");
+
+// Test 5: adapt() function should return an object
+print("Test 5: adapt() function");
+var adaptResult = adapt("Improve this code: var x = 1; print(x);");
+print("Adapt result type: " + typeof(adaptResult));
+print("Adapt result: " + adaptResult);
+print("");
+
+print("=== AI Function Object Tests Complete ===");
+print("All AI functions should now return native CX objects");
+print("Instead of raw strings, you should see Dictionary<string, object> objects");
+print("This enables proper property access and structured data handling");

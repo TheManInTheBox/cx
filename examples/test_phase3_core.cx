@@ -1,0 +1,36 @@
+// Phase 3 Feature Verification Test
+print("=== Phase 3 Core Features Test ===");
+
+// Test 1: Function return values
+function multiply(a, b) 
+{
+    return a * b;
+}
+
+var result = multiply(6, 7);
+print("Function returned: " + result);
+
+// Test 2: Arrays
+var fruits = ["apple", "banana", "orange"];
+print("Array created successfully");
+
+// Test 3: For-in loops
+print("Iterating through array:");
+for (var fruit in fruits) 
+{
+    print("Fruit: " + fruit);
+}
+
+// Test 4: Exception handling
+print("Testing exception handling:");
+try 
+{
+    print("In try block");
+    throw "Custom error";
+}
+catch (error) 
+{
+    print("Caught: " + error);
+}
+
+print("=== Phase 3 Test Complete ===");

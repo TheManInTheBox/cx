@@ -1,10 +1,15 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.Extensibility;
 using System.CommandLine;
 using CxLanguage.Parser;
 using CxLanguage.Compiler;
+using CxLanguage.Compiler.Modules;
 using CxLanguage.Azure.Services;
+using CxCoreAI = CxLanguage.Core.AI;
 
 namespace CxLanguage.CLI;
 
@@ -63,11 +68,15 @@ class Program
             return;
         }
 
+        var scriptExecutionStopwatch = System.Diagnostics.Stopwatch.StartNew();
+        IHost? host = null;
+        
         try
         {
             // Setup services
-            using var host = CreateHost();
+            host = CreateHost();
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
+            var telemetryService = host.Services.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
 
             logger.LogInformation("Running Cx script: {FileName}", file.Name);
 
@@ -82,17 +91,43 @@ class Program
                 {
                     Console.Error.WriteLine($"  Line {error.Line}, Column {error.Column}: {error.Message}");
                 }
+                
+                // Track failed script execution
+                telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, "Parse errors");
                 return;
             }
 
             // Compile the script
+            var compilationStopwatch = System.Diagnostics.Stopwatch.StartNew();
             var options = new CompilerOptions();
-            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(file.Name), options);
+            CxCoreAI.IAiService? aiService = null;
+            CxLanguage.Compiler.Modules.SemanticKernelAiFunctions? aiFunctions = null;
+            
+            try
+            {
+                aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
+                aiFunctions = host.Services.GetRequiredService<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: AI service not available: {ex.Message}");
+                Console.WriteLine("Function return values will still work, but AI functions will not.");
+                aiService = null;
+                aiFunctions = null;
+            }
+            
+            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(file.Name), options, aiService, aiFunctions);
             var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(file.Name), source);
+            
+            // Track compilation metrics
+            var linesOfCode = source.Split('\n').Length;
+            telemetryService?.TrackCompilation(file.Name, compilationStopwatch.Elapsed, compilationResult.IsSuccess, linesOfCode, 
+                compilationResult.IsSuccess ? null : compilationResult.ErrorMessage);
 
             if (!compilationResult.IsSuccess)
             {
                 Console.Error.WriteLine($"Compilation error: {compilationResult.ErrorMessage}");
+                telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, compilationResult.ErrorMessage);
                 return;
             }
 
@@ -102,28 +137,50 @@ class Program
             {
                 try
                 {
-                    // Create instance and run
-                    var instance = Activator.CreateInstance(compilationResult.ProgramType, new object());
+                    // Create instance with console, AI service, and SemanticKernelAiFunctions
+                    var instance = Activator.CreateInstance(
+                        compilationResult.ProgramType, 
+                        new object(),  // Console object
+                        aiService,     // AI service (can be null)
+                        aiFunctions    // SemanticKernelAiFunctions service (can be null)
+                    );
                     runMethod.Invoke(instance, null);
+                    
+                    // Track successful execution
+                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {
-                    Console.Error.WriteLine($"Runtime error: {ex.InnerException?.Message ?? ex.Message}");
+                    var errorMessage = ex.InnerException?.Message ?? ex.Message;
+                    Console.Error.WriteLine($"Runtime error: {errorMessage}");
                     if (ex.InnerException != null)
                     {
                         Console.Error.WriteLine($"Stack trace: {ex.InnerException.StackTrace}");
                     }
+                    
+                    // Track failed execution
+                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, errorMessage);
                 }
             }
             else
             {
                 Console.Error.WriteLine("No Run method found in compiled assembly.");
+                telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, "No Run method found");
             }
         }
         catch (Exception ex)
         {
             Console.Error.WriteLine($"Error running script: {ex.Message}");
             Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
+            
+            // Track exception
+            var telemetryService = host?.Services?.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
+            telemetryService?.TrackException(ex, "RunScript");
+            telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, ex.Message);
+        }
+        finally
+        {
+            host?.Dispose();
         }
     }
 
@@ -159,7 +216,23 @@ class Program
             // Compile the script
             var assemblyName = output?.Name ?? Path.ChangeExtension(source.Name, ".dll");
             var options = new CompilerOptions();
-            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(assemblyName), options);
+            
+            CxCoreAI.IAiService? aiService = null;
+            CxLanguage.Compiler.Modules.SemanticKernelAiFunctions? aiFunctions = null;
+            
+            try
+            {
+                aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
+                aiFunctions = host.Services.GetRequiredService<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Warning: AI service not available: {ex.Message}");
+                aiService = null;
+                aiFunctions = null;
+            }
+            
+            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(assemblyName), options, aiService, aiFunctions);
             var sourceText = File.ReadAllText(source.FullName);
             var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(assemblyName), sourceText);
 
@@ -228,13 +301,74 @@ class Program
 
     static IHost CreateHost()
     {
-        return Host.CreateDefaultBuilder()
-            .ConfigureServices((context, services) =>
-            {
-                services.AddLogging(builder => builder.AddConsole());
-                services.AddSingleton<IAiService, AzureOpenAIService>();
-            })
-            .Build();
+        try
+        {
+            return Host.CreateDefaultBuilder()
+                .ConfigureAppConfiguration((context, config) =>
+                {
+                    // Get the directory where the executable is located
+                    var assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
+                    var basePath = Path.GetDirectoryName(assemblyLocation) ?? Directory.GetCurrentDirectory();
+                    
+                    config.SetBasePath(basePath);
+                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+                    config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
+                    config.AddEnvironmentVariables();
+                })
+                .ConfigureServices((context, services) =>
+                {
+                    services.AddLogging(builder => 
+                    {
+                        builder.AddConsole();
+                        builder.AddApplicationInsights(
+                            configureTelemetryConfiguration: (config) => 
+                            {
+                                config.ConnectionString = context.Configuration.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING") 
+                                    ?? context.Configuration.GetSection("ApplicationInsights")["ConnectionString"];
+                            },
+                            configureApplicationInsightsLoggerOptions: (options) => { }
+                        );
+                    });
+
+                    // Add Application Insights telemetry for console applications
+                    services.AddApplicationInsightsTelemetryWorkerService(context.Configuration);
+                    
+                    // Add CX Language telemetry service
+                    services.AddSingleton<CxLanguage.Core.Telemetry.CxTelemetryService>();
+
+                    try
+                    {
+                        // Register the simple Semantic Kernel AI service
+                        services.AddSimpleSemanticKernelServices(context.Configuration);
+                        
+                        // Register the new SemanticKernelAiFunctions instead of old AiFunctions
+                        services.AddSingleton<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
+                    }
+                    catch (Exception ex)
+                    {
+                        // Log the error but continue - we'll just have null AI service
+                        Console.WriteLine($"Warning: AI services could not be initialized: {ex.Message}");
+                        Console.WriteLine("Function return values will still work, but AI functions will not.");
+                        
+                        // Register a null AI service for testing non-AI features
+                        services.AddSingleton<CxCoreAI.IAiService>(provider => null!);
+                    }
+                })
+                .Build();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating host: {ex.Message}");
+            
+            // Create a minimal host for testing
+            return new HostBuilder()
+                .ConfigureServices(services =>
+                {
+                    services.AddLogging(builder => builder.AddConsole());
+                    services.AddSingleton<CxCoreAI.IAiService>(provider => null!);
+                })
+                .Build();
+        }
     }
 }
 

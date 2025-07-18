@@ -1,0 +1,49 @@
+// Phase 4 - AI Integration Test
+print("=== PHASE 4: AI INTEGRATION TEST ===");
+
+// 1. BASIC AI FUNCTION CALLS
+print("\n1. Basic AI Functions:");
+
+// Task execution
+var taskResult = task("Generate a simple greeting message");
+print("Task result: " + taskResult);
+
+// Content synthesis
+var synthesizedContent = synthesize("Create a short poem about programming");
+print("Synthesized: " + synthesizedContent);
+
+// Reasoning
+var reasoningResult = reason("What is the best programming practice?");
+print("Reasoning: " + reasoningResult);
+
+// 2. AI FUNCTION WITH OPTIONS
+print("\n2. AI Functions with Options:");
+
+var advancedTask = task("Analyze this code", {
+    model: "gpt-4",
+    temperature: 0.7,
+    maxTokens: 100
+});
+print("Advanced task: " + advancedTask);
+
+// 3. SELF KEYWORD USAGE
+print("\n3. Self Keyword for Introspection:");
+
+function analyzeMyself()
+{
+    print("Function source: " + self);
+    var analysis = reason("Analyze this function: " + self);
+    print("Self-analysis: " + analysis);
+}
+
+analyzeMyself();
+
+// 4. AI FUNCTION CHAINING
+print("\n4. AI Function Chaining:");
+
+var step1 = task("Generate a problem statement");
+var step2 = reason("Analyze the problem: " + step1);
+var step3 = synthesize("Create a solution based on: " + step2);
+print("Chained result: " + step3);
+
+print("\n=== PHASE 4 TEST COMPLETE ===");

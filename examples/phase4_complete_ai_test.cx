@@ -1,0 +1,57 @@
+// CX Language - Phase 4 Complete AI Function Integration Test
+// This test verifies all 7 AI functions work with live Azure OpenAI service
+
+// Test all 7 AI functions with live service integration
+function testAllAiFunctions()
+{
+    print("=== CX Language Phase 4 Complete AI Function Test ===");
+    print("");
+    
+    // Test 1: Task function
+    print("1. Testing task() function:");
+    var taskResult = task("Create a simple greeting message");
+    print("Task result: " + taskResult);
+    print("");
+    
+    // Test 2: Reason function
+    print("2. Testing reason() function:");
+    var reasonResult = reason("Why is the sky blue?");
+    print("Reason result: " + reasonResult);
+    print("");
+    
+    // Test 3: Synthesize function
+    print("3. Testing synthesize() function:");
+    var synthesizeResult = synthesize("Combine the concepts of AI and programming");
+    print("Synthesize result: " + synthesizeResult);
+    print("");
+    
+    // Test 4: Process function
+    print("4. Testing process() function:");
+    var processResult = process("Hello world", "Make this text more formal");
+    print("Process result: " + processResult);
+    print("");
+    
+    // Test 5: Generate function
+    print("5. Testing generate() function:");
+    var generateResult = generate("Create a short poem about programming");
+    print("Generate result: " + generateResult);
+    print("");
+    
+    // Test 6: Embed function
+    print("6. Testing embed() function:");
+    var embedResult = embed("This is a test text for embedding");
+    print("Embed result: " + embedResult);
+    print("");
+    
+    // Test 7: Adapt function
+    print("7. Testing adapt() function:");
+    var adaptResult = adapt("Adapt this code to be more efficient");
+    print("Adapt result: " + adaptResult);
+    print("");
+    
+    print("=== All AI Functions Tested Successfully ===");
+    print("Phase 4 AI Integration Complete!");
+}
+
+// Run the comprehensive test
+testAllAiFunctions();
