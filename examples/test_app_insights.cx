@@ -1,0 +1,20 @@
+// Test Application Insights integration
+// This test should generate telemetry data for tracking
+
+function testAppInsights()
+{
+    print("=== Testing Application Insights Integration ===");
+    
+    // Test basic AI function to generate telemetry
+    var result = task("Create a simple greeting");
+    print("Task result: " + result);
+    
+    // Test another AI function
+    var reasoning = reason("What is the benefit of telemetry?");
+    print("Reason result: " + reasoning);
+    
+    print("=== App Insights test complete ===");
+}
+
+// Run the test
+testAppInsights();

@@ -437,12 +437,38 @@ public class AstBuilder : CxBaseVisitor<AstNode>
 
     public override AstNode VisitObjectLiteral(ObjectLiteralContext context)
     {
-        // For now, just return a null literal - object literals not fully implemented
-        var literal = new LiteralNode();
-        SetLocation(literal, context);
-        literal.Value = null;
-        literal.Type = LiteralType.Null;
-        return literal;
+        var objectLiteral = new ObjectLiteralNode();
+        SetLocation(objectLiteral, context);
+        
+        // Parse object properties if present
+        if (context.objectPropertyList() != null)
+        {
+            var propListContext = context.objectPropertyList();
+            foreach (var propContext in propListContext.objectProperty())
+            {
+                var property = new ObjectPropertyNode();
+                SetLocation(property, propContext);
+                
+                // Get the key (identifier or string literal)
+                if (propContext.IDENTIFIER() != null)
+                {
+                    property.Key = propContext.IDENTIFIER().GetText();
+                }
+                else if (propContext.STRING_LITERAL() != null)
+                {
+                    // Remove quotes from string literal
+                    var stringLiteral = propContext.STRING_LITERAL().GetText();
+                    property.Key = stringLiteral.Substring(1, stringLiteral.Length - 2);
+                }
+                
+                // Get the value expression
+                property.Value = (ExpressionNode)Visit(propContext.expression());
+                
+                objectLiteral.Properties.Add(property);
+            }
+        }
+        
+        return objectLiteral;
     }
 
     public override AstNode VisitArrayLiteral(ArrayLiteralContext context)

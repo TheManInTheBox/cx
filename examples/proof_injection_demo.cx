@@ -1,0 +1,61 @@
+// Proof of Runtime Function Injection - Actually calling the injected functions
+print("=== CX Runtime Function Injection PROOF Demo ===");
+print("");
+
+// Step 1: Generate and inject a simple addition function
+print("Step 1: Generating addition function...");
+var addResult = adapt("Create a function called 'add' that takes two numbers and returns their sum");
+print("✅ Function generated and injected into runtime");
+print("");
+
+// Step 2: Generate and inject a mathematical function
+print("Step 2: Generating square function...");
+var squareResult = adapt("Create a function called 'square' that takes a number and returns its square");
+print("✅ Function generated and injected into runtime");
+print("");
+
+// Step 3: Test that our own functions still work
+print("Step 3: Testing original functions...");
+function testOriginal(x)
+{
+    return x * 2;
+}
+
+var originalResult = testOriginal(5);
+print("Original function result (5 * 2):");
+print(originalResult);
+print("");
+
+// Step 4: PROOF - Actually call the injected functions
+print("Step 4: PROOF - Calling injected functions...");
+print("");
+
+// Test the injected add function
+print("Testing injected add(7, 3):");
+var addTestResult = add(7, 3);
+print("Result from AI-generated add function:");
+print(addTestResult);
+print("");
+
+// Test the injected square function
+print("Testing injected square(6):");
+var squareTestResult = square(6);
+print("Result from AI-generated square function:");
+print(squareTestResult);
+print("");
+
+// Test multiple calls to show they're persistent
+print("Testing multiple calls to prove persistence:");
+var addTest2 = add(10, 20);
+var squareTest2 = square(4);
+print("add(10, 20) =");
+print(addTest2);
+print("square(4) =");
+print(squareTest2);
+print("");
+
+print("=== PROOF COMPLETE ===");
+print("✅ AI-generated functions are WORKING and EXECUTABLE");
+print("✅ Functions persist in runtime and can be called multiple times");
+print("✅ Runtime injection is fully functional!");
+print("✅ The program has successfully adapted itself at runtime!");

@@ -201,6 +201,7 @@ public class ReasoningEngine
 
     private async Task<bool> IsSolutionSatisfactory(string goal, ReasoningState state, ReasoningOptions options)
     {
+        await Task.CompletedTask;
         if (state.Context.TryGetValue("evaluation", out var evalObj) && evalObj is EvaluationResult eval)
         {
             return eval.Score >= options.SatisfactionThreshold;
@@ -332,6 +333,7 @@ Provide refinements as a JSON array:
 
     private async Task<TaskPlan> ParsePlanningResponse(string response, string goal)
     {
+        await Task.CompletedTask;
         try
         {
             // This is a simplified parsing - in practice, you'd want more robust JSON extraction
@@ -366,6 +368,7 @@ Provide refinements as a JSON array:
 
     private async Task<EvaluationResult> ParseEvaluationResponse(string response)
     {
+        await Task.CompletedTask;
         try
         {
             var jsonStart = response.IndexOf('{');
@@ -403,6 +406,7 @@ Provide refinements as a JSON array:
 
     private async Task<List<Refinement>> ParseRefinementResponse(string response)
     {
+        await Task.CompletedTask;
         try
         {
             var jsonStart = response.IndexOf('[');
@@ -438,6 +442,7 @@ Provide refinements as a JSON array:
 
     private async Task ApplyRefinements(ReasoningState state, List<Refinement> refinements)
     {
+        await Task.CompletedTask;
         if (state.CurrentPlan == null) return;
 
         foreach (var refinement in refinements)

@@ -1,0 +1,117 @@
+// CX Language Vector Database Demo with Semantic Kernel Integration
+// This example demonstrates the vector database capabilities in CX language
+
+// Initialize memory with a text 
+var docId = ingest("The CX Language is an AI-native agentic programming language designed for autonomous workflows. It features first-class support for AI functions, JavaScript/TypeScript-like syntax, function introspection capabilities, and is built for .NET runtime via IL code generation.", {
+    source: "documentation",
+    metadata: { 
+        type: "concept", 
+        category: "language_design", 
+        version: "1.0" 
+    }
+});
+
+print("Document ingested with ID: " + docId);
+
+// Store multiple documents to demonstrate search
+ingest("The CX Language features native AI functions like task, synthesize, reason, process, generate, embed, and adapt for seamless AI integration.", {
+    source: "documentation",
+    metadata: { type: "feature", category: "ai_functions" }
+});
+
+ingest("CX syntax is similar to JavaScript/TypeScript for familiarity, with Allman-style braces where opening braces are on a new line.", {
+    source: "documentation",
+    metadata: { type: "syntax", category: "code_style" }
+});
+
+ingest("Function introspection in CX is enabled through the 'self' keyword, allowing functions to reference their own source code.", {
+    source: "documentation",
+    metadata: { type: "feature", category: "introspection" }
+});
+
+// Index the collection to ensure it's searchable
+var indexed = index("documentation", {
+    embedding_model: "text-embedding-3-small",
+    chunk_size: 512
+});
+
+print("Collection indexed: " + indexed);
+
+// Perform semantic search
+print("Performing semantic search for 'AI functions'...");
+var searchResults = search("What AI functions are available in CX?", {
+    collections: ["documentation"],
+    limit: 3,
+    similarity_threshold: 0.7,
+    include_metadata: true
+});
+
+// Display search results
+print("Search results:");
+for (var result in searchResults)
+{
+    print("---");
+    print("Score: " + result.score);
+    print("Text: " + result.text);
+    
+    if (result.metadata)
+    {
+        print("Metadata:");
+        print("  Type: " + result.metadata.type);
+        print("  Category: " + result.metadata.category);
+    }
+}
+
+// Calculate similarity between two texts
+var text1 = "CX is an agentic programming language";
+var text2 = "The CX language enables agent-based programming";
+var similarityScore = similarity(text1, text2);
+
+print("---");
+print("Similarity between:");
+print("  \"" + text1 + "\"");
+print("  \"" + text2 + "\"");
+print("Score: " + similarityScore);
+
+// Agent memory demonstration - storing and retrieving context
+print("---");
+print("Agent Memory Demonstration:");
+
+// Store context in agent memory
+var agentMemory = {
+    name: "Assistant",
+    goal: "Help users with CX programming",
+    context: {
+        user_preference: "Detailed explanations",
+        last_topic: "vector database"
+    }
+};
+
+// Convert to string for storage
+var memoryString = "Agent name: " + agentMemory.name + ", Goal: " + agentMemory.goal + 
+                  ", Context: User prefers " + agentMemory.context.user_preference + 
+                  ", Last topic: " + agentMemory.context.last_topic;
+
+ingest(memoryString, {
+    source: "agent_memory",
+    metadata: { type: "context", timestamp: "2023-06-15T10:30:00Z" }
+});
+
+// Retrieve agent memory through search
+var memoryResults = search("What are the user preferences?", {
+    collections: ["agent_memory"],
+    limit: 1
+});
+
+print("Retrieved agent memory:");
+if (memoryResults.length > 0)
+{
+    print(memoryResults[0].text);
+}
+else
+{
+    print("No memory found");
+}
+
+print("---");
+print("Vector database demo complete!");

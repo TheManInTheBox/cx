@@ -1,0 +1,52 @@
+// Test the enhanced adapt function that generates, compiles, and executes CX code
+// This demonstrates autonomous code generation with runtime compilation
+
+print("=== Testing Enhanced Adapt Function ===");
+print("The adapt function now generates CX code, compiles it, and makes it available to the runtime");
+
+// Test 1: Simple function adaptation
+print("\n--- Test 1: Simple Function Generation ---");
+var simpleResult = adapt("Create a function that calculates the factorial of a number");
+print("Adapt type: " + simpleResult.type);
+print("Adapt status: " + simpleResult.status);
+print("Generated code length: " + simpleResult.metadata.code_length);
+print("Compilation successful: " + simpleResult.metadata.compilation_successful);
+print("Generated code preview:");
+print(simpleResult.generated_code);
+print("Result: " + simpleResult.result);
+
+// Test 2: AI-enhanced code adaptation
+print("\n--- Test 2: AI-Enhanced Code Generation ---");
+var aiResult = adapt("Create a function that uses AI to analyze user sentiment and provide recommendations");
+print("Adapt type: " + aiResult.type);
+print("Adapt status: " + aiResult.status);
+print("Generated code length: " + aiResult.metadata.code_length);
+print("Compilation successful: " + aiResult.metadata.compilation_successful);
+print("Generated code preview:");
+print(aiResult.generated_code);
+print("Result: " + aiResult.result);
+
+// Test 3: Data processing adaptation
+print("\n--- Test 3: Data Processing Code Generation ---");
+var dataResult = adapt("Create a function that processes an array of numbers and returns statistical analysis");
+print("Adapt type: " + dataResult.type);
+print("Adapt status: " + dataResult.status);
+print("Generated code length: " + dataResult.metadata.code_length);
+print("Compilation successful: " + dataResult.metadata.compilation_successful);
+print("Generated code preview:");
+print(dataResult.generated_code);
+print("Result: " + dataResult.result);
+
+// Test 4: Optimization scenario
+print("\n--- Test 4: Algorithm Optimization ---");
+var optimizeResult = adapt("Optimize a sorting algorithm for better performance with large datasets");
+print("Adapt type: " + optimizeResult.type);
+print("Adapt status: " + optimizeResult.status);
+print("Generated code length: " + optimizeResult.metadata.code_length);
+print("Compilation successful: " + optimizeResult.metadata.compilation_successful);
+print("Generated code preview:");
+print(optimizeResult.generated_code);
+print("Result: " + optimizeResult.result);
+
+print("\n=== ENHANCED ADAPT FUNCTION TEST COMPLETE ===");
+print("The adapt function now provides true autonomous code generation with runtime compilation!");

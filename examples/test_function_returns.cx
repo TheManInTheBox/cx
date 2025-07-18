@@ -1,0 +1,32 @@
+// Function return values test
+print("=== Function Return Values Test ===");
+
+function add(a: number, b: number) -> number
+{
+    return a + b;
+}
+
+function greet(name: string) -> string
+{
+    return "Hello, " + name;
+}
+
+function getTrue() -> boolean
+{
+    return true;
+}
+
+// Test the functions
+print("Testing add function:");
+var result1 = add(5, 3);
+print("5 + 3 = " + result1);
+
+print("Testing greet function:");
+var result2 = greet("Alice");
+print(result2);
+
+print("Testing getTrue function:");
+var result3 = getTrue();
+print("getTrue() = " + result3);
+
+print("=== Return Values Test Complete ===");

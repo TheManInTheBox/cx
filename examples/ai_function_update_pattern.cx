@@ -1,0 +1,51 @@
+// Update Remaining AI Functions Script
+// This script shows the pattern for updating all remaining AI functions
+
+print("=== AI Function Update Pattern ===");
+print("All AI functions should return native CX objects with this structure:");
+print("");
+
+print("Success Object Structure:");
+print("{");
+print("  type: 'function_name',");
+print("  [input_parameter]: 'input_value',");
+print("  status: 'completed',");
+print("  result: 'ai_response_content',");
+print("  metadata: {");
+print("    function: 'function_name',");
+print("    timestamp: 'yyyy-MM-dd HH:mm:ss UTC',");
+print("    execution_time_ms: 123");
+print("  }");
+print("}");
+print("");
+
+print("Error Object Structure:");
+print("{");
+print("  type: 'function_name',");
+print("  [input_parameter]: 'input_value',");
+print("  status: 'failed' or 'error',");
+print("  error: 'error_message',");
+print("  metadata: {");
+print("    function: 'function_name',");
+print("    timestamp: 'yyyy-MM-dd HH:mm:ss UTC',");
+print("    execution_time_ms: 123");
+print("  }");
+print("}");
+print("");
+
+print("Functions to update:");
+print("1. ProcessAsync - should return object with type: 'process'");
+print("2. GenerateAsync - should return object with type: 'generate'");
+print("3. EmbedAsync - should return object with type: 'embed'");
+print("4. AdaptAsync - should return object with type: 'adapt'");
+print("");
+
+print("Benefits of native CX objects:");
+print("- Structured data access");
+print("- Consistent error handling");
+print("- Metadata tracking");
+print("- Property access: result.status, result.metadata.execution_time_ms");
+print("- Better debugging and logging");
+print("");
+
+print("=== Update Pattern Complete ===");

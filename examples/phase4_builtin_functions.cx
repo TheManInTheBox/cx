@@ -1,0 +1,172 @@
+// Phase 4: Built-in Data Ingestion Functions
+// Planned built-in functions for vector database operations
+
+print("=== Built-in Data Ingestion Functions ===");
+
+// 1. INGEST FUNCTION - Add data to vector database
+print("1. ingest() - Add data to vector database");
+
+// Basic text ingestion
+ingest("This is a sample document about machine learning");
+
+// Ingestion with metadata
+ingest("Advanced AI concepts and implementations", {
+    source: "technical_docs",
+    author: "AI Research Team",
+    category: "artificial_intelligence",
+    timestamp: "2025-01-17",
+    tags: ["AI", "machine_learning", "research"]
+});
+
+// File ingestion
+ingest("./documents/ai_research.pdf", {
+    type: "pdf",
+    extract_text: true,
+    chunk_size: 1024,
+    overlap: 128
+});
+
+// Batch ingestion
+var documents = [
+    "Document 1: Introduction to AI",
+    "Document 2: Machine Learning Fundamentals", 
+    "Document 3: Deep Learning Applications"
+];
+
+ingest(documents, {
+    batch_size: 10,
+    source: "course_materials"
+});
+
+// 2. INDEX FUNCTION - Optimize vector database for search
+print("2. index() - Optimize vector database for search");
+
+// Index with default settings
+index();
+
+// Index with custom settings
+index({
+    embedding_model: "text-embedding-3-large",
+    dimension: 1536,
+    similarity_metric: "cosine",
+    optimization_level: "high"
+});
+
+// Index specific collection
+index("technical_docs", {
+    embedding_model: "text-embedding-3-small",
+    batch_size: 100
+});
+
+// 3. SEARCH FUNCTION - Query vector database
+print("3. search() - Query vector database");
+
+// Basic semantic search
+var results = search("How does machine learning work?");
+
+// Advanced search with options
+var advanced_results = search("neural network architecture", {
+    limit: 5,
+    similarity_threshold: 0.8,
+    include_metadata: true,
+    include_scores: true,
+    filter: {
+        category: "artificial_intelligence",
+        tags: ["neural_networks"]
+    }
+});
+
+// Search with reranking
+var reranked_results = search("deep learning applications", {
+    limit: 10,
+    rerank: true,
+    rerank_model: "ms-marco-v2",
+    final_limit: 3
+});
+
+// Hybrid search (semantic + keyword)
+var hybrid_results = search("machine learning algorithms", {
+    hybrid_mode: true,
+    semantic_weight: 0.7,
+    keyword_weight: 0.3,
+    keywords: ["algorithm", "training", "model"]
+});
+
+// 4. MEMORY FUNCTION - Persistent memory for agents
+print("4. memory() - Persistent memory for agents");
+
+// Store agent memory
+memory.store("user_preferences", {
+    communication_style: "technical",
+    preferred_examples: "code_samples",
+    experience_level: "advanced"
+});
+
+// Retrieve agent memory
+var preferences = memory.get("user_preferences");
+
+// Update agent memory
+memory.update("user_preferences", {
+    last_interaction: "2025-01-17",
+    topics_discussed: ["AI", "vector_databases"]
+});
+
+// 5. EMBED FUNCTION - Generate embeddings directly
+print("5. embed() - Generate embeddings directly");
+
+// Generate embedding for text
+var embedding = embed("This is a sample text for embedding");
+
+// Generate embeddings with options
+var custom_embedding = embed("Technical documentation text", {
+    model: "text-embedding-3-large",
+    dimensions: 1536,
+    normalize: true
+});
+
+// Batch embedding generation
+var texts = ["Text 1", "Text 2", "Text 3"];
+var embeddings = embed(texts, {
+    batch_size: 32,
+    model: "text-embedding-3-small"
+});
+
+// 6. SIMILARITY FUNCTION - Calculate similarity between texts
+print("6. similarity() - Calculate similarity between texts");
+
+// Calculate semantic similarity
+var similarity_score = similarity(
+    "Machine learning is a subset of AI",
+    "AI includes machine learning techniques"
+);
+
+// Calculate similarity with custom model
+var custom_similarity = similarity(
+    "Deep learning uses neural networks",
+    "Neural networks are used in deep learning",
+    { model: "text-embedding-3-large" }
+);
+
+// 7. CLUSTER FUNCTION - Group similar documents
+print("7. cluster() - Group similar documents");
+
+// Cluster documents in the database
+var clusters = cluster({
+    collection: "technical_docs",
+    num_clusters: 5,
+    algorithm: "kmeans",
+    min_cluster_size: 3
+});
+
+// Cluster with custom parameters
+var advanced_clusters = cluster({
+    query: "machine learning topics",
+    limit: 100,
+    algorithm: "hierarchical",
+    linkage: "ward",
+    distance_threshold: 0.3
+});
+
+print("=== Built-in Functions Demo Complete ===");
+print("These functions will be implemented in Phase 4");
+print("Integration with Microsoft Semantic Kernel planned");

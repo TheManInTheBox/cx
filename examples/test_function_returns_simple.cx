@@ -1,0 +1,77 @@
+// Function Return Values Test
+
+// Simple function that adds two numbers and returns the result
+function add(a, b)
+{
+    return a + b;
+}
+
+// Function that returns a string
+function greeting(name)
+{
+    return "Hello, " + name;
+}
+
+// Function that returns a boolean
+function isPositive(num)
+{
+    if (num > 0)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+// Test the functions
+var result1 = add(5, 3);
+print("5 + 3 = " + result1);
+
+var result2 = greeting("World");
+print(result2);
+
+var result3 = isPositive(10);
+print("Is 10 positive? " + result3);
+
+var result4 = isPositive(-5);
+print("Is -5 positive? " + result4);
+
+// Function with branching return paths
+function testValue(x)
+{
+    if (x < 0)
+    {
+        return "Negative";
+    }
+    else if (x == 0)
+    {
+        return "Zero";
+    }
+    else
+    {
+        return "Positive";
+    }
+}
+
+// Test branching returns
+print("Testing -10: " + testValue(-10));
+print("Testing 0: " + testValue(0));
+print("Testing 10: " + testValue(10));
+
+// Function that calculates factorial
+function factorial(n)
+{
+    if (n <= 1)
+    {
+        return 1;
+    }
+    else
+    {
+        return n * factorial(n - 1);
+    }
+}
+
+// Test recursive function
+print("Factorial of 5: " + factorial(5));

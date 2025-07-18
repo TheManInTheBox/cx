@@ -123,7 +123,6 @@ primary
     | SELF
     | '(' expression ')'
     | aiFunction
-    | '{' objectPropertyList? '}'
     ;
 
 // AI-native functions

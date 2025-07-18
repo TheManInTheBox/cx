@@ -1,0 +1,7 @@
+// Basic array test without index access
+print("Testing basic array...");
+
+var arr = [1, 2, 3];
+print("Array created successfully");
+
+print("Test complete");
