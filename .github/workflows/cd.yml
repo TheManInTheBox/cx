@@ -57,8 +57,8 @@ jobs:
     - name: Configure secrets for production build
       run: |
         # Update appsettings.json with production secrets
-        sed -i 's/"ApiKey": "your-api-key-here"/"ApiKey": "${{ secrets.AZURE_OPENAI_API_KEY }}"/g' src/CxLanguage.CLI/appsettings.json
-        sed -i 's/"ConnectionString": "your-app-insights-connection-string"/"ConnectionString": "${{ secrets.APPLICATION_INSIGHTS_CONNECTION_STRING }}"/g' src/CxLanguage.CLI/appsettings.json
+        sed -i 's/"ApiKey": "YOUR_API_KEY_HERE"/"ApiKey": "${{ secrets.AZURE_OPENAI_API_KEY }}"/g' src/CxLanguage.CLI/appsettings.json
+        sed -i 's/"ConnectionString": "YOUR_CONNECTION_STRING_HERE"/"ConnectionString": "${{ secrets.APPLICATION_INSIGHTS_CONNECTION_STRING }}"/g' src/CxLanguage.CLI/appsettings.json
         echo "✅ Production secrets configured"
     
     - name: Run tests
