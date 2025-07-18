@@ -1,0 +1,33 @@
+// Test all AI functions with enhanced print
+print("Testing all AI functions with enhanced print formatting");
+
+// Test basic AI functions
+print("1. Task function:");
+var taskResult = task("Analyze the benefits of AI programming");
+print(taskResult);
+
+print("\n2. Generate function:");
+var generateResult = generate("Create a motivational quote");
+print(generateResult);
+
+print("\n3. Reason function:");
+var reasonResult = reason("Why is the sky blue?");
+print(reasonResult);
+
+print("\n4. Synthesize function:");
+var synthesizeResult = synthesize("Combine the concepts of AI and programming");
+print(synthesizeResult);
+
+print("\n5. Process function:");
+var processResult = process("Hello world", "Convert to uppercase");
+print(processResult);
+
+print("\n6. Embed function:");
+var embedResult = embed("AI programming language");
+print(embedResult);
+
+print("\n7. Adapt function:");
+var adaptResult = adapt("Make this text more technical: AI is cool");
+print(adaptResult);
+
+print("\nAll AI functions tested successfully!");

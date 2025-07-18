@@ -1,0 +1,8 @@
+// Test only the embed function with enhanced print
+print("Testing embed function with actual vector embeddings");
+
+print("Embedding text: AI programming language");
+var embedResult = embed("AI programming language");
+print(embedResult);
+
+print("Test complete!");

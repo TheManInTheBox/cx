@@ -23,6 +23,7 @@ public static class SemanticKernelServiceExtensions
         var endpoint = azureOpenAIConfig["Endpoint"] ?? throw new InvalidOperationException("AzureOpenAI:Endpoint is required");
         var apiKey = azureOpenAIConfig["ApiKey"] ?? throw new InvalidOperationException("AzureOpenAI:ApiKey is required");
         var deploymentName = azureOpenAIConfig["DeploymentName"] ?? "gpt-4o-mini";
+        var embeddingDeploymentName = azureOpenAIConfig["EmbeddingDeploymentName"] ?? "text-embedding-ada-002";
 
         // Register Semantic Kernel
         services.AddSingleton<Kernel>(serviceProvider =>
@@ -34,6 +35,14 @@ public static class SemanticKernelServiceExtensions
                 deploymentName: deploymentName,
                 endpoint: endpoint,
                 apiKey: apiKey);
+
+            // Add Azure OpenAI text embedding generation
+#pragma warning disable SKEXP0010
+            builder.AddAzureOpenAITextEmbeddingGeneration(
+                deploymentName: embeddingDeploymentName,
+                endpoint: endpoint,
+                apiKey: apiKey);
+#pragma warning restore SKEXP0010
             
             // Add logging
             builder.Services.AddSingleton(serviceProvider.GetRequiredService<ILoggerFactory>());

@@ -21,6 +21,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CxLanguage.Core\CxLanguage.Core.csproj" />
     <ProjectReference Include="..\CxLanguage.Parser\CxLanguage.Parser.csproj" />
+    <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
   </ItemGroup>
 
 </Project>

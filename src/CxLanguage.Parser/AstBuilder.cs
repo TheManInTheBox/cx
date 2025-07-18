@@ -585,67 +585,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
     }
 
-    public override AstNode VisitSynthesizeFunction(SynthesizeFunctionContext context)
-    {
-        var aiCall = new AICallNode();
-        SetLocation(aiCall, context);
-        
-        aiCall.FunctionName = "synthesize";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
-        
-        // If there's a second expression (options object), add it as an argument
-        if (context.expression().Length > 1)
-        {
-            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
-        }
-        
-        return aiCall;
-    }
-
     public override AstNode VisitReasonFunction(ReasonFunctionContext context)
     {
         var aiCall = new AICallNode();
         SetLocation(aiCall, context);
         
         aiCall.FunctionName = "reason";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
-        
-        // If there's a second expression (options object), add it as an argument
-        if (context.expression().Length > 1)
-        {
-            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
-        }
-        
-        return aiCall;
-    }
-
-    public override AstNode VisitProcessFunction(ProcessFunctionContext context)
-    {
-        var aiCall = new AICallNode();
-        SetLocation(aiCall, context);
-        
-        aiCall.FunctionName = "process";
-        
-        // ProcessFunction has two required expressions
-        var expressions = context.expression();
-        aiCall.Arguments.Add((ExpressionNode)Visit(expressions[0]));
-        aiCall.Arguments.Add((ExpressionNode)Visit(expressions[1]));
-        
-        // If there's a third expression (options object), add it as an argument
-        if (expressions.Length > 2)
-        {
-            aiCall.Arguments.Add((ExpressionNode)Visit(expressions[2]));
-        }
-        
-        return aiCall;
-    }
-
-    public override AstNode VisitGenerateFunction(GenerateFunctionContext context)
-    {
-        var aiCall = new AICallNode();
-        SetLocation(aiCall, context);
-        
-        aiCall.FunctionName = "generate";
         aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
         
         // If there's a second expression (options object), add it as an argument

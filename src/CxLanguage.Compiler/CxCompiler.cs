@@ -190,10 +190,10 @@ public class CxCompiler : IAstVisitor<object>
     /// </summary>
     private MethodInfo? GetMethodInfo(string name, int argCount)
     {
-        // Console.WriteLine
+        // Enhanced print function that handles Dictionary objects
         if (name == "print" && argCount == 1)
         {
-            return typeof(Console).GetMethod("WriteLine", new[] { typeof(object) });
+            return typeof(CxLanguage.Runtime.CxPrint).GetMethod("Print", new[] { typeof(object) });
         }
         
         // Console.Write
@@ -1132,9 +1132,7 @@ public class CxCompiler : IAstVisitor<object>
                 }
                 else
                 {
-                    // For unknown functions, generate a runtime call to a function resolver
-                    // This allows for runtime-injected functions to be called
-                    Console.WriteLine($"[DEBUG] Function not found at compile time, deferring to runtime: {identifier.Name}");
+                    Console.WriteLine($"🔍 COMPILER: Function not found at compile time, deferring to runtime: {identifier.Name}");
                     
                     // Load function name
                     _currentIl!.Emit(OpCodes.Ldstr, identifier.Name);
@@ -1154,6 +1152,7 @@ public class CxCompiler : IAstVisitor<object>
                     
                     // Call RuntimeFunctionRegistry.ExecuteFunction which will check both user-defined and injected functions
                     var executeMethod = typeof(RuntimeFunctionRegistry).GetMethod("ExecuteFunction", new[] { typeof(string), typeof(object[]) });
+                    Console.WriteLine($"🔗 COMPILER: Emitting call to RuntimeFunctionRegistry.ExecuteFunction for {identifier.Name}");
                     _currentIl.Emit(OpCodes.Call, executeMethod!);
                     
                     // The result is already an object on the stack
@@ -2005,12 +2004,22 @@ public class CompilationResult
         InjectedFunctions = injectedFunctions;
     }
 
-    public static CompilationResult Success(Assembly assembly, Type programType) => 
-        new(true, assembly, programType, null);
+    public static CompilationResult Success(Assembly assembly, Type programType) 
+    {
+        Console.WriteLine($"✅ COMPILATION RESULT: Success - Assembly: {assembly.FullName}, Type: {programType.Name}");
+        return new(true, assembly, programType, null);
+    }
 
-    public static CompilationResult SuccessWithInjections(Assembly assembly, Type programType, List<string> injectedFunctions) => 
-        new(true, assembly, programType, null, injectedFunctions);
+    public static CompilationResult SuccessWithInjections(Assembly assembly, Type programType, List<string> injectedFunctions) 
+    {
+        Console.WriteLine($"🎉 COMPILATION RESULT: Success with {injectedFunctions.Count} injected functions");
+        Console.WriteLine($"📋 INJECTED FUNCTIONS: {string.Join(", ", injectedFunctions)}");
+        return new(true, assembly, programType, null, injectedFunctions);
+    }
 
-    public static CompilationResult Failure(string errorMessage) => 
-        new(false, null, null, errorMessage);
+    public static CompilationResult Failure(string errorMessage) 
+    {
+        Console.WriteLine($"❌ COMPILATION RESULT: Failure - {errorMessage}");
+        return new(false, null, null, errorMessage);
+    }
 }
