@@ -1,0 +1,129 @@
+// Phase 3: Object Literals Complete Implementation
+// Demonstrates object creation, property access, and manipulation
+
+print("=== Object Literals Demo ===");
+
+// Basic object literal
+var person = 
+{
+    name: "John Doe",
+    age: 30,
+    city: "New York"
+};
+
+print("Person: " + person.name + ", Age: " + person.age + ", City: " + person.city);
+
+// Object with mixed data types
+var config = 
+{
+    debug: true,
+    timeout: 5000,
+    message: "Hello, World!"
+};
+
+print("Config - Debug: " + config.debug + ", Timeout: " + config.timeout);
+
+// Nested objects
+var employee = 
+{
+    name: "Jane Smith",
+    department: 
+    {
+        name: "Engineering",
+        location: "Building A"
+    },
+    skills: ["JavaScript", "Python", "CX"]
+};
+
+print("Employee: " + employee.name);
+print("Department: " + employee.department.name);
+print("Location: " + employee.department.location);
+
+// Object properties with functions
+var calculator = 
+{
+    x: 10,
+    y: 20,
+    operation: "add"
+};
+
+// Using object properties in expressions
+var result = calculator.x + calculator.y;
+print("Calculator result: " + result);
+
+// Object with string literal keys
+var apiConfig = 
+{
+    "api-key": "secret123",
+    "base-url": "https://api.example.com",
+    "max-retries": 3
+};
+
+print("API Key: " + apiConfig["api-key"]);
+print("Base URL: " + apiConfig["base-url"]);
+
+// Empty object
+var empty = {};
+print("Empty object created successfully");
+
+// Object in array
+var users = [
+    { name: "Alice", role: "admin" },
+    { name: "Bob", role: "user" }
+];
+
+print("First user: " + users[0].name + ", Role: " + users[0].role);
+print("Second user: " + users[1].name + ", Role: " + users[1].role);
+
+// Object with for-in loop
+var scores = 
+{
+    math: 95,
+    science: 87,
+    english: 92
+};
+
+print("=== Scores ===");
+for (var subject in scores) 
+{
+    print(subject + ": " + scores[subject]);
+}
+
+// Object with exception handling
+try 
+{
+    var data = 
+    {
+        status: "success",
+        value: 42
+    };
+    
+    if (data.status == "success") 
+    {
+        print("Data value: " + data.value);
+    }
+    else 
+    {
+        throw "Invalid status: " + data.status;
+    }
+}
+catch (error) 
+{
+    print("Error: " + error);
+}
+
+// Function returning object
+function createUser(username, email) 
+{
+    return 
+    {
+        username: username,
+        email: email,
+        active: true
+    };
+}
+
+var newUser = createUser("johndoe", "john@example.com");
+print("New user: " + newUser.username + " (" + newUser.email + ")");
+
+print("=== Object Literals Demo Complete ===");

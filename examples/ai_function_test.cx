@@ -1,0 +1,16 @@
+// Test AI functions with proper error handling
+print("Testing AI functions...");
+
+try
+{
+    var response = adapt("Create a simple function that adds two numbers");
+    print("AI function executed successfully");
+    print(response);
+}
+catch (error)
+{
+    print("AI function failed - this is expected without proper Azure OpenAI configuration");
+    print(error);
+}
+
+print("AI function test completed");

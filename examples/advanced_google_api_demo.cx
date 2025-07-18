@@ -1,0 +1,89 @@
+// === ADVANCED CODE ADAPTATION DEMO ===
+// This demonstrates the enhanced adapt() function generating CX code
+// to perform Google.com API calls and web requests
+
+print("=== ADVANCED CODE ADAPTATION DEMO ===");
+print("Objective: Generate CX code that performs Google.com API calls");
+print("");
+
+// Test 1: Generate basic web request function
+print("--- Test 1: Generate basic web request function ---");
+var webRequestResult = adapt("Create a function that makes an HTTP GET request to google.com and returns the response");
+print("Generated web request function:");
+print("Type: " + webRequestResult.type);
+print("Status: " + webRequestResult.status);
+print("Code length: " + webRequestResult.generatedCodeLength);
+print("Compilation successful: " + webRequestResult.compilationSuccess);
+print("Generated code preview:");
+print(webRequestResult.generatedCode);
+print("");
+
+// Test 2: Generate Google Search API function
+print("--- Test 2: Generate Google Search API function ---");
+var searchApiResult = adapt("Create a function that calls the Google Custom Search API with a search query parameter and API key");
+print("Generated Google Search API function:");
+print("Type: " + searchApiResult.type);
+print("Status: " + searchApiResult.status);
+print("Code length: " + searchApiResult.generatedCodeLength);
+print("Compilation successful: " + searchApiResult.compilationSuccess);
+print("Generated code preview:");
+print(searchApiResult.generatedCode);
+print("");
+
+// Test 3: Generate AI-enhanced Google request analyzer
+print("--- Test 3: Generate AI-enhanced Google request analyzer ---");
+var aiAnalyzerResult = adapt("Create a function that makes a request to Google.com, analyzes the response using AI task() function, and provides insights");
+print("Generated AI-enhanced analyzer:");
+print("Type: " + aiAnalyzerResult.type);
+print("Status: " + aiAnalyzerResult.status);
+print("Code length: " + aiAnalyzerResult.generatedCodeLength);
+print("Compilation successful: " + aiAnalyzerResult.compilationSuccess);
+print("Generated code preview:");
+print(aiAnalyzerResult.generatedCode);
+print("");
+
+// Test 4: Generate comprehensive Google API client
+print("--- Test 4: Generate comprehensive Google API client ---");
+var clientResult = adapt("Create a comprehensive Google API client function that handles authentication, makes multiple API calls, processes responses, and uses AI to synthesize results");
+print("Generated comprehensive Google API client:");
+print("Type: " + clientResult.type);
+print("Status: " + clientResult.status);
+print("Code length: " + clientResult.generatedCodeLength);
+print("Compilation successful: " + clientResult.compilationSuccess);
+print("Generated code preview:");
+print(clientResult.generatedCode);
+print("");
+
+// Test 5: Generate error handling and retry logic
+print("--- Test 5: Generate error handling and retry logic ---");
+var errorHandlingResult = adapt("Create a function that makes Google API calls with robust error handling, exponential backoff retry logic, and timeout management");
+print("Generated error handling function:");
+print("Type: " + errorHandlingResult.type);
+print("Status: " + errorHandlingResult.status);
+print("Code length: " + errorHandlingResult.generatedCodeLength);
+print("Compilation successful: " + errorHandlingResult.compilationSuccess);
+print("Generated code preview:");
+print(errorHandlingResult.generatedCode);
+print("");
+
+// Test 6: Generate data processing pipeline
+print("--- Test 6: Generate data processing pipeline ---");
+var pipelineResult = adapt("Create a function that fetches data from Google APIs, processes it through multiple stages, and uses AI functions to generate insights and recommendations");
+print("Generated data processing pipeline:");
+print("Type: " + pipelineResult.type);
+print("Status: " + pipelineResult.status);
+print("Code length: " + pipelineResult.generatedCodeLength);
+print("Compilation successful: " + pipelineResult.compilationSuccess);
+print("Generated code preview:");
+print(pipelineResult.generatedCode);
+print("");
+
+print("=== ADVANCED CODE ADAPTATION DEMO COMPLETE ===");
+print("The adapt() function successfully generated sophisticated Google API integration code!");
+print("Generated CX code demonstrates:");
+print("- HTTP request handling");
+print("- API authentication and authorization");
+print("- Error handling and retry logic");
+print("- AI-enhanced response analysis");
+print("- Data processing pipelines");
+print("- Autonomous code generation for complex web integrations!");

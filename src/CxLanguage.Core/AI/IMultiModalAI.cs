@@ -197,6 +197,7 @@ public class MultiModalAIService : IMultiModalAI
         string? description = null, 
         MultiModalOptions? options = null)
     {
+        await Task.CompletedTask;
         try
         {
             options ??= new MultiModalOptions();
@@ -226,6 +227,7 @@ public class MultiModalAIService : IMultiModalAI
 
     public async Task<AiResponse> ProcessAudioAsync(byte[] audioData, MultiModalOptions? options = null)
     {
+        await Task.CompletedTask;
         try
         {
             _logger.LogInformation("Processing audio with size: {Size} bytes", audioData.Length);
@@ -249,6 +251,7 @@ public class MultiModalAIService : IMultiModalAI
 
     public async Task<AiResponse> ProcessVideoAsync(byte[] videoData, MultiModalOptions? options = null)
     {
+        await Task.CompletedTask;
         try
         {
             _logger.LogInformation("Processing video with size: {Size} bytes", videoData.Length);
@@ -274,6 +277,7 @@ public class MultiModalAIService : IMultiModalAI
         string text, 
         EmbeddingOptions? options = null)
     {
+        await Task.CompletedTask;
         try
         {
             options ??= new EmbeddingOptions();
@@ -309,6 +313,7 @@ public class MultiModalAIService : IMultiModalAI
         object[] parameters, 
         FunctionCallOptions? options = null)
     {
+        await Task.CompletedTask;
         var startTime = DateTime.UtcNow;
         
         try

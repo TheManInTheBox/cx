@@ -1,0 +1,98 @@
+// Adaptive Web Search Demo
+// This script demonstrates how CX AI functions can adapt to feedback
+// and iteratively solve complex problems like API integration
+
+print("=== Adaptive Web Search API Integration Demo ===");
+print("Objective: Figure out how to call Google Search API");
+print("");
+
+// Step 1: Initial research and reasoning
+print("Step 1: Initial Research Phase");
+var initialResearch = reason("I need to integrate with Google Search API to perform web searches. What are the key requirements, authentication methods, and API endpoints I should consider?");
+print("Initial research completed");
+print("RESULT:");
+print(initialResearch);
+print("");
+
+// Step 2: Synthesize an implementation plan
+print("Step 2: Synthesizing Implementation Plan");
+var implementationPlan = synthesize("Create a detailed implementation plan for integrating Google Search API including: 1) Authentication requirements, 2) API endpoint structure, 3) Required parameters, 4) Response handling, 5) Error scenarios");
+print("Implementation plan created");
+print("RESULT:");
+print(implementationPlan);
+print("");
+
+// Step 3: Generate initial API call structure
+print("Step 3: Generating Initial API Structure");
+var initialApiStructure = generate("Generate a detailed HTTP request structure for Google Custom Search API including headers, query parameters, and authentication. Include specific examples.");
+print("Initial API structure generated");
+print("RESULT:");
+print(initialApiStructure);
+print("");
+
+// Step 4: Process feedback and adapt
+print("Step 4: Processing Feedback and Adapting");
+var feedbackContext = "The initial API structure needs to handle rate limiting, implement proper error handling, and support pagination. Also consider alternative search engines if Google API fails.";
+var adaptedStructure = process(initialApiStructure, feedbackContext);
+print("API structure adapted based on feedback");
+print("RESULT:");
+print(adaptedStructure);
+print("");
+
+// Step 5: Reason about implementation challenges
+print("Step 5: Analyzing Implementation Challenges");
+var challengeAnalysis = reason("What are the main challenges in implementing Google Search API integration? Consider: API keys, rate limits, response parsing, error handling, and fallback strategies.");
+print("Challenge analysis completed");
+print("RESULT:");
+print(challengeAnalysis);
+print("");
+
+// Step 6: Adapt to new requirements
+print("Step 6: Adapting to New Requirements");
+var newRequirements = "The search needs to support filtering by date, language, and content type. It should also cache results and provide search suggestions.";
+var enhancedPlan = adapt(implementationPlan + " Additional requirements: " + newRequirements);
+print("Plan enhanced with new requirements");
+print("RESULT:");
+print(enhancedPlan);
+print("");
+
+// Step 7: Generate final implementation
+print("Step 7: Generating Final Implementation");
+var finalImplementation = generate("Create a comprehensive implementation guide for Google Search API integration with all discussed features: authentication, rate limiting, caching, filtering, error handling, and fallback strategies. Include code examples and best practices.");
+print("Final implementation generated");
+print("RESULT:");
+print(finalImplementation);
+print("");
+
+// Step 8: Synthesize lessons learned
+print("Step 8: Synthesizing Lessons Learned");
+var lessonsLearned = synthesize("Based on the adaptive process of figuring out Google Search API integration, what are the key lessons about API integration, adaptive problem-solving, and iterative development?");
+print("Lessons learned documented");
+print("RESULT:");
+print(lessonsLearned);
+print("");
+
+// Step 9: Task completion verification
+print("Step 9: Task Completion Verification");
+var completionCheck = task("Verify that we have successfully created a comprehensive plan for Google Search API integration that addresses all requirements and challenges identified during the adaptive process.");
+print("Task completion verified");
+print("RESULT:");
+print(completionCheck);
+print("");
+
+// Step 10: Final adaptation based on overall context
+print("Step 10: Final Contextual Adaptation");
+var finalContext = "This was a demonstration of AI-driven adaptive problem solving where we iteratively refined our approach to API integration based on feedback and new requirements.";
+var finalAdaptation = adapt(completionCheck + " Context: " + finalContext);
+print("Final adaptation completed");
+print("RESULT:");
+print(finalAdaptation);
+print("");
+
+print("=== Adaptive Web Search Demo Complete ===");
+print("Successfully demonstrated:");
+print("- Iterative problem solving");
+print("- Adaptive response to feedback");
+print("- Multi-step reasoning process");
+print("- Context-aware adaptation");
+print("- Comprehensive solution synthesis");

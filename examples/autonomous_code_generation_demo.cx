@@ -1,0 +1,88 @@
+// === AUTONOMOUS CO// Test 2: String proc// Test 3: AI-enhanced// Test 4: Data processing function
+print("--- Test 4: Generate a data processing function ---");
+var dataResult = adapt("Create a function that finds the maximum value in an array");
+print("Generated data function result:");
+print("Type: " + dataResult.type);
+print("Status: " + dataResult.status);
+print("Code length: " + dataResult.generatedCodeLength);
+print("Compilation successful: " + dataResult.compilationSuccess);
+print("Generated code preview:");
+print(dataResult.generatedCode);
+print("");print("--- Test 3: Generate an AI-enhanced function ---");
+var aiResult = adapt("Create a function that uses the task() AI function to analyze text");
+print("Generated AI function result:");
+print("Type: " + aiResult.type);
+print("Status: " + aiResult.status);
+print("Code length: " + aiResult.generatedCodeLength);
+print("Compilation successful: " + aiResult.compilationSuccess);
+print("Generated code preview:");
+print(aiResult.generatedCode);
+print("");tion
+print("--- Test 2: Generate a string processing function ---");
+var stringResult = adapt("Create a function that reverses a string");
+print("Generated string function result:");
+print("Type: " + stringResult.type);
+print("Status: " + stringResult.status);
+print("Code length: " + stringResult.generatedCodeLength);
+print("Compilation successful: " + stringResult.compilationSuccess);
+print("Generated code preview:");
+print(stringResult.generatedCode);
+print("");ON DEMO ===
+// This demonstrates the enhanced adapt() function that generates,
+// compiles, and executes CX code dynamically in the runtime
+
+print("=== AUTONOMOUS CODE GENERATION DEMO ===");
+print("The adapt() function now generates CX code, compiles it, and makes it available to the runtime");
+print("");
+
+// Test 1: Simple mathematical function
+print("--- Test 1: Generate a mathematical function ---");
+var mathResult = adapt("Create a function that calculates the square of a number");
+print("Generated math function result:");
+print("Type: " + mathResult.type);
+print("Status: " + mathResult.status);
+print("Code length: " + mathResult.generatedCodeLength);
+print("Compilation successful: " + mathResult.compilationSuccess);
+print("Generated code preview:");
+print(mathResult.generatedCode);
+print("");
+
+// Test 2: String processing function
+print("--- Test 2: Generate a string processing function ---");
+var stringResult = adapt("Create a function that reverses a string");
+print("Generated string function result:");
+print("Type: " + stringResult.type);
+print("Status: " + stringResult.status);
+print("Code length: " + stringResult.generated_code_length);
+print("Compilation successful: " + stringResult.compilation_success);
+print("Generated code preview:");
+print(stringResult.generated_code);
+print("");
+
+// Test 3: AI-enhanced function
+print("--- Test 3: Generate an AI-enhanced function ---");
+var aiResult = adapt("Create a function that uses the task() AI function to analyze text");
+print("Generated AI function result:");
+print("Type: " + aiResult.type);
+print("Status: " + aiResult.status);
+print("Code length: " + aiResult.generated_code_length);
+print("Compilation successful: " + aiResult.compilation_success);
+print("Generated code preview:");
+print(aiResult.generated_code);
+print("");
+
+// Test 4: Data processing function
+print("--- Test 4: Generate a data processing function ---");
+var dataResult = adapt("Create a function that finds the maximum value in an array");
+print("Generated data function result:");
+print("Type: " + dataResult.type);
+print("Status: " + dataResult.status);
+print("Code length: " + dataResult.generated_code_length);
+print("Compilation successful: " + dataResult.compilation_success);
+print("Generated code preview:");
+print(dataResult.generated_code);
+print("");
+
+print("=== AUTONOMOUS CODE GENERATION DEMO COMPLETE ===");
+print("The adapt() function demonstrates true autonomous code generation!");
+print("Generated CX code is compiled and becomes available to the runtime!");

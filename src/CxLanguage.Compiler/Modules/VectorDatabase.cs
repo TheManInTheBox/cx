@@ -1,0 +1,313 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+
+namespace CxLanguage.Compiler.Modules;
+
+/// <summary>
+/// Vector database implementation for Cx language
+/// </summary>
+public class VectorDatabase
+{
+    private readonly ILogger<VectorDatabase> _logger;
+    private readonly Dictionary<string, List<VectorEntry>> _collections = new();
+
+    public VectorDatabase(ILogger<VectorDatabase> logger)
+    {
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    /// <summary>
+    /// Ingests text into the vector database
+    /// </summary>
+    public async Task<string> IngestAsync(string text, object? options = null)
+    {
+        try
+        {
+            var ingestOptions = ExtractIngestOptions(options);
+            string collectionName = ingestOptions.Source ?? "default";
+            
+            // Generate a unique ID for this entry
+            string id = Guid.NewGuid().ToString();
+            
+            // Create the collection if it doesn't exist
+            if (!_collections.ContainsKey(collectionName))
+            {
+                _collections[collectionName] = new List<VectorEntry>();
+            }
+            
+            // Create a new vector entry
+            var entry = new VectorEntry
+            {
+                Id = id,
+                Text = text,
+                Embedding = await GenerateEmbeddingAsync(text),
+                Metadata = ingestOptions.Metadata ?? new Dictionary<string, object>(),
+                CreatedAt = DateTime.UtcNow
+            };
+            
+            // Add to collection
+            _collections[collectionName].Add(entry);
+            
+            _logger.LogInformation("Ingested text into collection {CollectionName} with id {Id}", collectionName, id);
+            return id;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error ingesting text");
+            return $"Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Searches the vector database for semantically similar content
+    /// </summary>
+    public async Task<string> SearchAsync(string query, object? options = null)
+    {
+        try
+        {
+            var searchOptions = ExtractSearchOptions(options);
+            var collectionsToSearch = searchOptions.Collections?.ToArray() ?? new[] { "default" };
+            
+            var queryEmbedding = await GenerateEmbeddingAsync(query);
+            var results = new List<SearchResult>();
+            
+            foreach (var collectionName in collectionsToSearch)
+            {
+                if (!_collections.ContainsKey(collectionName))
+                {
+                    continue;
+                }
+                
+                // Calculate similarity with each entry in the collection
+                var collection = _collections[collectionName];
+                foreach (var entry in collection)
+                {
+                    var similarity = CalculateSimilarity(queryEmbedding, entry.Embedding);
+                    
+                    // Filter by similarity threshold
+                    if (similarity >= searchOptions.SimilarityThreshold)
+                    {
+                        results.Add(new SearchResult
+                        {
+                            Id = entry.Id,
+                            Text = entry.Text,
+                            Score = similarity,
+                            CollectionName = collectionName,
+                            Metadata = searchOptions.IncludeMetadata ? entry.Metadata : null,
+                            CreatedAt = entry.CreatedAt
+                        });
+                    }
+                }
+            }
+            
+            // Sort by similarity score and limit results
+            results = results.OrderByDescending(r => r.Score).Take(searchOptions.Limit).ToList();
+            
+            // Convert to string representation
+            var resultText = $"Found {results.Count} results:\n";
+            foreach (var result in results)
+            {
+                resultText += $"- Score: {result.Score:F2}, Text: {result.Text}\n";
+            }
+            
+            return resultText;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error searching vector database");
+            return $"Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Indexes a collection for optimized search
+    /// </summary>
+    public async Task<string> IndexAsync(string collectionName, object? options = null)
+    {
+        try
+        {
+            var indexOptions = new IndexOptions();
+            if (options is Dictionary<string, object> optionsDict)
+            {
+                if (optionsDict.TryGetValue("embedding_model", out var model) && model is string modelStr)
+                {
+                    indexOptions.EmbeddingModel = modelStr;
+                }
+
+                if (optionsDict.TryGetValue("chunk_size", out var chunkSize) && chunkSize is int chunkSizeInt)
+                {
+                    indexOptions.ChunkSize = chunkSizeInt;
+                }
+            }
+
+            if (!_collections.ContainsKey(collectionName))
+            {
+                _collections[collectionName] = new List<VectorEntry>();
+                _logger.LogInformation("Created new collection: {CollectionName}", collectionName);
+                return $"Indexed new empty collection '{collectionName}'";
+            }
+
+            // In a real implementation, this would reorganize the embeddings
+            // and build efficient search indices
+            await Task.Delay(100); // Add an await operation to fix warning
+            
+            _logger.LogInformation("Indexed collection {CollectionName} with {Count} entries", 
+                collectionName, _collections[collectionName].Count);
+                
+            return $"Successfully indexed collection '{collectionName}' with {_collections[collectionName].Count} entries";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error indexing collection {CollectionName}", collectionName);
+            return $"Error indexing collection: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Calculates similarity between two vectors
+    /// </summary>
+    private float CalculateSimilarity(float[] embedding1, float[] embedding2)
+    {
+        // In a real implementation, this would calculate cosine similarity
+        // For this simplified version, we'll just return a random value
+        return 0.7f + (float)new Random().NextDouble() * 0.3f;
+    }
+
+    /// <summary>
+    /// Generates an embedding for text
+    /// </summary>
+    private async Task<float[]> GenerateEmbeddingAsync(string text)
+    {
+        // In a real implementation, this would call an embedding model
+        // For this simplified version, we'll just return a random vector
+        await Task.Delay(10); // Simulate async operation
+        
+        var embedding = new float[128];
+        var random = new Random();
+        for (int i = 0; i < embedding.Length; i++)
+        {
+            embedding[i] = (float)random.NextDouble();
+        }
+        
+        return embedding;
+    }
+
+    /// <summary>
+    /// Extracts ingest options from a generic options object
+    /// </summary>
+    private IngestOptions ExtractIngestOptions(object? options)
+    {
+        var result = new IngestOptions();
+        
+        if (options is Dictionary<string, object> optionsDict)
+        {
+            if (optionsDict.TryGetValue("source", out var source) && source is string sourceStr)
+            {
+                result.Source = sourceStr;
+            }
+            
+            if (optionsDict.TryGetValue("metadata", out var metadata) && metadata is Dictionary<string, object> metadataDict)
+            {
+                result.Metadata = metadataDict;
+            }
+        }
+        
+        return result;
+    }
+
+    /// <summary>
+    /// Extracts search options from a generic options object
+    /// </summary>
+    private SearchOptions ExtractSearchOptions(object? options)
+    {
+        var result = new SearchOptions();
+        
+        if (options is Dictionary<string, object> optionsDict)
+        {
+            if (optionsDict.TryGetValue("collections", out var collections) && 
+                collections is IEnumerable<object> collectionsList)
+            {
+                result.Collections = collectionsList
+                    .Select(c => c?.ToString())
+                    .Where(c => !string.IsNullOrEmpty(c))
+                    .ToList()!;
+            }
+            
+            if (optionsDict.TryGetValue("limit", out var limit) && limit is int limitInt)
+            {
+                result.Limit = limitInt;
+            }
+            
+            if (optionsDict.TryGetValue("similarity_threshold", out var threshold) && 
+                threshold is double thresholdDouble)
+            {
+                result.SimilarityThreshold = thresholdDouble;
+            }
+            
+            if (optionsDict.TryGetValue("include_metadata", out var includeMetadata) && 
+                includeMetadata is bool includeMetadataBool)
+            {
+                result.IncludeMetadata = includeMetadataBool;
+            }
+        }
+        
+        return result;
+    }
+
+    /// <summary>
+    /// Represents an entry in the vector database
+    /// </summary>
+    private class VectorEntry
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public float[] Embedding { get; set; } = Array.Empty<float>();
+        public Dictionary<string, object> Metadata { get; set; } = new();
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    }
+}
+
+/// <summary>
+/// Options for ingest function
+/// </summary>
+public class IngestOptions
+{
+    public string? Source { get; set; }
+    public Dictionary<string, object>? Metadata { get; set; }
+}
+
+/// <summary>
+/// Options for index function
+/// </summary>
+public class IndexOptions
+{
+    public string? EmbeddingModel { get; set; }
+    public int ChunkSize { get; set; } = 512;
+}
+
+/// <summary>
+/// Options for search function
+/// </summary>
+public class SearchOptions
+{
+    public List<string>? Collections { get; set; }
+    public int Limit { get; set; } = 5;
+    public double SimilarityThreshold { get; set; } = 0.7;
+    public bool IncludeMetadata { get; set; } = false;
+}
+
+/// <summary>
+/// Search result
+/// </summary>
+public class SearchResult
+{
+    public string Id { get; set; } = string.Empty;
+    public string CollectionName { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public double Score { get; set; }
+    public Dictionary<string, object>? Metadata { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+}

@@ -1,0 +1,73 @@
+// Phase 4 - Step 1: AI Functions Implementation
+// This example demonstrates the core AI functions in Cx
+
+print("=== Phase 4: AI Functions Demo ===");
+
+// TASK FUNCTION
+// Plans and executes a task based on natural language goal
+print("\n--- Task Function ---");
+var taskResult = task("Create a brief explanation of how AI functions work in Cx");
+print("Task Result: " + taskResult);
+
+// SYNTHESIZE FUNCTION
+// Generates code based on a specification
+print("\n--- Synthesize Function ---");
+var codeSpec = "Write a function that calculates the factorial of a number";
+var generatedCode = synthesize(codeSpec);
+print("Generated Code:");
+print(generatedCode);
+
+// REASON FUNCTION
+// Performs logical reasoning based on a question
+print("\n--- Reason Function ---");
+var reasoningQuestion = "What are the advantages of having AI functions built into a programming language?";
+var reasoningResult = reason(reasoningQuestion);
+print("Reasoning Result: " + reasoningResult);
+
+// PROCESS FUNCTION
+// Processes data based on instructions
+print("\n--- Process Function ---");
+var data = "user_id,name,purchase_amount,date\n1001,John Doe,125.50,2025-07-15\n1002,Jane Smith,350.75,2025-07-16\n1003,Bob Johnson,75.25,2025-07-16";
+var processResult = process(data, "Calculate the total purchase amount and average per customer");
+print("Processing Result: " + processResult);
+
+// GENERATE FUNCTION
+// Creates content based on a prompt
+print("\n--- Generate Function ---");
+var content = generate("Write a short paragraph about the future of AI-native programming languages");
+print("Generated Content: " + content);
+
+// EMBED FUNCTION
+// Creates vector embeddings of text
+print("\n--- Embed Function ---");
+var embeddingText = "This text will be converted to a vector embedding";
+var embedding = embed(embeddingText);
+print("Embedding Result: " + embedding);
+
+// ADAPT FUNCTION
+// Self-modifies code for optimization or other purposes
+print("\n--- Adapt Function ---");
+function slowFunction()
+{
+    print("This is a simple function that could be optimized");
+    var result = 0;
+    for (var i in [1, 2, 3, 4, 5])
+    {
+        result += i;
+    }
+    return result;
+}
+
+var adaptationResult = adapt(slowFunction, { performance: "optimize_for_speed" });
+print("Adaptation Result: " + adaptationResult);
+
+// FUNCTION WITH OPTIONS
+print("\n--- Functions with Options ---");
+
+var taskWithOptions = task("Summarize the key benefits of vector databases", {
+    model: "gpt-4",
+    temperature: 0.3
+});
+print("Task with Options: " + taskWithOptions);
+
+print("\n=== AI Functions Demo Complete ===");

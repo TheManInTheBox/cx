@@ -1,0 +1,16 @@
+// Test multiple AI functions with Semantic Kernel
+print("=== Testing Multiple AI Functions ===");
+
+// Test task function
+var taskResult = task("Explain what a function is in programming");
+print("Task Result: " + taskResult);
+
+// Test synthesize function
+var synthesizeResult = synthesize("Create a simple function that adds two numbers");
+print("Synthesize Result: " + synthesizeResult);
+
+// Test reason function
+var reasonResult = reason("Why should we use functions in programming?");
+print("Reason Result: " + reasonResult);
+
+print("=== All AI Functions Tested ===");
