@@ -2,8 +2,13 @@
 
 [![CI](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml/badge.svg)](https://github.com/ahebert-lt/cx/actions/workflows/ci.yml)
 [![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com/ahebert-lt/cx)
-[![.NET](https://img.shields.# Test function return values
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run ex## ✅ Phase 4 Complete: AI Integration with Runtime Function Injection
+[![.NET](https://img.shields.io/badge/.NET-8.0-blue)](https://dotnet.microsoft.com/)
+[![Azure OpenAI](https://img.shields.io/badge/Azure%20OpenAI-Integrated-blue)](https://azure.microsoft.com/products/ai-services/openai-service)
+[![Application Insights](https://img.shields.io/badge/Application%20Insights-Instrumented-green)](https://azure.microsoft.com/products/monitor)
+
+**Cx** is a revolutionary programming language where **AI functions are native, not imported**. Designed specifically for autonomous agentic workflows, Cx enables agents to interpret goals, plan actions, learn from feedback, and modify their own behavior dynamically.
+
+## ✅ Phase 4 Complete: AI Integration with Runtime Function Injection
 
 ### 1. **AI Function Integration** ✅ COMPLETE
 - [x] Implement `task()` function using Semantic Kernel
@@ -68,9 +73,7 @@ dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/phase
 - ✅ **Error Tracking** - Comprehensive exception monitoring
 - ✅ **Usage Analytics** - Azure OpenAI API usage tracking
 
-> **🎉 [Phase 4 Complete! Read the full announcement →](docs/PHASE4_COMPLETE.md)**-blue)](https://dotnet.microsoft.com/)
-[![Azure OpenAI](https://img.shields.io/badge/Azure%20OpenAI-Integrated-blue)](https://azure.microsoft.com/products/ai-services/openai-service)
-[![Application Insights](https://img.shields.io/badge/Application%20Insights-Instrumented-green)](https://azure.microsoft.com/products/monitor)
+> **🎉 [Phase 4 Complete! Read the full announcement →](docs/PHASE4_COMPLETE.md)**
 
 **Cx** is a revolutionary programming language where **AI functions are native, not imported**. Designed specifically for autonomous agentic workflows, Cx enables agents to interpret goals, plan actions, learn from feedback, and modify their own behavior dynamically.
 
