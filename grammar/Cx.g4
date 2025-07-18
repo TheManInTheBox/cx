@@ -125,13 +125,10 @@ primary
     | aiFunction
     ;
 
-// AI-native functions
+// AI-native functions (streamlined to 4 core functions)
 aiFunction
     : TASK '(' expression (',' expression)? ')'           # TaskFunction
-    | SYNTHESIZE '(' expression (',' expression)? ')'     # SynthesizeFunction
     | REASON '(' expression (',' expression)? ')'         # ReasonFunction
-    | PROCESS '(' expression ',' expression (',' expression)? ')' # ProcessFunction
-    | GENERATE '(' expression (',' expression)? ')'       # GenerateFunction
     | EMBED '(' expression (',' expression)? ')'          # EmbedFunction
     | ADAPT '(' expression (',' expression)? ')'          # AdaptFunction
     ;
@@ -157,10 +154,7 @@ PUBLIC: 'public';
 PRIVATE: 'private';
 PROTECTED: 'protected';
 TASK: 'task';
-SYNTHESIZE: 'synthesize';
 REASON: 'reason';
-PROCESS: 'process';
-GENERATE: 'generate';
 EMBED: 'embed';
 ADAPT: 'adapt';
 TRY: 'try';

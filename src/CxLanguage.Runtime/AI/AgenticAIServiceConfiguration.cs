@@ -54,6 +54,11 @@ public class AgenticAIOptions
     public AzureOpenAIConfiguration AzureOpenAI { get; set; } = new();
 
     /// <summary>
+    /// Azure Computer Vision configuration for image analysis and OCR
+    /// </summary>
+    public AzureComputerVisionConfiguration ComputerVision { get; set; } = new();
+
+    /// <summary>
     /// Autonomous task planning and orchestration configuration
     /// </summary>
     public TaskPlanningConfiguration TaskPlanning { get; set; } = new();
@@ -82,9 +87,25 @@ public class AzureOpenAIConfiguration
     public string Endpoint { get; set; } = string.Empty;
     public string DeploymentName { get; set; } = "gpt-4";
     public string EmbeddingDeploymentName { get; set; } = "text-embedding-3-small";
+    public string ImageDeploymentName { get; set; } = "dall-e-3";
     public int MaxTokens { get; set; } = 4000;
     public double Temperature { get; set; } = 0.7;
     public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromMinutes(2);
+}
+
+/// <summary>
+/// Azure Computer Vision configuration for image analysis and OCR
+/// </summary>
+public class AzureComputerVisionConfiguration
+{
+    public string Endpoint { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+    public string ApiVersion { get; set; } = "2023-10-01";
+    public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromMinutes(2);
+    public bool EnableOCR { get; set; } = true;
+    public bool EnableImageAnalysis { get; set; } = true;
+    public bool EnableImageDescription { get; set; } = true;
+    public bool EnableObjectDetection { get; set; } = true;
 }
 
 /// <summary>
@@ -367,6 +388,60 @@ internal class SimpleAiService : IAiService
         }
         
         return responses.ToArray();
+    }
+
+    public async Task<AiEmbeddingResponse> GenerateEmbeddingAsync(string text, AiRequestOptions? options = null)
+    {
+        _logger.LogInformation("Generating embedding for text: {Text}", text);
+        
+        // Simple mock embedding for development
+        await Task.Delay(50); // Simulate processing time
+        
+        // Generate a simple mock embedding vector (1536 dimensions like OpenAI)
+        var random = new Random(text.GetHashCode()); // Use text hash as seed for consistency
+        var embedding = new float[1536];
+        for (int i = 0; i < embedding.Length; i++)
+        {
+            embedding[i] = (float)(random.NextDouble() * 2.0 - 1.0); // Random values between -1 and 1
+        }
+        
+        var usage = new AiUsage 
+        { 
+            PromptTokens = text.Length / 4, 
+            CompletionTokens = 0,
+            TotalTokens = text.Length / 4
+        };
+        
+        return AiEmbeddingResponse.Success(embedding, usage);
+    }
+
+    public async Task<AiImageResponse> GenerateImageAsync(string prompt, AiImageOptions? options = null)
+    {
+        _logger.LogInformation("Generating image for prompt: {Prompt}", prompt);
+        
+        // Simple mock image generation for development
+        await Task.Delay(200); // Simulate processing time
+        
+        // Generate a mock image URL
+        var imageUrl = $"https://example.com/generated-image-{prompt.GetHashCode():X}.jpg";
+        var revisedPrompt = $"Enhanced: {prompt} with artistic style and vivid colors";
+        
+        return AiImageResponse.Success(imageUrl, null, revisedPrompt);
+    }
+
+    public async Task<AiImageAnalysisResponse> AnalyzeImageAsync(string imageUrl, AiImageAnalysisOptions? options = null)
+    {
+        _logger.LogInformation("Analyzing image: {ImageUrl}", imageUrl);
+        
+        // Simple mock image analysis for development
+        await Task.Delay(300); // Simulate processing time
+        
+        var description = $"Mock analysis of image at {imageUrl}";
+        var extractedText = "Mock extracted text from image";
+        var tags = new[] { "mock", "image", "analysis" };
+        var objects = new[] { "mock-object-1", "mock-object-2" };
+        
+        return AiImageAnalysisResponse.Success(description, extractedText, tags, objects);
     }
 }
 

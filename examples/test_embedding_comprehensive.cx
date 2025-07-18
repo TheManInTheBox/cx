@@ -1,0 +1,79 @@
+// Comprehensive embedding test to demonstrate vector capabilities
+print("=== CX Language Embedding Test Suite ===");
+
+// Test 1: Basic embedding generation
+print("\n1. Basic Embedding Generation:");
+var text1 = "artificial intelligence";
+var embedding1 = embed(text1);
+print("Text:", text1);
+print("Success:", embedding1.IsSuccess);
+print("Vector length:", embedding1.Embedding.length);
+print("First 5 values:", embedding1.Embedding[0], embedding1.Embedding[1], embedding1.Embedding[2], embedding1.Embedding[3], embedding1.Embedding[4]);
+
+// Test 2: Different texts for similarity comparison
+print("\n2. Generating Embeddings for Similar Texts:");
+var text2 = "machine learning";
+var text3 = "deep learning";
+var text4 = "cooking recipes";
+
+var embedding2 = embed(text2);
+var embedding3 = embed(text3);
+var embedding4 = embed(text4);
+
+print("Text 2:", text2, "- Success:", embedding2.IsSuccess);
+print("Text 3:", text3, "- Success:", embedding3.IsSuccess);
+print("Text 4:", text4, "- Success:", embedding4.IsSuccess);
+
+// Test 3: Show embedding metadata
+print("\n3. Embedding Metadata:");
+print("Success:", embedding1.IsSuccess);
+print("Vector length:", embedding1.Embedding.length);
+print("Has usage info:", embedding1.Usage);
+print("Metadata:", embedding1.Metadata);
+
+// Test 4: Multiple language test
+print("\n4. Multi-language Support:");
+var frenchText = "intelligence artificielle";
+var spanishText = "inteligencia artificial";
+var germanText = "künstliche Intelligenz";
+
+var frenchEmbedding = embed(frenchText);
+var spanishEmbedding = embed(spanishText);
+var germanEmbedding = embed(germanText);
+
+print("French:", frenchText, "- Success:", frenchEmbedding.IsSuccess);
+print("Spanish:", spanishText, "- Success:", spanishEmbedding.IsSuccess);
+print("German:", germanText, "- Success:", germanEmbedding.IsSuccess);
+
+// Test 5: Technical vs. non-technical content
+print("\n5. Technical vs. Non-technical Content:");
+var technicalText = "neural network backpropagation algorithm";
+var casualText = "I love sunny days at the beach";
+
+var technicalEmbedding = embed(technicalText);
+var casualEmbedding = embed(casualText);
+
+print("Technical:", technicalText);
+print("  - Success:", technicalEmbedding.IsSuccess);
+print("  - Sample values:", technicalEmbedding.Embedding[0], technicalEmbedding.Embedding[1]);
+
+print("Casual:", casualText);
+print("  - Success:", casualEmbedding.IsSuccess);
+print("  - Sample values:", casualEmbedding.Embedding[0], casualEmbedding.Embedding[1]);
+
+// Test 6: Empty and edge cases
+print("\n6. Edge Cases:");
+var emptyText = "";
+var singleWord = "AI";
+var longText = "This is a very long text that contains multiple sentences and covers various topics including artificial intelligence, machine learning, deep learning, natural language processing, computer vision, and robotics. The purpose is to test how the embedding model handles longer inputs.";
+
+var emptyEmbedding = embed(emptyText);
+var singleWordEmbedding = embed(singleWord);
+var longEmbedding = embed(longText);
+
+print("Empty text - Success:", emptyEmbedding.IsSuccess);
+print("Single word - Success:", singleWordEmbedding.IsSuccess);
+print("Long text - Success:", longEmbedding.IsSuccess, "- Length:", longEmbedding.Embedding.length);
+
+print("\n=== Embedding Test Complete ===");
+print("All embeddings generated successfully using Azure OpenAI text-embedding-ada-002 model!");

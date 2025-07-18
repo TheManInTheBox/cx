@@ -1,0 +1,7 @@
+// Ultra simple embedding test
+print("Testing embeddings...");
+
+var result = embed("artificial intelligence");
+print(result);
+
+print("Embedding test complete!");

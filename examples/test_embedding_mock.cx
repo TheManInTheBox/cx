@@ -1,0 +1,21 @@
+// Test embed function with mock embeddings (using SimpleAiService fallback)
+print("Testing embed function with mock embeddings");
+
+print("Embedding text: AI programming language");
+var embedResult = embed("AI programming language");
+print(embedResult);
+
+print("Checking embedding dimensions:");
+print("Embedding array length:", embedResult.dimensions);
+
+print("First few embedding values:");
+if (embedResult.status == "completed") {
+    print("Sample embedding values (first 5):");
+    print("  [0]:", embedResult.embedding[0]);
+    print("  [1]:", embedResult.embedding[1]);
+    print("  [2]:", embedResult.embedding[2]);
+    print("  [3]:", embedResult.embedding[3]);
+    print("  [4]:", embedResult.embedding[4]);
+}
+
+print("Test complete!");

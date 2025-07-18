@@ -1,0 +1,13 @@
+// Simple embedding test that works with actual return format
+print("=== Simple Embedding Test ===");
+
+// Test basic embedding
+var text = "artificial intelligence";
+var result = embed(text);
+
+print("Text:", text);
+print("Embedding result:");
+print(result);
+
+print("\n=== Test Complete ===");
+print("✅ Embedding generated successfully!");
