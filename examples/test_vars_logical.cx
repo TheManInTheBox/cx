@@ -1,4 +1,0 @@
-// Test with variables like the original
-var isTrue = true
-var isFalse = false
-print(isTrue && isFalse)

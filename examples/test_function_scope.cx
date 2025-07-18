@@ -1,5 +1,0 @@
-function main() 
-{
-    message = "Hello, World!"
-    print(message)
-}

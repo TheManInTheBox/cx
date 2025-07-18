@@ -1,7 +1,0 @@
-// Test boolean to boolean comparisons
-var x = true
-var y = false
-
-Console.WriteLine(x == true)
-Console.WriteLine(y == false)
-Console.WriteLine(x == y)

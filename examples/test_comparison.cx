@@ -1,5 +1,0 @@
-// Test specific failing case
-var x = 10
-var y = 15
-var equal1 = x == y
-print(equal1)

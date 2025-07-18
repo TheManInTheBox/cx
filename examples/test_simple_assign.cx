@@ -1,3 +1,0 @@
-// Test simple assignment 
-var x = 42;
-print(x);

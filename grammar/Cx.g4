@@ -122,15 +122,6 @@ primary
     | NULL
     | SELF
     | '(' expression ')'
-    | aiFunction
-    ;
-
-// AI-native functions (streamlined to 4 core functions)
-aiFunction
-    : TASK '(' expression (',' expression)? ')'           # TaskFunction
-    | REASON '(' expression (',' expression)? ')'         # ReasonFunction
-    | EMBED '(' expression (',' expression)? ')'          # EmbedFunction
-    | ADAPT '(' expression (',' expression)? ')'          # AdaptFunction
     ;
 
 // Types
@@ -153,10 +144,6 @@ CONSTRUCTOR: 'constructor';
 PUBLIC: 'public';
 PRIVATE: 'private';
 PROTECTED: 'protected';
-TASK: 'task';
-REASON: 'reason';
-EMBED: 'embed';
-ADAPT: 'adapt';
 TRY: 'try';
 CATCH: 'catch';
 THROW: 'throw';

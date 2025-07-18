@@ -1,9 +1,0 @@
-// Simple test to isolate the issue
-function testSingleAI()
-{
-    print("Testing single AI function:");
-    var result = task("Hello world");
-    print("Result: " + result);
-}
-
-testSingleAI();

@@ -1,3 +1,16 @@
-while (true == false) {
-    Console.WriteLine("This should not print")
+// Simple while loop scoping test
+print("=== Simple While Loop Scoping Test ===");
+
+// Test basic variable declaration and usage
+var counter = 0;
+print("Initial counter: " + counter);
+
+// Test simple while loop
+while (counter < 3)
+{
+    print("In loop, counter: " + counter);
+    counter += 1;
 }
+
+print("Final counter: " + counter);
+print("=== Test Complete ===");

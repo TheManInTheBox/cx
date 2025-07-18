@@ -137,12 +137,13 @@ class Program
             {
                 try
                 {
-                    // Create instance with console, AI service, and SemanticKernelAiFunctions
+                    // Create instance with console, AI service, SemanticKernelAiFunctions, and service provider
                     var instance = Activator.CreateInstance(
                         compilationResult.ProgramType, 
                         new object(),  // Console object
                         aiService,     // AI service (can be null)
-                        aiFunctions    // SemanticKernelAiFunctions service (can be null)
+                        aiFunctions,   // SemanticKernelAiFunctions service (can be null)
+                        host.Services  // Service provider for DI
                     );
                     runMethod.Invoke(instance, null);
                     

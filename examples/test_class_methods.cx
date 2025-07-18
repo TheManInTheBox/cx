@@ -1,0 +1,39 @@
+// Test class with methods
+
+print("=== Class with Methods Test ===");
+
+class Person
+{
+    name: string;
+    age: number;
+    
+    constructor(personName: string, personAge: number)
+    {
+        print("Creating person: " + personName);
+        this.name = personName;
+        this.age = personAge;
+    }
+    
+    function greet()
+    {
+        print("Hello, my name is " + this.name);
+        print("I am " + this.age + " years old");
+    }
+    
+    function getInfo()
+    {
+        return this.name + " (" + this.age + ")";
+    }
+}
+
+print("Creating Person...");
+var person = new Person("Alice", 30);
+
+print("Calling greet method...");
+person.greet();
+
+print("Getting info...");
+var info = person.getInfo();
+print("Info: " + info);
+
+print("=== Test Complete ===");
