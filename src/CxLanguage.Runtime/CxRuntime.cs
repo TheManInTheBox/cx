@@ -1,4 +1,4 @@
-using CxLanguage.Azure.Services;
+using CxLanguage.Core.AI;
 using Microsoft.Extensions.Logging;
 
 namespace CxLanguage.Runtime;
@@ -24,7 +24,7 @@ public class CxRuntime
     /// <summary>
     /// Built-in functions available to Cx scripts
     /// </summary>
-    public class BuiltinFunctions
+public class BuiltinFunctions
     {
         private readonly CxRuntime _runtime;
 
@@ -33,25 +33,63 @@ public class CxRuntime
             _runtime = runtime;
         }
 
+        /// <summary>
+        /// Generate an image using DALL-E (Azure OpenAI)
+        /// </summary>
+        public async Task<object> Image(string prompt, object? options = null)
+        {
+            var imageOptions = options as AiImageOptions;
+            var response = await _runtime._aiService.GenerateImageAsync(prompt, imageOptions);
+
+            if (response == null || !response.IsSuccess)
+            {
+                throw new InvalidOperationException($"Image generation failed: {response?.ErrorMessage}");
+            }
+
+            var result = new Dictionary<string, object?>
+            {
+                ["ImageUrl"] = response.ImageUrl,
+                ["ImageData"] = response.ImageData,
+                ["RevisedPrompt"] = response.RevisedPrompt,
+                ["Metadata"] = response.Metadata
+            };
+            return result;
+        }
+
         public void Print(object? value)
         {
             Console.WriteLine(value?.ToString() ?? "null");
         }
 
-        public async Task<string> AiGenerate(string prompt, object? options = null)
+        public async Task<object> AiGenerate(string prompt, object? options = null)
         {
             var requestOptions = ParseAiOptions(options);
             var response = await _runtime._aiService.GenerateTextAsync(prompt, requestOptions);
-            
+
             if (!response.IsSuccess)
             {
                 throw new InvalidOperationException($"AI generation failed: {response.ErrorMessage}");
             }
 
-            return response.Content;
+            var content = response.Content;
+            // Try to parse as JSON object
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(content) && content.TrimStart().StartsWith("{"))
+                {
+                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(content);
+                    if (dict != null)
+                        return dict;
+                }
+            }
+            catch
+            {
+                // If parsing fails, just return the string
+            }
+            return content;
         }
 
-        public async Task<string> AiAnalyze(string content, object options)
+        public async Task<object> AiAnalyze(string content, object options)
         {
             var analysisOptions = ParseAnalysisOptions(options);
             var response = await _runtime._aiService.AnalyzeAsync(content, analysisOptions);
@@ -61,7 +99,21 @@ public class CxRuntime
                 throw new InvalidOperationException($"AI analysis failed: {response.ErrorMessage}");
             }
 
-            return response.Content;
+            var result = response.Content;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(result) && result.TrimStart().StartsWith("{"))
+                {
+                    var dict = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(result);
+                    if (dict != null)
+                        return dict;
+                }
+            }
+            catch
+            {
+                // If parsing fails, just return the string
+            }
+            return result;
         }
 
         public async Task<string[]> AiParallel(string[] prompts, object? options = null)

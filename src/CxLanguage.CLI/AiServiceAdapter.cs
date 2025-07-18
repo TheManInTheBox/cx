@@ -27,18 +27,12 @@ public class AiServiceAdapter : CxCoreAI.IAiService
         } : null;
 
         var azureResponse = await _azureService.GenerateTextAsync(prompt, azureOptions);
-        
         return new CxCoreAI.AiResponse
         {
             IsSuccess = azureResponse.IsSuccess,
             Content = azureResponse.Content,
-            Usage = azureResponse.Usage != null ? new CxCoreAI.AiUsage
-            {
-                PromptTokens = azureResponse.Usage.PromptTokens,
-                CompletionTokens = azureResponse.Usage.CompletionTokens,
-                TotalTokens = azureResponse.Usage.TotalTokens,
-                EstimatedCost = azureResponse.Usage.EstimatedCost
-            } : null
+            ErrorMessage = azureResponse.Error,
+            Usage = null // Azure does not provide Usage
         };
     }
 
@@ -47,23 +41,17 @@ public class AiServiceAdapter : CxCoreAI.IAiService
         // Map from Core options to Azure options
         var azureOptions = new CxAzureAI.AiAnalysisOptions
         {
-            Task = options.Task,
-            ResponseFormat = options.ResponseFormat
+            AnalysisType = options.Task,
+            Parameters = options.Parameters
         };
 
         var azureResponse = await _azureService.AnalyzeAsync(content, azureOptions);
-        
         return new CxCoreAI.AiResponse
         {
             IsSuccess = azureResponse.IsSuccess,
             Content = azureResponse.Content,
-            Usage = azureResponse.Usage != null ? new CxCoreAI.AiUsage
-            {
-                PromptTokens = azureResponse.Usage.PromptTokens,
-                CompletionTokens = azureResponse.Usage.CompletionTokens,
-                TotalTokens = azureResponse.Usage.TotalTokens,
-                EstimatedCost = azureResponse.Usage.EstimatedCost
-            } : null
+            ErrorMessage = azureResponse.Error,
+            Usage = null
         };
     }
 
@@ -77,7 +65,6 @@ public class AiServiceAdapter : CxCoreAI.IAiService
         } : null;
 
         var azureResponse = await _azureService.StreamGenerateTextAsync(prompt, azureOptions);
-        
         return new CoreAiStreamResponseAdapter(azureResponse);
     }
 
@@ -91,19 +78,83 @@ public class AiServiceAdapter : CxCoreAI.IAiService
         } : null;
 
         var azureResponses = await _azureService.ProcessBatchAsync(prompts, azureOptions);
-        
         return azureResponses.Select(r => new CxCoreAI.AiResponse
         {
             IsSuccess = r.IsSuccess,
             Content = r.Content,
-            Usage = r.Usage != null ? new CxCoreAI.AiUsage
-            {
-                PromptTokens = r.Usage.PromptTokens,
-                CompletionTokens = r.Usage.CompletionTokens,
-                TotalTokens = r.Usage.TotalTokens,
-                EstimatedCost = r.Usage.EstimatedCost
-            } : null
+            ErrorMessage = r.Error,
+            Usage = null
         }).ToArray();
+    }
+
+    public async Task<CxCoreAI.AiEmbeddingResponse> GenerateEmbeddingAsync(string text, CxCoreAI.AiRequestOptions? options = null)
+    {
+        // Map from Core options to Azure options if needed
+        var azureOptions = options != null ? new CxAzureAI.AiRequestOptions
+        {
+            Temperature = options.Temperature,
+            MaxTokens = options.MaxTokens
+        } : null;
+
+        var azureResponse = await _azureService.GenerateEmbeddingAsync(text, azureOptions);
+        return new CxCoreAI.AiEmbeddingResponse
+        {
+            IsSuccess = azureResponse.IsSuccess,
+            Embedding = azureResponse.Embedding,
+            ErrorMessage = azureResponse.Error,
+            Usage = null
+        };
+    }
+
+    public async Task<CxCoreAI.AiImageResponse> GenerateImageAsync(string prompt, CxCoreAI.AiImageOptions? options = null)
+    {
+        // Map from Core options to Azure options if needed
+        var azureOptions = options != null ? new CxAzureAI.AiImageOptions
+        {
+            Size = options.Size,
+            Quality = options.Quality,
+            Style = options.Style,
+            AdditionalOptions = new Dictionary<string, object>()
+        } : null;
+
+        var azureResponse = await _azureService.GenerateImageAsync(prompt, azureOptions);
+        return new CxCoreAI.AiImageResponse
+        {
+            IsSuccess = azureResponse.IsSuccess,
+            ImageUrl = azureResponse.ImageUrl,
+            RevisedPrompt = azureResponse.RevisedPrompt,
+            ErrorMessage = azureResponse.Error,
+            Usage = null
+        };
+    }
+
+    public async Task<CxCoreAI.AiImageAnalysisResponse> AnalyzeImageAsync(string imageUrl, CxCoreAI.AiImageAnalysisOptions? options = null)
+    {
+        // Map from Core options to Azure options if needed
+        var azureOptions = options != null ? new CxAzureAI.AiImageAnalysisOptions
+        {
+            EnableOCR = options.EnableOCR,
+            EnableDescription = options.EnableDescription,
+            EnableTags = options.EnableTags,
+            EnableObjects = options.EnableObjects,
+            Language = options.Language,
+            AdditionalOptions = new Dictionary<string, object>()
+        } : null;
+
+        var azureResponse = await _azureService.AnalyzeImageAsync(imageUrl, azureOptions);
+        // Convert List<string> to string[] for Tags
+        var tagsArray = azureResponse.Tags != null ? azureResponse.Tags.ToArray() : Array.Empty<string>();
+        // Convert List<AiDetectedObject> to string[] for Objects (use Name property)
+        var objectsArray = azureResponse.Objects != null ? azureResponse.Objects.Select(o => o.Name).ToArray() : Array.Empty<string>();
+        return new CxCoreAI.AiImageAnalysisResponse
+        {
+            IsSuccess = azureResponse.IsSuccess,
+            Description = azureResponse.Description,
+            ExtractedText = azureResponse.ExtractedText,
+            Tags = tagsArray,
+            Objects = objectsArray,
+            ErrorMessage = azureResponse.Error
+        };
     }
 }
 
@@ -121,11 +172,11 @@ public class CoreAiStreamResponseAdapter : CxCoreAI.AiStreamResponse
 
     public override IAsyncEnumerable<string> GetTokensAsync()
     {
-        return _azureResponse.GetTokensAsync();
+        return _azureResponse.ContentStream;
     }
 
     public override void Dispose()
     {
-        _azureResponse?.Dispose();
+        // No disposal needed for Azure AiStreamResponse
     }
 }

@@ -1,0 +1,18 @@
+// Test DALL-E 3 image generation and image-to-text analysis using the task function
+// This demonstrates real AI-powered text-to-image generation and captioning
+
+// Generate an image and get the direct image URL as 'ImageUrl'
+var imageResponse = task("Generate an image of a futuristic city skyline at sunset with flying cars and neon lights, cyberpunk aesthetic, detailed architectural elements, vibrant colors. Respond ONLY with a valid JSON object: { \"ImageUrl\": \"https://...\" }. No explanation, no nested objects, no extra properties, no code, no text.");
+
+print("Image generation response:");
+print(imageResponse);
+
+// Extract the image URL from the top-level response
+var imageUrl = imageResponse.result.ImageUrl;
+print("Image URL:");
+print(imageUrl);
+
+// Pass the image URL to image-to-text (captioning) function
+var caption = analyzeImage(imageUrl);
+print("Image caption:");
+print(caption);

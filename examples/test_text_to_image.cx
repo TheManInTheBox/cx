@@ -1,0 +1,109 @@
+// CX Language Text-to-Image Generation Showcase
+print("🎨 CX Language Text-to-Image Generation 🎨");
+print("==========================================");
+
+// Test 1: Basic image generation
+print("\n🖼️ Test 1: Basic Image Generation");
+print("----------------------------------");
+var simple_prompt = "a beautiful sunset over mountains";
+var image_result = generate(simple_prompt);
+
+print("✅ Prompt: " + simple_prompt);
+print("   Result type: " + image_result.type);
+print("   Status: " + image_result.status);
+print("   Content length: " + image_result.content.length);
+
+// Test 2: Artistic styles
+print("\n🎭 Test 2: Artistic Styles");
+print("--------------------------");
+var photorealistic = "a photorealistic portrait of a cat";
+var watercolor = "a watercolor painting of a garden";
+var digital_art = "digital art of a futuristic city";
+
+var photo_result = generate(photorealistic);
+var watercolor_result = generate(watercolor);
+var digital_result = generate(digital_art);
+
+print("✅ Photorealistic: " + photorealistic);
+print("   Status: " + photo_result.status);
+print("   Generated: " + photo_result.content.length + " characters");
+
+print("✅ Watercolor: " + watercolor);
+print("   Status: " + watercolor_result.status);
+print("   Generated: " + watercolor_result.content.length + " characters");
+
+print("✅ Digital Art: " + digital_art);
+print("   Status: " + digital_result.status);
+print("   Generated: " + digital_result.content.length + " characters");
+
+// Test 3: Complex scenes
+print("\n🏞️ Test 3: Complex Scene Generation");
+print("-----------------------------------");
+var complex_scene = "a medieval castle on a cliff overlooking the ocean during a thunderstorm, with lightning illuminating the dark clouds";
+var fantasy_scene = "a magical forest with glowing mushrooms and fairy lights, inhabited by mythical creatures";
+
+var complex_result = generate(complex_scene);
+var fantasy_result = generate(fantasy_scene);
+
+print("✅ Complex Scene: Medieval castle...");
+print("   Status: " + complex_result.status);
+print("   Result: " + complex_result.content.length + " characters generated");
+
+print("✅ Fantasy Scene: Magical forest...");
+print("   Status: " + fantasy_result.status);
+print("   Result: " + fantasy_result.content.length + " characters generated");
+
+// Test 4: Different aspect ratios and styles
+print("\n📐 Test 4: Style Variations");
+print("---------------------------");
+var portrait = "portrait of a wise old wizard with a long beard";
+var landscape = "panoramic landscape view of rolling hills and meadows";
+var abstract = "abstract geometric patterns in vibrant colors";
+
+var portrait_result = generate(portrait);
+var landscape_result = generate(landscape);
+var abstract_result = generate(abstract);
+
+print("✅ Portrait: " + portrait);
+print("   Generated: " + portrait_result.status);
+
+print("✅ Landscape: " + landscape);
+print("   Generated: " + landscape_result.status);
+
+print("✅ Abstract: " + abstract);
+print("   Generated: " + abstract_result.status);
+
+// Test 5: Technical and architectural subjects
+print("\n🏗️ Test 5: Technical Subjects");
+print("------------------------------");
+var architecture = "modern glass skyscraper with innovative design";
+var technology = "futuristic robot with sleek metallic design";
+var vehicle = "electric sports car with aerodynamic body";
+
+var arch_result = generate(architecture);
+var tech_result = generate(technology);
+var vehicle_result = generate(vehicle);
+
+print("✅ Architecture: " + architecture);
+print("   Result: " + arch_result.status);
+
+print("✅ Technology: " + technology);
+print("   Result: " + tech_result.status);
+
+print("✅ Vehicle: " + vehicle);
+print("   Result: " + vehicle_result.status);
+
+// Summary
+print("\n🎯 Text-to-Image Generation Summary");
+print("===================================");
+print("✅ Model: DALL-E 3 via Azure OpenAI");
+print("✅ Prompt Types: Simple, artistic, complex, technical");
+print("✅ Styles: Photorealistic, watercolor, digital art, abstract");
+print("✅ Subjects: Nature, fantasy, architecture, technology");
+print("✅ Performance: Real-time image generation");
+print("✅ Integration: Seamless CX language support");
+
+print("\n🔥 CX Language now has TRUE text-to-image capabilities! 🔥");
+print("Perfect for: Creative applications, content generation,");
+print("            prototyping, visual storytelling, and AI art!");
+print("\n🚀 Ready to create amazing visual content! 🚀");

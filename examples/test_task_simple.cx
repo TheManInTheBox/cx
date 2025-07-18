@@ -1,0 +1,11 @@
+// Simple test for task function
+print("🎯 Testing Task Function");
+print("=======================");
+
+// Test basic task function
+var result = task("test basic functionality");
+print("✅ Task executed");
+print("   Status: " + result.status);
+print("   Type: " + result.type);
+
+print("\n✅ Task function test complete!");

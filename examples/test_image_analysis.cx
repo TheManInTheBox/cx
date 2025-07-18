@@ -1,0 +1,3 @@
+var imageUrl = "https://example.com/test-image.jpg";
+var result = task("analyze image: " + imageUrl);
+print("Image analysis result: " + result);

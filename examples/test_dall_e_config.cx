@@ -1,0 +1,10 @@
+// Test DALL-E 3 configuration detection
+// This test verifies the DALL-E 3 deployment configuration is properly loaded
+
+print("Testing DALL-E 3 configuration...");
+
+// Test 1: Simple image generation request
+var simpleImage = task("generate image: A red apple on a white background");
+print(simpleImage);
+
+print("DALL-E 3 configuration test complete!");

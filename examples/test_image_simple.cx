@@ -1,0 +1,14 @@
+// Simple text-to-image generation test
+print("🎨 CX Language Text-to-Image Test 🎨");
+print("=====================================");
+
+// Test basic image generation
+print("\n🖼️ Basic Image Generation:");
+var prompt = "a beautiful sunset over mountains";
+var result = generate(prompt);
+
+print("✅ Prompt: " + prompt);
+print("✅ Result:");
+print(result);
+
+print("\n🎨 Text-to-Image Generation Complete! 🎨");

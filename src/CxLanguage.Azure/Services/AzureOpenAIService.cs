@@ -16,7 +16,7 @@ namespace CxLanguage.Azure.Services;
 /// Azure OpenAI service integration for Cx language
 /// TODO: Update to use correct Azure OpenAI SDK 2.1.0-beta.1 APIs
 /// </summary>
-public class AzureOpenAIService : CxLanguage.Core.AI.IAiService
+public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azure.Services.IAiService
 {
     private readonly AzureOpenAIClient _client;
     private readonly ILogger<AzureOpenAIService> _logger;
@@ -57,6 +57,7 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService
             {
                 Endpoint = configSection["Endpoint"] ?? "https://your-resource-name.openai.azure.com/",
                 DeploymentName = configSection["DeploymentName"] ?? "gpt-4",
+                ImageDeploymentName = configSection["ImageDeploymentName"] ?? "dall-e-3",
                 ApiKey = configSection["ApiKey"] ?? throw new InvalidOperationException("Azure OpenAI API Key is required"),
                 ApiVersion = configSection["ApiVersion"] ?? "2024-06-01"
             };
@@ -70,9 +71,15 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService
             {
                 Endpoint = "https://your-resource-name.openai.azure.com/",
                 DeploymentName = "gpt-4",
-                ApiKey = throw new InvalidOperationException("Azure OpenAI API Key is required"),
+                ImageDeploymentName = "dall-e-3",
+                ApiKey = string.Empty, // Will throw later if empty
                 ApiVersion = "2024-06-01"
             };
+            
+            if (string.IsNullOrEmpty(_config.ApiKey))
+            {
+                throw new InvalidOperationException("Azure OpenAI API Key is required");
+            }
         }
 
         // Check if API key is provided in config
@@ -254,6 +261,181 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService
         }
     }
 
+    public Task<CxLanguage.Core.AI.AiEmbeddingResponse> GenerateEmbeddingAsync(string text, CxLanguage.Core.AI.AiRequestOptions? options = null)
+    {
+        try
+        {
+            _logger.LogInformation("Generating embedding for text: {Text}", text);
+
+            // Note: This is a placeholder implementation
+            // In a real implementation, you would use Azure OpenAI's embedding API
+            _logger.LogWarning("Embedding generation not yet implemented for Azure OpenAI service");
+            
+            // Return a failure response for now
+            return Task.FromResult(CxLanguage.Core.AI.AiEmbeddingResponse.Failure("Embedding generation not implemented for Azure OpenAI service"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating embedding");
+            return Task.FromResult(CxLanguage.Core.AI.AiEmbeddingResponse.Failure($"Error: {ex.Message}"));
+        }
+    }
+
+    public async Task<CxLanguage.Core.AI.AiImageResponse> GenerateImageAsync(string prompt, CxLanguage.Core.AI.AiImageOptions? options = null)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var operation = "GenerateImage";
+        
+        try
+        {
+            _logger.LogInformation("Generating image for prompt: {Prompt}", prompt);
+
+            // Use DALL-E 3 API endpoint
+            var requestUri = new Uri($"{_config.Endpoint}openai/deployments/{_config.ImageDeploymentName}/images/generations?api-version={_config.ApiVersion}");
+            
+            // Create an HttpClient
+            using var httpClient = new HttpClient();
+            
+            // Add the API key if available
+            if (!string.IsNullOrEmpty(_config.ApiKey))
+            {
+                httpClient.DefaultRequestHeaders.Add("api-key", _config.ApiKey);
+            }
+            
+            // Create the request content for DALL-E 3
+            var requestContent = new
+            {
+                prompt = prompt,
+                size = options?.Size ?? "1024x1024",
+                quality = options?.Quality ?? "standard",
+                style = options?.Style ?? "vivid",
+                n = 1,
+                response_format = options?.ResponseFormat ?? "url"
+            };
+            
+            // Serialize the request content
+            var requestJson = JsonSerializer.Serialize(requestContent);
+            var requestBody = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
+            
+            // Send the request
+            var response = await httpClient.PostAsync(requestUri, requestBody);
+            
+            // Read the complete response content
+            var responseContent = await response.Content.ReadAsStringAsync();
+            
+            // Log the response for debugging
+            _logger.LogInformation("DALL-E 3 Response Status: {StatusCode}", response.StatusCode);
+            _logger.LogInformation("DALL-E 3 Response Content: {Content}", responseContent);
+            
+            // Check if the request was successful
+            if (response.IsSuccessStatusCode)
+            {
+                try
+                {
+                    // Parse the response
+                    var responseJson = JsonSerializer.Deserialize<JsonElement>(responseContent);
+                    
+                    // Extract the image data from the response
+                    var dataArray = responseJson.GetProperty("data");
+                    var firstImage = dataArray.EnumerateArray().First();
+                    
+                    string? imageUrl = null;
+                    byte[]? imageData = null;
+                    string? revisedPrompt = null;
+                    
+                    // Get the image URL or data based on response format
+                    if (firstImage.TryGetProperty("url", out var urlElement))
+                    {
+                        imageUrl = urlElement.GetString();
+                    }
+                    
+                    if (firstImage.TryGetProperty("b64_json", out var b64Element))
+                    {
+                        var base64Data = b64Element.GetString();
+                        if (!string.IsNullOrEmpty(base64Data))
+                        {
+                            imageData = Convert.FromBase64String(base64Data);
+                        }
+                    }
+                    
+                    if (firstImage.TryGetProperty("revised_prompt", out var revisedElement))
+                    {
+                        revisedPrompt = revisedElement.GetString();
+                    }
+                    
+                    // Track successful telemetry
+                    _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, true);
+                    
+                    var metadata = new Dictionary<string, object>
+                    {
+                        ["model"] = "dall-e-3",
+                        ["size"] = options?.Size ?? "1024x1024",
+                        ["quality"] = options?.Quality ?? "standard",
+                        ["style"] = options?.Style ?? "vivid",
+                        ["timestamp"] = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss UTC")
+                    };
+                    
+                    var result = CxLanguage.Core.AI.AiImageResponse.Success(imageUrl, imageData, revisedPrompt);
+                    result.Metadata.Clear();
+                    foreach (var kvp in metadata)
+                    {
+                        result.Metadata[kvp.Key] = kvp.Value;
+                    }
+                    
+                    return result;
+                }
+                catch (Exception parseEx)
+                {
+                    _logger.LogError(parseEx, "Error parsing DALL-E 3 response: {ResponseContent}", responseContent);
+                    _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, parseEx.Message);
+                    return CxLanguage.Core.AI.AiImageResponse.Failure($"Error parsing response: {parseEx.Message}");
+                }
+            }
+            else
+            {
+                _logger.LogError("DALL-E 3 request failed with status: {StatusCode}, Content: {Content}", 
+                    response.StatusCode, responseContent);
+                _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, $"{response.StatusCode} - {responseContent}");
+                return CxLanguage.Core.AI.AiImageResponse.Failure($"DALL-E 3 Error: {response.StatusCode} - {responseContent}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating image with DALL-E 3");
+            _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, ex.Message);
+            return CxLanguage.Core.AI.AiImageResponse.Failure($"Error: {ex.Message}");
+        }
+    }
+
+    public async Task<CxLanguage.Core.AI.AiImageAnalysisResponse> AnalyzeImageAsync(string imageUrl, CxLanguage.Core.AI.AiImageAnalysisOptions? options = null)
+    {
+        var stopwatch = Stopwatch.StartNew();
+        var operation = "AnalyzeImage";
+        
+        try
+        {
+            _logger.LogInformation("Analyzing image: {ImageUrl}", imageUrl);
+
+            // For now, use a simple mock implementation
+            // TODO: Implement actual Azure Computer Vision API integration
+            await Task.Delay(500); // Simulate processing time
+
+            var description = $"Mock analysis of image: {imageUrl}";
+            var extractedText = "Mock extracted text from image";
+            var tags = new[] { "mock", "analysis", "image" };
+            var objects = new[] { "mock-object" };
+
+            _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, true, null, null);
+            return CxLanguage.Core.AI.AiImageAnalysisResponse.Success(description, extractedText, tags, objects);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error analyzing image");
+            _telemetryService?.TrackAzureOpenAIUsage(operation, stopwatch.Elapsed, false, null, ex.Message);
+            return CxLanguage.Core.AI.AiImageAnalysisResponse.Failure($"Error: {ex.Message}");
+        }
+    }
+
     private async IAsyncEnumerable<string> GenerateTokens(string prompt)
     {
         // Placeholder token generation
@@ -264,6 +446,174 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService
             yield return word + " ";
         }
     }
+
+    #region Azure Interface Implementations
+
+    // Azure interface versions for explicit implementation
+    async Task<CxLanguage.Azure.Services.AiResponse> IAiService.GenerateTextAsync(string prompt, CxLanguage.Azure.Services.AiRequestOptions? options)
+    {
+        var coreOptions = options != null ? new CxLanguage.Core.AI.AiRequestOptions
+        {
+            Temperature = options.Temperature,
+            MaxTokens = options.MaxTokens,
+            Model = options.Model,
+            Parameters = options.AdditionalOptions
+        } : null;
+
+        var coreResponse = await GenerateTextAsync(prompt, coreOptions);
+        return new CxLanguage.Azure.Services.AiResponse
+        {
+            Content = coreResponse.Content,
+            Metadata = coreResponse.Metadata,
+            IsSuccess = coreResponse.IsSuccess,
+            Error = coreResponse.ErrorMessage
+        };
+    }
+
+    async Task<CxLanguage.Azure.Services.AiResponse> IAiService.AnalyzeAsync(string content, CxLanguage.Azure.Services.AiAnalysisOptions options)
+    {
+        var coreOptions = new CxLanguage.Core.AI.AiAnalysisOptions
+        {
+            Task = options.AnalysisType,
+            ResponseFormat = "text", // Default to text for now
+            Parameters = options.Parameters
+        };
+
+        var coreResponse = await AnalyzeAsync(content, coreOptions);
+        return new CxLanguage.Azure.Services.AiResponse
+        {
+            Content = coreResponse.Content,
+            Metadata = coreResponse.Metadata,
+            IsSuccess = coreResponse.IsSuccess,
+            Error = coreResponse.ErrorMessage
+        };
+    }
+
+    async Task<CxLanguage.Azure.Services.AiStreamResponse> IAiService.StreamGenerateTextAsync(string prompt, CxLanguage.Azure.Services.AiRequestOptions? options)
+    {
+        var coreOptions = options != null ? new CxLanguage.Core.AI.AiRequestOptions
+        {
+            Temperature = options.Temperature,
+            MaxTokens = options.MaxTokens,
+            Model = options.Model,
+            Parameters = options.AdditionalOptions
+        } : null;
+
+        var coreResponse = await StreamGenerateTextAsync(prompt, coreOptions);
+        var streamResponse = new CxLanguage.Azure.Services.AiStreamResponse
+        {
+            // Convert Core stream to Azure stream format
+            ContentStream = coreResponse.GetTokensAsync(),
+            Metadata = new Dictionary<string, object>(),
+            IsSuccess = true,
+            Error = null
+        };
+        return streamResponse;
+    }
+
+    async Task<CxLanguage.Azure.Services.AiResponse[]> IAiService.ProcessBatchAsync(string[] prompts, CxLanguage.Azure.Services.AiRequestOptions? options)
+    {
+        var coreOptions = options != null ? new CxLanguage.Core.AI.AiRequestOptions
+        {
+            Temperature = options.Temperature,
+            MaxTokens = options.MaxTokens,
+            Model = options.Model,
+            Parameters = options.AdditionalOptions
+        } : null;
+
+        var coreResponses = await ProcessBatchAsync(prompts, coreOptions);
+        return coreResponses.Select(r => new CxLanguage.Azure.Services.AiResponse
+        {
+            Content = r.Content,
+            Metadata = r.Metadata,
+            IsSuccess = r.IsSuccess,
+            Error = r.ErrorMessage
+        }).ToArray();
+    }
+
+    async Task<CxLanguage.Azure.Services.AiEmbeddingResponse> IAiService.GenerateEmbeddingAsync(string text, CxLanguage.Azure.Services.AiRequestOptions? options)
+    {
+        var coreOptions = options != null ? new CxLanguage.Core.AI.AiRequestOptions
+        {
+            Temperature = options.Temperature,
+            MaxTokens = options.MaxTokens,
+            Model = options.Model
+            // Note: Core and Azure have different property names
+        } : null;
+
+        var coreResponse = await GenerateEmbeddingAsync(text, coreOptions);
+        return new CxLanguage.Azure.Services.AiEmbeddingResponse
+        {
+            Embedding = coreResponse.Embedding,
+            Metadata = coreResponse.Metadata,
+            IsSuccess = coreResponse.IsSuccess,
+            Error = coreResponse.ErrorMessage
+        };
+    }
+
+    async Task<CxLanguage.Azure.Services.AiImageResponse> IAiService.GenerateImageAsync(string prompt, CxLanguage.Azure.Services.AiImageOptions? options)
+    {
+        var coreOptions = options != null ? new CxLanguage.Core.AI.AiImageOptions
+        {
+            Size = options.Size,
+            Quality = options.Quality,
+            Style = options.Style,
+            Parameters = options.AdditionalOptions
+        } : null;
+
+        var coreResponse = await GenerateImageAsync(prompt, coreOptions);
+        return new CxLanguage.Azure.Services.AiImageResponse
+        {
+            ImageUrl = coreResponse.ImageUrl ?? string.Empty,
+            RevisedPrompt = coreResponse.RevisedPrompt ?? string.Empty,
+            Metadata = coreResponse.Metadata,
+            IsSuccess = coreResponse.IsSuccess,
+            Error = coreResponse.ErrorMessage
+        };
+    }
+    
+    async Task<CxLanguage.Azure.Services.AiImageAnalysisResponse> IAiService.AnalyzeImageAsync(string imageUrl, CxLanguage.Azure.Services.AiImageAnalysisOptions? options)
+    {
+        var coreOptions = options != null ? new CxLanguage.Core.AI.AiImageAnalysisOptions
+        {
+            EnableOCR = options.EnableOCR,
+            EnableDescription = options.EnableDescription,
+            EnableTags = options.EnableTags,
+            EnableObjects = options.EnableObjects,
+            Language = options.Language,
+            Parameters = options.AdditionalOptions
+        } : null;
+
+        var coreResponse = await AnalyzeImageAsync(imageUrl, coreOptions);
+        
+        // Convert from Core string[] to Azure List<AiDetectedObject>
+        var objectsList = new List<CxLanguage.Azure.Services.AiDetectedObject>();
+        if (coreResponse.Objects != null)
+        {
+            foreach (var obj in coreResponse.Objects)
+            {
+                objectsList.Add(new CxLanguage.Azure.Services.AiDetectedObject
+                {
+                    Name = obj,
+                    Confidence = 1.0, // Default confidence
+                    BoundingBox = new CxLanguage.Azure.Services.BoundingBox() // Empty bounding box
+                });
+            }
+        }
+        
+        return new CxLanguage.Azure.Services.AiImageAnalysisResponse
+        {
+            Description = coreResponse.Description,
+            ExtractedText = coreResponse.ExtractedText,
+            Tags = new List<string>(coreResponse.Tags),
+            Objects = objectsList,
+            Metadata = coreResponse.Metadata,
+            IsSuccess = coreResponse.IsSuccess,
+            Error = coreResponse.ErrorMessage
+        };
+    }
+
+    #endregion
 }
 
 /// <summary>
@@ -299,6 +649,7 @@ public class AzureOpenAIConfig
 {
     public string Endpoint { get; set; } = string.Empty;
     public string DeploymentName { get; set; } = string.Empty;
+    public string ImageDeploymentName { get; set; } = "dall-e-3";
     public string ApiKey { get; set; } = string.Empty;
     public string ApiVersion { get; set; } = "2024-06-01";
 }

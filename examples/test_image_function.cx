@@ -1,0 +1,11 @@
+// Test DALL-E 3 image generation using the new image() function
+// This demonstrates real AI-powered text-to-image generation
+
+var imageResponse = image("Generate an image of a futuristic city skyline at sunset with flying cars and neon lights, cyberpunk aesthetic, detailed architectural elements, vibrant colors.");
+
+print("Image generation response:");
+print(imageResponse);
+
+var imageUrl = imageResponse.ImageUrl;
+print("Image URL:");
+print(imageUrl);

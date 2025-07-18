@@ -1,0 +1,51 @@
+// Text Generation Test using the generate function
+print("🎨 CX Language Text Generation Test 🎨");
+print("========================================");
+
+// Test 1: Creative Writing
+print("\n📝 Test 1: Creative Writing");
+var creative_prompt = "write a short story about a robot learning to paint";
+var creative_result = generate(creative_prompt);
+print("✅ Prompt: " + creative_prompt);
+print("✅ Generated Content:");
+print(creative_result.result);
+print("✅ Status: " + creative_result.status);
+
+// Test 2: Technical Content
+print("\n🔧 Test 2: Technical Content");
+var tech_prompt = "explain quantum computing in simple terms";
+var tech_result = generate(tech_prompt);
+print("✅ Prompt: " + tech_prompt);
+print("✅ Generated Content:");
+print(tech_result.result);
+print("✅ Status: " + tech_result.status);
+
+// Test 3: Marketing Copy
+print("\n📢 Test 3: Marketing Copy");
+var marketing_prompt = "create a compelling product description for a smart watch";
+var marketing_result = generate(marketing_prompt);
+print("✅ Prompt: " + marketing_prompt);
+print("✅ Generated Content:");
+print(marketing_result.result);
+print("✅ Status: " + marketing_result.status);
+
+// Test 4: Code Generation
+print("\n💻 Test 4: Code Generation");
+var code_prompt = "write a Python function to calculate fibonacci numbers";
+var code_result = generate(code_prompt);
+print("✅ Prompt: " + code_prompt);
+print("✅ Generated Content:");
+print(code_result.result);
+print("✅ Status: " + code_result.status);
+
+// Test 5: Poetry
+print("\n🌺 Test 5: Poetry");
+var poetry_prompt = "write a haiku about autumn leaves";
+var poetry_result = generate(poetry_prompt);
+print("✅ Prompt: " + poetry_prompt);
+print("✅ Generated Content:");
+print(poetry_result.result);
+print("✅ Status: " + poetry_result.status);
+
+print("\n🎨 Text Generation Test Complete! 🎨");
+print("All generate function calls successful with proper property access!");

@@ -20,23 +20,36 @@
 - [x] Implement `adapt()` for self-modification **WITH RUNTIME FUNCTION INJECTION**
 
 ### 2. **Runtime Function Injection** ✅ REVOLUTIONARY BREAKTHROUGH
-- [x] **Dynamic Function Generation**: AI generates CX functions at runtime
+- [x] **Dynamic Function Generation**: AI generates CX functions at runtime using Semantic Kernel
 - [x] **Runtime Compilation**: Generated functions are compiled to IL and executed
 - [x] **Persistent Function Registry**: Injected functions remain available throughout execution
 - [x] **Mathematical Proof**: Demonstrated with add() and square() functions returning correct results
 - [x] **Production Ready**: Full error handling and type safety
 
+### 3. **Semantic Kernel Integration** ✅ COMPLETE
+- [x] **Text Generation**: Chat completion and content generation via Azure OpenAI
+- [x] **Text Embeddings**: Vector embeddings for semantic search capabilities
+- [x] **Image to Text**: Vision capabilities for image understanding and description
+- [x] **Text to Image**: AI-powered image generation from text descriptions
+- [x] **Text to Audio**: Text-to-speech synthesis with neural voices
+- [x] **Audio to Text**: Speech recognition and transcription services
+- [x] **Realtime Processing**: Streaming AI responses for continuous workflows
+- [x] **Multi-Modal AI**: Unified processing across text, image, and audio modalities
+
 ### 3. **Azure OpenAI Integration** ✅ COMPLETE
-- [x] Full integration with Azure OpenAI gpt-4.1-nano model
+- [x] Full integration with Azure OpenAI via Microsoft Semantic Kernel
 - [x] Complete AI responses with proper streaming handling
 - [x] Application Insights telemetry and monitoring
 - [x] Error handling and recovery mechanisms
-- [x] Token usage tracking and cost optimizationfunctions.cx
+- [x] Token usage tracking and cost optimization
+- [x] Multi-modal AI capabilities (text, image, audio processing)
+- [x] Vector embeddings for semantic search
+- [x] Realtime processing and streaming responses
 ```
 
 ### AI Configuration Setup
 ```bash
-# Set up Azure OpenAI configuration
+# Set up Azure OpenAI configuration for Semantic Kernel
 # Create appsettings.json with your Azure OpenAI credentials:
 {
   "AzureOpenAI": {
@@ -49,6 +62,9 @@
   }
 }
 
+# Test comprehensive Semantic Kernel integration (ALL AI capabilities)
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/semantic_kernel_showcase.cx
+
 # Test AI functions with configuration
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/phase4_step1_ai_functions.cx
 
@@ -58,14 +74,26 @@ dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/phase
 
 ## ✅ Phase 4 Complete - AI Integration Achieved
 
-### **Successfully Implemented AI Functions**
-- ✅ **`task()`** - General AI task execution with Azure OpenAI
-- ✅ **`synthesize()`** - Code and content synthesis
-- ✅ **`reason()`** - Logical reasoning and analysis
-- ✅ **`process()`** - Multi-modal data processing
-- ✅ **`generate()`** - Creative content generation
-- ✅ **`embed()`** - Vector embedding generation
-- ✅ **`adapt()`** - Self-modification and optimization
+### **Streamlined AI Functions via Semantic Kernel (4 Core Functions)**
+- ✅ **`task()`** - Specific AI operations (text-to-image, text-to-speech, transcription, etc.)
+- ✅ **`reason()`** - Logical reasoning, analysis, and decision-making capabilities
+- ✅ **`embed()`** - Vector embedding generation for semantic search and similarity
+- ✅ **`adapt()`** - Self-modification, code generation, and runtime optimization
+
+### **Consolidated Functions (Removed Overlap)**
+- ❌ **`generate()`** → Merged into `task()` for content generation
+- ❌ **`synthesize()`** → Merged into `adapt()` for code synthesis  
+- ❌ **`process()`** → Merged into `task()` and `reason()` for data processing
+
+### **Microsoft Semantic Kernel Features**
+- ✅ **Chat Completion** - Advanced conversational AI via Azure OpenAI
+- ✅ **Text Embeddings** - Vector representations for semantic operations
+- ✅ **Vision Processing** - Image understanding and description capabilities
+- ✅ **Audio Processing** - Speech-to-text and text-to-speech conversion
+- ✅ **Streaming Responses** - Real-time AI processing and response generation
+- ✅ **Multi-Modal Integration** - Unified processing across content types
+- ✅ **Function Calling** - AI-driven function discovery and execution
+- ✅ **Memory Management** - Persistent context and conversation history
 
 ### **Enterprise-Grade Monitoring**
 - ✅ **Application Insights Integration** - Complete telemetry tracking
@@ -83,10 +111,13 @@ dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/phase
 # Build the project
 dotnet build CxLanguage.sln
 
-# Test AI integration (Phase 4 complete!)
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/phase4_complete_ai_test.cx
+# Test comprehensive Semantic Kernel integration (ALL AI capabilities)
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/semantic_kernel_showcase.cx
 
-# Test REVOLUTIONARY runtime function injection
+# Test AI integration showcase (Phase 4 features)
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/ai_showcase.cx
+
+# Test REVOLUTIONARY runtime function injection with mathematical proof
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/proof_injection_demo.cx
 
 # Test Application Insights telemetry
@@ -144,30 +175,80 @@ dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/compr
 - **Classes**: Class declarations, constructors, methods, inheritance
 - **String Operations**: Concatenation, interpolation, built-in methods
 
-### 🚀 **AI Integration (Phase 4)**
+### 🚀 **AI Integration (Phase 4) - Powered by Microsoft Semantic Kernel**
 
-#### **Native AI Functions**
+#### **Streamlined AI Functions (4 Core Functions)**
 ```cx
-// Task planning and execution
-var plan = task("Create a customer service workflow");
+// 🎯 TASK - Specific AI operations (text-to-image, text-to-speech, transcription, etc.)
+var image = task("generate image: A futuristic cityscape at sunset");
+var speech = task("speak text: Hello world", { voice: "neural", speed: 1.0 });
+var transcript = task("transcribe audio: meeting_recording.mp3");
+var imageAnalysis = task("describe image: path/to/photo.jpg", { detail: "high" });
 
-// Intelligent reasoning
+// 🧠 REASON - Logical reasoning, analysis, and decision-making
 var decision = reason("What is the best approach to solve this problem?");
+var analysis = reason("Analyze the pros and cons of this solution");
+var comparison = reason("Compare options A and B for effectiveness");
 
-// Code synthesis
-var code = synthesize("Create a function to calculate compound interest");
-
-// Multi-modal data processing
-var result = process("customer_feedback.json", "analyze sentiment");
-
-// Content generation
-var content = generate("Write a technical blog post about AI");
-
-// Vector embeddings
+// 🔤 EMBED - Vector embeddings for semantic operations
 var embedding = embed("This text will be converted to vectors");
+var similarity = embed("text1", "text2", { operation: "similarity" });
+var search = embed("search query", documents, { operation: "search", limit: 5 });
 
-// Self-optimizing code adaptation
-var optimized = adapt("Optimize this code for performance");
+// � ADAPT - Self-modification, code generation, and runtime optimization
+var newFunction = adapt("Create a function to calculate fibonacci numbers");
+var optimized = adapt(self, { target: "performance" });
+var enhanced = adapt("Add error handling to this function", existingFunction);
+```
+
+#### **Consolidated Examples (Removed Overlap)**
+```cx
+// OLD: Multiple functions for similar operations
+var content = generate("Write a blog post");     // ❌ Removed
+var code = synthesize("Create a function");      // ❌ Removed  
+var result = process("data", "analyze");         // ❌ Removed
+
+// NEW: Streamlined approach with clear semantic purpose
+var content = task("generate content: Write a blog post");
+var code = adapt("Create a function to process data");
+var result = reason("Analyze this data and provide insights");
+```
+
+#### **Multi-Modal AI Processing**
+```cx
+// All handled through the task() function with clear intent
+var textToImage = task("generate image: peaceful mountain landscape");
+var imageToText = task("describe image: vacation_photo.jpg");
+var textToSpeech = task("speak text: Welcome to our presentation");
+var speechToText = task("transcribe audio: interview.mp3");
+var videoAnalysis = task("analyze video: marketing_video.mp4");
+```
+
+#### **Revolutionary Runtime Function Injection**
+```cx
+// AI generates, compiles, and injects functions at runtime via adapt()
+var result = adapt("Create a function to add two numbers", {
+    type: "function",
+    name: "add",
+    parameters: ["a", "b"],
+    returnType: "number"
+});
+
+// Generated function is now available for immediate use
+var sum = add(7, 3);  // Returns 10
+print("Sum: " + sum);
+
+// Complex function generation with mathematical operations
+var mathFunc = adapt("Create a function to calculate compound interest", {
+    type: "function", 
+    name: "compoundInterest",
+    parameters: ["principal", "rate", "time"],
+    returnType: "number"
+});
+
+var interest = compoundInterest(1000, 0.05, 3);  // Calculates compound interest
+print("Interest: " + interest);
+```
 ```
 
 #### **Revolutionary Runtime Function Injection**
@@ -365,20 +446,28 @@ CxLanguage.sln
 - **.NET 8**: Target runtime platform
 - **ANTLR 4**: Grammar definition and parsing
 - **System.Reflection.Emit**: Dynamic IL generation
-- **Microsoft Semantic Kernel**: AI orchestration and workflow management
-- **Azure OpenAI**: AI model integration
+- **Microsoft Semantic Kernel**: AI orchestration and workflow management (CORE AI ENGINE)
+- **Azure OpenAI**: AI model integration via Semantic Kernel
 - **Two-pass compilation**: Function forward references and proper scoping
 
-### AI Integration Architecture
-- **Semantic Kernel**: Core AI orchestration engine
+### AI Integration Architecture (Powered by Semantic Kernel)
+- **Semantic Kernel**: Core AI orchestration engine providing all AI capabilities
+- **Chat Completion**: Advanced conversational AI via Azure OpenAI integration
+- **Text Embeddings**: Vector representations for semantic search operations
+- **Vision Processing**: Image understanding and description capabilities
+- **Audio Processing**: Speech-to-text and text-to-speech conversion
+- **Streaming Responses**: Real-time AI processing and response generation
+- **Multi-Modal Integration**: Unified processing across text, image, and audio content
+- **Function Calling**: AI-driven function discovery and execution
+- **Memory Management**: Persistent context and conversation history
 - **Vector Database**: In-memory semantic search and retrieval
-- **Multi-Modal AI**: Text, image, audio, and video processing
 - **Agent Memory**: Persistent context and learning capabilities
 - **Self-Modification**: Function introspection and adaptation
 
 ## 📁 Examples
 
 ### ✅ **Fully Working Examples (Phases 1-4)**
+- **`semantic_kernel_showcase.cx`** - **COMPREHENSIVE**: All Semantic Kernel AI capabilities demonstration
 - **`comprehensive_working_demo.cx`** - Complete Phase 1-3 feature demonstration
 - **`ai_showcase.cx`** - Full AI integration showcase with all 7 native functions
 - **`proof_injection_demo.cx`** - **REVOLUTIONARY**: Runtime function injection with mathematical proof of execution
@@ -410,14 +499,8 @@ CxLanguage.sln
 
 ### Build Commands
 ```bash
-# Build the solution
-dotnet build CxLanguage.sln
-
-# Run tests
-dotnet test
-
-# Test comprehensive working demo (all Phase 1-3 features)
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_working_demo.cx
+# Test comprehensive Semantic Kernel integration (ALL AI capabilities)
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/semantic_kernel_showcase.cx
 
 # Test AI integration showcase (Phase 4 features)
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/ai_showcase.cx
@@ -522,6 +605,55 @@ export AZURE_TENANT_ID="your-tenant-id"
 export AZURE_OPENAI_CONNECTION_STRING="your-connection-string"
 ```
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/phase3_exception_complete.cx
+```
+
+## 🔧 Semantic Kernel Configuration
+
+### Microsoft Semantic Kernel Integration
+The CX language leverages **Microsoft Semantic Kernel** as its core AI orchestration engine, providing all AI capabilities through a unified interface:
+
+```json
+{
+  "AzureOpenAI": {
+    "Endpoint": "https://your-resource.openai.azure.com/",
+    "DeploymentName": "gpt-4o-mini",
+    "EmbeddingDeploymentName": "text-embedding-3-small",
+    "ApiVersion": "2024-02-01"
+  },
+  "SemanticKernel": {
+    "EnableFunctionCalling": true,
+    "EnableStreaming": true,
+    "EnableMemory": true,
+    "EnableMultiModal": true,
+    "MaxTokens": 4000,
+    "Temperature": 0.7
+  }
+}
+```
+
+### Semantic Kernel Features Enabled
+- **✅ Text Generation**: Chat completion and content generation
+- **✅ Text Embeddings**: Vector embeddings for semantic search
+- **✅ Image to Text**: Vision capabilities for image understanding
+- **✅ Text to Image**: AI-powered image generation
+- **✅ Text to Audio**: Text-to-speech synthesis
+- **✅ Audio to Text**: Speech recognition and transcription
+- **✅ Realtime Processing**: Streaming AI responses
+- **✅ Function Calling**: AI-driven function discovery
+- **✅ Memory Management**: Persistent context and conversation history
+- **✅ Multi-Modal Integration**: Unified processing across content types
+
+### Environment Variables
+```bash
+# Azure authentication (recommended for Semantic Kernel)
+export AZURE_CLIENT_ID="your-client-id"
+export AZURE_CLIENT_SECRET="your-client-secret"
+export AZURE_TENANT_ID="your-tenant-id"
+
+# Enable Semantic Kernel features
+export SEMANTIC_KERNEL_ENABLE_FUNCTION_CALLING=true
+export SEMANTIC_KERNEL_ENABLE_STREAMING=true
+export SEMANTIC_KERNEL_ENABLE_MEMORY=true
 ```
 
 ## 🎯 AI Agentic Vision

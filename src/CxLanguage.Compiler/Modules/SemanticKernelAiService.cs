@@ -6,6 +6,8 @@ using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 using Microsoft.SemanticKernel.ChatCompletion;
+using Microsoft.SemanticKernel.Embeddings;
+using Microsoft.Extensions.DependencyInjection;
 using CxLanguage.Core.AI;
 
 namespace CxLanguage.Compiler.Modules;
@@ -19,6 +21,9 @@ public class SemanticKernelAiService : IAiService
     private readonly ILogger<SemanticKernelAiService> _logger;
     private readonly Kernel _kernel;
     private readonly IChatCompletionService _chatCompletionService;
+#pragma warning disable SKEXP0001
+    private readonly ITextEmbeddingGenerationService? _embeddingService;
+#pragma warning restore SKEXP0001
 
     public SemanticKernelAiService(
         ILogger<SemanticKernelAiService> logger,
@@ -27,6 +32,9 @@ public class SemanticKernelAiService : IAiService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
         _chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+#pragma warning disable SKEXP0001
+        _embeddingService = kernel.Services.GetService<ITextEmbeddingGenerationService>();
+#pragma warning restore SKEXP0001
     }
 
     /// <summary>
@@ -118,6 +126,82 @@ public class SemanticKernelAiService : IAiService
         var tasks = prompts.Select(prompt => GenerateTextAsync(prompt, options));
         var results = await Task.WhenAll(tasks);
         return results.ToArray();
+    }
+
+    /// <summary>
+    /// Generates text embeddings using the Semantic Kernel
+    /// </summary>
+    public async Task<AiEmbeddingResponse> GenerateEmbeddingAsync(string text, AiRequestOptions? options = null)
+    {
+        try
+        {
+            _logger.LogInformation("Generating embedding for text: {Text}", text);
+
+            if (_embeddingService == null)
+            {
+                _logger.LogWarning("No embedding service configured");
+                return AiEmbeddingResponse.Failure("No embedding service configured");
+            }
+
+            // Generate the embedding
+#pragma warning disable SKEXP0001
+            var embedding = await _embeddingService.GenerateEmbeddingAsync(text);
+#pragma warning restore SKEXP0001
+            
+            // Convert to float array
+            var embeddingArray = embedding.ToArray();
+
+            _logger.LogInformation("Generated embedding with {Dimensions} dimensions", embeddingArray.Length);
+
+            return AiEmbeddingResponse.Success(embeddingArray);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating embedding with Semantic Kernel");
+            return AiEmbeddingResponse.Failure(ex.Message);
+        }
+    }
+
+    public async Task<AiImageResponse> GenerateImageAsync(string prompt, AiImageOptions? options = null)
+    {
+        try
+        {
+            _logger.LogInformation("Generating image for prompt: {Prompt}", prompt);
+
+            // For now, return a placeholder response
+            // In a full implementation, you would use Semantic Kernel's image generation capabilities
+            _logger.LogWarning("Image generation not yet implemented for Semantic Kernel service");
+            
+            await Task.Delay(100); // Simulate processing time
+            
+            return AiImageResponse.Failure("Image generation not implemented for Semantic Kernel service");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating image with Semantic Kernel");
+            return AiImageResponse.Failure(ex.Message);
+        }
+    }
+
+    public async Task<AiImageAnalysisResponse> AnalyzeImageAsync(string imageUrl, AiImageAnalysisOptions? options = null)
+    {
+        try
+        {
+            _logger.LogInformation("Analyzing image: {ImageUrl}", imageUrl);
+
+            // For now, return a placeholder response
+            // In a full implementation, you would use Semantic Kernel's image analysis capabilities
+            _logger.LogWarning("Image analysis not yet implemented for Semantic Kernel service");
+            
+            await Task.Delay(100); // Simulate processing time
+            
+            return AiImageAnalysisResponse.Failure("Image analysis not implemented for Semantic Kernel service");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error analyzing image with Semantic Kernel");
+            return AiImageAnalysisResponse.Failure(ex.Message);
+        }
     }
 
     /// <summary>
