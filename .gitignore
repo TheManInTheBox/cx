@@ -16,6 +16,10 @@ out/
 *.VC.db
 *.VC.opendb
 
+# Local configuration files with secrets
+appsettings.local.json
+appsettings.*.local.json
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
