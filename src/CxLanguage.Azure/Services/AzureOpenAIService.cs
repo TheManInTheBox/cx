@@ -55,9 +55,9 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService
             // Manual configuration parsing as a fallback
             _config = new AzureOpenAIConfig
             {
-                Endpoint = configSection["Endpoint"] ?? "https://agilai.openai.azure.com/",
-                DeploymentName = configSection["DeploymentName"] ?? "asst_y7gTWRhfEG69Kcx6rANEtM4W",
-                ApiKey = configSection["ApiKey"] ?? "BE8XGQpxdlWCvuwilPGPo8nZ50v4J4WCX8G1CY6IhzBGY5yk3wULJQQJ99BGACYeBjFXJ3w3AAAAACOGG8ce",
+                Endpoint = configSection["Endpoint"] ?? "https://your-resource-name.openai.azure.com/",
+                DeploymentName = configSection["DeploymentName"] ?? "gpt-4",
+                ApiKey = configSection["ApiKey"] ?? throw new InvalidOperationException("Azure OpenAI API Key is required"),
                 ApiVersion = configSection["ApiVersion"] ?? "2024-06-01"
             };
         }
@@ -68,9 +68,9 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService
             // Hardcoded fallback configuration for testing
             _config = new AzureOpenAIConfig
             {
-                Endpoint = "https://agilai.openai.azure.com/",
-                DeploymentName = "asst_y7gTWRhfEG69Kcx6rANEtM4W",
-                ApiKey = "BE8XGQpxdlWCvuwilPGPo8nZ50v4J4WCX8G1CY6IhzBGY5yk3wULJQQJ99BGACYeBjFXJ3w3AAAAACOGG8ce",
+                Endpoint = "https://your-resource-name.openai.azure.com/",
+                DeploymentName = "gpt-4",
+                ApiKey = throw new InvalidOperationException("Azure OpenAI API Key is required"),
                 ApiVersion = "2024-06-01"
             };
         }
