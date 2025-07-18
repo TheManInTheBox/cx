@@ -1,0 +1,39 @@
+// More precise test of comparison operators
+print("=== Precise Comparison Test ===");
+
+var a = 5;
+var b = 3;
+
+print("a = " + a + ", b = " + b);
+
+print("Testing: a > b (5 > 3, should be TRUE)");
+if (a > b)
+{
+    print("✅ a > b is TRUE");
+}
+else
+{
+    print("❌ a > b is FALSE");
+}
+
+print("Testing: a < b (5 < 3, should be FALSE)");
+if (a < b)
+{
+    print("❌ a < b is TRUE");
+}
+else
+{
+    print("✅ a < b is FALSE");
+}
+
+print("Testing: b < a (3 < 5, should be TRUE)");
+if (b < a)
+{
+    print("✅ b < a is TRUE");
+}
+else
+{
+    print("❌ b < a is FALSE");
+}
+
+print("=== Test Complete ===");

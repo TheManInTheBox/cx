@@ -1,7 +1,0 @@
-// Test if with logical expression
-var age = 25
-var hasLicense = true
-if (age >= 18 && hasLicense)
-{
-    print("Can drive")
-}

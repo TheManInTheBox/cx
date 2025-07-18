@@ -262,10 +262,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         {
             return Visit(context.expression());
         }
-        else if (context.aiFunction() != null)
-        {
-            return Visit(context.aiFunction());
-        }
 
         throw new InvalidOperationException($"Unknown primary expression: {context.GetText()}");
     }
@@ -531,109 +527,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
             node.Column = ruleContext.Start.Column;
             node.SourceFile = _fileName;
         }
-    }
-
-    // AI Function visitors
-    public override AstNode VisitTaskFunction(TaskFunctionContext context)
-    {
-        var aiCall = new AICallNode();
-        SetLocation(aiCall, context);
-        
-        aiCall.FunctionName = "task";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
-        
-        // If there's a second expression (options object), add it as an argument
-        if (context.expression().Length > 1)
-        {
-            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
-        }
-        
-        return aiCall;
-    }
-
-    private void ParseAIOptions(AICallNode aiCall, ObjectPropertyListContext optionsContext)
-    {
-        foreach (var property in optionsContext.objectProperty())
-        {
-            string key;
-            if (property.IDENTIFIER() != null)
-            {
-                key = property.IDENTIFIER().GetText();
-            }
-            else if (property.STRING_LITERAL() != null)
-            {
-                key = property.STRING_LITERAL().GetText().Trim('"');
-            }
-            else
-            {
-                continue; // Skip invalid property names
-            }
-
-            var valueExpr = (ExpressionNode)Visit(property.expression());
-            
-            // For now, store the expression directly
-            // In a more complete implementation, we might want to evaluate literals
-            if (valueExpr is LiteralNode literal)
-            {
-                aiCall.Options[key] = literal.Value ?? "";
-            }
-            else
-            {
-                // Store complex expressions as-is for later evaluation
-                aiCall.Options[key] = valueExpr;
-            }
-        }
-    }
-
-    public override AstNode VisitReasonFunction(ReasonFunctionContext context)
-    {
-        var aiCall = new AICallNode();
-        SetLocation(aiCall, context);
-        
-        aiCall.FunctionName = "reason";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
-        
-        // If there's a second expression (options object), add it as an argument
-        if (context.expression().Length > 1)
-        {
-            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
-        }
-        
-        return aiCall;
-    }
-
-    public override AstNode VisitEmbedFunction(EmbedFunctionContext context)
-    {
-        var aiCall = new AICallNode();
-        SetLocation(aiCall, context);
-        
-        aiCall.FunctionName = "embed";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
-        
-        // If there's a second expression (options object), add it as an argument
-        if (context.expression().Length > 1)
-        {
-            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
-        }
-        
-        return aiCall;
-    }
-
-    public override AstNode VisitAdaptFunction(AdaptFunctionContext context)
-    {
-        var aiCall = new AICallNode();
-        SetLocation(aiCall, context);
-        
-        aiCall.FunctionName = "adapt";
-        aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(0)));
-        
-        // If there's a second expression (options object), add it as an argument
-        if (context.expression().Length > 1)
-        {
-            aiCall.Arguments.Add((ExpressionNode)Visit(context.expression(1)));
-        }
-        
-        return aiCall;
     }
 
     public override AstNode VisitTryStatement(TryStatementContext context)

@@ -1,0 +1,18 @@
+<Project>
+  
+  <PropertyGroup>
+    <!-- Treat all warnings as errors globally -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    
+    <!-- Optional: Set warning level to maximum for stricter code quality -->
+    <WarningLevel>5</WarningLevel>
+    
+    <!-- Optional: Enable nullable reference types warnings -->
+    <Nullable>enable</Nullable>
+    
+    <!-- Optional: Enable all analyzers for better code quality -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+  </PropertyGroup>
+
+</Project>

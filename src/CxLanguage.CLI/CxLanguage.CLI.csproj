@@ -29,6 +29,7 @@
     <ProjectReference Include="..\CxLanguage.Core\CxLanguage.Core.csproj" />
     <ProjectReference Include="..\CxLanguage.Parser\CxLanguage.Parser.csproj" />
     <ProjectReference Include="..\CxLanguage.Compiler\CxLanguage.Compiler.csproj" />
+    <ProjectReference Include="..\CxLanguage.StandardLibrary\CxLanguage.StandardLibrary.csproj" />
     <ProjectReference Include="..\CxLanguage.Azure\CxLanguage.Azure.csproj" />
   </ItemGroup>
 

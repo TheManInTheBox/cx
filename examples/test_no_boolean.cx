@@ -1,8 +1,0 @@
-function main() {
-    x = 42
-    y = "hello"
-    print("Numbers work:")
-    print(x)
-    print("Strings work:")
-    print(y)
-}

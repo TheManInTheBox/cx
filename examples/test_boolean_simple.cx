@@ -1,5 +1,0 @@
-function main() {
-    condition = false
-    print("Boolean test:")
-    print(condition)
-}

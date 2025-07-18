@@ -1,5 +1,0 @@
-function main() {
-    print("Before")
-    print(null)
-    print("After")
-}

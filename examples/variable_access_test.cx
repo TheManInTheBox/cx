@@ -1,0 +1,10 @@
+// Test variable access for comparison debugging
+print("=== Variable Access Debug Test ===");
+
+var a = 5;
+print("a = " + a);
+
+var b = 3;
+print("b = " + b);
+
+print("=== Test Complete ===");

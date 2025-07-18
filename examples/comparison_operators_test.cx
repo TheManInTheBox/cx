@@ -1,0 +1,57 @@
+// Test all comparison operators to find the bug
+print("=== Comparison Operators Debug Test ===");
+
+var counter = 0;
+print("counter = " + counter);
+
+print("Testing: counter < 3");
+if (counter < 3)
+{
+    print("✅ counter < 3 is TRUE");
+}
+else
+{
+    print("❌ counter < 3 is FALSE");
+}
+
+print("Testing: counter > 3");
+if (counter > 3)
+{
+    print("❌ counter > 3 is TRUE (should be false)");
+}
+else
+{
+    print("✅ counter > 3 is FALSE");
+}
+
+print("Testing: counter == 0");
+if (counter == 0)
+{
+    print("✅ counter == 0 is TRUE");
+}
+else
+{
+    print("❌ counter == 0 is FALSE");
+}
+
+print("Testing: counter <= 3");
+if (counter <= 3)
+{
+    print("✅ counter <= 3 is TRUE");
+}
+else
+{
+    print("❌ counter <= 3 is FALSE");
+}
+
+print("Testing: counter >= 0");
+if (counter >= 0)
+{
+    print("✅ counter >= 0 is TRUE");
+}
+else
+{
+    print("❌ counter >= 0 is FALSE");
+}
+
+print("=== Test Complete ===");

@@ -1,6 +1,0 @@
-// Test basic variables with semicolons
-var message = "Hello, Cx Language!";
-var count = 42;
-print("Initial values:");
-print(message);
-print(count);

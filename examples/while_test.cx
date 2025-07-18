@@ -1,5 +1,0 @@
-var counter = 0
-while (counter < 3) {
-    Console.WriteLine(counter)
-    counter = counter + 1
-}
