@@ -1,0 +1,19 @@
+// AI Service Test - Aura CX Language
+// Testing service-based AI integration
+
+using textGen from "Cx.AI.TextGeneration";
+
+print("=== AURA CX - AI SERVICE TEST ===");
+
+// Test basic AI text generation
+var prompt = "Explain the benefits of AI-native programming languages in one sentence.";
+var options = {
+    temperature: 0.7,
+    maxTokens: 100
+};
+
+print("Calling AI service...");
+var response = textGen.GenerateAsync(prompt, options);
+print("AI Response: " + response);
+
+print("=== AI SERVICE TEST COMPLETE ===");

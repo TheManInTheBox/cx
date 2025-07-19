@@ -1,0 +1,28 @@
+// Test NAudio direct memory playback - pure memory-based audio
+using textToSpeech from "Cx.AI.TextToSpeech";
+
+print("🎵 Testing NAudio Direct Memory Playback");
+print("========================================");
+print("");
+
+try 
+{
+    print("🎤 Playing audio directly from memory using NAudio...");
+    print("   (No temporary files, pure memory streaming)");
+    print("");
+    
+    textToSpeech.SpeakAsync("This is amazing! I am now playing audio directly from memory using NAudio. No temporary files are created, just pure memory-based audio streaming through your speakers!");
+    
+    print("✅ NAudio memory playback completed!");
+    print("   🎵 Audio streamed directly from memory");
+    print("   🚫 No temporary files created");
+    print("   ⚡ Pure NAudio WaveOut implementation");
+    print("   🔊 High-quality direct memory playback");
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}
+
+print("");
+print("🚀 NAudio direct memory playback test complete!");

@@ -1,0 +1,21 @@
+// Test multiple AI services with debug logging
+using textToSpeech from "Cx.AI.TextToSpeech";
+using chatBot from "Cx.AI.ChatCompletion";
+
+print("=== Multi-Service Debug Test ===");
+
+try {
+    print("Testing TTS (should use EastUS2)...");
+    var ttsResult = textToSpeech.SynthesizeAsync("Hello TTS");
+    print("TTS Success!");
+    
+    print("Testing Chat (should use EastUS)...");
+    var chatResult = chatBot.CompleteAsync("System: Be helpful", "User: Say hello");
+    print("Chat Success!");
+    
+    print("Both services working!");
+} catch (error) {
+    print("ERROR: " + error);
+}
+
+print("=== Test completed ===");

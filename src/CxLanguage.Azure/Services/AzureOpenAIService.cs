@@ -9,6 +9,7 @@ using Microsoft.SemanticKernel;
 using System.Text.Json;
 using System.ClientModel;
 using System.Diagnostics;
+using System.Collections.Generic;
 
 namespace CxLanguage.Azure.Services;
 
@@ -52,15 +53,56 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
                 _logger.LogInformation("  {Key}: {Value}", setting.Key, setting.Value);
             }
             
-            // Manual configuration parsing as a fallback
-            _config = new AzureOpenAIConfig
+            // Check if this is new multi-service configuration format
+            var servicesSection = configSection.GetSection("Services");
+            if (servicesSection.Exists() && servicesSection.GetChildren().Any())
             {
-                Endpoint = configSection["Endpoint"] ?? "https://your-resource-name.openai.azure.com/",
-                DeploymentName = configSection["DeploymentName"] ?? "gpt-4",
-                ImageDeploymentName = configSection["ImageDeploymentName"] ?? "dall-e-3",
-                ApiKey = configSection["ApiKey"] ?? throw new InvalidOperationException("Azure OpenAI API Key is required"),
-                ApiVersion = configSection["ApiVersion"] ?? "2024-06-01"
-            };
+                // New multi-service configuration format
+                _logger.LogInformation("Using new multi-service configuration format");
+                var multiConfig = configSection.Get<MultiServiceAzureOpenAIConfig>();
+                
+                var defaultServiceName = multiConfig?.DefaultService ?? multiConfig?.Services?.FirstOrDefault()?.Name;
+                var defaultService = multiConfig?.Services?.FirstOrDefault(s => s.Name == defaultServiceName)
+                                   ?? multiConfig?.Services?.FirstOrDefault();
+                
+                if (defaultService != null)
+                {
+                    _config = new AzureOpenAIConfig
+                    {
+                        Endpoint = defaultService.Endpoint,
+                        DeploymentName = defaultService.Models?.ChatCompletion ?? "gpt-4",
+                        ImageDeploymentName = defaultService.Models?.TextToImage ?? "dall-e-3",
+                        TextToSpeechDeploymentName = defaultService.Models?.TextToSpeech ?? string.Empty,
+                        ApiKey = defaultService.ApiKey,
+                        ApiVersion = defaultService.ApiVersion ?? "2024-10-21",
+                        MultiServiceConfig = defaultService // Store reference for model-specific API versions
+                    };
+                    
+                    _logger.LogInformation("Selected service: {ServiceName} at {Endpoint}", defaultService.Name, defaultService.Endpoint);
+                    if (!string.IsNullOrEmpty(_config.TextToSpeechDeploymentName))
+                    {
+                        _logger.LogInformation("  TextToSpeechDeploymentName: {DeploymentName}", _config.TextToSpeechDeploymentName);
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException("No valid Azure OpenAI service configuration found");
+                }
+            }
+            else
+            {
+                // Legacy single-service configuration format
+                _logger.LogInformation("Using legacy single-service configuration format");
+                _config = new AzureOpenAIConfig
+                {
+                    Endpoint = configSection["Endpoint"] ?? "https://your-resource-name.openai.azure.com/",
+                    DeploymentName = configSection["DeploymentName"] ?? "gpt-4",
+                    ImageDeploymentName = configSection["ImageDeploymentName"] ?? "dall-e-3",
+                    TextToSpeechDeploymentName = configSection["TextToSpeechDeploymentName"] ?? string.Empty,
+                    ApiKey = configSection["ApiKey"] ?? throw new InvalidOperationException("Azure OpenAI API Key is required"),
+                    ApiVersion = configSection["ApiVersion"] ?? "2024-06-01"
+                };
+            }
         }
         catch (Exception ex)
         {
@@ -100,6 +142,40 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
         }
     }
 
+    /// <summary>
+    /// Gets the API version for a specific model type, with fallback to service-level API version
+    /// </summary>
+    private string GetApiVersionForModel(string modelType)
+    {
+        // If we have multi-service configuration with model-specific API versions
+        if (_config.MultiServiceConfig?.ModelApiVersions != null)
+        {
+            return modelType switch
+            {
+                "ChatCompletion" => _config.MultiServiceConfig.ModelApiVersions.ChatCompletion,
+                "TextGeneration" => _config.MultiServiceConfig.ModelApiVersions.TextGeneration,
+                "TextEmbedding" => _config.MultiServiceConfig.ModelApiVersions.TextEmbedding,
+                "TextToImage" => _config.MultiServiceConfig.ModelApiVersions.TextToImage,
+                "TextToSpeech" => _config.MultiServiceConfig.ModelApiVersions.TextToSpeech,
+                "AudioToText" => _config.MultiServiceConfig.ModelApiVersions.AudioToText,
+                "ImageToText" => _config.MultiServiceConfig.ModelApiVersions.ImageToText,
+                _ => _config.ApiVersion
+            };
+        }
+        
+        // Fallback to service-level API version
+        return _config.ApiVersion;
+    }
+
+    /// <summary>
+    /// Builds the request URI with model-specific API version
+    /// </summary>
+    private Uri BuildRequestUri(string deploymentName, string endpoint, string modelType)
+    {
+        var apiVersion = GetApiVersionForModel(modelType);
+        return new Uri($"{_config.Endpoint}openai/deployments/{deploymentName}/{endpoint}?api-version={apiVersion}");
+    }
+
     public async Task<CxLanguage.Core.AI.AiResponse> GenerateTextAsync(string prompt, CxLanguage.Core.AI.AiRequestOptions? options = null)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -114,7 +190,7 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
             // Let's use a simple approach for now by just constructing the request directly
             // This avoids issues with changing API names and structures
 
-            var requestUri = new Uri($"{_config.Endpoint}openai/deployments/{_config.DeploymentName}/chat/completions?api-version={_config.ApiVersion}");
+            var requestUri = BuildRequestUri(_config.DeploymentName, "chat/completions", "ChatCompletion");
             
             // Create an HttpClient
             using var httpClient = new HttpClient();
@@ -271,8 +347,8 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
         var requestBody = new StringContent(requestJson, System.Text.Encoding.UTF8, "application/json");
         
         // Send the streaming request
-        var requestUriString = $"{_config.Endpoint}openai/deployments/{_config.DeploymentName}/chat/completions?api-version={_config.ApiVersion}";
-        using var response = await httpClient.PostAsync(requestUriString, requestBody);
+        var requestUri = BuildRequestUri(_config.DeploymentName, "chat/completions", "ChatCompletion");
+        using var response = await httpClient.PostAsync(requestUri, requestBody);
         
         if (response.IsSuccessStatusCode)
         {
@@ -365,7 +441,7 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
 
             // Use Azure OpenAI's text-embedding-ada-002 API endpoint
             var embeddingDeployment = options?.Model ?? "text-embedding-ada-002";
-            var requestUri = new Uri($"{_config.Endpoint}openai/deployments/{embeddingDeployment}/embeddings?api-version={_config.ApiVersion}");
+            var requestUri = BuildRequestUri(embeddingDeployment, "embeddings", "TextEmbedding");
             
             // Create an HttpClient
             using var httpClient = new HttpClient();
@@ -462,7 +538,7 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
             _logger.LogInformation("Generating image for prompt: {Prompt}", prompt);
 
             // Use DALL-E 3 API endpoint
-            var requestUri = new Uri($"{_config.Endpoint}openai/deployments/{_config.ImageDeploymentName}/images/generations?api-version={_config.ApiVersion}");
+            var requestUri = BuildRequestUri(_config.ImageDeploymentName, "images/generations", "TextToImage");
             
             // Create an HttpClient
             using var httpClient = new HttpClient();
@@ -588,7 +664,7 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
             _logger.LogInformation("Analyzing image: {ImageUrl}", imageUrl);
 
             // Use GPT-4 Vision API for image analysis
-            var requestUri = $"{_config.Endpoint}openai/deployments/{_config.DeploymentName}/chat/completions?api-version={_config.ApiVersion}";
+            var requestUri = BuildRequestUri(_config.DeploymentName, "chat/completions", "ImageToText").ToString();
             
             using var httpClient = new HttpClient();
             
@@ -951,6 +1027,62 @@ public class AzureOpenAIConfig
     public string Endpoint { get; set; } = string.Empty;
     public string DeploymentName { get; set; } = string.Empty;
     public string ImageDeploymentName { get; set; } = "dall-e-3";
+    public string TextToSpeechDeploymentName { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
     public string ApiVersion { get; set; } = "2024-06-01";
+    
+    // Reference to the original multi-service configuration for API version lookup
+    public AzureOpenAIServiceConfig? MultiServiceConfig { get; set; }
+}
+
+/// <summary>
+/// Multi-service configuration for Azure OpenAI services
+/// </summary>
+public class MultiServiceAzureOpenAIConfig
+{
+    public List<AzureOpenAIServiceConfig> Services { get; set; } = new();
+    public string DefaultService { get; set; } = string.Empty;
+    public Dictionary<string, string> ServiceSelection { get; set; } = new();
+}
+
+/// <summary>
+/// Individual Azure OpenAI service configuration
+/// </summary>
+public class AzureOpenAIServiceConfig
+{
+    public string Name { get; set; } = string.Empty;
+    public string Endpoint { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+    public string ApiVersion { get; set; } = "2024-10-21";
+    public string Region { get; set; } = string.Empty;
+    public AzureOpenAIModelsConfig Models { get; set; } = new();
+    public ModelApiVersionsConfig? ModelApiVersions { get; set; }
+}
+
+/// <summary>
+/// Azure OpenAI model deployments configuration
+/// </summary>
+public class AzureOpenAIModelsConfig
+{
+    public string? ChatCompletion { get; set; }
+    public string? TextGeneration { get; set; }
+    public string? TextEmbedding { get; set; }
+    public string? TextToImage { get; set; }
+    public string? TextToSpeech { get; set; }
+    public string? AudioToText { get; set; }
+    public string? ImageToText { get; set; }
+}
+
+/// <summary>
+/// Model-specific API versions configuration
+/// </summary>
+public class ModelApiVersionsConfig
+{
+    public string ChatCompletion { get; set; } = "2024-10-21";
+    public string TextGeneration { get; set; } = "2024-10-21";
+    public string TextEmbedding { get; set; } = "2024-10-21";
+    public string TextToImage { get; set; } = "2024-10-01";
+    public string TextToSpeech { get; set; } = "2024-10-01";
+    public string AudioToText { get; set; } = "2024-10-01";
+    public string ImageToText { get; set; } = "2024-10-01";
 }

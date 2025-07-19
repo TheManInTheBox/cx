@@ -1,0 +1,16 @@
+// Simple debug test for TTS service
+using textToSpeech from "Cx.AI.TextToSpeech";
+
+print("=== Simple TTS Debug Test ===");
+print("Testing single TTS service call");
+
+try {
+    print("Calling textToSpeech.SynthesizeAsync...");
+    var result = textToSpeech.SynthesizeAsync("Hello from CX language");
+    print("TTS call completed successfully!");
+    print("Result type: " + result);
+} catch (error) {
+    print("ERROR in TTS call: " + error);
+}
+
+print("=== Test completed ===");

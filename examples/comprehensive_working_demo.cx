@@ -1,0 +1,115 @@
+// Comprehensive Working Demo - Aura CX Language
+// Testing all confirmed working features
+
+print("=== AURA CX - COMPREHENSIVE FEATURE TEST ===");
+
+// 1. Variable Declarations and Types
+var projectName = "Aura Cognitive Executor";
+var version = 1.0;
+var isActive = true;
+var features = ["AI-Native", "Enterprise-Ready", "Object-Oriented"];
+
+print("Project: " + projectName);
+print("Version: " + version);
+print("Status: " + isActive);
+
+// 2. Arithmetic Operations
+var baseScore = 85;
+var bonus = 15;
+var total = baseScore + bonus;
+var percentage = total / 100;
+
+print("Score Calculation:");
+print("Base: " + baseScore + ", Bonus: " + bonus);
+print("Total: " + total + " (" + percentage + "%)");
+
+// 3. Control Flow
+if (total >= 90)
+{
+    print("Grade: A - Excellent!");
+}
+else if (total >= 80)
+{
+    print("Grade: B - Good!");
+}
+else
+{
+    print("Grade: C - Needs improvement");
+}
+
+// 4. Loops and Iteration
+print("Processing features:");
+for (var feature in features)
+{
+    print("- " + feature);
+}
+
+var count = 0;
+while (count < 3)
+{
+    print("Iteration: " + count);
+    count += 1;
+}
+
+// 5. Functions with Parameters and Return Values
+function calculatePerformance(base, multiplier)
+{
+    var result = base * multiplier;
+    return result;
+}
+
+function displayResult(title, value)
+{
+    print(title + ": " + value);
+}
+
+var performance = calculatePerformance(85, 1.2);
+displayResult("Performance Score", performance);
+
+// 6. Exception Handling
+try
+{
+    var riskyOperation = 100 / 0;
+    print("Result: " + riskyOperation);
+}
+catch (error)
+{
+    print("Handled error: " + error);
+}
+
+// 7. Object and Array Literals
+var config = {
+    name: "Aura CX",
+    type: "AI-Native Language",
+    runtime: ".NET 8",
+    status: "Production Ready"
+};
+
+print("Configuration:");
+print("Name: " + config.name);
+print("Type: " + config.type);
+print("Runtime: " + config.runtime);
+
+var technologies = ["Microsoft Semantic Kernel", "Azure OpenAI", "ANTLR4"];
+print("Technology Stack:");
+for (var tech in technologies)
+{
+    print("- " + tech);
+}
+
+// 8. Complex Data Structures
+var systemInfo = {
+    project: config,
+    scores: [85, 92, 88, 95],
+    metadata: {
+        created: "2025",
+        language: "CX",
+        paradigm: "AI-Native"
+    }
+};
+
+print("System Overview:");
+print("Project: " + systemInfo.project.name);
+print("First Score: " + systemInfo.scores[0]);
+
+print("=== ALL CORE FEATURES OPERATIONAL ===");

@@ -1,0 +1,69 @@
+// 🧪 Quick AI Service Test - Week 1-2 Progress Check
+// Testing the fixes for Image Generation, Speech services
+
+using textGen from "Cx.AI.TextGeneration";
+using chatBot from "Cx.AI.ChatCompletion";
+using embeddings from "Cx.AI.TextEmbeddings";
+using imageGen from "Cx.AI.TextToImage";
+using tts from "Cx.AI.TextToSpeech";
+
+print("🔬 === WEEK 1-2 AI SERVICE FIXES TEST ===");
+
+// 1. Text Generation (Known Working) ✅
+print("\n✅ 1. Testing Text Generation...");
+try
+{
+    var textResult = textGen.GenerateAsync("Quick test of text generation");
+    print("📝 TextGen Result: " + textResult);
+}
+catch (error)
+{
+    print("❌ TextGen Error: " + error);
+}
+
+// 2. Text Embeddings (Should be working) ✅
+print("\n🧪 2. Testing Text Embeddings...");
+try
+{
+    var embeddingResult = embeddings.GenerateEmbeddingAsync("test embedding generation");
+    print("🔢 Embedding Result: " + embeddingResult);
+}
+catch (error)
+{
+    print("❌ Embedding Error: " + error);
+}
+
+// 3. Text to Image (DALL-E 3) - Testing the fix 🎯
+print("\n🎯 3. Testing Text to Image (DALL-E 3)...");
+try
+{
+    var imageOptions = {
+        size: "1024x1024",
+        quality: "standard"
+    };
+    var imageResult = imageGen.GenerateImageAsync("A futuristic AI programming language logo", imageOptions);
+    print("🎨 Image Generation Result: " + imageResult);
+}
+catch (error)
+{
+    print("❌ Image Generation Error: " + error);
+}
+
+// 4. Text to Speech - Testing the new SynthesizeAsync method 🎯
+print("\n🎯 4. Testing Text to Speech...");
+try
+{
+    var speechOptions = {
+        voice: "alloy",
+        speed: 1.0
+    };
+    var speechResult = tts.SynthesizeAsync("Hello from Aura CX language", speechOptions);
+    print("🗣️ Speech Synthesis Result: " + speechResult);
+}
+catch (error)
+{
+    print("❌ Speech Synthesis Error: " + error);
+}
+
+print("\n🎉 === WEEK 1-2 SERVICE AUDIT COMPLETE ===");
+print("Check results to validate our fixes!");
