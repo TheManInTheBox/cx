@@ -14,15 +14,59 @@ namespace CxLanguage.Runtime
     public static class CxRuntimeHelper
     {
         /// <summary>
+        /// Static service registry for accessing services from static function contexts
+        /// </summary>
+        private static readonly Dictionary<string, object> _staticServices = new();
+        
+        /// <summary>
+        /// Register a service instance for static access
+        /// </summary>
+        public static void RegisterService(string serviceName, object serviceInstance)
+        {
+            _staticServices[serviceName] = serviceInstance;
+            Console.WriteLine($"[DEBUG] Registered static service: {serviceName}");
+        }
+        
+        /// <summary>
+        /// Get a registered service instance
+        /// </summary>
+        public static object? GetService(string serviceName)
+        {
+            return _staticServices.TryGetValue(serviceName, out var service) ? service : null;
+        }
+        /// <summary>
         /// Calls a method on a service instance dynamically using reflection.
         /// This method handles method overload resolution, optional parameters, and async Task results.
         /// Synchronous version to avoid Task.Result blocking issues.
+        /// If serviceInstance is null, attempts to get it from static service registry.
         /// </summary>
         public static object? CallServiceMethod(object serviceInstance, string methodName, object[] arguments)
         {
+            // Handle null serviceInstance by attempting to get from static registry
             if (serviceInstance == null)
             {
-                return $"[Error: Service instance is null. Cannot call method '{methodName}'.]";
+                Console.WriteLine($"[DEBUG] Service instance is null, trying to resolve from static registry for method: {methodName}");
+                // Try to find the service by method name pattern (e.g., GenerateAsync -> TextGeneration)
+                var possibleServices = _staticServices.Values.ToList();
+                foreach (var service in possibleServices)
+                {
+                    var currentServiceType = service.GetType();
+                    var currentMethods = currentServiceType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                        .Where(m => m.Name == methodName)
+                        .ToArray();
+                    
+                    if (currentMethods.Length > 0)
+                    {
+                        Console.WriteLine($"[DEBUG] Found service {currentServiceType.Name} with method {methodName}");
+                        serviceInstance = service;
+                        break;
+                    }
+                }
+                
+                if (serviceInstance == null)
+                {
+                    return $"[Error: Service instance is null and no registered service found with method '{methodName}'.]";
+                }
             }
 
             var serviceType = serviceInstance.GetType();
@@ -123,6 +167,13 @@ namespace CxLanguage.Runtime
                 return CxParameterConverter.ConvertToOptions(dict, targetType);
             }
             
+            // Handle array conversions for parallel operations
+            if (targetType == typeof(string[]) && arg is object[] objArray)
+            {
+                // Convert object[] to string[] for parallel operations
+                return objArray.Select(o => o?.ToString() ?? "").ToArray();
+            }
+            
             if (targetType.IsInstanceOfType(arg))
             {
                 return arg;
@@ -207,6 +258,39 @@ namespace CxLanguage.Runtime
             // If no exact match, return the first method with the same name
             // This handles cases where parameter conversion is needed
             return namedMethods.FirstOrDefault();
+        }
+
+        /// <summary>
+        /// Executes a function in a background task (parallel execution).
+        /// This provides the parallel keyword functionality.
+        /// </summary>
+        public static Task ExecuteParallel(Action action)
+        {
+            if (action == null)
+            {
+                throw new ArgumentNullException(nameof(action));
+            }
+
+            // Start the action in a background task
+            var task = Task.Run(action);
+            
+            // Don't wait for completion - let it run in background
+            return task;
+        }
+
+        /// <summary>
+        /// Executes a function in a background task and returns the result.
+        /// This provides parallel execution for functions that return values.
+        /// </summary>
+        public static Task<T> ExecuteParallel<T>(Func<T> func)
+        {
+            if (func == null)
+            {
+                throw new ArgumentNullException(nameof(func));
+            }
+
+            // Start the function in a background task
+            return Task.Run(func);
         }
     }
 }

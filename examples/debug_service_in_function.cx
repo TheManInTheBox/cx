@@ -1,0 +1,31 @@
+using chatBot from "Cx.AI.ChatCompletion";
+using textGen from "Cx.AI.TextGeneration";
+
+print("🧪 CX Service Call Debug Test");
+print("==============================");
+
+try
+{
+    print("✅ Testing direct service call (should work):");
+    var directResult = textGen.GenerateAsync("Say hello", {temperature: 0.7, maxTokens: 50});
+    print("Direct result: " + directResult);
+
+    print("\n🔍 Testing service call inside function (debugging):");
+    
+    function testServiceInFunction()
+    {
+        print("  - Inside function, about to call textGen...");
+        var result = textGen.GenerateAsync("Say goodbye", {temperature: 0.7, maxTokens: 50});
+        print("  - Function result: " + result);
+        return result;
+    }
+    
+    var functionResult = testServiceInFunction();
+    print("Function call completed: " + functionResult);
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}
+
+print("\n✅ Service Call Debug Complete");

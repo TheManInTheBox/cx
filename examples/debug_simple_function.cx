@@ -1,0 +1,9 @@
+print("Simple Function Test");
+
+function simpleTest()
+{
+    print("Inside simple test function");
+}
+
+var result = simpleTest();
+print("Simple test complete: " + result);

@@ -1,0 +1,37 @@
+// Test parallel keyword as execution modifier - runs any function in parallel thread
+using textGen from "Cx.AI.TextGeneration";
+
+function slowFunction(message)
+{
+    print("Processing: " + message);
+    return "Processed: " + message;
+}
+
+try
+{
+    print("=== CX Parallel Execution Modifier Test ===");
+    
+    // Test 1: Parallel execution of regular function
+    print("Testing parallel execution of regular function...");
+    var result1 = parallel slowFunction("Hello World");
+    print("Result 1: " + result1);
+    
+    // Test 2: Parallel execution of AI service call
+    print("Testing parallel execution of AI service...");
+    var result2 = parallel textGen.GenerateAsync("Write a short poem", {temperature: 0.8});
+    print("Result 2: " + result2);
+    
+    // Test 3: Multiple parallel executions (when we have proper threading)
+    print("Testing sequential calls for now...");
+    var result3 = parallel slowFunction("Task 1");
+    var result4 = parallel slowFunction("Task 2");
+    
+    print("Result 3: " + result3);
+    print("Result 4: " + result4);
+    
+    print("✅ Parallel modifier test completed!");
+}
+catch (error)
+{
+    print("❌ Parallel modifier test failed: " + error);
+}
