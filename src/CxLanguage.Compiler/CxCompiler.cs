@@ -1404,116 +1404,44 @@ public class CxCompiler : IAstVisitor<object>
     }
     
     /// <summary>
-    /// Emit IL code for service method calls with Semantic Kernel integration
+    /// Emit IL code for service method calls using runtime helper for robustness
     /// </summary>
     private void EmitServiceMethodCall(string serviceName, string methodName, List<ExpressionNode> arguments, FieldBuilder serviceField)
     {
         Console.WriteLine($"[DEBUG] Emitting service method call: {serviceName}.{methodName} with {arguments.Count} arguments");
         
-        // Get the service type to determine the method signature
-        var serviceType = _importedServices[serviceName];
+        // Load the service instance
+        _currentIl!.Emit(OpCodes.Ldarg_0); // this
+        _currentIl.Emit(OpCodes.Ldfld, serviceField); // load service field
         
-        // Try to find the method on the service
-        var method = FindBestMatchingMethod(serviceType, methodName, arguments.Count);
+        // Load method name
+        _currentIl.Emit(OpCodes.Ldstr, methodName);
         
-        if (method != null)
+        // Create object array for arguments
+        _currentIl.Emit(OpCodes.Ldc_I4, arguments.Count);
+        _currentIl.Emit(OpCodes.Newarr, typeof(object));
+        
+        // Fill the array with arguments
+        for (int i = 0; i < arguments.Count; i++)
         {
-            Console.WriteLine($"[DEBUG] Found matching method: {method.Name} with {method.GetParameters().Length} parameters");
-            
-            // Debug: Print parameter types
-            var parameters = method.GetParameters();
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                Console.WriteLine($"[DEBUG] Parameter {i}: {parameters[i].Name} : {parameters[i].ParameterType.Name}");
-            }
-            
-            // Check if service is null at runtime and handle accordingly
-            var serviceNotNullLabel = _currentIl!.DefineLabel();
-            var endLabel = _currentIl.DefineLabel();
-            
-            // Load this instance
-            _currentIl.Emit(OpCodes.Ldarg_0);
-            // Load the service field
-            _currentIl.Emit(OpCodes.Ldfld, serviceField);
-            
-            // Duplicate for null check
-            _currentIl.Emit(OpCodes.Dup);
-            
-            // Check if service is null
-            _currentIl.Emit(OpCodes.Ldnull);
-            _currentIl.Emit(OpCodes.Ceq);
-            _currentIl.Emit(OpCodes.Brfalse, serviceNotNullLabel);
-            
-            // Service is null - pop the duplicate and return placeholder
-            _currentIl.Emit(OpCodes.Pop);
-            _currentIl.Emit(OpCodes.Ldstr, $"[Service {serviceName} not initialized - requires dependency injection]");
-            _currentIl.Emit(OpCodes.Br, endLabel);
-            
-            // Service is not null - proceed with method call
-            _currentIl.MarkLabel(serviceNotNullLabel);
-            
-            // Compile arguments with proper type conversion
-            var methodParameters = method.GetParameters();
-            
-            // Compile provided arguments
-            for (int i = 0; i < arguments.Count; i++)
-            {
-                arguments[i].Accept(this);
-                
-                // Convert arguments to expected parameter types
-                var paramType = methodParameters[i].ParameterType;
-                EmitParameterConversion(paramType, serviceName, methodName);
-            }
-            
-            // Add default values for any optional parameters not provided
-            for (int i = arguments.Count; i < methodParameters.Length; i++)
-            {
-                if (methodParameters[i].HasDefaultValue)
-                {
-                    var defaultValue = methodParameters[i].DefaultValue;
-                    if (defaultValue == null)
-                    {
-                        _currentIl.Emit(OpCodes.Ldnull);
-                    }
-                    else
-                    {
-                        // Handle other default value types as needed
-                        _currentIl.Emit(OpCodes.Ldnull); // For now, treat all as null
-                    }
-                }
-            }
-            
-            // Call the service method
-            if (method.IsVirtual)
-            {
-                _currentIl.EmitCall(OpCodes.Callvirt, method, null);
-            }
-            else
-            {
-                _currentIl.EmitCall(OpCodes.Call, method, null);
-            }
-            
-            // Handle async methods - if method returns Task<T>, we need to await it
-            if (IsAsyncMethod(method))
-            {
-                Console.WriteLine($"[DEBUG] Method {methodName} is async, handling Task result");
-                EmitTaskResultHandling(method);
-            }
-            
-            // Handle return value - if void, push null
-            if (method.ReturnType == typeof(void))
-            {
-                _currentIl.Emit(OpCodes.Ldnull);
-            }
-            
-            _currentIl.MarkLabel(endLabel);
+            _currentIl.Emit(OpCodes.Dup); // Duplicate array reference
+            _currentIl.Emit(OpCodes.Ldc_I4, i); // Load array index
+            arguments[i].Accept(this); // Generate argument value (already boxed by VisitLiteral)
+            _currentIl.Emit(OpCodes.Stelem_Ref); // Store in array
         }
-        else
+        
+        // Call the runtime helper
+        var helperMethod = typeof(CxRuntimeHelper).GetMethod("CallServiceMethod", 
+            new[] { typeof(object), typeof(string), typeof(object[]) });
+            
+        if (helperMethod == null)
         {
-            // Method not found - emit runtime error message
-            Console.WriteLine($"[DEBUG] Method {methodName} not found on {serviceType.Name}, emitting placeholder");
-            _currentIl!.Emit(OpCodes.Ldstr, $"[Method '{methodName}' not found on service '{serviceName}']");
+            throw new CompilationException("Runtime helper method CallServiceMethod not found");
         }
+        
+        _currentIl.EmitCall(OpCodes.Call, helperMethod, null);
+        
+        Console.WriteLine($"[DEBUG] Successfully emitted call to runtime helper");
     }
     
     /// <summary>
@@ -1685,14 +1613,14 @@ public class CxCompiler : IAstVisitor<object>
         {
             // For Task (void async), call Task.Wait() and return null
             var waitMethod = typeof(Task).GetMethod("Wait", Type.EmptyTypes);
-            _currentIl!.EmitCall(OpCodes.Callvirt, waitMethod!, null);
+            _currentIl!.EmitCall(OpCodes.Call, waitMethod!, null);
             _currentIl.Emit(OpCodes.Ldnull);
         }
         else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
         {
             // For Task<T>, get the Result property
             var resultProperty = returnType.GetProperty("Result");
-            _currentIl!.EmitCall(OpCodes.Callvirt, resultProperty!.GetMethod!, null);
+            _currentIl!.EmitCall(OpCodes.Call, resultProperty!.GetMethod!, null);
             
             // Box the result if it's a value type
             var resultType = returnType.GetGenericArguments()[0];
@@ -1718,7 +1646,7 @@ public class CxCompiler : IAstVisitor<object>
             "Cx.AI.TextToSpeech" => typeof(CxLanguage.StandardLibrary.AI.TextToSpeech.TextToSpeechService),
             "Cx.AI.AudioToText" => typeof(CxLanguage.StandardLibrary.AI.AudioToText.AudioToTextService),
             "Cx.AI.Realtime" => typeof(CxLanguage.StandardLibrary.AI.Realtime.RealtimeService),
-            "Cx.AI.Memory" => typeof(CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService),
+            "Cx.AI.VectorDatabase" => typeof(CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService),
             
             // Core Standard Library - for future non-AI services like:
             // "Cx.Core.IO" => typeof(...),

@@ -19,15 +19,15 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.SemanticKernel" Version="1.28.0" />
     <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.28.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-    <PackageReference Include="Microsoft.Extensions.Options" Version="8.0.2" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
     <PackageReference Include="NAudio" Version="2.2.1" />
     <!-- Kernel Memory for enterprise RAG and vector database -->
-    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.78.241005.1" />
-    <PackageReference Include="Microsoft.KernelMemory.DataFormats.AzureAIDocIntel" Version="0.78.241005.1" />
-    <PackageReference Include="Microsoft.KernelMemory.WebClient" Version="0.78.241005.1" />
+    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
+    <PackageReference Include="Microsoft.KernelMemory.DataFormats.AzureAIDocIntel" Version="0.98.250508.3" />
+    <PackageReference Include="Microsoft.KernelMemory.WebClient" Version="0.98.250508.3" />
   </ItemGroup>
 
 </Project>
