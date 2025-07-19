@@ -1,7 +1,23 @@
 ---
  applyTo: "**/*.cx"
- description: "CX Language Syntax Reference"
+ description: "CX Cognitive Executor Language - Autonomous Programming Platform"
 ---
+
+## CX Language - Cognitive Executor for Autonomous Programming
+
+### Overview
+CX (Cognitive Executor) is an autonomous programming language built on the Aura cognitive architecture framework. Designed for Safe, Quality, Productivity, and Autonomy in AI-driven development environments.
+
+**Key Principles:**
+- **Safe**: Memory-safe IL generation with comprehensive error handling
+- **Quality**: Enterprise-grade reliability with production-tested AI integration  
+- **Productivity**: Ultra-fast compilation (~50ms) with intuitive syntax
+- **Autonomy**: First-class support for autonomous agents and self-modifying code
+
+**Architecture:**
+- **CX Language**: The Cognitive Executor - executable autonomous programming language
+- **Aura Framework**: The cognitive architecture powering autonomous decision-making
+- **Agent Integration**: Copilot and other AI agents can execute CX code directly
 
 ## CX Language Syntax Reference
 
