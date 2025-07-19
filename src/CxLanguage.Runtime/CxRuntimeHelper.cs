@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace CxLanguage.Runtime
 {
@@ -135,6 +136,77 @@ namespace CxLanguage.Runtime
             {
                 return arg; // Return original if conversion fails
             }
+        }
+
+        /// <summary>
+        /// Retrieves a service from the service provider using GetRequiredService.
+        /// This method is used to obtain service instances in a static context.
+        /// </summary>
+        public static object? GetService(System.IServiceProvider serviceProvider, System.Type serviceType)
+        {
+            if (serviceProvider == null)
+            {
+                return null;
+            }
+            
+            try
+            {
+                // Use GetRequiredService via reflection to avoid generic method issues in IL
+                var getRequiredServiceMethod = typeof(Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions)
+                    .GetMethod("GetRequiredService", new[] { typeof(System.IServiceProvider) })
+                    ?.MakeGenericMethod(serviceType);
+                
+                if (getRequiredServiceMethod != null)
+                {
+                    return getRequiredServiceMethod.Invoke(null, new object[] { serviceProvider });
+                }
+                
+                // Fallback to GetService
+                return serviceProvider.GetService(serviceType);
+            }
+            catch (Exception ex)
+            {
+                return $"[Error: Failed to get service of type '{serviceType.Name}': {ex.Message}]";
+            }
+        }
+
+        /// <summary>
+        /// Find a compatible method from an array of methods based on name and argument count.
+        /// Handles optional parameters and method overloads.
+        /// </summary>
+        public static System.Reflection.MethodInfo? FindCompatibleMethod(
+            System.Reflection.MethodInfo[] methods, 
+            string methodName, 
+            int argumentCount)
+        {
+            // First, filter by method name
+            var namedMethods = methods.Where(m => m.Name == methodName).ToArray();
+            
+            if (namedMethods.Length == 0)
+            {
+                return null;
+            }
+            
+            // Find methods that can accept the given number of arguments
+            foreach (var method in namedMethods)
+            {
+                var parameters = method.GetParameters();
+                var requiredParams = parameters.Count(p => !p.HasDefaultValue);
+                var totalParams = parameters.Length;
+                
+                // Method is compatible if:
+                // 1. Argument count equals total parameters, OR
+                // 2. Argument count is between required and total (optional parameters)
+                if (argumentCount == totalParams || 
+                    (argumentCount >= requiredParams && argumentCount <= totalParams))
+                {
+                    return method;
+                }
+            }
+            
+            // If no exact match, return the first method with the same name
+            // This handles cases where parameter conversion is needed
+            return namedMethods.FirstOrDefault();
         }
     }
 }

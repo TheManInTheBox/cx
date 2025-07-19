@@ -1,0 +1,20 @@
+// Test service call with object literal - matching working pattern
+using textGen from "Cx.AI.TextGeneration";
+
+print("🧪 Object Literal Service Call Test");
+print("===================================");
+
+try 
+{
+    var response = textGen.GenerateAsync("Hello world!", {
+        temperature: 0.7,
+        maxTokens: 50
+    });
+    print("Response received: " + response);
+}
+catch (error)
+{
+    print("Error in service call: " + error);
+}
+
+print("Test complete.");

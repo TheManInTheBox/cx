@@ -23,7 +23,7 @@ public static class SemanticKernelServiceExtensions
         var endpoint = azureOpenAIConfig["Endpoint"] ?? throw new InvalidOperationException("AzureOpenAI:Endpoint is required");
         var apiKey = azureOpenAIConfig["ApiKey"] ?? throw new InvalidOperationException("AzureOpenAI:ApiKey is required");
         var deploymentName = azureOpenAIConfig["DeploymentName"] ?? "gpt-4o-mini";
-        var embeddingDeploymentName = azureOpenAIConfig["EmbeddingDeploymentName"] ?? "text-embedding-ada-002";
+        var embeddingDeploymentName = azureOpenAIConfig["EmbeddingDeploymentName"] ?? "text-embedding-3-small";
         var imageDeploymentName = azureOpenAIConfig["ImageDeploymentName"] ?? "dall-e-3";
 
         // Register Semantic Kernel
