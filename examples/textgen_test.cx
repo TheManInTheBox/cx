@@ -1,0 +1,11 @@
+// Test to confirm runtime helper works with textGen
+using textGen from "Cx.AI.TextGeneration";
+
+function main()
+{
+    print("Testing textGen service...");
+    var result = textGen.GenerateAsync("Hello world");
+    print("Result: " + result);
+}
+
+main();

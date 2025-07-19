@@ -1,0 +1,11 @@
+// Minimal test to isolate the InvalidProgramException
+using vectorDB from "Cx.AI.VectorDatabase";
+
+function main()
+{
+    print("Before service call");
+    vectorDB.IngestTextAsync("test", "test");
+    print("After service call");
+}
+
+main();
