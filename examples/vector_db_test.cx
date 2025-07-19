@@ -1,0 +1,23 @@
+// Simple vector database availability test
+
+print("🔥 Vector Database Service Test");
+print("===============================");
+
+using vectorDb from "Cx.AI.Memory";
+
+print("✅ Vector database service imported successfully");
+print("Service: " + vectorDb);
+
+try 
+{
+    var stats = vectorDb.GetStatsAsync("test");
+    print("📊 Service Stats:");
+    print("  Index: " + stats.IndexName);
+    print("  Status: Ready");
+}
+catch (error)
+{
+    print("❌ Service Error: " + error);
+}
+
+print("🎉 Vector database test complete!");

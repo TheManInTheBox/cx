@@ -1718,6 +1718,7 @@ public class CxCompiler : IAstVisitor<object>
             "Cx.AI.TextToSpeech" => typeof(CxLanguage.StandardLibrary.AI.TextToSpeech.TextToSpeechService),
             "Cx.AI.AudioToText" => typeof(CxLanguage.StandardLibrary.AI.AudioToText.AudioToTextService),
             "Cx.AI.Realtime" => typeof(CxLanguage.StandardLibrary.AI.Realtime.RealtimeService),
+            "Cx.AI.Memory" => typeof(CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService),
             
             // Core Standard Library - for future non-AI services like:
             // "Cx.Core.IO" => typeof(...),
@@ -1932,6 +1933,25 @@ public class CxCompiler : IAstVisitor<object>
     }
     public object VisitMemberAccess(MemberAccessNode node)
     {
+        // Check for array.length property access first
+        if (node.Property == "length")
+        {
+            // Visit the object expression (should put array on stack)
+            node.Object.Accept(this);
+            
+            // Cast to object[] to ensure we have an array
+            _currentIl!.Emit(OpCodes.Castclass, typeof(object[]));
+            
+            // Get the length property
+            _currentIl.Emit(OpCodes.Ldlen);
+            
+            // Convert native int to int32 and then box it
+            _currentIl.Emit(OpCodes.Conv_I4);
+            _currentIl.Emit(OpCodes.Box, typeof(int));
+            
+            return new object();
+        }
+
         // Check if this is a service property access (e.g., service.PropertyName)
         if (node.Object is IdentifierNode serviceIdentifier &&
             _serviceFields.TryGetValue(serviceIdentifier.Name, out var serviceField))
@@ -2007,10 +2027,13 @@ public class CxCompiler : IAstVisitor<object>
         // Cast to object[] 
         _currentIl!.Emit(OpCodes.Castclass, typeof(object[]));
         
-        // Visit the index expression (this puts index on stack)
+        // Visit the index expression (this puts boxed index on stack)
         node.Index.Accept(this);
         
-        // Now stack is [array] [index] which is correct order for ldelem_ref
+        // Unbox the index to get the actual int value
+        _currentIl.Emit(OpCodes.Unbox_Any, typeof(int));
+        
+        // Now stack is [array] [int_index] which is correct order for ldelem_ref
         _currentIl.Emit(OpCodes.Ldelem_Ref);
         
         return new object();
