@@ -29,18 +29,63 @@ public static class KernelMemoryServiceExtensions
                 return services;
             }
 
-            // For new KernelMemory API, we'll use a simpler approach with Azure OpenAI configuration
-            var azureOpenAIConfig = new AzureOpenAIConfig
+            // Handle multi-service configuration format
+            string apiKey = string.Empty;
+            string endpoint = string.Empty;
+            string embeddingDeployment = string.Empty;
+            string chatDeployment = string.Empty;
+            
+            var servicesSection = azureOpenAISection.GetSection("Services");
+            if (servicesSection.Exists())
             {
-                APIKey = azureOpenAISection["ApiKey"] ?? string.Empty,
-                Endpoint = azureOpenAISection["Endpoint"] ?? string.Empty,
-                Deployment = azureOpenAISection["DeploymentName"] ?? string.Empty,
+                // Multi-service configuration
+                var defaultService = azureOpenAISection["DefaultService"] ?? "EastUS";
+                var embeddingService = azureOpenAISection.GetSection("ServiceSelection")["TextEmbedding"] ?? defaultService;
+                
+                // Find the embedding service configuration
+                foreach (var serviceSection in servicesSection.GetChildren())
+                {
+                    var serviceName = serviceSection["Name"];
+                    if (serviceName == embeddingService)
+                    {
+                        apiKey = serviceSection["ApiKey"] ?? string.Empty;
+                        endpoint = serviceSection["Endpoint"] ?? string.Empty;
+                        embeddingDeployment = serviceSection.GetSection("Models")["TextEmbedding"] ?? string.Empty;
+                        chatDeployment = serviceSection.GetSection("Models")["ChatCompletion"] ?? string.Empty;
+                        Console.WriteLine($"Vector Database: Using embedding service '{embeddingService}' with deployment '{embeddingDeployment}'");
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                // Legacy single-service configuration
+                apiKey = azureOpenAISection["ApiKey"] ?? string.Empty;
+                endpoint = azureOpenAISection["Endpoint"] ?? string.Empty;
+                embeddingDeployment = azureOpenAISection["EmbeddingDeploymentName"] ?? azureOpenAISection["DeploymentName"] ?? string.Empty;
+                chatDeployment = azureOpenAISection["DeploymentName"] ?? string.Empty;
+            }
+
+            // Create separate configs for embeddings and text generation
+            var embeddingConfig = new AzureOpenAIConfig
+            {
+                APIKey = apiKey,
+                Endpoint = endpoint,
+                Deployment = embeddingDeployment,
+                Auth = AzureOpenAIConfig.AuthTypes.APIKey
+            };
+
+            var textGenConfig = new AzureOpenAIConfig
+            {
+                APIKey = apiKey,
+                Endpoint = endpoint,
+                Deployment = chatDeployment,
                 Auth = AzureOpenAIConfig.AuthTypes.APIKey
             };
 
             var kernelMemoryBuilder = new KernelMemoryBuilder()
-                .WithAzureOpenAITextGeneration(azureOpenAIConfig)
-                .WithAzureOpenAITextEmbeddingGeneration(azureOpenAIConfig);
+                .WithAzureOpenAITextGeneration(textGenConfig)
+                .WithAzureOpenAITextEmbeddingGeneration(embeddingConfig);
 
             Console.WriteLine("Vector Database: Building KernelMemory with Azure OpenAI configuration");
             

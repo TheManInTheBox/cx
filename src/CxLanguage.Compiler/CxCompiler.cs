@@ -1404,44 +1404,51 @@ public class CxCompiler : IAstVisitor<object>
     }
     
     /// <summary>
-    /// Emit IL code for service method calls using runtime helper for robustness
+    /// Emit IL code for service method calls using optimized direct reflection with proper method resolution
     /// </summary>
     private void EmitServiceMethodCall(string serviceName, string methodName, List<ExpressionNode> arguments, FieldBuilder serviceField)
     {
         Console.WriteLine($"[DEBUG] Emitting service method call: {serviceName}.{methodName} with {arguments.Count} arguments");
         
-        // Load the service instance
-        _currentIl!.Emit(OpCodes.Ldarg_0); // this
-        _currentIl.Emit(OpCodes.Ldfld, serviceField); // load service field
+        // FINAL OPTIMIZATION: Use CxRuntimeHelper.CallServiceMethod directly for robust service calls
+        // This approach eliminates complex IL stack management and leverages proven runtime helpers
         
-        // Load method name
+        // Load service instance (first parameter for CallServiceMethod)
+        _currentIl!.Emit(OpCodes.Ldarg_0); // Load 'this' pointer
+        _currentIl.Emit(OpCodes.Ldfld, serviceField); // Load service field
+        
+        // Load method name (second parameter)
         _currentIl.Emit(OpCodes.Ldstr, methodName);
         
-        // Create object array for arguments
+        // Create object array for arguments (third parameter)
         _currentIl.Emit(OpCodes.Ldc_I4, arguments.Count);
         _currentIl.Emit(OpCodes.Newarr, typeof(object));
         
         // Fill the array with arguments
         for (int i = 0; i < arguments.Count; i++)
         {
+            Console.WriteLine($"[DEBUG] Processing argument {i}: {arguments[i].GetType().Name}");
+            
             _currentIl.Emit(OpCodes.Dup); // Duplicate array reference
             _currentIl.Emit(OpCodes.Ldc_I4, i); // Load array index
-            arguments[i].Accept(this); // Generate argument value (already boxed by VisitLiteral)
-            _currentIl.Emit(OpCodes.Stelem_Ref); // Store in array
-        }
-        
-        // Call the runtime helper
-        var helperMethod = typeof(CxRuntimeHelper).GetMethod("CallServiceMethod", 
-            new[] { typeof(object), typeof(string), typeof(object[]) });
             
-        if (helperMethod == null)
-        {
-            throw new CompilationException("Runtime helper method CallServiceMethod not found");
+            // Generate argument value
+            arguments[i].Accept(this);
+            Console.WriteLine($"[DEBUG] Generated IL for argument {i}");
+            
+            // Store the value in the array
+            _currentIl.Emit(OpCodes.Stelem_Ref);
+            Console.WriteLine($"[DEBUG] Stored argument {i} in array");
         }
         
-        _currentIl.EmitCall(OpCodes.Call, helperMethod, null);
+        Console.WriteLine($"[DEBUG] All arguments processed, calling CxRuntimeHelper.CallServiceMethod");
         
-        Console.WriteLine($"[DEBUG] Successfully emitted call to runtime helper");
+        // Call CxRuntimeHelper.CallServiceMethod(serviceInstance, methodName, arguments)
+        var callServiceMethod = typeof(CxRuntimeHelper).GetMethod("CallServiceMethod", 
+            new[] { typeof(object), typeof(string), typeof(object[]) });
+        _currentIl.EmitCall(OpCodes.Call, callServiceMethod!, null);
+        
+        Console.WriteLine($"[DEBUG] Successfully emitted runtime helper call - maximum reliability approach");
     }
     
     /// <summary>

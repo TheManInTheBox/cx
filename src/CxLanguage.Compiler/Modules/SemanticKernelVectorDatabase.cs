@@ -190,7 +190,7 @@ public class SemanticKernelVectorDatabase
                 ["estimated_entries"] = results.Count,
                 ["last_updated"] = DateTime.UtcNow,
                 ["using_semantic_kernel"] = true,
-                ["embedding_model"] = "text-embedding-ada-002" // Default for Azure OpenAI
+                ["embedding_model"] = "text-embedding-3-small" // Default for Azure OpenAI
             };
             
             return stats;

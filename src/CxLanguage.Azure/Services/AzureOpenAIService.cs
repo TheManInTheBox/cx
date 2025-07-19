@@ -439,8 +439,8 @@ public class AzureOpenAIService : CxLanguage.Core.AI.IAiService, CxLanguage.Azur
         {
             _logger.LogInformation("Generating embedding for text length: {Length}", text.Length);
 
-            // Use Azure OpenAI's text-embedding-ada-002 API endpoint
-            var embeddingDeployment = options?.Model ?? "text-embedding-ada-002";
+            // Use Azure OpenAI's text-embedding-3-small API endpoint
+            var embeddingDeployment = options?.Model ?? "text-embedding-3-small";
             var requestUri = BuildRequestUri(embeddingDeployment, "embeddings", "TextEmbedding");
             
             // Create an HttpClient
