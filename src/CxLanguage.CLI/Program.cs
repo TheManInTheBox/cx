@@ -9,6 +9,8 @@ using CxLanguage.Parser;
 using CxLanguage.Compiler;
 using CxLanguage.Compiler.Modules;
 using CxLanguage.Azure.Services;
+using CxLanguage.StandardLibrary.AI.VectorDatabase;
+using CxLanguage.CLI.Extensions;
 using CxCoreAI = CxLanguage.Core.AI;
 
 namespace CxLanguage.CLI;
@@ -341,20 +343,14 @@ class Program
                     // Always register Vector Database services - they can work without full Azure OpenAI config
                     try
                     {
+                        // Use the proper extension method for Kernel Memory services
                         services.AddKernelMemoryServices(context.Configuration);
                         Console.WriteLine("Vector Database services registered successfully");
                     }
                     catch (Exception vectorEx)
                     {
                         Console.WriteLine($"Warning: Vector Database initialization failed: {vectorEx.Message}");
-                        // Register a mock VectorDatabaseService for development
-                        services.AddSingleton<CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService>(provider => 
-                        {
-                            // Create a mock implementation that can be safely instantiated
-                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService>>();
-                            // Return null for now - this will need to be a proper mock implementation
-                            return null!; 
-                        });
+                        // The extension method handles fallback gracefully
                     }
 
                     try
