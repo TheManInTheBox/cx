@@ -11,13 +11,21 @@ applyTo: '**'
 - Always keep README.md up to date with the latest development status and features.
 
 ## Project Overview
-The CX Language is an AI-native agentic programming language designed for autonomous workflows. It features:
+The CX Language is the **Cognitive Executor** - an autonomous programming language built on the **Aura cognitive architecture framework**. Designed for Safe, Quality, Productivity, and Autonomy in AI-driven development.
+
+**Core Principles:**
+- **Safe**: Memory-safe IL generation with comprehensive error handling
+- **Quality**: Enterprise-grade reliability with production-tested AI integration  
+- **Productivity**: Ultra-fast compilation (~50ms) with intuitive syntax
+- **Autonomy**: First-class support for autonomous agents and self-modifying code
+
+**Key Features:**
 - First-class support for AI functions (task, synthesize, reason, process, generate, embed, adapt)
 - JavaScript/TypeScript-like syntax for familiarity
 - Function introspection capabilities with the `self` keyword
 - Built for .NET runtime via IL code generation
 - **Cx.Ai.Adaptations Standard Library** - AI-powered .NET IL generator for dynamic code generation
-- Focus on autonomous agent capabilities and self-modifying code
+- **Agent Integration**: Copilot and other AI agents can execute CX code directly for autonomous programming
 
 ## Development Phases and Scope
 
@@ -274,6 +282,15 @@ Based on working examples and grammar:
 - Complex multi-step AI workflows functional
 - MP3 pure memory streaming operational
 - Single-parameter and object literal service calls working
+
+**🤖 Autonomous Agent Integration:**
+- **Copilot as CX Agent**: GitHub Copilot can execute CX code directly for autonomous programming tasks
+- **Agent Execution Pattern**: AI agents can write, compile, and execute CX code in real-time
+- **Autonomous Workflows**: CX enables agents to perform complex programming tasks independently
+- **Self-Modifying Capability**: Agents can generate and modify CX code based on task requirements
+- **Cognitive Architecture**: Built on Aura framework for advanced autonomous decision-making
+- **Multi-Agent Coordination**: Support for multiple AI agents working collaboratively through CX
+- **Dynamic Code Generation**: Agents can create custom solutions using CX's rapid compilation
 
 **⏳ Grammar Ready (Compiler Pending):**
 - Class inheritance (extends keyword)

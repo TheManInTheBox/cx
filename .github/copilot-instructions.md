@@ -1,7 +1,18 @@
-# CX Language - AI Coding Agent Instructions
+# CX Language - Cognitive Executor for Autonomous Programming
 
 ## Project Overview
-CX is an AI-native agentic programming language with JavaScript/TypeScript-like syntax, built on .NET 8 with IL code generation. **Phase 4 (AI Integration) is 100% COMPLETE** with production-ready AI services and final IL optimization achieved.
+CX (Cognitive Executor) is an autonomous programming language built on the Aura cognitive architecture framework, with JavaScript/TypeScript-like syntax on .NET 8 with IL code generation. **Phase 4 (AI Integration) is 100% COMPLETE** with production-ready AI services and final IL optimization achieved.
+
+**Core Principles:**
+- **Safe**: Memory-safe IL generation with comprehensive error handling
+- **Quality**: Enterprise-grade reliability with production-tested AI integration  
+- **Productivity**: Ultra-fast compilation (~50ms) with intuitive syntax
+- **Autonomy**: First-class support for autonomous agents and self-modifying code
+
+**Autonomous Programming Platform:**
+- **CX Language**: The Cognitive Executor - executable autonomous programming language
+- **Aura Framework**: The cognitive architecture powering autonomous decision-making
+- **Agent Integration**: AI agents (including Copilot) can execute CX code directly for autonomous programming tasks
 
 ## Architecture & Key Components
 
@@ -39,7 +50,7 @@ dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/compr
 - Class inheritance (`extends`), interfaces, async/await, access modifiers
 - Module imports (`using service from "namespace"`), typed parameters
 
-## CX Language Patterns
+## CX Autonomous Programming Patterns
 
 ### Code Style (Non-Negotiable)
 ```cx
@@ -72,28 +83,31 @@ var story = textGen.GenerateAsync("Write a story", {
     topP: 0.9
 });
 
-// Zero-file MP3 streaming (revolutionary feature)
-tts.SpeakAsync("Pure memory audio playback!");
+// Zero-file MP3 streaming (autonomous audio capabilities)
+tts.SpeakAsync("CX: Autonomous programming in action!");
 ```
 
-### Class System Pattern
+### Autonomous Agent Pattern
 ```cx
-class Agent
+class AutonomousAgent
 {
     name: string;
+    cognition: string; // Aura cognitive architecture
     
-    constructor(agentName)
+    constructor(agentName, cognitiveModel)
     {
         this.name = agentName;
+        this.cognition = cognitiveModel;
     }
     
-    function process(task)
+    function executeAutonomously(task)
     {
-        return "Processing: " + task;
+        // CX enables agents to write and execute code autonomously
+        return "Executing: " + task + " via " + this.cognition;
     }
 }
 
-var agent = new Agent("CX Assistant");
+var agent = new AutonomousAgent("CX Copilot", "Aura Framework");
 ```
 
 ## Development Workflows
