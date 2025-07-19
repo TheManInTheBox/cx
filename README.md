@@ -82,117 +82,28 @@ dotnet build CxLanguage.sln
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/comprehensive_ai_mp3_demo.cx
 ```
 
-## 🚀 **QUICK START: AI IN ACTION**
+## 🚀 **CX IN ACTION: AUTONOMOUS EXAMPLES**
 
-**Experience working AI services in under 1 minute:**
+### **1. Aura: Event-Driven Sensory Agent**
+This example showcases the core of the Aura sensory layer. One agent emits a high-level "presence" signal after analyzing transcribed audio, and a second agent reactively and autonomously responds.
 
-```bash
-# 1. Build the language
-dotnet build CxLanguage.sln
-
-# 2. Run AI demo (requires Azure OpenAI configuration)
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/quick_ai_test.cx
-```
-
-**See it working:**
 ```cx
 using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using tts from "Cx.AI.TextToSpeech";
 
-// Generate creative content
-var story = textGen.GenerateAsync("Write a short story about AI", {
-    temperature: 0.8,
-    maxTokens: 300
-});
-
-// Interactive chat
-var response = chatBot.ChatAsync("What is autonomous programming?", {
-    temperature: 0.7
-});
-
-// Zero-file audio streaming
-tts.SpeakAsync("CX: Autonomous programming in action!");
-```
-
-## 🏗️ **AUTONOMOUS AGENT ARCHITECTURE**
-
-### **Cognitive Executor Pattern**
-```cx
-class AutonomousAgent
-{
-    name: string;
-    cognitiveModel: string; // Aura framework
-    
-    constructor(agentName, model)
-    {
-        this.name = agentName;
-        this.cognitiveModel = model;
-    }
-    
-    function executeAutonomously(task)
-    {
-        // Agent performs autonomous reasoning and execution
-        return "Executing: " + task + " via " + this.cognitiveModel;
-    }
-}
-
-var copilotAgent = new AutonomousAgent("GitHub Copilot", "Aura-v2.0");
-var result = copilotAgent.executeAutonomously("Complex data analysis");
-```
-
-### **Multi-Agent Coordination**
-```cx
-class AgentCoordinator
-{
-    agents: array;
-    
-    constructor()
-    {
-        this.agents = [];
-    }
-    
-    function addAgent(agent)
-    {
-        this.agents += [agent];
-    }
-    
-    function distributeTask(complexTask)
-    {
-        for (agent in this.agents)
-        {
-            // Each agent processes autonomously
-            agent.processAsync(complexTask);
-        }
-    }
-}
-```
-
-### **Event-Driven Sensory Layer (Aura)**
-The future of CX is a reactive, event-driven model where agents perceive and respond to their environment. This is the primary objective of the Aura layer, enabled by new `on`, `when`, and `emit` keywords.
-
-```cx
-// Aura: Perceive an event from the environment
+// Agent 1: Senses raw data and emits an abstract event
 on "audio.transcribed" (payload) =>
 {
-    // Cx: Reason about the event using AI
-    var sentiment = textGen.GenerateAsync("sentiment", payload.content);
+    // Cx reasons about the transcribed text
     var intent = textGen.GenerateAsync("intent", payload.content);
 
-    // Cx: Act by emitting a new, enriched event
-    emit "presence.signal",
-        {
-            source: "audio",
-            sentiment: sentiment,
-            intent: intent,
-            timestamp: now() // now() requires Time library
-        };
+    // Cx acts by emitting a higher-level "presence" signal
+    emit "presence.signal", { source: "audio", intent: intent };
 }
 
-// Another agent perceives the signal from the first
+// Agent 2: Reacts to the abstract signal from Agent 1
 on "presence.signal" (payload) =>
 {
-    // Cx: Apply conditional logic
+    // Cx applies conditional logic to the perceived intent
     when (payload.intent == "query") =>
     {
         var result = textGen.GenerateAsync("reason", payload.content);
@@ -201,33 +112,57 @@ on "presence.signal" (payload) =>
 }
 ```
 
-## 🧠 **AI SERVICES INTEGRATION**
+### **2. Cx: Parallel Multi-Agent Coordination**
+This demonstrates true multi-agent autonomy. Four different AI agents are instantiated and run in parallel to debate a topic from their unique perspectives, showcasing the `parallel` keyword.
 
-### **Vector Database & RAG**
 ```cx
-using vectorDb from "Cx.AI.VectorDatabase";
+using textGen from "Cx.AI.TextGeneration";
 
-// Ingest documents for semantic search
-vectorDb.IngestTextAsync("Complex technical documentation about autonomous systems...");
+class DebateAgent
+{
+    perspective: string;
+    constructor(p) { this.perspective = p; }
+    function argue(topic)
+    {
+        return textGen.GenerateAsync("Argue about " + topic + " from the perspective of " + this.perspective);
+    }
+}
 
-// Intelligent query with context
-var context = vectorDb.AskAsync("How do autonomous agents coordinate?");
-print("Context: " + context);
+var agents = [
+    new DebateAgent("a climate scientist"),
+    new DebateAgent("an industrial CEO"),
+    new DebateAgent("a policy maker"),
+    new DebateAgent("a citizen activist")
+];
+
+// Run all agents concurrently
+parallel for (agent in agents)
+{
+    var argument = agent.argue("climate change");
+    print(agent.perspective + ": " + argument);
+}
 ```
 
-### **Multi-Modal AI Workflows**
-```cx
-using imageGen from "Cx.AI.ImageGeneration";
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
+### **3. Integrated AI: RAG & Multi-Modal Workflow**
+This example highlights the seamless integration of CX's most advanced AI services, combining Retrieval Augmented Generation (RAG) with multi-modal image generation.
 
-// Generate story, create image, analyze with chat
-var story = textGen.GenerateAsync("Futuristic AI city");
-var image = imageGen.GenerateAsync("Futuristic AI cityscape", {
+```cx
+using vectorDb from "Cx.AI.VectorDatabase";
+using imageGen from "Cx.AI.ImageGeneration";
+
+// 1. Ingest knowledge into the vector database
+vectorDb.IngestTextAsync("The CX language enables agents to achieve autonomy through an event-driven architecture called Aura.");
+
+// 2. Use RAG to ask a question against the knowledge
+var context = vectorDb.AskAsync("How do agents achieve autonomy in CX?");
+
+// 3. Use the retrieved context to generate a relevant image
+var image = imageGen.GenerateAsync("A visual representation of: " + context, {
     quality: "hd",
     size: "1024x1024"
 });
-var analysis = chatBot.ChatAsync("Analyze this AI-generated story and image concept");
+
+print("Generated image based on retrieved context: " + image);
 ```
 
 ## 🏆 **PRODUCTION ACHIEVEMENTS**
