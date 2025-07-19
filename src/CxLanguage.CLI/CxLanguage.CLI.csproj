@@ -9,6 +9,14 @@
     <AssemblyName>cx</AssemblyName>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors />
+    <Version>1.0.0-beta</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>CX Language - AI-Native Agentic Programming Language</Product>
+    <Company>Aura CX</Company>
+    <Authors>Aaron Hebert</Authors>
+    <Copyright>Copyright © 2025 Aaron Hebert</Copyright>
+    <Description>CX Language command-line interface for AI-native programming with Azure OpenAI integration</Description>
   </PropertyGroup>
 
   <ItemGroup>
