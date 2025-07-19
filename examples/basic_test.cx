@@ -1,0 +1,22 @@
+// Basic CX Language Test
+var message = "Hello, Aura CX!";
+var count = 42;
+var isActive = true;
+
+print("Testing basic functionality:");
+print(message);
+print("Count: " + count);
+print("Active: " + isActive);
+
+// Test arithmetic
+var result = 10 + 5 * 2;
+print("Math result: " + result);
+
+// Test function
+function greet(name)
+{
+    return "Hello, " + name + "!";
+}
+
+var greeting = greet("Developer");
+print(greeting);

@@ -24,6 +24,7 @@ public static class SemanticKernelServiceExtensions
         var apiKey = azureOpenAIConfig["ApiKey"] ?? throw new InvalidOperationException("AzureOpenAI:ApiKey is required");
         var deploymentName = azureOpenAIConfig["DeploymentName"] ?? "gpt-4o-mini";
         var embeddingDeploymentName = azureOpenAIConfig["EmbeddingDeploymentName"] ?? "text-embedding-ada-002";
+        var imageDeploymentName = azureOpenAIConfig["ImageDeploymentName"] ?? "dall-e-3";
 
         // Register Semantic Kernel
         services.AddSingleton<Kernel>(serviceProvider =>
@@ -40,6 +41,14 @@ public static class SemanticKernelServiceExtensions
 #pragma warning disable SKEXP0010
             builder.AddAzureOpenAITextEmbeddingGeneration(
                 deploymentName: embeddingDeploymentName,
+                endpoint: endpoint,
+                apiKey: apiKey);
+#pragma warning restore SKEXP0010
+
+            // Add Azure OpenAI text-to-image generation (DALL-E 3)
+#pragma warning disable SKEXP0010
+            builder.AddAzureOpenAITextToImage(
+                deploymentName: imageDeploymentName ?? "dall-e-3",
                 endpoint: endpoint,
                 apiKey: apiKey);
 #pragma warning restore SKEXP0010

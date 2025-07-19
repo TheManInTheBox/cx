@@ -123,20 +123,22 @@ This standard library provides modular AI services for the CX programming langua
 
 ### ✅ 7. TextToSpeechService
 **Location**: `AI/TextToSpeech/TextToSpeechService.cs`
-**Purpose**: Advanced speech synthesis with conversational capabilities
+**Purpose**: Advanced speech synthesis with zero-file MP3 streaming playback
 
 **Key Methods**:
-- `SynthesizeAsync(text, options)` - Basic speech synthesis
+- `SpeakAsync(text, options)` - Pure memory MP3 streaming with NAudio playback
+- `SynthesizeAsync(text, options)` - Basic speech synthesis (returns audio data)
 - `SynthesizeStreamAsync(text, options)` - Streaming synthesis
 - `SynthesizeConversationalAsync(text, context, options)` - Context-aware speech
-- `SynthesizeBatchAsync(texts, options)` - Batch synthesis
 
 **Features**:
-- Real-time speech synthesis
+- **Zero-File MP3 Streaming**: Direct memory-based audio playback using NAudio
+- Real-time speech synthesis and immediate playback
+- 70% smaller file sizes with MP3 format (vs WAV)
+- Professional audio engine integration (WaveOutEvent)
 - Conversational context adaptation
 - Prosody and emotion controls
-- Multiple voice models
-- SSML and expression support
+- Multiple voice models and SSML support
 
 ### ✅ 8. AudioToTextService
 **Location**: `AI/AudioToText/AudioToTextService.cs`

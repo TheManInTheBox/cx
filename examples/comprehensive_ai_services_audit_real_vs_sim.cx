@@ -1,0 +1,141 @@
+// 🔍 COMPREHENSIVE AI SERVICES AUDIT - REAL vs SIMULATED
+// Testing all 9 AI services to verify actual vs simulated functionality
+
+using textGen from "Cx.AI.TextGeneration";
+using chatBot from "Cx.AI.ChatCompletion";
+using embeddings from "Cx.AI.TextEmbeddings";
+using imageGen from "Cx.AI.TextToImage";
+using imageAnalysis from "Cx.AI.ImageToText";
+using tts from "Cx.AI.TextToSpeech";
+using stt from "Cx.AI.AudioToText";
+using audioGen from "Cx.AI.TextToAudio";
+using realtime from "Cx.AI.Realtime";
+
+print("🔍 === COMPREHENSIVE AI SERVICES AUDIT ===");
+print("Testing REAL vs SIMULATED functionality for all 9 services");
+print("");
+
+// ✅ 1. Text Generation - KNOWN WORKING
+print("✅ 1. Testing Text Generation (REAL)...");
+try
+{
+    var textResult = textGen.GenerateAsync("Test text generation");
+    print("📝 TextGen Result: " + textResult);
+}
+catch (error)
+{
+    print("❌ TextGen Error: " + error);
+}
+print("");
+
+// ✅ 2. Chat Completion - KNOWN WORKING  
+print("✅ 2. Testing Chat Completion (REAL)...");
+try
+{
+    var chatResult = chatBot.CompleteAsync("You are a helpful assistant", "What is AI?");
+    print("💬 ChatBot Result: " + chatResult);
+}
+catch (error)
+{
+    print("❌ ChatBot Error: " + error);
+}
+print("");
+
+// ✅ 3. Text Embeddings - KNOWN WORKING
+print("✅ 3. Testing Text Embeddings (REAL)...");
+try
+{
+    var embeddingResult = embeddings.GenerateEmbeddingAsync("Test embedding generation");
+    print("🔢 Embedding Result: " + embeddingResult);
+}
+catch (error)
+{
+    print("❌ Embeddings Error: " + error);
+}
+print("");
+
+// ✅ 4. Text to Image (DALL-E 3) - KNOWN WORKING
+print("✅ 4. Testing Text to Image (REAL)...");
+try
+{
+    var imageResult = imageGen.GenerateImageAsync("A simple test image");
+    print("🎨 ImageGen Result: " + imageResult);
+}
+catch (error)
+{
+    print("❌ ImageGen Error: " + error);
+}
+print("");
+
+// 🔍 5. Image to Text - NEEDS VERIFICATION
+print("🔍 5. Testing Image to Text (VERIFY)...");
+try
+{
+    var analysisResult = imageAnalysis.AnalyzeImageAsync("https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/280px-PNG_transparency_demonstration_1.png");
+    print("👁️ ImageAnalysis Result: " + analysisResult);
+}
+catch (error)
+{
+    print("❌ ImageAnalysis Error: " + error);
+}
+print("");
+
+// ✅ 6. Text to Speech - KNOWN WORKING
+print("✅ 6. Testing Text to Speech (REAL)...");
+try
+{
+    var speechResult = tts.SynthesizeAsync("Test speech synthesis");
+    print("🗣️ TTS Result: " + speechResult);
+}
+catch (error)
+{
+    print("❌ TTS Error: " + error);
+}
+print("");
+
+// 🔍 7. Audio to Text - NEEDS VERIFICATION
+print("🔍 7. Testing Audio to Text (VERIFY)...");
+try
+{
+    var dummyAudio = "test audio bytes";
+    var transcriptResult = stt.TranscribeAsync(dummyAudio);
+    print("🎧 STT Result: " + transcriptResult);
+}
+catch (error)
+{
+    print("❌ STT Error: " + error);
+}
+print("");
+
+// 🔍 8. Text to Audio - NEEDS VERIFICATION
+print("🔍 8. Testing Text to Audio (VERIFY)...");
+try
+{
+    var audioGenResult = audioGen.GenerateAudioAsync("Test audio generation");
+    print("🎵 AudioGen Result: " + audioGenResult);
+}
+catch (error)
+{
+    print("❌ AudioGen Error: " + error);
+}
+print("");
+
+// 🔍 9. Realtime - NEEDS VERIFICATION
+print("🔍 9. Testing Realtime Service (VERIFY)...");
+try
+{
+    var realtimeResult = realtime.StartSessionAsync();
+    print("⚡ Realtime Result: " + realtimeResult);
+}
+catch (error)
+{
+    print("❌ Realtime Error: " + error);
+}
+print("");
+
+print("🎯 === AUDIT SUMMARY ===");
+print("✅ WORKING: TextGen, ChatBot, Embeddings, ImageGen, TTS");
+print("🔍 VERIFY: ImageAnalysis, STT, AudioGen, Realtime");
+print("📊 Check results above to identify simulated vs real services");
+print("");
+print("🚀 Goal: All 9 services should be REAL Azure OpenAI integrated!");

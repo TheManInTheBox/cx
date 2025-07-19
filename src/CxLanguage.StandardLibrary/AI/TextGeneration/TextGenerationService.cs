@@ -214,6 +214,14 @@ public class TextGenerationResult : CxAiResult
     /// Finish reason (completed, length, stop, etc.)
     /// </summary>
     public string? FinishReason { get; set; }
+    
+    /// <summary>
+    /// Returns the generated text when converted to string
+    /// </summary>
+    public override string ToString()
+    {
+        return GeneratedText;
+    }
 }
 
 /// <summary>

@@ -1,0 +1,293 @@
+// Comprehensive test of all AI models/services with multi-service configuration
+using textGen from "Cx.AI.TextGeneration";
+using chatBot from "Cx.AI.ChatCompletion";
+using embeddings from "Cx.AI.TextEmbeddings";
+using imageGen from "Cx.AI.TextToImage";
+using imageToText from "Cx.AI.ImageToText";
+using textToSpeech from "Cx.AI.TextToSpeech";
+using audioToText from "Cx.AI.AudioToText";
+
+function testAllAIModelsComprehensive()
+{
+    print("=== COMPREHENSIVE AI MODELS TEST WITH MULTI-SERVICE CONFIGURATION ===");
+    print("Testing all AI services with model-specific API versions...");
+    print("");
+    
+    var results = {
+        chatCompletion: false,
+        textGeneration: false,
+        textEmbeddings: false,
+        textToImage: false,
+        imageToText: false,
+        textToSpeech: false,
+        audioToText: false,
+        totalTests: 7,
+        passedTests: 0
+    };
+    
+    // Test 1: Chat Completion (EastUS - API version 2024-10-21)
+    print("🤖 Test 1: Chat Completion Service");
+    try
+    {
+        var chatResponse = chatBot.CompleteAsync(
+            "You are a helpful AI assistant specialized in explaining technology.",
+            "What are the key benefits of multi-service Azure OpenAI architecture?"
+        );
+        print("✅ Chat Completion Response: " + chatResponse);
+        results.chatCompletion = true;
+        results.passedTests += 1;
+    }
+    catch (error)
+    {
+        print("❌ Chat Completion failed: " + error);
+    }
+    print("");
+    
+    // Test 2: Text Generation (EastUS - API version 2024-10-21)
+    print("📝 Test 2: Text Generation Service");
+    try
+    {
+        var textResponse = textGen.GenerateAsync(
+            "Write a technical summary of AI-powered programming languages like CX",
+            {
+                temperature: 0.8,
+                maxTokens: 150,
+                topP: 0.9
+            }
+        );
+        print("✅ Text Generation Response: " + textResponse);
+        results.textGeneration = true;
+        results.passedTests += 1;
+    }
+    catch (error)
+    {
+        print("❌ Text Generation failed: " + error);
+    }
+    print("");
+    
+    // Test 3: Text Embeddings (EastUS - API version 2024-08-01-preview)
+    print("🔢 Test 3: Text Embeddings Service");
+    try
+    {
+        var embeddingText = "Aura CX is an AI-native programming language with autonomous capabilities";
+        var embeddingResponse = embeddings.GenerateEmbeddingAsync(embeddingText);
+        print("✅ Text Embeddings Response: Vector generated successfully");
+        results.textEmbeddings = true;
+        results.passedTests += 1;
+    }
+    catch (error)
+    {
+        print("❌ Text Embeddings failed: " + error);
+    }
+    print("");
+    
+    // Test 4: Text-to-Image (EastUS - API version 2024-02-15-preview)
+    print("🎨 Test 4: Text-to-Image Service (DALL-E 3)");
+    try
+    {
+        var imagePrompt = "A futuristic programming interface showing AI code generation in action";
+        var imageResponse = imageGen.GenerateImageAsync(imagePrompt, {
+            size: "1024x1024",
+            quality: "standard"
+        });
+        print("✅ Text-to-Image Response: " + imageResponse);
+        results.textToImage = true;
+        results.passedTests += 1;
+    }
+    catch (error)
+    {
+        print("❌ Text-to-Image failed: " + error);
+    }
+    print("");
+    
+    // Test 5: Image-to-Text (EastUS - API version 2024-10-01)
+    print("👁️ Test 5: Image-to-Text Service (GPT-4 Vision)");
+    try
+    {
+        var imageUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Python.svg/1200px-Python.svg.png";
+        var analysisResponse = imageToText.AnalyzeImageAsync(
+            imageUrl,
+            "Describe what you see in this image and identify any programming languages or technologies."
+        );
+        print("✅ Image-to-Text Response: " + analysisResponse);
+        results.imageToText = true;
+        results.passedTests += 1;
+    }
+    catch (error)
+    {
+        print("❌ Image-to-Text failed: " + error);
+    }
+    print("");
+    
+    // Test 6: Text-to-Speech (EastUS2 - API version 2024-10-01)
+    print("🎵 Test 6: Text-to-Speech Service");
+    try
+    {
+        var speechText = "Welcome to Aura CX, the future of AI-native programming!";
+        var speechResponse = textToSpeech.SynthesizeAsync(speechText);
+        print("✅ Text-to-Speech Response: " + speechResponse);
+        results.textToSpeech = true;
+        results.passedTests += 1;
+    }
+    catch (error)
+    {
+        print("❌ Text-to-Speech failed: " + error);
+    }
+    print("");
+    
+    // Test 7: Audio-to-Text (EastUS - API version 2024-10-01)
+    print("🎤 Test 7: Audio-to-Text Service (Whisper)");
+    try
+    {
+        // Note: This would typically require an actual audio file
+        var audioUrl = "https://example.com/sample-audio.wav";
+        var transcriptionResponse = audioToText.TranscribeAsync(audioUrl);
+        print("✅ Audio-to-Text Response: " + transcriptionResponse);
+        results.audioToText = true;
+        results.passedTests += 1;
+    }
+    catch (error)
+    {
+        print("❌ Audio-to-Text failed (expected - requires actual audio file): " + error);
+    }
+    print("");
+    
+    return results;
+}
+
+function displayTestResults(results)
+{
+    print("=== TEST RESULTS SUMMARY ===");
+    print("Total Tests: " + results.totalTests);
+    print("Passed Tests: " + results.passedTests);
+    var successRate = (results.passedTests / results.totalTests) * 100;
+    print("Success Rate: " + successRate + "%");
+    print("");
+    
+    print("Individual Service Results:");
+    if (results.chatCompletion)
+    {
+        print("  Chat Completion: ✅ PASS");
+    }
+    else
+    {
+        print("  Chat Completion: ❌ FAIL");
+    }
+    
+    if (results.textGeneration)
+    {
+        print("  Text Generation: ✅ PASS");
+    }
+    else
+    {
+        print("  Text Generation: ❌ FAIL");
+    }
+    
+    if (results.textEmbeddings)
+    {
+        print("  Text Embeddings: ✅ PASS");
+    }
+    else
+    {
+        print("  Text Embeddings: ❌ FAIL");
+    }
+    
+    if (results.textToImage)
+    {
+        print("  Text-to-Image: ✅ PASS");
+    }
+    else
+    {
+        print("  Text-to-Image: ❌ FAIL");
+    }
+    
+    if (results.imageToText)
+    {
+        print("  Image-to-Text: ✅ PASS");
+    }
+    else
+    {
+        print("  Image-to-Text: ❌ FAIL");
+    }
+    
+    if (results.textToSpeech)
+    {
+        print("  Text-to-Speech: ✅ PASS");
+    }
+    else
+    {
+        print("  Text-to-Speech: ❌ FAIL");
+    }
+    
+    if (results.audioToText)
+    {
+        print("  Audio-to-Text: ✅ PASS");
+    }
+    else
+    {
+        print("  Audio-to-Text: ❌ FAIL");
+    }
+    print("");
+    
+    if (results.passedTests >= 5)
+    {
+        print("🎉 EXCELLENT! Multi-service configuration is working great!");
+    }
+    else if (results.passedTests >= 3)
+    {
+        print("👍 GOOD! Most services are working, some may need configuration.");
+    }
+    else
+    {
+        print("⚠️  NEEDS ATTENTION: Several services need configuration or fixes.");
+    }
+    
+    print("");
+    print("=== SERVICE ROUTING VALIDATION ===");
+    print("Based on ServiceSelection configuration:");
+    print("  ChatCompletion → EastUS (gpt-4.1-nano, API: 2024-10-21)");
+    print("  TextGeneration → EastUS (gpt-4.1-nano, API: 2024-10-21)");
+    print("  TextEmbedding → EastUS (text-embedding-ada-002, API: 2024-08-01-preview)");
+    print("  TextToImage → EastUS (dall-e-3, API: 2024-02-15-preview)");
+    print("  TextToSpeech → EastUS2 (gpt-4o-mini-tts, API: 2024-10-01)");
+    print("  AudioToText → EastUS (whisper, API: 2024-10-01)");
+    print("  ImageToText → EastUS (gpt-4.1-nano, API: 2024-10-01)");
+}
+
+function testMultiServiceConfiguration()
+{
+    print("Starting comprehensive AI models test...");
+    print("This will validate:");
+    print("  ✓ Multi-service configuration loading");
+    print("  ✓ Model-specific API version resolution");
+    print("  ✓ Service routing based on ServiceSelection");
+    print("  ✓ All AI service integrations");
+    print("");
+    
+    try
+    {
+        var results = testAllAIModelsComprehensive();
+        displayTestResults(results);
+        
+        return results.passedTests >= 5;
+    }
+    catch (error)
+    {
+        print("❌ Critical error during comprehensive test: " + error);
+        return false;
+    }
+}
+
+// Execute the comprehensive test
+print("🚀 AURA CX - COMPREHENSIVE AI MODELS TEST");
+print("==========================================");
+var success = testMultiServiceConfiguration();
+print("==========================================");
+if (success)
+{
+    print("Final Result: ✅ SUCCESS");
+}
+else
+{
+    print("Final Result: ❌ NEEDS WORK");
+}

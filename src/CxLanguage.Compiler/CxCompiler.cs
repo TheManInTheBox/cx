@@ -1420,6 +1420,13 @@ public class CxCompiler : IAstVisitor<object>
         {
             Console.WriteLine($"[DEBUG] Found matching method: {method.Name} with {method.GetParameters().Length} parameters");
             
+            // Debug: Print parameter types
+            var parameters = method.GetParameters();
+            for (int i = 0; i < parameters.Length; i++)
+            {
+                Console.WriteLine($"[DEBUG] Parameter {i}: {parameters[i].Name} : {parameters[i].ParameterType.Name}");
+            }
+            
             // Check if service is null at runtime and handle accordingly
             var serviceNotNullLabel = _currentIl!.DefineLabel();
             var endLabel = _currentIl.DefineLabel();
@@ -1445,7 +1452,7 @@ public class CxCompiler : IAstVisitor<object>
             // Service is not null - proceed with method call
             _currentIl.MarkLabel(serviceNotNullLabel);
             
-            // Compile arguments
+            // Compile arguments with proper type conversion
             var methodParameters = method.GetParameters();
             
             // Compile provided arguments
@@ -1453,14 +1460,9 @@ public class CxCompiler : IAstVisitor<object>
             {
                 arguments[i].Accept(this);
                 
-                // Convert string arguments if needed (unbox and convert back to string)
+                // Convert arguments to expected parameter types
                 var paramType = methodParameters[i].ParameterType;
-                if (paramType == typeof(string))
-                {
-                    // Convert object to string by calling ToString()
-                    var toStringMethod = typeof(object).GetMethod("ToString");
-                    _currentIl.EmitCall(OpCodes.Callvirt, toStringMethod!, null);
-                }
+                EmitParameterConversion(paramType, serviceName, methodName);
             }
             
             // Add default values for any optional parameters not provided
@@ -1515,6 +1517,107 @@ public class CxCompiler : IAstVisitor<object>
     }
     
     /// <summary>
+    /// Emit IL code to convert CX values to .NET parameter types
+    /// </summary>
+    private void EmitParameterConversion(Type targetType, string serviceName, string methodName)
+    {
+        // Handle string conversion
+        if (targetType == typeof(string))
+        {
+            // Convert object to string by calling ToString()
+            var toStringMethod = typeof(object).GetMethod("ToString");
+            _currentIl!.EmitCall(OpCodes.Callvirt, toStringMethod!, null);
+            return;
+        }
+        
+        // Handle AI service options objects (like TextGenerationOptions)
+        if (IsAiOptionsType(targetType))
+        {
+            EmitAiOptionsConversion(targetType);
+            return;
+        }
+        
+        // Handle primitive types that need unboxing
+        if (targetType.IsValueType)
+        {
+            EmitValueTypeConversion(targetType);
+            return;
+        }
+        
+        // For reference types, no conversion needed (keep as object)
+    }
+    
+    /// <summary>
+    /// Check if a type is an AI options type that needs special conversion
+    /// </summary>
+    private bool IsAiOptionsType(Type type)
+    {
+        if (type == null) return false;
+        
+        // Check if type name ends with "Options" and is in the AI namespace
+        return type.Name.EndsWith("Options") && 
+               type.Namespace?.Contains("AI") == true;
+    }
+    
+    /// <summary>
+    /// Convert Dictionary<string, object> to AI options object
+    /// </summary>
+    private void EmitAiOptionsConversion(Type optionsType)
+    {
+        // Create a helper method call to convert Dictionary to options object
+        var converterType = typeof(CxParameterConverter);
+        var convertMethod = converterType.GetMethod("ConvertToOptions", 
+            BindingFlags.Public | BindingFlags.Static);
+        
+        if (convertMethod != null)
+        {
+            // Load the target type as a Type parameter
+            _currentIl!.Emit(OpCodes.Ldtoken, optionsType);
+            _currentIl.EmitCall(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle")!, null);
+            
+            // Call the converter: CxParameterConverter.ConvertToOptions(dict, targetType)
+            _currentIl.EmitCall(OpCodes.Call, convertMethod, null);
+            
+            // Cast result to target type
+            _currentIl.Emit(OpCodes.Castclass, optionsType);
+        }
+        else
+        {
+            // Fallback: just pass null for now
+            _currentIl!.Emit(OpCodes.Pop); // Remove the dictionary
+            _currentIl.Emit(OpCodes.Ldnull);
+        }
+    }
+    
+    /// <summary>
+    /// Convert object to value type with proper unboxing
+    /// </summary>
+    private void EmitValueTypeConversion(Type valueType)
+    {
+        if (valueType == typeof(int))
+        {
+            _currentIl!.Emit(OpCodes.Unbox_Any, typeof(int));
+        }
+        else if (valueType == typeof(double))
+        {
+            _currentIl!.Emit(OpCodes.Unbox_Any, typeof(double));
+        }
+        else if (valueType == typeof(float))
+        {
+            _currentIl!.Emit(OpCodes.Unbox_Any, typeof(float));
+        }
+        else if (valueType == typeof(bool))
+        {
+            _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
+        }
+        else
+        {
+            // Generic unboxing for other value types
+            _currentIl!.Emit(OpCodes.Unbox_Any, valueType);
+        }
+    }
+    
+    /// <summary>
     /// Find the best matching method for the given name and argument count
     /// </summary>
     private MethodInfo? FindBestMatchingMethod(Type serviceType, string methodName, int argumentCount)
@@ -1530,10 +1633,24 @@ public class CxCompiler : IAstVisitor<object>
         }
         
         // Try to find exact parameter count match first
-        var exactMatch = methods.FirstOrDefault(m => m.GetParameters().Length == argumentCount);
-        if (exactMatch != null)
+        var exactMatches = methods.Where(m => m.GetParameters().Length == argumentCount).ToArray();
+        if (exactMatches.Length == 1)
         {
-            return exactMatch;
+            return exactMatches[0];
+        }
+        
+        // If multiple methods with same parameter count, prefer all-string parameters for CX calls
+        if (exactMatches.Length > 1)
+        {
+            var allStringMethod = exactMatches.FirstOrDefault(m => 
+                m.GetParameters().All(p => p.ParameterType == typeof(string)));
+            if (allStringMethod != null)
+            {
+                return allStringMethod;
+            }
+            
+            // Fall back to first exact match
+            return exactMatches[0];
         }
         
         // Try to find method with optional parameters that could work
