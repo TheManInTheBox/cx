@@ -1,0 +1,36 @@
+// Simple class test without AI services to isolate null reference issue
+print("Simple Class Test - No AI Services");
+
+class TestClass
+{
+    name: string;
+    
+    constructor(testName)
+    {
+        this.name = testName;
+        print("Constructor: name set to " + this.name);
+    }
+    
+    function getName()
+    {
+        print("Getting name: " + this.name);
+        return this.name;
+    }
+}
+
+try 
+{
+    print("Creating instance...");
+    var obj = new TestClass("SimpleTest");
+    print("Instance created successfully");
+    
+    print("Calling method...");
+    var result = obj.getName();
+    print("Method result: " + result);
+}
+catch (error)
+{
+    print("Error occurred: " + error);
+}
+
+print("Simple class test completed");

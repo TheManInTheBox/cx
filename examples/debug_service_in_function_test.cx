@@ -1,0 +1,27 @@
+// Test AI service calls within functions with static service registry
+using textGen from "Cx.AI.TextGeneration";
+
+print("Service in Function Test");
+
+function generateText()
+{
+    print("Inside function, calling textGen service...");
+    var result = textGen.GenerateAsync("Say hello from a CX function", {
+        temperature: 0.7,
+        maxTokens: 20
+    });
+    print("Service call completed in function");
+    return result;
+}
+
+try 
+{
+    var message = generateText();
+    print("Generated message: " + message);
+}
+catch (error)
+{
+    print("Error occurred: " + error);
+}
+
+print("Service in function test completed");
