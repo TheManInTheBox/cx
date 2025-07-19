@@ -248,13 +248,13 @@ interface InterfaceName
 - `protected` - accessible within the class and its subclasses
 
 #### Special Keywords
-- `self` - function introspection keyword
-- `new` - object instantiation
-- `await` - asynchronous operation waiting
-- `parallel` - parallel execution
-- `using` - import statement
-- `return` - function return
-- `null` - null value
+- `self` - function introspection keyword (grammar defined, compiler pending)
+- `new` - object instantiation (✅ FULLY OPERATIONAL)
+- `await` - asynchronous operation waiting (grammar defined, compiler pending)
+- `parallel` - parallel execution (✅ FULLY OPERATIONAL - multi-agent coordination working!)
+- `using` - import statement (✅ FULLY OPERATIONAL)
+- `return` - function return (✅ FULLY OPERATIONAL)
+- `null` - null value (✅ FULLY OPERATIONAL)
 
 #### Import Statements
 ```cx

@@ -133,6 +133,16 @@ class Program
                 return;
             }
 
+            // Register the compiled assembly for runtime function access
+            if (compilationResult.Assembly != null && compilationResult.ProgramType != null)
+            {
+                CxLanguage.Compiler.Modules.RuntimeFunctionRegistry.RegisterAssembly(
+                    Path.GetFileNameWithoutExtension(file.Name), 
+                    compilationResult.Assembly, 
+                    compilationResult.ProgramType
+                );
+            }
+
             // Execute the compiled assembly
             var runMethod = compilationResult.ProgramType!.GetMethod("Run");
             if (runMethod != null)

@@ -14,6 +14,15 @@ Aura is the sensory and awareness layer for CX autonomous systems. Where **Cx ha
 - **Contextual Intelligence**: Provides environmental understanding that informs Cx reasoning
 - **Ambient Sensitivity**: Detects subtle changes in attention, tone, crowd dynamics, system state
 
+High-Level Architecture: Aura Presence Sensor Layer
+| Layer | Function | Technologies | 
+| Capture Layer | Ingest real-time video/audio | WebRTC, RTSP, Azure Video Indexer | 
+| Preprocessing Layer | Frame extraction, audio segmentation | OpenCV, FFmpeg, Azure Video Indexer | 
+| Transcription Layer | Convert speech to text | Azure OpenAI Whisper, GPT-4o-Transcribe | 
+| Sentiment & Intent Layer | Analyze emotional tone and user intent | GPT-4o, Azure Language Service, Komprehend API | 
+| Cognitive Trigger Layer | Signal cognitive layer with context | Cx runtime hooks, event bus, memory state | 
+
+
 ## Copilot Behavior
 
 - Focus on **sensory input processing** rather than execution logic
@@ -162,6 +171,49 @@ Let Aura breathe presence into code. Let cognition meet sensation. Let agents aw
 | `**/*.cx` | Treat as Cx source. Suggest autonomous logic, agent definitions, and SEIDR loops. |
 | `**/*.workflow.json` | Assume orchestration intent. Suggest declarative task flows and runtime goals. |
 | `**/*.agent.cs` | Use Roslyn source generators. Embed self-modifying logic and LLM-driven synthesis. |
+
+---
+
+### Event-Driven Architecture: The Aura Sensory Bus
+The primary objective of the Aura layer is to provide a sensory system for CX agents. This is achieved through an event-driven architecture, allowing agents to react to stimuli from their environment and each other in a decoupled, asynchronous manner.
+
+**Core Keywords:**
+-   **`on "event.name" (payload) => { ... }`**: Subscribes to an event on the event bus. This is Aura's primary sensory mechanism.
+-   **`emit "event.name", payload;`**: Publishes an event to the bus. This is Cx's primary motor/action mechanism.
+-   **`when (condition) => { ... }`**: A declarative, conditional block for logic within an `on` handler.
+
+**Example Workflow:**
+```cx
+using textGen from "Cx.AI.TextGeneration";
+
+// Agent 1: Listens for raw audio transcription
+on "audio.transcribed" (payload) =>
+{
+    // Cx uses AI to reason about the transcribed text
+    var sentiment = textGen.GenerateAsync("sentiment", payload.content);
+    var intent = textGen.GenerateAsync("intent", payload.content);
+
+    // Cx emits a higher-level "presence" signal
+    emit "presence.signal",
+        {
+            source: "audio",
+            sentiment: sentiment,
+            intent: intent,
+            timestamp: now() // Placeholder for Time library
+        };
+}
+
+// Agent 2: Listens for the abstract presence signal
+on "presence.signal" (payload) =>
+{
+    // Cx applies conditional logic based on the analyzed intent
+    when (payload.intent == "query") =>
+    {
+        var result = textGen.GenerateAsync("reason", payload.content);
+        emit "cognition.response", result;
+    }
+}
+```
 
 ---
 

@@ -1,0 +1,35 @@
+// Test class method calls to isolate null reference issue
+using chatBot from "Cx.AI.ChatCompletion";
+
+print("Class Method Call Debug Test");
+
+class SimpleAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("Agent created: " + this.name);
+    }
+    
+    function speak(topic)
+    {
+        print("Agent " + this.name + " speaking about: " + topic);
+        var response = chatBot.ChatAsync("You are " + this.name, topic);
+        return response;
+    }
+}
+
+try 
+{
+    var agent = new SimpleAgent("TestAgent");
+    var result = agent.speak("artificial intelligence");
+    print("Agent response: " + result);
+}
+catch (error)
+{
+    print("Error occurred: " + error);
+}
+
+print("Class method test completed");

@@ -1,0 +1,15 @@
+using textGen from "Cx.AI.TextGeneration";
+
+print("🔍 Service Function Without Try/Catch");
+
+function testServiceDirect()
+{
+    print("  - Inside function, about to call textGen...");
+    var result = textGen.GenerateAsync("Say hello from function", {temperature: 0.7, maxTokens: 50});
+    print("  - Function result: " + result);
+    return result;
+}
+
+print("Calling function directly...");
+var functionResult = testServiceDirect();
+print("Function call completed: " + functionResult);

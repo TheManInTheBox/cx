@@ -466,7 +466,7 @@ public class CxCompiler : IAstVisitor<object>
             // Create the method with the determined return type
             var methodBuilder = _programTypeBuilder.DefineMethod(
                 node.Name, 
-                MethodAttributes.Public | MethodAttributes.Static,
+                MethodAttributes.Public | MethodAttributes.Static, // Back to Static - will pass services differently
                 returnType,
                 parameterTypes);
             
@@ -1125,37 +1125,46 @@ public class CxCompiler : IAstVisitor<object>
             return new object();
         }
         
-        // Compile arguments first
-        foreach (var arg in node.Arguments)
+        // Check if it's a user-defined function first (for instance method calling)
+        if (_userFunctions.TryGetValue(node.FunctionName, out var methodBuilder))
         {
-            arg.Accept(this);
-        }
-        
-        // Get method info and emit call
-        var methodInfo = GetMethodInfo(node.FunctionName, node.Arguments.Count);
-        if (methodInfo != null)
-        {
-            // Built-in function (like print, write)
-            _currentIl!.EmitCall(OpCodes.Call, methodInfo, null);
+            // User-defined function - load 'this' first, then arguments
+            _currentIl!.Emit(OpCodes.Ldarg_0); // Load 'this' pointer
             
-            // Methods like print/write return void, but we need object for expressions
-            if (methodInfo.ReturnType == typeof(void))
+            // Compile arguments after 'this'
+            foreach (var arg in node.Arguments)
             {
-                _currentIl.Emit(OpCodes.Ldnull);
+                arg.Accept(this);
             }
-        }
-        else if (_userFunctions.TryGetValue(node.FunctionName, out var methodBuilder))
-        {
-            // User-defined function - now we can call it directly using the MethodBuilder!
-            // Since we made functions static, we don't need to load 'this'
-            _currentIl!.EmitCall(OpCodes.Call, methodBuilder, null);
             
+            _currentIl!.EmitCall(OpCodes.Callvirt, methodBuilder, null);
             // User functions now return object, so no need to push null
-            // The function will return either a value or null if no explicit return
         }
         else
         {
-            throw new CompilationException($"Function not found: {node.FunctionName}");
+            // Built-in function - compile arguments first, then call
+            foreach (var arg in node.Arguments)
+            {
+                arg.Accept(this);
+            }
+            
+            // Get method info and emit call
+            var methodInfo = GetMethodInfo(node.FunctionName, node.Arguments.Count);
+            if (methodInfo != null)
+            {
+                // Built-in function (like print, write)
+                _currentIl!.EmitCall(OpCodes.Call, methodInfo, null);
+                
+                // Methods like print/write return void, but we need object for expressions
+                if (methodInfo.ReturnType == typeof(void))
+                {
+                    _currentIl.Emit(OpCodes.Ldnull);
+                }
+            }
+            else
+            {
+                throw new CompilationException($"Function not found: {node.FunctionName}");
+            }
         }
         
         return new object();
@@ -1389,6 +1398,20 @@ public class CxCompiler : IAstVisitor<object>
                     
                     // Store in service field
                     _constructorIl.Emit(OpCodes.Stfld, serviceField);
+                    
+                    // Register service in static registry for function access
+                    _constructorIl.Emit(OpCodes.Ldstr, node.Alias); // Service name
+                    _constructorIl.Emit(OpCodes.Ldarg_0); // 'this' pointer
+                    _constructorIl.Emit(OpCodes.Ldfld, serviceField); // Load service instance
+                    
+                    // Call CxRuntimeHelper.RegisterService(serviceName, serviceInstance)
+                    var registerServiceMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper)
+                        .GetMethod("RegisterService", new[] { typeof(string), typeof(object) });
+                    if (registerServiceMethod != null)
+                    {
+                        _constructorIl.Emit(OpCodes.Call, registerServiceMethod);
+                    }
+                    
                     Console.WriteLine($"[DEBUG] Added service field initialization for: {node.Alias} (resolved from DI container)");
                 }
                 
@@ -1414,8 +1437,25 @@ public class CxCompiler : IAstVisitor<object>
         // This approach eliminates complex IL stack management and leverages proven runtime helpers
         
         // Load service instance (first parameter for CallServiceMethod)
-        _currentIl!.Emit(OpCodes.Ldarg_0); // Load 'this' pointer
-        _currentIl.Emit(OpCodes.Ldfld, serviceField); // Load service field
+        if (_currentParameterMapping != null)
+        {
+            // We're inside a function (static context) - get service from static registry
+            Console.WriteLine($"[DEBUG] Service call in function context - using static service registry");
+            
+            // Load service name for static registry lookup
+            _currentIl!.Emit(OpCodes.Ldstr, serviceName);
+            
+            // Call CxRuntimeHelper.GetService(serviceName) to get the service instance
+            var getServiceMethod = typeof(CxRuntimeHelper).GetMethod("GetService", new[] { typeof(string) });
+            _currentIl.EmitCall(OpCodes.Call, getServiceMethod!, null);
+        }
+        else
+        {
+            // We're in main program (instance context) - use service field directly
+            Console.WriteLine($"[DEBUG] Service call in main program context - using service field");
+            _currentIl!.Emit(OpCodes.Ldarg_0); // Load 'this' pointer
+            _currentIl.Emit(OpCodes.Ldfld, serviceField); // Load service field
+        }
         
         // Load method name (second parameter)
         _currentIl.Emit(OpCodes.Ldstr, methodName);
@@ -1885,6 +1925,28 @@ public class CxCompiler : IAstVisitor<object>
             _currentIl.Emit(OpCodes.Box, typeof(int));
             
             return new object();
+        }
+
+        // Check if this is a 'this.fieldName' field access
+        if (node.Object is IdentifierNode objectIdentifier && objectIdentifier.Name == "this")
+        {
+            Console.WriteLine($"[DEBUG] Found 'this.{node.Property}' field access");
+            
+            // Load 'this' pointer
+            _currentIl!.Emit(OpCodes.Ldarg_0);
+            
+            // Load the field
+            var fieldKey = _currentClassName + "." + node.Property;
+            if (_classFields.TryGetValue(fieldKey, out var field))
+            {
+                Console.WriteLine($"[DEBUG] Loading field: {field.Name}");
+                _currentIl.Emit(OpCodes.Ldfld, field);
+                return new object();
+            }
+            else
+            {
+                throw new CompilationException($"Field not found: {node.Property} in class {_currentClassName}");
+            }
         }
 
         // Check if this is a service property access (e.g., service.PropertyName)
@@ -2485,6 +2547,15 @@ public class CxCompiler : IAstVisitor<object>
     {
         if (_isFirstPass)
         {
+            // In Pass 1, we need to process the try block to collect function declarations
+            node.TryBlock.Accept(this);
+            
+            // Also process the catch block in case it contains function declarations
+            if (node.CatchBlock != null)
+            {
+                node.CatchBlock.Accept(this);
+            }
+            
             return new object();
         }
 
@@ -2648,7 +2719,30 @@ public class CxCompiler : IAstVisitor<object>
         }
     }
     public object VisitAwaitExpression(AwaitExpressionNode node) => new object();
-    public object VisitParallelExpression(ParallelExpressionNode node) => new object();
+    
+    public object VisitParallelExpression(ParallelExpressionNode node)
+    {
+        Console.WriteLine($"[DEBUG] Implementing parallel expression - parallel execution modifier");
+        
+        if (_isFirstPass)
+        {
+            return new object(); // Skip in first pass
+        }
+
+        // The parallel keyword is a modifier that executes any expression in a parallel thread
+        // For now, we'll implement this as direct execution and add a TODO for true parallelism
+        // This maintains functionality while we work out the IL generation complexities
+        
+        Console.WriteLine($"[DEBUG] Parallel modifier - executing expression directly (TODO: add true parallel threading)");
+        
+        // Execute the wrapped expression directly for now
+        node.Expression.Accept(this);
+        
+        Console.WriteLine($"[DEBUG] Successfully executed parallel expression (synchronous for now)");
+        
+        return new object();
+    }
+    
     public object VisitClassDeclaration(ClassDeclarationNode node)
     {
         if (_isFirstPass)
