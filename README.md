@@ -85,14 +85,16 @@ var story = textGen.GenerateAsync("Write a sci-fi story about AI programming", {
     maxTokens: 200
 });
 
-// 💬 Conversational AI
+// 💬 Conversational AI with system and user messages
 var response = chatBot.CompleteAsync(
-    "You are a helpful programming assistant.",
-    "What makes Aura CX special?"
+    "What makes CX Language special for AI development?",
+    {
+        systemMessage: "You are a helpful programming assistant."
+    }
 );
 
 // 🎵 Revolutionary zero-file MP3 streaming
-tts.SpeakAsync("Welcome to Aura CX - the future of AI programming!");
+tts.SpeakAsync("Welcome to CX Language - the future of AI programming!");
 
 print("Story: " + story);
 print("Assistant: " + response);
@@ -171,7 +173,12 @@ class IntelligentAgent
     
     function solve(problem: string)
     {
-        var analysis = chatBot.CompleteAsync(problem + " using " + this.knowledge);
+        var analysis = chatBot.CompleteAsync(
+            problem + " using " + this.knowledge,
+            {
+                systemMessage: "You are an expert problem solver."
+            }
+        );
         var solution = textGen.GenerateAsync("Code to solve: " + analysis);
         return solution;
     }
@@ -234,10 +241,20 @@ var summary = textGen.GenerateAsync("Executive briefing: " + insight);
 ```cx
 using chatBot from "Cx.AI.ChatCompletion";
 
-// Multi-turn intelligent conversations
-var advisor = chatBot.StartConversationAsync("You are a brilliant space exploration advisor");
-var strategy = chatBot.ContinueConversationAsync(advisor, "Plan a Mars colony mission");
-var timeline = chatBot.ContinueConversationAsync(advisor, "Create a 5-year timeline for: " + strategy);
+// Multi-turn intelligent conversations with proper system/user message format
+var strategy = chatBot.CompleteAsync(
+    "Plan a Mars colony mission",
+    {
+        systemMessage: "You are a brilliant space exploration advisor"
+    }
+);
+
+var timeline = chatBot.CompleteAsync(
+    "Create a 5-year timeline for: " + strategy,
+    {
+        systemMessage: "You are a brilliant space exploration advisor"
+    }
+);
 ```
 
 ### **🎨 Multi-Modal AI Workflows**
@@ -344,10 +361,12 @@ var story = textGen.GenerateAsync("Write a sci-fi story", {
     topP: 0.9
 });
 
-// Conversational AI with context
+// Conversational AI with system and user messages
 var response = chatBot.CompleteAsync(
-    "You are a helpful programming assistant.",
-    "Explain the benefits of AI-native languages"
+    "Explain the benefits of AI-native languages",
+    {
+        systemMessage: "You are a helpful programming assistant."
+    }
 );
 
 // DALL-E 3 Image Generation
@@ -478,9 +497,13 @@ function buildIntelligentApp()
     var story = textGen.GenerateAsync(storyPrompt, options);
     print("Generated Story: " + story);
     
-    // 2. Interactive conversation
-    var conversation = chatBot.StartConversationAsync("You are a creative writing assistant");
-    var response = chatBot.ContinueConversationAsync(conversation, "What makes good sci-fi?");
+    // 2. Interactive conversation with proper system/user format
+    var response = chatBot.CompleteAsync(
+        "What makes good sci-fi?",
+        {
+            systemMessage: "You are a creative writing assistant"
+        }
+    );
     print("AI Advice: " + response);
     
     // 3. Semantic understanding

@@ -1,6 +1,15 @@
 <Project>
   
   <PropertyGroup>
+    <!-- Version Information -->
+    <Version>1.0.0-beta</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Product>CX Language - AI-Native Agentic Programming Language</Product>
+    <Company>Aura CX</Company>
+    <Authors>Aaron Hebert</Authors>
+    <Copyright>Copyright © 2025 Aaron Hebert</Copyright>
+    
     <!-- Treat all warnings as errors globally -->
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     
