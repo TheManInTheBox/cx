@@ -338,6 +338,25 @@ class Program
                     // Add CX Language telemetry service
                     services.AddSingleton<CxLanguage.Core.Telemetry.CxTelemetryService>();
 
+                    // Always register Vector Database services - they can work without full Azure OpenAI config
+                    try
+                    {
+                        services.AddKernelMemoryServices(context.Configuration);
+                        Console.WriteLine("Vector Database services registered successfully");
+                    }
+                    catch (Exception vectorEx)
+                    {
+                        Console.WriteLine($"Warning: Vector Database initialization failed: {vectorEx.Message}");
+                        // Register a mock VectorDatabaseService for development
+                        services.AddSingleton<CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService>(provider => 
+                        {
+                            // Create a mock implementation that can be safely instantiated
+                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService>>();
+                            // Return null for now - this will need to be a proper mock implementation
+                            return null!; 
+                        });
+                    }
+
                     try
                     {
                         // Register the simple Semantic Kernel AI service

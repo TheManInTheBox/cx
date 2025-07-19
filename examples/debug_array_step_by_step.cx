@@ -1,0 +1,32 @@
+// Test to check array element access specifically
+// Let's see if the problem is with casting or indexing
+
+function testArrayStepByStep()
+{
+    print("=== Step-by-step Array Debugging ===");
+    
+    // Step 1: Create empty array
+    print("Step 1: Creating empty array");
+    var emptyArr = [];
+    print("Empty array created");
+    
+    // Step 2: Create array with one element
+    print("Step 2: Creating array with one element");
+    var oneElement = [42];
+    print("One-element array created");
+    
+    // Step 3: Try to access the element (this is where it fails)
+    print("Step 3: About to access oneElement[0]");
+    try
+    {
+        var value = oneElement[0];
+        print("Successfully accessed element: " + value);
+    }
+    catch (error)
+    {
+        print("Failed to access element: " + error);
+        throw error;
+    }
+}
+
+testArrayStepByStep();

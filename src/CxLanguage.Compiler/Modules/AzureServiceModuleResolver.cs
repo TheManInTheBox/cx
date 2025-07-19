@@ -49,6 +49,19 @@ public class AzureServiceModuleResolver : IModuleResolver
                 },
                 ModuleType.AzureService,
                 "CxLanguage.Azure.Services.IAzureCognitiveService"
+            ),
+            
+            ["Cx.AI.Memory"] = ModuleResolutionResult.Success(
+                new Dictionary<string, CxType>
+                {
+                    ["IngestDocumentAsync"] = CxType.Function(CxType.Object, CxType.String, CxType.Object),
+                    ["IngestTextAsync"] = CxType.Function(CxType.Object, CxType.String, CxType.String, CxType.Object),
+                    ["SearchAsync"] = CxType.Function(CxType.Object, CxType.String, CxType.Object),
+                    ["AskAsync"] = CxType.Function(CxType.String, CxType.String, CxType.Object),
+                    ["GetStatsAsync"] = CxType.Function(CxType.Object, CxType.String)
+                },
+                ModuleType.AzureService,
+                "CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService"
             )
         };
     }
