@@ -285,6 +285,14 @@ public class ImageGenerationResult : CxAiResult
     /// Revised prompt (if the model modified the input)
     /// </summary>
     public string? RevisedPrompt { get; set; }
+    
+    /// <summary>
+    /// Returns the image URL when converted to string
+    /// </summary>
+    public override string ToString()
+    {
+        return ImageUrl;
+    }
 }
 
 /// <summary>

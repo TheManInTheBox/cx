@@ -1,0 +1,126 @@
+// 🧪 Complete AI Services Test - All Available Services
+// Testing all registered AI services to see what's working
+
+using textGen from "Cx.AI.TextGeneration";
+using chatBot from "Cx.AI.ChatCompletion";
+using embeddings from "Cx.AI.TextEmbeddings";
+using imageGen from "Cx.AI.TextToImage";
+using imageAnalysis from "Cx.AI.ImageToText";
+using tts from "Cx.AI.TextToSpeech";
+using stt from "Cx.AI.AudioToText";
+using audioGen from "Cx.AI.TextToAudio";
+using realtime from "Cx.AI.Realtime";
+
+print("🔬 === COMPLETE AI SERVICES AUDIT ===");
+print("Testing all registered AI services...\n");
+
+// 1. Text Generation (KNOWN WORKING)
+print("✅ 1. Testing Text Generation...");
+try
+{
+    var textResult = textGen.GenerateAsync("Generate a short welcome message for Aura CX");
+    print("📝 TextGen Result: " + textResult);
+}
+catch (error)
+{
+    print("❌ TextGen Error: " + error);
+}
+
+// 2. Chat Completion (KNOWN WORKING)
+print("\n✅ 2. Testing Chat Completion...");
+try
+{
+    var chatResult = chatBot.CompleteAsync("You are a helpful assistant.", "What is AI-native programming?");
+    print("💬 ChatBot Result: " + chatResult);
+}
+catch (error)
+{
+    print("❌ ChatBot Error: " + error);
+}
+
+// 3. Text Embeddings
+print("\n🧪 3. Testing Text Embeddings...");
+try
+{
+    var embeddingResult = embeddings.GenerateEmbeddingAsync("artificial intelligence programming");
+    print("🔢 Embeddings Result: " + embeddingResult);
+}
+catch (error)
+{
+    print("❌ Embeddings Error: " + error);
+}
+
+// 4. Text to Image (DALL-E 3)
+print("\n🧪 4. Testing Text to Image...");
+try
+{
+    var imageResult = imageGen.GenerateImageAsync("A futuristic programming environment with AI assistance");
+    print("🎨 ImageGen Result: " + imageResult);
+}
+catch (error)
+{
+    print("❌ ImageGen Error: " + error);
+}
+
+// 5. Image to Text Analysis
+print("\n🧪 5. Testing Image to Text...");
+try
+{
+    var analysisResult = imageAnalysis.AnalyzeImageAsync("https://example.com/test-image.jpg");
+    print("👁️ ImageAnalysis Result: " + analysisResult);
+}
+catch (error)
+{
+    print("❌ ImageAnalysis Error: " + error);
+}
+
+// 6. Text to Speech
+print("\n🧪 6. Testing Text to Speech...");
+try
+{
+    var speechResult = tts.SynthesizeAsync("Hello from Aura CX language");
+    print("🗣️ TextToSpeech Result: " + speechResult);
+}
+catch (error)
+{
+    print("❌ TextToSpeech Error: " + error);
+}
+
+// 7. Audio to Text
+print("\n🧪 7. Testing Audio to Text...");
+try
+{
+    var transcriptResult = stt.TranscribeAsync("audio-file-url");
+    print("🎤 AudioToText Result: " + transcriptResult);
+}
+catch (error)
+{
+    print("❌ AudioToText Error: " + error);
+}
+
+// 8. Text to Audio
+print("\n🧪 8. Testing Text to Audio...");
+try
+{
+    var audioResult = audioGen.GenerateAudioAsync("Create audio from text");
+    print("🔊 TextToAudio Result: " + audioResult);
+}
+catch (error)
+{
+    print("❌ TextToAudio Error: " + error);
+}
+
+// 9. Realtime AI
+print("\n🧪 9. Testing Realtime AI...");
+try
+{
+    var realtimeResult = realtime.StartSessionAsync("realtime-config");
+    print("⚡ Realtime Result: " + realtimeResult);
+}
+catch (error)
+{
+    print("❌ Realtime Error: " + error);
+}
+
+print("\n🎉 === AI SERVICES AUDIT COMPLETE ===");
+print("Check results above to see which services are operational!");

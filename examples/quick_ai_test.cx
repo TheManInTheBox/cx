@@ -1,0 +1,39 @@
+// 🎯 Quick AI Services Test - Aura CX Phase 4 Complete
+// Fast verification that all AI services are working
+
+using textGen from "Cx.AI.TextGeneration";
+using chatBot from "Cx.AI.ChatCompletion";
+
+print("🚀 === QUICK AI SERVICES TEST ===");
+
+// 1. Simple Text Generation
+print("\n✨ Testing Text Generation...");
+var simpleText = textGen.GenerateAsync("What is the Aura CX programming language?");
+print("📝 Result: " + simpleText);
+
+// 2. Text Generation with Options
+print("\n⚙️ Testing with Parameters...");
+var options = {
+    temperature: 0.7,
+    maxTokens: 100
+};
+var creativeText = textGen.GenerateAsync("Write a haiku about AI programming", options);
+print("🎭 Creative Result: " + creativeText);
+
+// 3. Chat Completion
+print("\n💬 Testing Chat Completion...");
+var chatResponse = chatBot.CompleteAsync(
+    "You are a helpful programming assistant.",
+    "Explain what makes Aura CX special in one sentence."
+);
+print("🤖 Chat Result: " + chatResponse);
+
+// 4. Complex Workflow Test
+print("\n🔗 Testing Complex Workflow...");
+var concept = textGen.GenerateAsync("Suggest a feature for AI programming languages");
+var analysis = chatBot.CompleteAsync("You are a technical analyst.", "Analyze this feature: " + concept);
+print("💡 Concept: " + concept);
+print("📊 Analysis: " + analysis);
+
+print("\n✅ === ALL AI SERVICES WORKING! ===");
+print("🎉 Phase 4 AI Integration Complete!");

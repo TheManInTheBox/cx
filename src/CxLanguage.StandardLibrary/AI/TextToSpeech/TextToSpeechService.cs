@@ -1,17 +1,21 @@
 using CxLanguage.StandardLibrary.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
+using Microsoft.SemanticKernel.AudioToText;
+using Microsoft.SemanticKernel.TextToAudio;
+using Microsoft.SemanticKernel.Connectors.OpenAI;
+using System.Diagnostics;
+using System.IO;
+using NAudio.Wave;
 
 namespace CxLanguage.StandardLibrary.AI.TextToSpeech;
 
 /// <summary>
-/// Text to speech service for CX standard library
-/// Specialized for real-time speech synthesis with streaming capabilities
+/// Text to speech service for CX standard library using Azure OpenAI TTS
 /// </summary>
 public class TextToSpeechService : CxAiServiceBase
 {
-    private readonly HttpClient _httpClient;
-    private readonly List<SpeechSynthesizer> _activeSynthesizers;
+    private readonly ITextToAudioService _textToAudioService;
 
     /// <summary>
     /// Initializes a new instance of the TextToSpeechService class
@@ -21,8 +25,7 @@ public class TextToSpeechService : CxAiServiceBase
     public TextToSpeechService(Kernel kernel, ILogger<TextToSpeechService> logger) 
         : base(kernel, logger)
     {
-        _httpClient = new HttpClient();
-        _activeSynthesizers = new List<SpeechSynthesizer>();
+        _textToAudioService = kernel.GetRequiredService<ITextToAudioService>();
     }
 
     /// <summary>
@@ -36,61 +39,71 @@ public class TextToSpeechService : CxAiServiceBase
     public override string Version => "1.0.0";
 
     /// <summary>
-    /// Synthesize speech with real-time streaming
+    /// Synthesize speech with streaming support (simulated chunking for compatibility)
     /// </summary>
     public async IAsyncEnumerable<SpeechStreamResult> SynthesizeSpeechStreamAsync(
         string text, 
         TextToSpeechOptions? options = null)
     {
         var startTime = DateTimeOffset.UtcNow;
-        var synthesizer = new SpeechSynthesizer(options);
-        _activeSynthesizers.Add(synthesizer);
+        SpeechStreamResult result;
 
-        try
+        _logger.LogInformation("Starting speech synthesis for text of length: {Length}", text.Length);
+
+        // For now, Azure OpenAI TTS doesn't support streaming, so we synthesize the whole text
+        var synthesisResult = await SynthesizeAsync(text, options);
+        
+        if (synthesisResult.IsSuccess)
         {
-            _logger.LogInformation("Starting speech synthesis stream for text of length: {Length}", text.Length);
-
-            var chunks = SplitTextIntoChunks(text, options?.ChunkSize ?? 200);
-
-            foreach (var chunk in chunks)
-            {
-                var audioChunk = await synthesizer.SynthesizeChunkAsync(chunk);
-                
-                yield return new SpeechStreamResult
-                {
-                    IsSuccess = true,
-                    AudioChunk = audioChunk,
-                    TextChunk = chunk,
-                    IsComplete = false,
-                    ChunkIndex = chunks.IndexOf(chunk),
-                    TotalChunks = chunks.Count,
-                    ExecutionTime = DateTimeOffset.UtcNow - startTime
-                };
-
-                // Small delay to simulate real-time streaming
-                await Task.Delay(10);
-            }
-
-            yield return new SpeechStreamResult
+            // Return the complete audio as a single chunk for compatibility
+            result = new SpeechStreamResult
             {
                 IsSuccess = true,
-                AudioChunk = Array.Empty<byte>(),
-                TextChunk = string.Empty,
+                AudioChunk = synthesisResult.AudioData ?? Array.Empty<byte>(),
+                TextChunk = text,
                 IsComplete = true,
-                ChunkIndex = chunks.Count,
-                TotalChunks = chunks.Count,
+                ChunkIndex = 0,
+                TotalChunks = 1,
                 ExecutionTime = DateTimeOffset.UtcNow - startTime
             };
         }
-        finally
+        else
         {
-            _activeSynthesizers.Remove(synthesizer);
-            synthesizer.Dispose();
+            result = new SpeechStreamResult
+            {
+                IsSuccess = false,
+                AudioChunk = Array.Empty<byte>(),
+                TextChunk = text,
+                IsComplete = true,
+                ChunkIndex = 0,
+                TotalChunks = 1,
+                ExecutionTime = DateTimeOffset.UtcNow - startTime,
+                ErrorMessage = synthesisResult.ErrorMessage
+            };
         }
+
+        yield return result;
     }
 
     /// <summary>
-    /// Synthesize speech with advanced prosody controls
+    /// Simple text-to-speech synthesis using Azure OpenAI
+    /// </summary>
+    public async Task<SpeechSynthesisResult> SynthesizeAsync(
+        string text, 
+        TextToSpeechOptions? options = null)
+    {
+        var defaultProsody = new ProsodyOptions
+        {
+            Rate = 1.0f,
+            Pitch = 0.0f,
+            Volume = 1.0f
+        };
+        
+        return await SynthesizeWithProsodyAsync(text, defaultProsody, options);
+    }
+
+    /// <summary>
+    /// Synthesize speech with advanced prosody controls using Azure OpenAI TTS
     /// </summary>
     public async Task<SpeechSynthesisResult> SynthesizeWithProsodyAsync(
         string text, 
@@ -102,24 +115,34 @@ public class TextToSpeechService : CxAiServiceBase
 
         try
         {
-            _logger.LogInformation("Synthesizing speech with prosody controls");
+            _logger.LogInformation("Synthesizing speech with Azure OpenAI TTS");
 
-            var synthesizer = new SpeechSynthesizer(options);
-            var audioData = await synthesizer.SynthesizeWithProsodyAsync(text, prosody);
+            // Configure Azure OpenAI TTS execution settings
+            var executionSettings = new OpenAITextToAudioExecutionSettings
+            {
+                Voice = options?.Voice ?? "alloy",
+                ResponseFormat = "mp3",
+                Speed = (float)Math.Max(0.25, Math.Min(4.0, prosody.Rate))
+            };
+
+            // Call Azure OpenAI TTS service through Semantic Kernel
+            var audioResult = await _textToAudioService.GetAudioContentAsync(text, executionSettings);
 
             result.IsSuccess = true;
-            result.AudioData = audioData;
+            result.AudioData = audioResult.Data?.ToArray() ?? Array.Empty<byte>();
             result.InputText = text;
             result.Prosody = prosody;
             result.Duration = CalculateSpeechDuration(text, prosody.Rate);
-            result.Voice = options?.Voice ?? "default";
+            result.Voice = executionSettings.Voice;
             result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+
+            _logger.LogInformation("Speech synthesis completed successfully. Audio data size: {Size} bytes", result.AudioData.Length);
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error synthesizing speech with prosody");
+            _logger.LogError(ex, "Error synthesizing speech with Azure OpenAI TTS");
             result.IsSuccess = false;
             result.ErrorMessage = ex.Message;
             result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
@@ -142,19 +165,25 @@ public class TextToSpeechService : CxAiServiceBase
         {
             _logger.LogInformation("Synthesizing conversational speech with context");
 
-            var synthesizer = new SpeechSynthesizer(options);
+            // Use the regular synthesis method for conversational text
+            var synthesisResult = await SynthesizeAsync(text, options);
             
-            // Adjust speech parameters based on conversation context
-            var adjustedOptions = AdjustForConversation(options, context);
-            var audioData = await synthesizer.SynthesizeConversationalAsync(text, adjustedOptions);
-
-            result.IsSuccess = true;
-            result.AudioData = audioData;
-            result.InputText = text;
-            result.Context = context;
-            result.TurnNumber = context.TurnNumber;
-            result.SpeakingRate = adjustedOptions.Speed ?? 1.0f;
-            result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+            if (synthesisResult.IsSuccess)
+            {
+                result.IsSuccess = true;
+                result.AudioData = synthesisResult.AudioData;
+                result.InputText = text;
+                result.Context = context;
+                result.TurnNumber = context.TurnNumber;
+                result.SpeakingRate = options?.Speed ?? 1.0f;
+                result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+            }
+            else
+            {
+                result.IsSuccess = false;
+                result.ErrorMessage = synthesisResult.ErrorMessage;
+                result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+            }
 
             return result;
         }
@@ -184,21 +213,22 @@ public class TextToSpeechService : CxAiServiceBase
             _logger.LogInformation("Synthesizing batch of {Count} texts", textList.Count);
 
             var synthesisResults = new List<SpeechSynthesisResult>();
-            var synthesizer = new SpeechSynthesizer(options);
 
             foreach (var text in textList)
             {
-                var audioData = await synthesizer.SynthesizeAsync(text);
+                var synthesisResult = await SynthesizeAsync(text, options);
                 synthesisResults.Add(new SpeechSynthesisResult
                 {
-                    IsSuccess = true,
-                    AudioData = audioData,
+                    IsSuccess = synthesisResult.IsSuccess,
+                    AudioData = synthesisResult.AudioData,
                     InputText = text,
-                    Duration = CalculateSpeechDuration(text, options?.Speed ?? 1.0f)
+                    Voice = synthesisResult.Voice,
+                    Duration = CalculateSpeechDuration(text, options?.Speed ?? 1.0f),
+                    ErrorMessage = synthesisResult.ErrorMessage
                 });
             }
 
-            result.IsSuccess = true;
+            result.IsSuccess = synthesisResults.All(r => r.IsSuccess);
             result.Results = synthesisResults;
             result.InputTexts = textList;
             result.TotalDuration = synthesisResults.Sum(r => r.Duration);
@@ -268,6 +298,174 @@ public class TextToSpeechService : CxAiServiceBase
     }
 
     /// <summary>
+    /// Synthesize speech and play it immediately using NAudio direct memory playback
+    /// </summary>
+    public async Task<PlaybackResult> SpeakAsync(
+        string text,
+        TextToSpeechOptions? options = null)
+    {
+        var result = new PlaybackResult();
+        var startTime = DateTimeOffset.UtcNow;
+
+        try
+        {
+            _logger.LogInformation("Synthesizing and playing speech directly from memory for text: {Text}", text.Length > 100 ? text.Substring(0, 100) + "..." : text);
+
+            // Configure Azure OpenAI TTS to return WAV format for direct playback
+            var executionSettings = new OpenAITextToAudioExecutionSettings
+            {
+                Voice = options?.Voice ?? "alloy",
+                ResponseFormat = "mp3", // Use MP3 format for better NAudio compatibility
+                Speed = options?.Speed ?? 1.0f
+            };
+
+            // Call Azure OpenAI TTS service directly for MP3 audio
+            var audioResult = await _textToAudioService.GetAudioContentAsync(text, executionSettings);
+            
+            if (audioResult?.Data == null)
+            {
+                result.IsSuccess = false;
+                result.ErrorMessage = "No audio data received from TTS service";
+                result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+                return result;
+            }
+
+            var audioData = audioResult.Data?.ToArray() ?? Array.Empty<byte>();
+            _logger.LogInformation("Received MP3 audio data: {Size} bytes", audioData.Length);
+
+            // Play audio directly from memory using NAudio
+            await PlayAudioFromMemoryAsync(audioData);
+
+            result.IsSuccess = true;
+            result.InputText = text;
+            result.AudioDataSize = audioData.Length;
+            result.AudioPath = "[Direct Memory Playback - No File Created]";
+            result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+
+            _logger.LogInformation("Direct memory playback successful. Size: {Size} bytes, Duration: {Duration}ms", 
+                audioData.Length, result.ExecutionTime.TotalMilliseconds);
+
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in direct memory audio playback");
+            result.IsSuccess = false;
+            result.ErrorMessage = ex.Message;
+            result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+            return result;
+        }
+    }
+
+    /// <summary>
+    /// Play audio directly from memory using NAudio with MP3 support
+    /// </summary>
+    private async Task PlayAudioFromMemoryAsync(byte[] audioData)
+    {
+        try
+        {
+            _logger.LogInformation("Starting NAudio MP3 memory streaming playback...");
+
+            // MP3 is much simpler - NAudio has built-in support
+            if (await TryPlayMp3FromMemoryAsync(audioData))
+            {
+                _logger.LogInformation("MP3 memory streaming successful!");
+                return;
+            }
+
+            // If MP3 streaming fails, throw an exception instead of falling back
+            throw new InvalidOperationException("MP3 memory streaming failed - no fallback to temporary files");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in NAudio MP3 memory streaming");
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// Attempt MP3 memory streaming using NAudio's built-in Mp3FileReader equivalent
+    /// </summary>
+    private async Task<bool> TryPlayMp3FromMemoryAsync(byte[] audioData)
+    {
+        try
+        {
+            _logger.LogInformation("Starting MP3 memory streaming with {Size} bytes", audioData.Length);
+
+            // Create memory stream from MP3 data
+            using var memoryStream = new MemoryStream(audioData);
+            
+            // NAudio can read MP3 directly from stream
+            using var mp3Reader = new Mp3FileReader(memoryStream);
+            using var outputDevice = new WaveOutEvent();
+
+            outputDevice.Init(mp3Reader);
+
+            var playbackCompleted = new TaskCompletionSource<bool>();
+
+            outputDevice.PlaybackStopped += (sender, e) =>
+            {
+                if (e.Exception != null)
+                {
+                    playbackCompleted.SetException(e.Exception);
+                }
+                else
+                {
+                    playbackCompleted.SetResult(true);
+                }
+            };
+
+            outputDevice.Play();
+            _logger.LogInformation("NAudio MP3 memory streaming started, waiting for completion...");
+
+            await playbackCompleted.Task;
+            _logger.LogInformation("NAudio MP3 memory streaming completed successfully - NO TEMP FILES!");
+            
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "MP3 memory streaming failed");
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Fallback audio playback using system command
+    /// </summary>
+    private async Task PlayAudioFallbackAsync(byte[] audioData)
+    {
+        try
+        {
+            var tempWavPath = Path.GetTempFileName() + ".wav";
+            await File.WriteAllBytesAsync(tempWavPath, audioData);
+            
+            _logger.LogInformation("Fallback: Using system command for playback");
+            
+            using var process = Process.Start(new ProcessStartInfo
+            {
+                FileName = "cmd.exe",
+                Arguments = $"/c start /wait wmplayer \"{tempWavPath}\" /close",
+                UseShellExecute = false,
+                CreateNoWindow = true
+            });
+            
+            if (process != null)
+            {
+                await process.WaitForExitAsync();
+            }
+            
+            // Clean up temporary file
+            try { File.Delete(tempWavPath); } catch { /* Ignore cleanup errors */ }
+        }
+        catch (Exception fallbackEx)
+        {
+            _logger.LogError(fallbackEx, "Fallback playback also failed");
+            throw;
+        }
+    }
+
+    /// <summary>
     /// Releases the unmanaged resources used by the TextToSpeechService and optionally releases the managed resources
     /// </summary>
     /// <param name="disposing">true to release both managed and unmanaged resources; false to release only unmanaged resources</param>
@@ -275,12 +473,7 @@ public class TextToSpeechService : CxAiServiceBase
     {
         if (disposing)
         {
-            foreach (var synthesizer in _activeSynthesizers.ToList())
-            {
-                synthesizer.Dispose();
-            }
-            _activeSynthesizers.Clear();
-            _httpClient?.Dispose();
+            // No resources to dispose for Azure OpenAI TTS service
         }
         base.Dispose(disposing);
     }
@@ -291,52 +484,6 @@ public class TextToSpeechService : CxAiServiceBase
     public SpeechSynthesisResult SynthesizeSpeech(string text, TextToSpeechOptions? options = null)
     {
         return SynthesizeWithProsodyAsync(text, new ProsodyOptions(), options).GetAwaiter().GetResult();
-    }
-}
-
-/// <summary>
-/// Internal speech synthesizer helper class
-/// </summary>
-internal class SpeechSynthesizer : IDisposable
-{
-    private readonly TextToSpeechOptions? _options;
-    private bool _disposed;
-
-    public SpeechSynthesizer(TextToSpeechOptions? options)
-    {
-        _options = options;
-    }
-
-    public async Task<byte[]> SynthesizeAsync(string text)
-    {
-        await Task.Delay(50); // Simulate synthesis time
-        return new byte[text.Length * 100]; // Simulated audio data
-    }
-
-    public async Task<byte[]> SynthesizeChunkAsync(string chunk)
-    {
-        await Task.Delay(20); // Simulate chunk synthesis
-        return new byte[chunk.Length * 80]; // Simulated audio chunk
-    }
-
-    public async Task<byte[]> SynthesizeWithProsodyAsync(string text, ProsodyOptions prosody)
-    {
-        await Task.Delay(100); // Simulate prosody processing
-        return new byte[text.Length * 120]; // Simulated prosodic audio
-    }
-
-    public async Task<byte[]> SynthesizeConversationalAsync(string text, TextToSpeechOptions options)
-    {
-        await Task.Delay(75); // Simulate conversational processing
-        return new byte[text.Length * 110]; // Simulated conversational audio
-    }
-
-    public void Dispose()
-    {
-        if (!_disposed)
-        {
-            _disposed = true;
-        }
     }
 }
 
@@ -565,4 +712,25 @@ public class BatchSpeechResult : CxAiResult
     /// Total duration of all synthesized audio in seconds
     /// </summary>
     public float TotalDuration { get; set; }
+}
+
+/// <summary>
+/// Result from playing synthesized speech
+/// </summary>
+public class PlaybackResult : CxAiResult
+{
+    /// <summary>
+    /// Path to the temporary audio file that was played
+    /// </summary>
+    public string AudioPath { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Original input text that was synthesized and played
+    /// </summary>
+    public string InputText { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// Size of the audio data in bytes
+    /// </summary>
+    public int AudioDataSize { get; set; }
 }

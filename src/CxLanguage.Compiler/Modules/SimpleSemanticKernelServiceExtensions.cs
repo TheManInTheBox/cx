@@ -1,6 +1,6 @@
-using System;
-using System.Threading.Tasks;
+
 using System.Linq;
+using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -10,6 +10,58 @@ using CxCoreAI = CxLanguage.Core.AI;
 using CxAzureAI = CxLanguage.Azure.Services;
 
 namespace CxLanguage.Compiler.Modules;
+
+/// <summary>
+/// Configuration model for Azure OpenAI services
+/// </summary>
+public class AzureOpenAIConfiguration
+{
+    public List<AzureOpenAIService> Services { get; set; } = new();
+    public string DefaultService { get; set; } = string.Empty;
+    public Dictionary<string, string> ServiceSelection { get; set; } = new();
+}
+
+/// <summary>
+/// Configuration model for individual Azure OpenAI service
+/// </summary>
+public class AzureOpenAIService
+{
+    public string Name { get; set; } = string.Empty;
+    public string Endpoint { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+    public string ApiVersion { get; set; } = "2024-10-21";
+    public string Region { get; set; } = string.Empty;
+    public AzureOpenAIModels Models { get; set; } = new();
+    public ModelApiVersions? ModelApiVersions { get; set; }
+}
+
+/// <summary>
+/// Configuration model for Azure OpenAI model deployments with API version support
+/// </summary>
+public class AzureOpenAIModels
+{
+    public string? ChatCompletion { get; set; }
+    public string? TextGeneration { get; set; }
+    public string? TextEmbedding { get; set; }
+    public string? TextToImage { get; set; }
+    public string? TextToSpeech { get; set; }
+    public string? AudioToText { get; set; }
+    public string? ImageToText { get; set; }
+}
+
+/// <summary>
+/// Configuration model for model-specific API versions
+/// </summary>
+public class ModelApiVersions
+{
+    public string ChatCompletion { get; set; } = "2024-10-21";
+    public string TextGeneration { get; set; } = "2024-10-21";
+    public string TextEmbedding { get; set; } = "2024-10-21";
+    public string TextToImage { get; set; } = "2024-10-01";
+    public string TextToSpeech { get; set; } = "2024-10-01";
+    public string AudioToText { get; set; } = "2024-10-01";
+    public string ImageToText { get; set; } = "2024-10-01";
+}
 
 /// <summary>
 /// Simple extension methods for configuring Semantic Kernel services
@@ -24,35 +76,94 @@ public static class SimpleSemanticKernelServiceExtensions
         IConfiguration configuration)
     {
         // Get Azure OpenAI configuration
-        var azureOpenAIConfig = configuration.GetSection("AzureOpenAI");
-        var endpoint = azureOpenAIConfig["Endpoint"];
-        var apiKey = azureOpenAIConfig["ApiKey"];
-        var deploymentName = azureOpenAIConfig["DeploymentName"] ?? "gpt-4o-mini";
-
-        // Only add SK if we have valid configuration
-        if (!string.IsNullOrEmpty(endpoint) && !string.IsNullOrEmpty(apiKey))
+        var azureOpenAIConfig = configuration.GetSection("AzureOpenAI").Get<AzureOpenAIConfiguration>();
+        
+        if (azureOpenAIConfig?.Services?.Any() == true)
         {
-            // Register Semantic Kernel
+            // Helper method to get service configuration for a specific AI service type
+            AzureOpenAIService GetServiceForType(string serviceType)
+            {
+                var selectedServiceName = azureOpenAIConfig.ServiceSelection?.GetValueOrDefault(serviceType) 
+                                         ?? azureOpenAIConfig.DefaultService;
+                
+                return azureOpenAIConfig.Services.FirstOrDefault(s => s.Name == selectedServiceName)
+                       ?? azureOpenAIConfig.Services.First();
+            }
+
+            // Register Semantic Kernel with multiple service support
             services.AddSingleton<Kernel>(serviceProvider =>
             {
                 var logger = serviceProvider.GetRequiredService<ILogger<Kernel>>();
-                
                 var builder = Kernel.CreateBuilder();
-                
-                // Add Azure OpenAI chat completion
-                builder.AddAzureOpenAIChatCompletion(
-                    deploymentName: deploymentName,
-                    endpoint: endpoint,
-                    apiKey: apiKey);
 
-                // Add Azure OpenAI text embedding generation
+                // Chat Completion Service
+                var chatService = GetServiceForType("ChatCompletion");
+                if (!string.IsNullOrEmpty(chatService.Models.ChatCompletion))
+                {
+                    builder.AddAzureOpenAIChatCompletion(
+                        deploymentName: chatService.Models.ChatCompletion,
+                        endpoint: chatService.Endpoint,
+                        apiKey: chatService.ApiKey);
+                }
+
+                // Text Embedding Service
+                var embeddingService = GetServiceForType("TextEmbedding");
+                if (!string.IsNullOrEmpty(embeddingService.Models.TextEmbedding))
+                {
 #pragma warning disable SKEXP0010
-                builder.AddAzureOpenAITextEmbeddingGeneration(
-                    deploymentName: "text-embedding-ada-002",
-                    endpoint: endpoint,
-                    apiKey: apiKey);
+                    builder.AddAzureOpenAITextEmbeddingGeneration(
+                        deploymentName: embeddingService.Models.TextEmbedding,
+                        endpoint: embeddingService.Endpoint,
+                        apiKey: embeddingService.ApiKey);
 #pragma warning restore SKEXP0010
-                
+                }
+
+                // Text-to-Image Service
+                var imageService = GetServiceForType("TextToImage");
+                if (!string.IsNullOrEmpty(imageService.Models.TextToImage))
+                {
+#pragma warning disable SKEXP0010
+                    builder.AddAzureOpenAITextToImage(
+                        deploymentName: imageService.Models.TextToImage,
+                        endpoint: imageService.Endpoint,
+                        apiKey: imageService.ApiKey);
+#pragma warning restore SKEXP0010
+                }
+
+                // Audio-to-Text Service (Whisper)
+                var audioToTextService = GetServiceForType("AudioToText");
+                if (!string.IsNullOrEmpty(audioToTextService.Models.AudioToText))
+                {
+#pragma warning disable SKEXP0010
+                    builder.AddAzureOpenAIAudioToText(
+                        deploymentName: audioToTextService.Models.AudioToText,
+                        endpoint: audioToTextService.Endpoint,
+                        apiKey: audioToTextService.ApiKey);
+#pragma warning restore SKEXP0010
+                }
+                else
+                {
+                    // Fallback to whisper if no specific deployment configured
+#pragma warning disable SKEXP0010
+                    builder.AddAzureOpenAIAudioToText(
+                        deploymentName: "whisper",
+                        endpoint: chatService.Endpoint,
+                        apiKey: chatService.ApiKey);
+#pragma warning restore SKEXP0010
+                }
+
+                // Text-to-Speech Service
+                var ttsService = GetServiceForType("TextToSpeech");
+                if (!string.IsNullOrEmpty(ttsService.Models.TextToSpeech))
+                {
+#pragma warning disable SKEXP0010
+                    builder.AddAzureOpenAITextToAudio(
+                        deploymentName: ttsService.Models.TextToSpeech,
+                        endpoint: ttsService.Endpoint,
+                        apiKey: ttsService.ApiKey);
+#pragma warning restore SKEXP0010
+                }
+
                 // Add logging
                 builder.Services.AddSingleton(serviceProvider.GetRequiredService<ILoggerFactory>());
                 

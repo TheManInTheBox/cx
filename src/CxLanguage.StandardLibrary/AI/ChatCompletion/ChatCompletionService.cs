@@ -90,6 +90,39 @@ public class ChatCompletionService : CxAiServiceBase
     }
 
     /// <summary>
+    /// Send a message with system context and get a chat completion response
+    /// </summary>
+    /// <param name="systemMessage">The system message to set context</param>
+    /// <param name="userMessage">The user message to process</param>
+    /// <param name="options">Optional chat completion settings</param>
+    /// <returns>Chat completion result</returns>
+    public async Task<ChatCompletionResult> CompleteAsync(string systemMessage, string userMessage, ChatCompletionOptions? options = null)
+    {
+        // Create options with system message if not provided
+        var effectiveOptions = options ?? new ChatCompletionOptions();
+        effectiveOptions.SystemMessage = systemMessage;
+        
+        // Call the main CompleteAsync method with the user message
+        return await CompleteAsync(userMessage, effectiveOptions);
+    }
+
+    /// <summary>
+    /// Send a message with system context and get a chat completion response (2 parameter overload)
+    /// </summary>
+    /// <param name="systemMessage">The system message to set context</param>
+    /// <param name="userMessage">The user message to process</param>
+    /// <returns>Chat completion result</returns>
+    public async Task<ChatCompletionResult> CompleteAsync(string systemMessage, string userMessage)
+    {
+        // Create options with system message 
+        var options = new ChatCompletionOptions();
+        options.SystemMessage = systemMessage;
+        
+        // Call the main CompleteAsync method with the user message
+        return await CompleteAsync(userMessage, options);
+    }
+
+    /// <summary>
     /// Continue a conversation with chat history
     /// </summary>
     public async Task<ChatCompletionResult> ContinueConversationAsync(
@@ -195,6 +228,15 @@ public class ChatCompletionService : CxAiServiceBase
     {
         return CompleteAsync(message, options).GetAwaiter().GetResult();
     }
+
+    /// <summary>
+    /// String-returning chat completion for CX language compatibility
+    /// </summary>
+    public async Task<string> GetResponseAsync(string systemMessage, string userMessage)
+    {
+        var result = await CompleteAsync(systemMessage, userMessage);
+        return result.IsSuccess ? result.Response : $"Error: {result.ErrorMessage}";
+    }
 }
 
 /// <summary>
@@ -283,6 +325,14 @@ public class ChatCompletionResult : CxAiResult
     /// Finish reason (completed, length, stop, etc.)
     /// </summary>
     public string? FinishReason { get; set; }
+    
+    /// <summary>
+    /// Returns the response content when converted to string
+    /// </summary>
+    public override string ToString()
+    {
+        return Response;
+    }
 }
 
 /// <summary>
