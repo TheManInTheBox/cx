@@ -3,24 +3,24 @@ applyTo: "**"
 description: "Aura - Cognitive Architecture Framework for CX Language"
 ---
 
-# Aura – Cognitive Executor Language (Cx)
+# Aura – Cognitive Architecture Framework
 
-Aura is a language for presence-sensitive, autonomous systems. Cx scripts are agents that sense, react, and adapt based on ambient data and cognitive architecture.
+Aura is the sensory and awareness layer for CX autonomous systems. Where **Cx handles reasoning and motor functions** (logic, execution, actions), **Aura provides sensory input and environmental awareness** (perception, context, ambient intelligence).
 
 ## Philosophy
 
-- Code is not just execution—it's perception.
-- Every Cx unit is contextually aware: it perceives *aura*—the ambient presence, intent, or emotional charge of its environment.
-- Logic flows from input vectors that include physical sensors, emotional tone, or implied goals.
-- The architecture is designed around cognitive loops, environmental stimuli, and self-modifying inference.
+- **Sensory Layer**: Aura perceives environmental data - presence, intent, emotional charge, contextual shifts
+- **Awareness Engine**: Processes ambient information into actionable cognitive insights  
+- **Contextual Intelligence**: Provides environmental understanding that informs Cx reasoning
+- **Ambient Sensitivity**: Detects subtle changes in attention, tone, crowd dynamics, system state
 
 ## Copilot Behavior
 
-- Prefer declarative, perceptual primitives (e.g., `detect`, `vibe`, `adjust`, `evoke`)
-- Suggest patterns for ambient data fusion (e.g., text + audio + motion)
-- Recommend AI-powered sensors, edge devices, or virtual actuators that simulate presence response
-- Use Roslyn generators for runtime adaptation, sensory modeling, and fusion pipelines
-- Propose multi-agent coordination when aura shifts—e.g., when attention, tone, or crowd density changes
+- Focus on **sensory input processing** rather than execution logic
+- Suggest **ambient data fusion patterns** (environmental sensors → cognitive insights)
+- Recommend **awareness mechanisms**: presence detection, context switching, mood sensing
+- Design **perceptual interfaces** that feed into Cx reasoning systems
+- Propose **environmental monitoring** for autonomous system adaptation
 
 ## File Scopes
 
@@ -31,11 +31,19 @@ Aura is a language for presence-sensitive, autonomous systems. Cx scripts are ag
 | `**/*.sense.cs` | Sensor fusion modules—combine data streams into actionable cognitive insights |
 | `**/*.aura.map` | Topological awareness—map presence vectors across physical or virtual space |
 
+## Aura-Cx Integration Pattern
+
+**Aura (Sensory)** → **Cx (Reasoning/Motor)**
+
+```
+Environmental Data → Aura Processing → Cognitive Insights → Cx Decision Making → Actions
+```
+
 ## Aura Cognitive Architecture Integration
 
 ### Ambient Awareness Patterns
 ```cx
-// Presence-sensitive autonomous agents
+// Aura perceives and processes environmental data
 class AuraAgent
 {
     ambientState: object;
@@ -49,14 +57,14 @@ class AuraAgent
     
     function perceiveAura(environmentData)
     {
-        // Sense ambient presence, intent, emotional charge
+        // Aura: Sense ambient presence, intent, emotional charge
         var presenceVector = this.fuseAmbientData(environmentData);
         return this.adaptToCognitiveShift(presenceVector);
     }
     
     function evokePrescriptiveAction(auraShift)
     {
-        // Autonomous response to environmental stimuli
+        // Cx: Autonomous response based on Aura's environmental analysis
         return "Adjusting behavior based on ambient aura: " + auraShift;
     }
 }
@@ -66,23 +74,24 @@ class AuraAgent
 ```cx
 using cognitiveOrchestrator from "Cx.Aura.Coordination";
 
-// Agents coordinate when aura shifts (attention, tone, crowd density)
+// Aura detects environmental shifts, Cx coordinates agent responses
 function respondToAuraShift(agents, ambientChange)
 {
     for (agent in agents)
     {
-        // Each agent perceives and adapts to cognitive environment
+        // Aura: Each agent perceives environmental changes
         var response = agent.perceiveAura(ambientChange);
+        // Cx: Coordinate based on Aura's sensory input
         cognitiveOrchestrator.coordinate(agent, response);
     }
 }
 ```
 
-### Perceptual Primitives
-- `detect(stimulus)` - Ambient data detection and processing
-- `vibe(contextualData)` - Emotional and intentional tone analysis  
-- `adjust(behaviorVector)` - Self-modifying response to stimuli
-- `evoke(presenceResponse)` - Generate prescriptive environmental actions
+### Aura Sensory Primitives (Input) → Cx Motor Functions (Output)
+- `detect(stimulus)` - **Aura**: Ambient data detection and processing
+- `vibe(contextualData)` - **Aura**: Emotional and intentional tone analysis  
+- `adjust(behaviorVector)` - **Cx**: Self-modifying response to Aura input
+- `evoke(presenceResponse)` - **Cx**: Generate actions based on Aura awareness
 
 ---
 
