@@ -1,0 +1,36 @@
+print("=== CX LANGUAGE CORE TEST ===");
+
+// Basic variables
+var name = "Aura CX";
+var version = 4.1;
+print("Language: " + name + " v" + version);
+
+// Simple arithmetic
+var result = 10 + 5 * 2;
+print("Math result: " + result);
+
+// Arrays and loops
+var items = ["Variables", "Functions", "AI Services"];
+for (var item in items)
+{
+    print("Feature: " + item);
+}
+
+// Functions with return values
+function multiply(a, b)
+{
+    return a * b;
+}
+
+var product = multiply(6, 7);
+print("Function result: " + product);
+
+// Object literals  
+var config = {
+    name: "CX Config",
+    value: 42
+};
+
+print("Config: " + config.name + " = " + config.value);
+
+print("=== CORE LANGUAGE FEATURES WORKING ===");

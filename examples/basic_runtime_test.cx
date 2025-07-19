@@ -1,0 +1,19 @@
+// Minimal test to isolate runtime issue
+print("Testing basic functionality...");
+
+// Test basic features first
+var message = "Hello World";
+print("Message: " + message);
+
+var num = 42;
+print("Number: " + num);
+
+var items = ["one", "two", "three"];
+print("Array length: " + items.length);
+
+for (var item in items)
+{
+    print("Item: " + item);
+}
+
+print("Basic test complete!");
