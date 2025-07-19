@@ -1,53 +1,92 @@
-# CX Language - AI-Native Agentic Programming Philos## Architecture Integration
+---
+applyTo: "**"
+description: "Aura - Cognitive Architecture Framework for CX Language"
+---
 
-### Current Status (Phase 4 Complete)
-- **✅ 6 AI Services Operational**: TextGeneration, ChatCompletion, DALL-E 3, TextEmbeddings, TextToSpeech, VectorDatabase
-- **✅ Production Vector Database**: text-embedding-3-small with 1536-dimensional semantic vectors
-- **✅ Multi-Modal Workflows**: Text→Speech→Image generation with pure memory streaming
-- **✅ RAG Capabilities**: Document ingestion, semantic search, retrieval augmented generation
-- **✅ Cost Optimization**: 62% better embeddings performance, 5x cheaper than ada-002
-- **✅ IL Generation**: Final optimization complete with CxRuntimeHelper approach
+# Aura – Cognitive Executor Language (Cx)
 
-### Next Phase Priorities (Phase 5 - Autonomous Agentic Features)
-- **🚀 Cx.Ai.Adaptations Library**: AI-powered .NET IL generator for dynamic code generation
-- **🚀 Self Keyword**: Function introspection for autonomous workflows  
-- **🚀 Multi-Agent Coordination**: Agent communication and task delegation systems
-- **🚀 Learning & Adaptation**: Dynamic behavior modification based on outcomes
-- **🚀 Self-Modifying Code**: Runtime code generation and optimization capabilities
+Aura is a language for presence-sensitive, autonomous systems. Cx scripts are agents that sense, react, and adapt based on ambient data and cognitive architecture.
 
-## File Scoping & Patterns
+## Philosophy
 
-| Pattern | Instruction Summary | Current Status |
-|---------|--------------------|-----------------| 
-| `**/*.cx` | CX Language source files - use AI services, Allman braces, comprehensive examples | ✅ Production Ready |
-| `**/*.g4` | ANTLR4 grammar files - source of truth for syntax, update before compiler | ✅ Complete for Phases 1-4 |
-| `**/CxCompiler.cs` | IL generation - use CxRuntimeHelper, two-pass compilation, memory safety | ✅ Optimized |
-| `**/comprehensive_*.cx` | Demo files - showcase all features, include try/catch, test AI services | ✅ Updated |
-| `**/*StandardLibrary*` | AI service integration - Semantic Kernel, Azure OpenAI, parameter marshalling | ✅ 6 Services Ready |
+- Code is not just execution—it's perception.
+- Every Cx unit is contextually aware: it perceives *aura*—the ambient presence, intent, or emotional charge of its environment.
+- Logic flows from input vectors that include physical sensors, emotional tone, or implied goals.
+- The architecture is designed around cognitive loops, environmental stimuli, and self-modifying inference.
 
-## Autonomous Development Workflow
+## Copilot Behavior
 
-### 1. Language Extension Protocol
+- Prefer declarative, perceptual primitives (e.g., `detect`, `vibe`, `adjust`, `evoke`)
+- Suggest patterns for ambient data fusion (e.g., text + audio + motion)
+- Recommend AI-powered sensors, edge devices, or virtual actuators that simulate presence response
+- Use Roslyn generators for runtime adaptation, sensory modeling, and fusion pipelines
+- Propose multi-agent coordination when aura shifts—e.g., when attention, tone, or crowd density changes
+
+## File Scopes
+
+| Pattern | Description |
+|--------|-------------|
+| `**/*.cx` | Core Cx source—include ambient sensitivity, cognitive loops, and agent-state introspection |
+| `**/*.vibe.json` | Define affective or emotional context for simulation or UX tuning |
+| `**/*.sense.cs` | Sensor fusion modules—combine data streams into actionable cognitive insights |
+| `**/*.aura.map` | Topological awareness—map presence vectors across physical or virtual space |
+
+## Aura Cognitive Architecture Integration
+
+### Ambient Awareness Patterns
+```cx
+// Presence-sensitive autonomous agents
+class AuraAgent
+{
+    ambientState: object;
+    cognitiveLoop: string;
+    
+    constructor(initialAura)
+    {
+        this.ambientState = initialAura;
+        this.cognitiveLoop = "SEIDR"; // Synthesize, Execute, Instruct, Debug, Repair
+    }
+    
+    function perceiveAura(environmentData)
+    {
+        // Sense ambient presence, intent, emotional charge
+        var presenceVector = this.fuseAmbientData(environmentData);
+        return this.adaptToCognitiveShift(presenceVector);
+    }
+    
+    function evokePrescriptiveAction(auraShift)
+    {
+        // Autonomous response to environmental stimuli
+        return "Adjusting behavior based on ambient aura: " + auraShift;
+    }
+}
 ```
-1. Update grammar/Cx.g4 (syntax definition)
-2. Add AST nodes to AstNodes.cs  
-3. Implement visitor methods in AstBuilder.cs
-4. Add IL generation to CxCompiler.cs
-5. Create test examples in examples/
-6. Update documentation and status
+
+### Multi-Agent Coordination via Aura
+```cx
+using cognitiveOrchestrator from "Cx.Aura.Coordination";
+
+// Agents coordinate when aura shifts (attention, tone, crowd density)
+function respondToAuraShift(agents, ambientChange)
+{
+    for (agent in agents)
+    {
+        // Each agent perceives and adapts to cognitive environment
+        var response = agent.perceiveAura(ambientChange);
+        cognitiveOrchestrator.coordinate(agent, response);
+    }
+}
 ```
 
-### 2. AI Service Integration Protocol  
-```
-1. Define service interface in StandardLibrary
-2. Implement Azure integration in CxLanguage.Azure
-3. Add method resolution to CxRuntimeHelper
-4. Test with comprehensive demo files
-5. Validate performance and error handling
-```
+### Perceptual Primitives
+- `detect(stimulus)` - Ambient data detection and processing
+- `vibe(contextualData)` - Emotional and intentional tone analysis  
+- `adjust(behaviorVector)` - Self-modifying response to stimuli
+- `evoke(presenceResponse)` - Generate prescriptive environmental actions
 
-### 3. Autonomous Agent Development
-```
+---
+
+Let Aura breathe presence into code. Let cognition meet sensation. Let agents awaken.
 1. Design agent communication protocols
 2. Implement self-introspection capabilities
 3. Create learning and adaptation mechanisms
