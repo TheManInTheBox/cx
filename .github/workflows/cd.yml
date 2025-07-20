@@ -134,10 +134,8 @@ jobs:
       run: |
         echo "🔄 Updating version in project files to ${{ steps.version.outputs.version_number }}..."
         
-        # Update Directory.Build.props
+        # Update Directory.Build.props - only update the Version field, leave AssemblyVersion and FileVersion as numeric
         sed -i "s/<Version>.*<\/Version>/<Version>${{ steps.version.outputs.version_number }}<\/Version>/g" Directory.Build.props
-        sed -i "s/<AssemblyVersion>.*<\/AssemblyVersion>/<AssemblyVersion>${{ steps.version.outputs.version_number }}<\/AssemblyVersion>/g" Directory.Build.props
-        sed -i "s/<FileVersion>.*<\/FileVersion>/<FileVersion>${{ steps.version.outputs.version_number }}<\/FileVersion>/g" Directory.Build.props
         
         echo "✅ Version updated in Directory.Build.props"
 

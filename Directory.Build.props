@@ -3,8 +3,8 @@
   <PropertyGroup>
     <!-- Version Information -->
     <Version>1.0.0-beta.2</Version>
-    <AssemblyVersion>1.0.0.0</AssemblyVersion>
-    <FileVersion>1.0.0.0</FileVersion>
+    <AssemblyVersion>1.0.0.2</AssemblyVersion>
+    <FileVersion>1.0.0.2</FileVersion>
     <Product>CX Language - Multi-Agent Voice Programming Platform</Product>
     <Company>Aura CX</Company>
     <Authors>Aaron Hebert</Authors>
