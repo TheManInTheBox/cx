@@ -158,7 +158,7 @@ FALSE: 'false';
 ON: 'on';
 EMIT: 'emit';
 
-// Additional tokens
+// Thread context keyword - provides access to current thread context and state
 SELF: 'self';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
