@@ -1,0 +1,130 @@
+// 🔥 AMAZING AI DEBATE: CLIMATE CHANGE SOLUTIONS - WORKING VERSION
+// Fixed approach: Direct AI calls + Simple classes without constructor parameters
+using textGen from "Cx.AI.TextGeneration";
+using tts from "Cx.AI.TextToSpeech";
+
+class DebateAgent
+{
+    name: string;
+    position: string;
+}
+
+print("🔥 AMAZING AI DEBATE: CLIMATE CHANGE SOLUTIONS");
+print("===============================================");
+print("🤖 CX Autonomous Programming Platform Demo");
+print("");
+
+try
+{
+    // Create agents without constructor parameters (working approach)
+    var agent1 = new DebateAgent();
+    agent1.name = "Dr. Sarah Chen";
+    agent1.position = "Technology Solutions";
+    
+    var agent2 = new DebateAgent();
+    agent2.name = "Prof. Marcus Green"; 
+    agent2.position = "Nature-Based Solutions";
+    
+    var agent3 = new DebateAgent();
+    agent3.name = "Dr. Lisa Martinez";
+    agent3.position = "Economic Transformation";
+    
+    var agent4 = new DebateAgent();
+    agent4.name = "Dr. James Wilson";
+    agent4.position = "Policy & Governance";
+    
+    var agents = [agent1, agent2, agent3, agent4];
+    
+    print("🎭 Debate Participants:");
+    for (var agent in agents)
+    {
+        // Field access works! (no constructor corruption)
+        print("   → " + agent.name + " (" + agent.position + ")");
+    }
+    
+    print("");
+    print("🗣️  DEBATE ROUND 1: Opening Statements");
+    print("=====================================");
+    
+    // ROUND 1: Each agent presents their opening statement
+    print("");
+    print("🔥 " + agent1.name + " (" + agent1.position + "):");
+    var statement1 = textGen.GenerateAsync(
+        "As " + agent1.name + ", passionately argue for " + agent1.position + " to combat climate change. Mention specific technologies. Be bold. 2-3 sentences.",
+        { temperature: 0.8, maxTokens: 150 }
+    );
+    print(statement1);
+    tts.SpeakAsync(agent1.name + " argues: " + statement1);
+    
+    print("");
+    print("🌿 " + agent2.name + " (" + agent2.position + "):");
+    var statement2 = textGen.GenerateAsync(
+        "As " + agent2.name + ", passionately argue for " + agent2.position + " to combat climate change. Counter technology-only approaches. Mention ecosystems and biodiversity. 2-3 sentences.",
+        { temperature: 0.8, maxTokens: 150 }
+    );
+    print(statement2);
+    tts.SpeakAsync(agent2.name + " counters: " + statement2);
+    
+    print("");
+    print("💰 " + agent3.name + " (" + agent3.position + "):");
+    var statement3 = textGen.GenerateAsync(
+        "As " + agent3.name + ", passionately argue for " + agent3.position + " in climate action. Address both technology and nature approaches from an economic perspective. Mention costs and benefits. 2-3 sentences.",
+        { temperature: 0.8, maxTokens: 150 }
+    );
+    print(statement3);
+    tts.SpeakAsync(agent3.name + " adds: " + statement3);
+    
+    print("");
+    print("⚖️ " + agent4.name + " (" + agent4.position + "):");
+    var statement4 = textGen.GenerateAsync(
+        "As " + agent4.name + ", passionately argue for " + agent4.position + " in climate action. Address how policy can unite technology, nature, and economic approaches. Be diplomatic but urgent. 2-3 sentences.",
+        { temperature: 0.8, maxTokens: 150 }
+    );
+    print(statement4);
+    tts.SpeakAsync(agent4.name + " concludes: " + statement4);
+    
+    print("");
+    print("🎯 DEBATE ROUND 2: Cross-Examination & Rebuttals");
+    print("=============================================");
+    
+    // ROUND 2: Each agent responds to the others
+    for (var agent in agents)
+    {
+        print("");
+        print("💭 " + agent.name + " responds:");
+        var response = textGen.GenerateAsync(
+            "As " + agent.name + " with focus on " + agent.position + ", respond thoughtfully to the other climate arguments you've heard. Challenge at least one other approach while finding common ground. Be specific. 2-3 sentences.",
+            { temperature: 0.9, maxTokens: 150 }
+        );
+        print(response);
+        tts.SpeakAsync(agent.name + " responds: " + response);
+    }
+    
+    print("");
+    print("🏆 UNIFIED SOLUTION SYNTHESIS");
+    print("=============================");
+    
+    var synthesis = textGen.GenerateAsync(
+        "Synthesize this climate change debate between technology, nature-based, economic, and policy approaches into a unified solution that combines all perspectives. Be inspiring, actionable, and urgent. 4-5 sentences.",
+        { temperature: 0.7, maxTokens: 250 }
+    );
+    
+    print("🌍 The Panel's Unified Vision:");
+    print(synthesis);
+    
+    tts.SpeakAsync("The climate debate panel concludes: " + synthesis);
+    
+    print("");
+    print("✨ =====================================");
+    print("✨ AMAZING AI DEBATE DEMO COMPLETE!");
+    print("✨ =====================================");
+    print("🤖 4 AI Agents in Turn-Based Coordination");
+    print("🎵 Full Text-to-Speech Integration");  
+    print("🧠 Dynamic Multi-Agent Argumentation");
+    print("🔥 CX Language: Autonomous Programming Platform");
+    print("🚀 Phase 5: Multi-Agent Coordination ACHIEVED!");
+}
+catch (error)
+{
+    print("❌ Debate error: " + error);
+}

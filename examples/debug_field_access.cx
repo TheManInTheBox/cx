@@ -1,0 +1,19 @@
+class TestAgent
+{
+    name: string;
+    position: string;
+    
+    constructor(name, position)
+    {
+        this.name = name;
+        this.position = position;
+        print("Constructor: " + name + " → " + position);
+    }
+}
+
+print("Creating agent...");
+var agent = new TestAgent("Dr. Test", "Testing Position");
+print("Agent created");
+print("Agent name: " + agent.name);
+print("Agent position: " + agent.position);
+print("Done");

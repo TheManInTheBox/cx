@@ -1,0 +1,20 @@
+// Test string concatenation with parameters in constructor
+
+class ConcatTest
+{
+    name: string;
+    
+    constructor(inputName)
+    {
+        print("Simple print works");
+        print(inputName);                                    // This works
+        print("About to try concatenation");
+        print("Constructor: Setting fields for " + inputName); // This might fail
+        this.name = inputName;
+        print("Success!");
+    }
+}
+
+print("=== Creating instance ===");
+var obj = new ConcatTest("TestValue");
+print("Done!");

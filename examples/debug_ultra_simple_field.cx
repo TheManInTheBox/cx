@@ -1,0 +1,30 @@
+// Ultra simple variable test
+class DebateAgent
+{
+    name: string;
+}
+
+try
+{
+    print("Creating agent...");
+    var agent1 = new DebateAgent();
+    print("Agent created successfully");
+    
+    print("Testing variable access...");
+    print("Agent1 type check");
+    // This should just load the variable without field access
+    // But print automatically tries to convert to string which might reveal the issue
+    
+    print("Simple field assignment test...");
+    agent1.name = "Test Name";
+    print("Assignment completed");
+    
+    print("Direct field access test (this is where it fails):");
+    var testName = agent1.name;  // This should isolate the field access issue
+    print("Field access completed");
+    
+}
+catch (error)
+{
+    print("Error: " + error);
+}

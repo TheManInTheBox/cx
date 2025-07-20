@@ -1,0 +1,16 @@
+using textGen from "Cx.AI.TextGeneration";
+using tts from "Cx.AI.TextToSpeech";
+
+print("Testing service availability...");
+print("textGen type: " + textGen);
+print("tts type: " + tts);
+print("Services exist");
+
+// Test without any class at all
+function testServices(gen, speech)
+{
+    print("Function got services: " + gen + " and " + speech);
+}
+
+testServices(textGen, tts);
+print("Function call worked");

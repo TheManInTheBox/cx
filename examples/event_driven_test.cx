@@ -1,0 +1,39 @@
+// Event-Driven Architecture Test - Phase 5 Implementation
+// Testing the new 'on', 'when', and 'emit' keywords with UNQUOTED event names
+
+using textGen from "Cx.AI.TextGeneration";
+
+// Test 1: Basic event handler with 'on' keyword (unquoted event name)
+on audio.transcribed (payload)
+{
+    print("Event received: " + payload.content);
+    
+// Test conditional logic within event handler
+    if (payload.intent == "query")
+    {
+        var response = "Processing query: " + payload.content;
+        print(response);
+        
+        // Test event emission (unquoted)
+        emit cognition.response, { 
+            result: response,
+            timestamp: "now"
+        };
+    }
+}
+
+// Test 2: Another event handler (unquoted)
+on presence.signal (data)
+{
+    print("Presence detected from: " + data.source);
+    
+    if (data.source == "audio")
+    {
+        emit system.alert, "Audio presence detected";
+    }
+}
+
+// Test 3: Basic emit statement with unquoted event name
+emit system.startup, "CX Event System Initializing";
+
+print("Event-driven architecture test loaded successfully!");
