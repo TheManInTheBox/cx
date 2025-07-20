@@ -41,25 +41,35 @@ Aura is the Live Embodied Intelligence layer for CX autonomous systems. The **5 
 - **Voice Commands**: "Aura on/off" detection with noise filtering  
 - **Pattern**: `on live.audio (payload) { ... }` - always processes audio
 
-### 2. Animal Personality Integration
-- **Wild Character**: Animal from Muppets with "BEEP-BOOP!" responses
-- **Voice Synthesis**: Character-specific TTS with personality prompts
-- **Pattern**: `speakBeepBoop(message, isActivation)` - wild/calm modes
+### **🎯 Phase 8.3: Real-Time Microphone Integration** ⭐ **HIGHEST PRIORITY**
+**STATUS: NEXT IMMEDIATE FOCUS** 
 
-### 3. Intelligent State Management  
-- **Global Flags**: `auraEnabled`, `isAwake`, `inConversation` properties
-- **Conditional Logic**: `if (!this.auraEnabled) return;` - smart processing
-- **Pattern**: State-dependent event handling with early returns
+**Core Mission**: Transform the successful Phase 8.2 simulation into live hardware integration with real microphone capture and speech processing.
 
-### 4. Multi-Modal Coordination
-- **Audio Always**: `on live.audio` handlers process continuously
-- **State-Dependent**: `on presence.detected`, `on environment.change` only when enabled
-- **Pattern**: Audio ✅ | Presence (conditional) | Environment (conditional)
+**Top Priority Features:**
+1. **🎤 Live NAudio Microphone Capture** ⭐ **CRITICAL PATH**
+   - Replace simulated live.audio events with real microphone input
+   - Continuous audio buffer processing in background thread
+   - Hardware audio device detection and configuration
+   - Real-time audio stream management with proper cleanup
 
-### 5. Event-Driven Architecture
-- **Agent Auto-Registration**: `agent ClassName()` registers event handlers automatically
-- **Complex Interactions**: Multi-agent coordination via event chains
-- **Pattern**: `emit aura.system.activated` → system monitor responses
+2. **🗣️ Azure Speech Service Integration** ⭐ **CRITICAL PATH**
+   - Real-time speech-to-text conversion from microphone input
+   - Azure Speech Service continuous recognition mode
+   - Audio chunk processing with confidence scoring
+   - Wake word detection from actual voice commands
+
+3. **🔄 Live Audio Event Pipeline** 📈 **HIGH PRIORITY**
+   - Bridge real microphone → speech service → live.audio events
+   - Maintain existing event-driven architecture from Phase 8.2
+   - Audio quality monitoring and error handling
+   - Latency optimization for real-time responsiveness
+
+4. **🎛️ Production Audio Management** 📈 **HIGH PRIORITY**
+   - Audio device selection and switching capabilities
+   - Volume and sensitivity controls
+   - Background noise filtering and audio enhancement
+   - Microphone permission handling and user privacy controls
 
 ## ⚡ CRITICAL: Agent Event System Architecture
 
