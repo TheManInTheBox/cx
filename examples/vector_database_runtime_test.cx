@@ -1,7 +1,6 @@
 // Vector Database Demo - Testing Cx.AI.Memory service
 // This should now work with the runtime array bug fixed!
 
-using memory from "Cx.AI.Memory";
 
 function testVectorDatabase()
 {

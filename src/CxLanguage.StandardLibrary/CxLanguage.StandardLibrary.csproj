@@ -14,6 +14,7 @@
   <ItemGroup>
     <ProjectReference Include="..\CxLanguage.Core\CxLanguage.Core.csproj" />
     <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
+    <ProjectReference Include="..\CxLanguage.Azure\CxLanguage.Azure.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -24,6 +25,7 @@
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
     <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.40.0" />
     <!-- Kernel Memory for enterprise RAG and vector database -->
     <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
     <PackageReference Include="Microsoft.KernelMemory.DataFormats.AzureAIDocIntel" Version="0.98.250508.3" />

@@ -1,7 +1,6 @@
 // CX Language - Advanced Event Bus Service Demo
 // Demonstrates pub/sub patterns with different scoping strategies
 
-using textGen from "Cx.AI.TextGeneration";
 
 // Agent class that can join/leave the event bus
 class SmartAgent

@@ -1,5 +1,4 @@
 // Test NAudio with hybrid approach (temp file + immediate cleanup)
-using textToSpeech from "Cx.AI.TextToSpeech";
 
 print("🎵 Testing NAudio Hybrid Approach");
 print("=================================");

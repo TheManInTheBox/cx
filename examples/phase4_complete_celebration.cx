@@ -2,9 +2,6 @@
 // CX Language AI Integration - PRODUCTION READY
 // AccessViolationException ELIMINATED - All service call patterns working!
 
-using textGen from "Cx.AI.TextGeneration";
-using textToSpeech from "Cx.AI.TextToSpeech";
-using chatBot from "Cx.AI.ChatCompletion";
 
 print("� PHASE 4: 100% COMPLETE - MAJOR MILESTONE ACHIEVED!");
 print("====================================================");

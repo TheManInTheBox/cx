@@ -1,5 +1,4 @@
 // Test class method calls to isolate null reference issue
-using chatBot from "Cx.AI.ChatCompletion";
 
 print("Class Method Call Debug Test");
 

@@ -1,8 +1,6 @@
 // CX Language - Simplified Autonomous Agent Core
 // Focus on event-driven agents that self-manage through 'autonomous' keyword
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 // =============================================================================
 // CORE INSIGHT: AGENTS ARE EVENT-DRIVEN, NOT INVOKED

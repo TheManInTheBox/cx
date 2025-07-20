@@ -173,6 +173,8 @@ public static class SimpleSemanticKernelServiceExtensions
             // Register the Azure OpenAI service directly since it implements CxCoreAI.IAiService
             services.AddSingleton<CxCoreAI.IAiService, CxAzureAI.AzureOpenAIService>();
             
+            // Note: Azure Speech Service removed - replaced by Azure OpenAI Realtime API integration
+            
             // Register all the individual AI services that can be imported
             services.AddSingleton<CxLanguage.StandardLibrary.AI.TextGeneration.TextGenerationService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.ChatCompletion.ChatCompletionService>();
@@ -183,6 +185,9 @@ public static class SimpleSemanticKernelServiceExtensions
             services.AddSingleton<CxLanguage.StandardLibrary.AI.TextToSpeech.TextToSpeechService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.AudioToText.AudioToTextService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.Realtime.RealtimeService>();
+            services.AddSingleton<CxLanguage.StandardLibrary.AI.MicrophoneCapture.MicrophoneCaptureService>();
+            services.AddSingleton<CxLanguage.StandardLibrary.AI.LiveAudio.LiveAudioService>();
+            // Note: SpeechRecognitionService removed - replaced by Azure OpenAI Realtime API integration
         }
 
         return services;

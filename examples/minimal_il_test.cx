@@ -1,5 +1,4 @@
 // Minimal test to isolate the InvalidProgramException
-using vectorDB from "Cx.AI.VectorDatabase";
 
 function main()
 {

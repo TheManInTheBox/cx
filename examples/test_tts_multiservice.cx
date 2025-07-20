@@ -1,6 +1,4 @@
 // Test specifically the Text-to-Speech service with EastUS2 configuration
-using textToSpeech from "Cx.AI.TextToSpeech";
-using chatBot from "Cx.AI.ChatCompletion";
 
 function testTTSService()
 {

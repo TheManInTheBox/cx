@@ -1,0 +1,69 @@
+
+print("🎯 CONTINUOUS VOICE CAPTURE - LIVE EMBODIED INTELLIGENCE");
+print("=========================================================");
+print("🎤 This will continuously listen to your microphone");
+print("🤖 Real-time transcription with AI responses");
+print("🛑 Press Ctrl+C to stop when ready");
+print("");
+
+try
+{
+    print("🚀 Initializing microphone services...");
+    
+    // Initialize microphone capture
+    print("🎤 Starting microphone capture...");
+    micCapture.StartListeningAsync();
+    print("✅ Microphone listening started");
+    
+    // Initialize live audio processing
+    print("🔄 Starting live audio transcription...");
+    liveAudio.StartAsync();
+    print("✅ Live audio processing started");
+    
+    print("");
+    print("🎯 SYSTEM READY - CONTINUOUS LISTENING ACTIVE!");
+    print("===============================================");
+    print("🗣️  Speak into your microphone now");
+    print("🤖 The system will transcribe and respond to everything you say");
+    print("⏱️  Running continuously until you stop the program...");
+    print("");
+    
+    // Simple continuous loop to keep the program running
+    // The microphone services will capture and process audio in the background
+    var iteration = 0;
+    
+    while (true)
+    {
+        // Status update every 30 seconds
+        if (iteration % 30 == 0)
+        {
+            var status = liveAudio.GetStatusAsync();
+            print("📊 LIVE STATUS [" + iteration + "s]:");
+            print("   🔄 Active: " + status.IsActive);
+            print("   🎤 Listening: " + status.IsListening);
+            print("   📈 Buffer: " + status.BufferedChunks + " chunks");
+            print("   ⚡ Processing: " + status.ProcessingInterval + "ms intervals");
+            print("");
+            print("🎙️  Continue speaking... (Ctrl+C to stop)");
+        }
+        
+        // Wait 1 second before next iteration
+        // This keeps the program alive while services process audio
+        System.Threading.Thread.Sleep(1000);
+        iteration = iteration + 1;
+    }
+}
+catch (error)
+{
+    print("❌ Error in continuous voice capture: " + error);
+    
+    print("");
+    print("🔇 Stopping continuous voice capture...");
+    
+    // Clean shutdown
+    liveAudio.StopAsync();
+    micCapture.StopListeningAsync();
+    
+    print("✅ Voice capture stopped");
+    print("🎯 Live Embodied Intelligence session complete!");
+}

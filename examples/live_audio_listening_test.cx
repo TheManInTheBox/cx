@@ -1,0 +1,64 @@
+
+// LIVE AUDIO LISTENING TEST
+// This script will continuously listen to your microphone until you say "stop listening"
+
+class LiveAudioAgent
+{
+    isListening: boolean;
+    
+    constructor()
+    {
+        this.isListening = true;
+        print("🎧 LIVE AUDIO AGENT: Ready and listening...");
+        print("🎤 Speak into your microphone!");
+        print("🛑 Say 'stop listening' to end the test");
+    }
+    
+    // Always-On Audio Processing - Real microphone input
+    on live.audio (payload)
+    {
+        if (!this.isListening)
+        {
+            return;
+        }
+        
+        print("🔊 You said: " + payload);
+        
+        // Check for stop command
+        var audioLower = payload.toLowerCase();
+        if (audioLower.includes("stop listening"))
+        {
+            this.isListening = false;
+            print("🔇 Audio listening stopped!");
+            tts.SpeakAsync("Audio listening stopped. Test complete!");
+            return;
+        }
+        
+        // Echo back what was heard with TTS
+        var echoResponse = "I heard you say: " + payload;
+        tts.SpeakAsync(echoResponse);
+        
+        // Also generate an AI response
+        var aiResponse = textGen.GenerateAsync("Respond briefly and friendly to: " + payload, {
+            temperature: 0.7,
+            maxTokens: 30
+        });
+        
+        print("🤖 AI Response: " + aiResponse);
+        tts.SpeakAsync(aiResponse);
+    }
+}
+
+print("🚀 STARTING LIVE AUDIO LISTENING TEST");
+print("=====================================");
+print("🎯 This will listen to your actual microphone input");
+print("🗣️ Speak clearly and the system will respond");
+print("🔊 You'll hear TTS responses for each input");
+print("🛑 Say 'stop listening' when you're done testing");
+print("");
+
+// Create the live audio agent
+var audioAgent = agent LiveAudioAgent();
+
+print("✅ Live audio agent created and listening!");
+print("🎤 Ready for your voice input...");

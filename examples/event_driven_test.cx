@@ -1,7 +1,6 @@
 // Event-Driven Architecture Test - Phase 5 Implementation
 // Testing the new 'on', 'when', and 'emit' keywords with UNQUOTED event names
 
-using textGen from "Cx.AI.TextGeneration";
 
 // Test 1: Basic event handler with 'on' keyword (unquoted event name)
 on audio.transcribed (payload)

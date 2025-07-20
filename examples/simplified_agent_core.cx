@@ -1,9 +1,6 @@
 // CX Language - Simplified Agent Infrastructure
 // Reduced complexity while maintaining autonomous capabilities
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
-using vectorDb from "Cx.AI.VectorDatabase";
 
 // =============================================================================
 // SIMPLIFIED AGENT PATTERN 1: Core Agent (Class-Based)

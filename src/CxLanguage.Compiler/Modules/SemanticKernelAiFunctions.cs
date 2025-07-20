@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Reflection;
 using CxLanguage.Core.AI;
+using CxLanguage.Core.Ast;
 using CxLanguage.Core.Telemetry;
 using CxLanguage.Core.Serialization;
 using CxLanguage.Parser;
@@ -1268,7 +1269,7 @@ Request: {content}
             
             if (!parseResult.IsSuccess || parseResult.Value == null)
             {
-                var errorMessage = parseResult.Errors.Count > 0 
+                var errorMessage = parseResult.Errors.Length > 0 
                     ? string.Join(", ", parseResult.Errors.Select(e => e.Message))
                     : "Unknown parse error";
                 
@@ -1277,7 +1278,7 @@ Request: {content}
             
             // Compile the CX code
             var compiler = new CxCompiler(tempFileName, new CompilerOptions(), _aiService, this);
-            var compilationResult = compiler.Compile(parseResult.Value!, tempFileName, cxCode);
+            var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, tempFileName, cxCode);
             
             if (!compilationResult.IsSuccess)
             {
@@ -1343,7 +1344,7 @@ Request: {content}
             
             if (!parseResult.IsSuccess || parseResult.Value == null)
             {
-                var errorMessage = parseResult.Errors.Count > 0 
+                var errorMessage = parseResult.Errors.Length > 0 
                     ? string.Join(", ", parseResult.Errors.Select(e => e.Message))
                     : "Unknown parse error";
                 
@@ -1352,7 +1353,7 @@ Request: {content}
             
             // Compile the CX code
             var compiler = new CxCompiler(tempFileName, new CompilerOptions(), _aiService, this);
-            var compilationResult = compiler.Compile(parseResult.Value!, tempFileName, cxCode);
+            var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, tempFileName, cxCode);
             
             if (!compilationResult.IsSuccess)
             {

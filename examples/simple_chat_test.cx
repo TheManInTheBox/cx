@@ -1,4 +1,3 @@
-using chatBot from "Cx.AI.ChatCompletion";
 
 print("=== SIMPLE CHAT COMPLETION TEST ===");
 var response = chatBot.CompleteAsync("You are a helpful assistant.", "Hello, how are you?");

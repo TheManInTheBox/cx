@@ -4,7 +4,6 @@
 print("🧪 Testing ChatCompletion Service Syntax Fix");
 print("===========================================");
 
-using chatBot from "Cx.AI.ChatCompletion";
 
 try
 {

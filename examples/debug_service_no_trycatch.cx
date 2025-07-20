@@ -1,4 +1,3 @@
-using textGen from "Cx.AI.TextGeneration";
 
 print("🔍 Service Function Without Try/Catch");
 

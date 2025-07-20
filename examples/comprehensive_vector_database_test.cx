@@ -2,8 +2,6 @@
 // Testing KernelMemory 0.98.x integration with Azure OpenAI
 // Validating semantic search, document ingestion, and retrieval
 
-using vectorDB from "Cx.AI.VectorDatabase";
-using textGen from "Cx.AI.TextGeneration";
 
 print("🗄️ COMPREHENSIVE VECTOR DATABASE TEST");
 print("=====================================");

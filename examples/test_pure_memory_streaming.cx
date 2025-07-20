@@ -1,5 +1,4 @@
 // Test Pure Memory Streaming - NO temporary files whatsoever
-using textToSpeech from "Cx.AI.TextToSpeech";
 
 print("🎵 Testing Pure Memory Streaming Audio Playback");
 print("===============================================");

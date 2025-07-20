@@ -1,7 +1,6 @@
 // CX Language - Comprehensive Agent Keyword Demo
 // Testing the new simplified agent syntax for autonomous programming
 
-using textGen from "Cx.AI.TextGeneration";
 
 // Autonomous Agent Class with AI Integration
 class DebateAgent

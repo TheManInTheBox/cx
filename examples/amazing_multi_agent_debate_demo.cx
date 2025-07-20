@@ -1,8 +1,6 @@
 // Amazing Multi-Agent AI Debate Demo - CX Autonomous Programming Platform
 // Demonstrates autonomous AI agents debating climate change in agreed turn order
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 class DebateAgent
 {

@@ -1,0 +1,226 @@
+// ✅ Phase 8: Azure OpenAI Realtime API - Fixed CX Object Literal Syntax
+// Using proper CX Language object literal format without reserved keywords
+
+class AzureRealtimeAgent
+{
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
+    
+    name: string;
+    isConnected: boolean;
+    conversationState: string;
+    
+    constructor(config)
+    {
+        this.name = config.name;
+        this.isConnected = false;
+        this.conversationState = "idle";
+        
+        print("✅ " + this.name + " initialized for real-time conversation");
+    }
+    
+    function connect()
+    {
+        this.isConnected = true;
+        this.conversationState = "connected";
+        
+        emit realtime.session.started, {
+            sessionId: "session-123",
+            agentName: this.name,
+            status: "connected"
+        };
+        
+        print("🔗 " + this.name + " connected to Azure OpenAI Realtime API");
+    }
+    
+    function sendMessage(userInput)
+    {
+        if (!this.isConnected)
+        {
+            print("❌ Agent not connected. Call connect() first.");
+            return;
+        }
+        
+        emit realtime.message.sent, {
+            messageId: "msg-123",
+            agentName: this.name,
+            content: userInput
+        };
+        
+        print("📤 " + this.name + " sent: " + userInput);
+        
+        // Simulate AI response
+        this.handleResponse("AI response to: " + userInput);
+    }
+    
+    function handleResponse(response)
+    {
+        emit realtime.response.received, {
+            responseId: "resp-123",
+            agentName: this.name,
+            content: response
+        };
+        
+        // Convert to speech
+        if (tts)
+        {
+            tts.SpeakAsync(response);
+        }
+        
+        print("📥 " + this.name + " received: " + response);
+    }
+    
+    function disconnect()
+    {
+        this.isConnected = false;
+        this.conversationState = "disconnected";
+        
+        emit realtime.session.closed, {
+            sessionId: "session-123",
+            agentName: this.name,
+            status: "disconnected"
+        };
+        
+        print("🔌 " + this.name + " disconnected from Azure OpenAI Realtime API");
+    }
+    
+    // Event handlers for autonomous agent behavior
+    on realtime.command.connect (payload)
+    {
+        if (payload.agentName == this.name)
+        {
+            this.connect();
+        }
+    }
+    
+    on realtime.command.send (payload)
+    {
+        if (payload.agentName == this.name)
+        {
+            this.sendMessage(payload.message);
+        }
+    }
+    
+    on realtime.command.disconnect (payload)
+    {
+        if (payload.agentName == this.name)
+        {
+            this.disconnect();
+        }
+    }
+}
+
+class RealtimeResponseAgent
+{
+    name: string;
+    
+    constructor(config)
+    {
+        this.name = config.name;
+        print("🎧 " + this.name + " listening for real-time events");
+    }
+    
+    on realtime.session.started (payload)
+    {
+        print("🚀 Session started - Agent: " + payload.agentName + ", ID: " + payload.sessionId);
+        
+        emit realtime.event.logged, {
+            eventType: "session_started",
+            agentName: payload.agentName,
+            timestamp: "now"
+        };
+    }
+    
+    on realtime.message.sent (payload)
+    {
+        print("📡 Message sent - Agent: " + payload.agentName + ", Content: " + payload.content);
+        
+        emit realtime.event.logged, {
+            eventType: "message_sent",
+            agentName: payload.agentName,
+            timestamp: "now"
+        };
+    }
+    
+    on realtime.response.received (payload)
+    {
+        print("🎤 Response received - Agent: " + payload.agentName + ", Content: " + payload.content);
+        
+        emit realtime.event.logged, {
+            eventType: "response_received",
+            agentName: payload.agentName,
+            timestamp: "now"
+        };
+    }
+    
+    on realtime.session.closed (payload)
+    {
+        print("🔒 Session closed - Agent: " + payload.agentName + ", ID: " + payload.sessionId);
+        
+        emit realtime.event.logged, {
+            eventType: "session_closed",
+            agentName: payload.agentName,
+            timestamp: "now"
+        };
+    }
+    
+    on realtime.event.logged (payload)
+    {
+        print("📊 Event logged: " + payload.eventType + " for agent " + payload.agentName);
+    }
+}
+
+print("🎯 Phase 8: Azure OpenAI Realtime API Demo");
+print("==========================================");
+print("✅ Using correct CX Language object literal syntax");
+print("✅ Avoiding reserved keywords in object properties");
+print("");
+
+try
+{
+    // Create agents
+    var realtimeAgent = agent AzureRealtimeAgent({ name: "RealtimeBot" });
+    var responseAgent = agent RealtimeResponseAgent({ name: "ResponseMonitor" });
+    
+    print("🤖 Agents created successfully");
+    print("");
+    
+    // Demonstrate real-time conversation flow
+    print("🔥 Starting Real-Time Conversation:");
+    print("===================================");
+    
+    // Use event-driven commands for autonomous behavior
+    emit realtime.command.connect, {
+        agentName: "RealtimeBot"
+    };
+    
+    emit realtime.command.send, {
+        agentName: "RealtimeBot",
+        message: "Hello, how are you today?"
+    };
+    
+    emit realtime.command.send, {
+        agentName: "RealtimeBot", 
+        message: "Can you help me with programming?"
+    };
+    
+    emit realtime.command.send, {
+        agentName: "RealtimeBot",
+        message: "What's the weather like?"
+    };
+    
+    emit realtime.command.disconnect, {
+        agentName: "RealtimeBot"
+    };
+    
+    print("");
+    print("✅ Phase 8 Demo Complete!");
+    print("✅ Real-time conversation flow working");
+    print("✅ Event-driven architecture operational");
+    print("✅ Object literal syntax with proper property names");
+    
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}

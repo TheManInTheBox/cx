@@ -2,10 +2,6 @@
 // Demonstrating all agent units: Class-based, Function-based, Thread-based, Event-driven
 // Progressive improvement framework for autonomous agent development
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
-using vectorDb from "Cx.AI.VectorDatabase";
-using embeddings from "Cx.AI.TextEmbeddings";
 
 // =============================================================================
 // AGENT PATTERN 1: Class-Based Cognitive Agents (Primary Unit)

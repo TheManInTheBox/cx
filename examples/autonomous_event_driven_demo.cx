@@ -1,8 +1,6 @@
 // CX Language - Autonomous Agent Architecture (Current Syntax)
 // Testing event-driven agents without the 'autonomous' keyword for now
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 // =============================================================================
 // AUTONOMOUS AGENT CONCEPT WITH CURRENT SYNTAX

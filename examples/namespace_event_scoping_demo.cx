@@ -1,7 +1,6 @@
 // CX Language - Namespace-based Event Scoping Demo
 // Event names define the scope: global.any, team.name.any, role.name.any, agent.name.any, channel.name.any
 
-using textGen from "Cx.AI.TextGeneration";
 
 class NamespacedAgent
 {

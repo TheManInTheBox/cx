@@ -14,6 +14,7 @@ public interface IAstVisitor<T>
     T VisitFunctionDeclaration(FunctionDeclarationNode node);
     T VisitParameter(ParameterNode node);
     T VisitImport(ImportStatementNode node);
+    T VisitUses(UsesStatementNode node);
     T VisitReturn(ReturnStatementNode node);
     T VisitIf(IfStatementNode node);
     T VisitWhile(WhileStatementNode node);
@@ -51,7 +52,6 @@ public interface IAstVisitor<T>
     
     // Async/await visitor methods
     T VisitAwaitExpression(AwaitExpressionNode node);
-    T VisitParallelExpression(ParallelExpressionNode node);
     
     // Event-driven architecture visitor methods
     T VisitEventName(EventNameNode node);
@@ -146,7 +146,7 @@ public class VariableDeclarationNode : StatementNode
 }
 
 /// <summary>
-/// Import statement
+/// Import statement for CX modules
 /// </summary>
 public class ImportStatementNode : StatementNode
 {
@@ -154,6 +154,17 @@ public class ImportStatementNode : StatementNode
     public string ModulePath { get; set; } = string.Empty;
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitImport(this);
+}
+
+/// <summary>
+/// Uses statement for dependency injection inside classes
+/// </summary>
+public class UsesStatementNode : StatementNode
+{
+    public string Alias { get; set; } = string.Empty;
+    public string ServicePath { get; set; } = string.Empty;
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitUses(this);
 }
 
 /// <summary>
@@ -540,16 +551,6 @@ public class AwaitExpressionNode : ExpressionNode
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAwaitExpression(this);
 }
 
-/// <summary>
-/// Parallel expression for concurrent operations
-/// </summary>
-public class ParallelExpressionNode : ExpressionNode
-{
-    public ExpressionNode Expression { get; set; } = new LiteralNode();
-
-    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitParallelExpression(this);
-}
-
 // Access modifier enumeration
 public enum AccessModifier
 {
@@ -567,6 +568,7 @@ public class ClassDeclarationNode : StatementNode
     public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
     public string? BaseClass { get; set; }
     public List<string> Interfaces { get; set; } = new();
+    public List<UsesStatementNode> UsesStatements { get; set; } = new();
     public List<FieldDeclarationNode> Fields { get; set; } = new();
     public List<MethodDeclarationNode> Methods { get; set; } = new();
     public List<ConstructorDeclarationNode> Constructors { get; set; } = new();

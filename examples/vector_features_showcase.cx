@@ -8,8 +8,6 @@ print("Demonstrating enterprise-grade RAG and semantic search");
 print("");
 
 // Import vector database service (99% integration complete)
-using vectorDB from "Cx.AI.VectorDatabase";
-using textGen from "Cx.AI.TextGeneration";
 
 // 📚 Knowledge Base: Sample Documents for Vector Processing
 var knowledgeBase = [

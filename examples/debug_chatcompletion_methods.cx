@@ -4,7 +4,6 @@
 print("🔍 DEBUG: ChatCompletion Method Signatures");
 print("==========================================");
 
-using chatBot from "Cx.AI.ChatCompletion";
 
 try
 {

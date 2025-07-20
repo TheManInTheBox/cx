@@ -1,8 +1,6 @@
 // 🌊 Streaming AI Services Test - Week 1-2 Complete Implementation
 // Testing real-time streaming capabilities across all AI services
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
 
 print("🌊 === STREAMING AI SERVICES TEST ===");
 print("Testing real-time response streaming capabilities\n");

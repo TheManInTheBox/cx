@@ -1,0 +1,29 @@
+// Simple test to verify CX single-object constructor pattern
+
+class TestClass
+{
+    name: string;
+    
+    constructor(config)
+    {
+        this.name = config.name;
+        print("TestClass constructor called");
+    }
+    
+    function testMethod()
+    {
+        print("TestMethod called on: " + this.name);
+    }
+}
+
+try
+{
+    print("Creating test instance with single config object...");
+    var test = new TestClass({ name: "ConfigTest" });
+    test.testMethod();
+    print("✅ Single-object constructor test completed successfully!");
+}
+catch (error)
+{
+    print("❌ ERROR: " + error);
+}

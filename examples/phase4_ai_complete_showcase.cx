@@ -1,8 +1,6 @@
 // 🚀 AURA CX PHASE 4 COMPLETE - AI Services Showcase
 // Demonstrates all working AI capabilities with real-world examples
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
 
 print("🌟 === AURA CX - PHASE 4 AI INTEGRATION COMPLETE! === 🌟");
 print("Showcasing all working AI services and capabilities\n");

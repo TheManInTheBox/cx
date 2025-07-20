@@ -1,23 +1,34 @@
-print("Creating class instance...");
+// Test field access in methods - isolating the issue
 
-class TestObject
+class SimpleClass
 {
-    value: string;
+    name: string;
     
-    constructor()
+    constructor(config)
     {
-        print("Constructor called");
+        print("Constructor: setting name to " + config.name);
+        this.name = config.name;
+        print("Constructor: this.name is now " + this.name);
+    }
+    
+    function getName()
+    {
+        print("getName: about to access this.name");
+        var result = this.name;
+        print("getName: accessed this.name successfully: " + result);
+        return result;
     }
 }
 
-print("About to create object");
-var obj = new TestObject();
-print("Object created successfully: " + obj);
-
-print("About to assign field");
-obj.value = "test";
-print("Field assigned successfully");
-
-print("About to read field");
-print("Field value: " + obj.value);
-print("Test complete");
+try
+{
+    print("Creating instance...");
+    var obj = new SimpleClass({ name: "TestName" });
+    print("Calling getName...");
+    var result = obj.getName();
+    print("Got result: " + result);
+}
+catch (error)
+{
+    print("Error: " + error);
+}

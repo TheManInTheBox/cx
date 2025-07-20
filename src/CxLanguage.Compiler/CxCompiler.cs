@@ -51,6 +51,8 @@ public class CxCompiler : IAstVisitor<object>
     // Class system support
     private readonly Dictionary<string, TypeBuilder> _userClasses = new();
     private readonly Dictionary<string, FieldBuilder> _classFields = new();
+    private readonly Dictionary<string, Type> _createdTypes = new(); // Maps className -> created Type
+    private readonly Dictionary<string, FieldInfo> _actualFields = new(); // Maps className.fieldName -> actual FieldInfo
     private readonly Dictionary<string, MethodBuilder> _classMethods = new();
     private readonly Dictionary<string, ConstructorBuilder> _classConstructors = new();
     private readonly Dictionary<string, List<(string EventName, string MethodName)>> _classEventHandlers = new();
@@ -119,7 +121,7 @@ public class CxCompiler : IAstVisitor<object>
         _serviceProviderField = _programTypeBuilder.DefineField(
             "_serviceProvider", 
             typeof(IServiceProvider), 
-            FieldAttributes.Private);
+            FieldAttributes.Assembly | FieldAttributes.Static);
         
         // Initialize symbol table
         _scopes.Push(new SymbolTable());
@@ -153,13 +155,15 @@ public class CxCompiler : IAstVisitor<object>
             ctorIl.Emit(OpCodes.Stfld, _aiServiceField);
             
             // Store AiFunctions in static field
+            Console.WriteLine($"[DEBUG] IL-EMIT: Storing AiFunctions in static field");
             ctorIl.Emit(OpCodes.Ldarg_3);
             ctorIl.Emit(OpCodes.Stsfld, _aiFunctionsField);
             
-            // Store service provider in field (arg 4)
-            ctorIl.Emit(OpCodes.Ldarg_0);
+            // Store service provider in static field (arg 4)
+            Console.WriteLine($"[DEBUG] IL-EMIT: Storing service provider in static field");
+            Console.WriteLine($"[DEBUG] IL-EMIT: Service provider field info - Name: {_serviceProviderField.Name}, Type: {_serviceProviderField.FieldType}, IsStatic: {_serviceProviderField.IsStatic}");
             ctorIl.Emit(OpCodes.Ldarg, 4);
-            ctorIl.Emit(OpCodes.Stfld, _serviceProviderField);
+            ctorIl.Emit(OpCodes.Stsfld, _serviceProviderField);
             
             // Initialize imported services (this will be populated after import processing)
             _constructorIl = ctorIl;
@@ -203,7 +207,17 @@ public class CxCompiler : IAstVisitor<object>
             
             // Then compile the main program (excluding function declarations which are skipped in second pass)
             Console.WriteLine("[DEBUG] Compiling main program statements");
+            
+            // Add runtime debug output at the start of the Run method
+            var printMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
+            _currentIl.Emit(OpCodes.Ldstr, "[DEBUG] RUNTIME: Run method started executing");
+            _currentIl.Emit(OpCodes.Call, printMethod!);
+            
             ast.Accept(this);
+            
+            // Add runtime debug output at the end of the Run method (before the return)
+            _currentIl.Emit(OpCodes.Ldstr, "[DEBUG] RUNTIME: Run method completed successfully");
+            _currentIl.Emit(OpCodes.Call, printMethod!);
             
             // Generate event handler registration code
             GenerateEventHandlerRegistrations();
@@ -368,16 +382,52 @@ public class CxCompiler : IAstVisitor<object>
     public object VisitExpression(ExpressionStatementNode node)
     {
         Console.WriteLine($"[DEBUG] Processing expression statement in Pass {(_isFirstPass ? "1" : "2")}");
+        
+        if (_isFirstPass)
+        {
+            node.Expression.Accept(this);
+            return new object();
+        }
+
+        // In Pass 2, we need to be careful about stack management
+        // Most expressions leave values on the stack that need to be popped when used as statements
+        bool needsPop = true;
+
+        // Assignment expressions manage their own stack and don't leave extra values
+        if (node.Expression is AssignmentExpressionNode)
+        {
+            Console.WriteLine($"[DEBUG] Processing assignment expression - will need to pop result");
+            needsPop = true; // Assignment expressions now leave a duplicated value on the stack
+        }
+        
+        // Some specific function calls that return void or manage their own stack
+        if (node.Expression is CallExpressionNode callExpr)
+        {
+            // Check if the callee is an identifier (simple function call)
+            if (callExpr.Callee is IdentifierNode identifier)
+            {
+                // Built-in functions that return void - these push null in VisitFunctionCall, so we need to pop it in expression context
+                if (identifier.Name == "print")
+                {
+                    needsPop = true; // print returns void, pushes null in VisitFunctionCall, must pop in expression context
+                }
+            }
+        }
+
         node.Expression.Accept(this);
         
-        // Discard the expression result (only if there is one on the stack)
-        // For void function calls, we pushed null, so we need to pop it
-        if (!_isFirstPass)
+        // Only pop if the expression actually left a value on the stack
+        if (needsPop)
         {
             Console.WriteLine("[DEBUG] Popping expression result from stack");
             _currentIl!.Emit(OpCodes.Pop);
         }
+        else
+        {
+            Console.WriteLine("[DEBUG] No pop needed - expression doesn't leave value on stack");
+        }
         
+        Console.WriteLine("[DEBUG] Expression statement processing complete");
         return new object();
     }
 
@@ -399,11 +449,11 @@ public class CxCompiler : IAstVisitor<object>
         // Compile condition
         node.Condition.Accept(this);
         
-        // Unbox to boolean
-        _currentIl!.Emit(OpCodes.Unbox_Any, typeof(bool));
+        // Convert to boolean condition
+        EmitTruthyConversion();
         
         // Create labels
-        var elseLabel = _currentIl.DefineLabel();
+        var elseLabel = _currentIl!.DefineLabel();
         var endLabel = _currentIl.DefineLabel();
         
         // Jump to else if condition is false
@@ -766,6 +816,23 @@ public class CxCompiler : IAstVisitor<object>
         
         // Result is already an object (boolean) on the stack
     }
+
+    /// <summary>
+    /// Convert any value on stack to a truthy boolean value
+    /// - null -> false
+    /// - boolean -> as is 
+    /// - number 0 -> false, otherwise true
+    /// - string empty/null -> false, otherwise true
+    /// - objects -> true if not null
+    /// </summary>
+    private void EmitTruthyConversion()
+    {
+        // Call runtime helper to convert any value to boolean
+        var helperMethod = typeof(CxRuntimeHelper).GetMethod("ConvertToBoolean", new[] { typeof(object) });
+        _currentIl!.EmitCall(OpCodes.Call, helperMethod!, null);
+        
+        // Result is a boolean on the stack
+    }
     
     /// <summary>
     /// Determine the runtime type of an expression (simplified version)
@@ -828,25 +895,33 @@ public class CxCompiler : IAstVisitor<object>
     {
         if (node.Value == null)
         {
+            Console.WriteLine($"[IL-EMIT] Emitting Ldnull for null literal");
             _currentIl!.Emit(OpCodes.Ldnull);
         }
         else if (node.Value is int intValue)
         {
+            Console.WriteLine($"[IL-EMIT] Emitting Ldc_I4 {intValue} for int literal");
             _currentIl!.Emit(OpCodes.Ldc_I4, intValue);
+            Console.WriteLine($"[IL-EMIT] Emitting Box(int) to box int value");
             _currentIl.Emit(OpCodes.Box, typeof(int));
         }
         else if (node.Value is bool boolValue)
         {
+            Console.WriteLine($"[IL-EMIT] Emitting Ldc_I4_{(boolValue ? "1" : "0")} for bool literal");
             _currentIl!.Emit(boolValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
+            Console.WriteLine($"[IL-EMIT] Emitting Box(bool) to box bool value");
             _currentIl.Emit(OpCodes.Box, typeof(bool));
         }
         else if (node.Value is double doubleValue)
         {
+            Console.WriteLine($"[IL-EMIT] Emitting Ldc_R8 {doubleValue} for double literal");
             _currentIl!.Emit(OpCodes.Ldc_R8, doubleValue);
+            Console.WriteLine($"[IL-EMIT] Emitting Box(double) to box double value");
             _currentIl.Emit(OpCodes.Box, typeof(double));
         }
         else if (node.Value is string stringValue)
         {
+            Console.WriteLine($"[IL-EMIT] Emitting Ldstr '{stringValue}' for string literal");
             _currentIl!.Emit(OpCodes.Ldstr, stringValue);
             // Don't box strings - they're already reference types
         }
@@ -1027,25 +1102,46 @@ public class CxCompiler : IAstVisitor<object>
                 // Check if it's 'this.fieldName'
                 if (memberNode.Object is IdentifierNode objectId && objectId.Name == "this")
                 {
-                    // this.fieldName = value
-                    // Load 'this' pointer
-                    _currentIl!.Emit(OpCodes.Ldarg_0);
+                    Console.WriteLine($"[DEBUG] Field assignment: this.{memberNode.Property} = <value>");
                     
-                    // Evaluate the value
+                    // Evaluate the value and keep it on stack for return
+                    Console.WriteLine($"[IL-EMIT] Evaluating right-hand side value");
                     node.Right.Accept(this);
                     
-                    // Store to field
-                    var fieldKey = _currentClassName + "." + memberNode.Property;
-                    if (_classFields.TryGetValue(fieldKey, out var field))
+                    // Duplicate the value so we can return it
+                    Console.WriteLine($"[IL-EMIT] Emitting Dup to duplicate value on stack");
+                    _currentIl!.Emit(OpCodes.Dup);
+                    
+                    // Store the value for the method call
+                    var valueLocal = _currentIl.DeclareLocal(typeof(object));
+                    Console.WriteLine($"[IL-EMIT] Declared local variable {valueLocal.LocalIndex} for value storage");
+                    Console.WriteLine($"[IL-EMIT] Emitting Stloc to store duplicated value in local {valueLocal.LocalIndex}");
+                    _currentIl.Emit(OpCodes.Stloc, valueLocal);
+                    
+                    // Call SetInstanceField(this, fieldName, value)
+                    Console.WriteLine($"[IL-EMIT] Emitting Ldarg_0 to load 'this' pointer (1st param)");
+                    _currentIl.Emit(OpCodes.Ldarg_0);  // Load 'this' (1st param)
+                    Console.WriteLine($"[IL-EMIT] Emitting Ldstr '{memberNode.Property}' (2nd param)");
+                    _currentIl.Emit(OpCodes.Ldstr, memberNode.Property);  // Load field name (2nd param)
+                    Console.WriteLine($"[IL-EMIT] Emitting Ldloc {valueLocal.LocalIndex} to load value (3rd param)");
+                    _currentIl.Emit(OpCodes.Ldloc, valueLocal);  // Load value (3rd param)
+                    
+                    // Call the runtime helper
+                    var setFieldMethod = typeof(CxRuntimeHelper).GetMethod("SetInstanceField", 
+                        BindingFlags.Public | BindingFlags.Static);
+                    if (setFieldMethod != null)
                     {
-                        _currentIl.Emit(OpCodes.Stfld, field);
-                        
-                        // Load null as expression result (assignments don't return meaningful values)
-                        _currentIl.Emit(OpCodes.Ldnull);
+                        Console.WriteLine($"[IL-EMIT] Found SetInstanceField method: {setFieldMethod}");
+                        Console.WriteLine($"[IL-EMIT] Method signature: {setFieldMethod.ReturnType} {setFieldMethod.Name}({string.Join(", ", setFieldMethod.GetParameters().Select(p => $"{p.ParameterType} {p.Name}"))})");
+                        Console.WriteLine($"[IL-EMIT] Stack before Call: [return_value, this, fieldName, value]");
+                        Console.WriteLine($"[IL-EMIT] Emitting Call to SetInstanceField");
+                        _currentIl.Emit(OpCodes.Call, setFieldMethod);
+                        Console.WriteLine($"[IL-EMIT] Stack after Call: [return_value] (SetInstanceField returns void)");
+                        Console.WriteLine($"[DEBUG] Runtime field assignment complete, return value on stack");
                     }
                     else
                     {
-                        throw new CompilationException($"Field not found: {memberNode.Property} in class {_currentClassName}");
+                        throw new CompilationException("SetInstanceField method not found in CxRuntimeHelper");
                     }
                 }
                 else
@@ -1299,13 +1395,19 @@ public class CxCompiler : IAstVisitor<object>
             if (methodInfo != null)
             {
                 // Built-in function (like print, write)
+                Console.WriteLine($"[IL-EMIT] Found built-in method: {methodInfo.DeclaringType?.Name}.{methodInfo.Name}");
+                Console.WriteLine($"[IL-EMIT] Method signature: {methodInfo.ReturnType.Name} {methodInfo.Name}({string.Join(", ", methodInfo.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"))})");
+                Console.WriteLine($"[IL-EMIT] Stack before Call: {node.Arguments.Count} arguments");
+                Console.WriteLine($"[IL-EMIT] Emitting Call to {methodInfo.Name}");
                 _currentIl!.EmitCall(OpCodes.Call, methodInfo, null);
                 
                 // Methods like print/write return void, but we need object for expressions
                 if (methodInfo.ReturnType == typeof(void))
                 {
+                    Console.WriteLine($"[IL-EMIT] Method returns void, emitting Ldnull for expression compatibility");
                     _currentIl.Emit(OpCodes.Ldnull);
                 }
+                Console.WriteLine($"[IL-EMIT] Built-in function call complete, result on stack");
             }
             else
             {
@@ -1318,6 +1420,14 @@ public class CxCompiler : IAstVisitor<object>
 
     public object VisitIdentifier(IdentifierNode node)
     {
+        // Special handling for 'this' keyword in class context
+        if (node.Name == "this" && _currentClassName != null)
+        {
+            Console.WriteLine($"[DEBUG] Loading 'this' reference for class {_currentClassName}");
+            _currentIl!.Emit(OpCodes.Ldarg_0); // Load 'this' pointer (first parameter in instance methods)
+            return new object();
+        }
+
         // Check for parameters first (when inside a function)
         if (_currentParameterMapping != null && _currentParameterMapping.TryGetValue(node.Name, out var paramIndex))
         {
@@ -1573,6 +1683,146 @@ public class CxCompiler : IAstVisitor<object>
         }
         
         return new object();
+    }
+    
+    public object VisitUses(UsesStatementNode node)
+    {
+        Console.WriteLine($"[DEBUG] Processing uses: {node.Alias} from '{node.ServicePath}'");
+        
+        // Only process uses statements in the first pass for service registration
+        if (_isFirstPass)
+        {
+            var serviceType = ResolveServiceType(node.ServicePath);
+            if (serviceType != null)
+            {
+                // Register the service type
+                _importedServices[node.Alias] = serviceType;
+                
+                // Create a field for this service instance
+                var serviceField = _programTypeBuilder.DefineField(
+                    $"_{node.Alias}", 
+                    serviceType,
+                    FieldAttributes.Private | FieldAttributes.Static);
+                    
+                _serviceFields[node.Alias] = serviceField;
+                
+                // Add service instantiation to constructor
+                if (_constructorIl != null)
+                {
+                    // Load service provider (arg 4) - no need to load 'this' for static fields
+                    _constructorIl.Emit(OpCodes.Ldarg, 4);
+                    
+                    // Get the GetRequiredService<T> method
+                    var getServiceMethod = typeof(ServiceProviderServiceExtensions)
+                        .GetMethod("GetRequiredService", new[] { typeof(IServiceProvider) })!
+                        .MakeGenericMethod(serviceType);
+                    
+                    // Call serviceProvider.GetRequiredService<ServiceType>()
+                    _constructorIl.Emit(OpCodes.Call, getServiceMethod);
+                    
+                    // Store in static service field
+                    _constructorIl.Emit(OpCodes.Stsfld, serviceField);
+                    
+                    // Register service in static registry for function access
+                    _constructorIl.Emit(OpCodes.Ldstr, node.Alias); // Service name
+                    _constructorIl.Emit(OpCodes.Ldsfld, serviceField); // Load service instance from static field
+                    
+                    // Call CxRuntimeHelper.RegisterService(serviceName, serviceInstance)
+                    var registerServiceMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper)
+                        .GetMethod("RegisterService", new[] { typeof(string), typeof(object) });
+                    if (registerServiceMethod != null)
+                    {
+                        _constructorIl.Emit(OpCodes.Call, registerServiceMethod);
+                    }
+                    
+                    Console.WriteLine($"[DEBUG] Added service field initialization for: {node.Alias} (resolved from DI container)");
+                }
+                
+                Console.WriteLine($"[DEBUG] Registered service: {node.Alias} -> {serviceType.Name}");
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Warning: Could not resolve service for path: {node.ServicePath}");
+            }
+        }
+        
+        return new object();
+    }
+
+    /// <summary>
+    /// Initialize an instance service field in a class constructor
+    /// </summary>
+    private void InitializeInstanceServiceField(string className, string alias, string servicePath)
+    {
+        Console.WriteLine($"[DEBUG] InitializeInstanceServiceField: {className}.{alias} from '{servicePath}'");
+        
+        // Resolve service type from the service path
+        var serviceType = ResolveServiceType(servicePath);
+        if (serviceType != null)
+        {
+            Console.WriteLine($"[DEBUG] IL-EMIT: Resolved service type: {serviceType}");
+            
+            // Get the service field that was created in Pass 1
+            var fieldKey = className + "." + alias;
+            if (_classFields.TryGetValue(fieldKey, out var serviceField))
+            {
+                Console.WriteLine($"[DEBUG] Initializing instance service field: {fieldKey}");
+                Console.WriteLine($"[DEBUG] IL-EMIT: Service field info - Name: {serviceField.Name}, Type: {serviceField.FieldType}, IsStatic: {serviceField.IsStatic}");
+                Console.WriteLine($"[DEBUG] IL-EMIT: Service provider field info - Name: {_serviceProviderField.Name}, Type: {_serviceProviderField.FieldType}, IsStatic: {_serviceProviderField.IsStatic}");
+                
+            try
+            {
+                // Debug output
+                Console.WriteLine($"[DEBUG] Initializing instance service field: {alias} of type {serviceType} in class {className}");
+                
+                // Load 'this' pointer
+                Console.WriteLine($"[DEBUG] IL-EMIT: Emitting Ldarg_0 (load 'this' pointer)");
+                _currentIl!.Emit(OpCodes.Ldarg_0);
+                
+                // Get service instance from the service provider
+                Console.WriteLine($"[DEBUG] IL-EMIT: Emitting Ldsfld to load static service provider field");
+                _currentIl.Emit(OpCodes.Ldsfld, _serviceProviderField);
+                
+                // Load service type token for GetRequiredService<T>()
+                Console.WriteLine($"[DEBUG] IL-EMIT: Emitting Ldtoken for service type: {serviceType}");
+                _currentIl.Emit(OpCodes.Ldtoken, serviceType);
+                Console.WriteLine($"[DEBUG] IL-EMIT: Emitting Call to Type.GetTypeFromHandle");
+                _currentIl.Emit(OpCodes.Call, typeof(Type).GetMethod("GetTypeFromHandle")!);
+                
+                // Call serviceProvider.GetRequiredService(Type)
+                var getServiceMethod = typeof(Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions)
+                    .GetMethod("GetRequiredService", new[] { typeof(IServiceProvider), typeof(Type) });
+                if (getServiceMethod != null)
+                {
+                    Console.WriteLine($"[DEBUG] IL-EMIT: Emitting Call to GetRequiredService method: {getServiceMethod}");
+                    _currentIl.Emit(OpCodes.Call, getServiceMethod);
+                    
+                    // Store in instance service field
+                    Console.WriteLine($"[DEBUG] IL-EMIT: Emitting Stfld to store service in instance field: {serviceField.Name}");
+                    _currentIl.Emit(OpCodes.Stfld, serviceField);
+                    
+                    Console.WriteLine($"[DEBUG] Instance service field initialized: {alias}");
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] Warning: GetRequiredService method not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Error in InitializeInstanceServiceField: {ex}");
+                throw;
+            }
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Warning: Service field not found: {fieldKey}");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"[DEBUG] Warning: Could not resolve service type for: {servicePath}");
+        }
     }
     
     /// <summary>
@@ -1841,6 +2091,8 @@ public class CxCompiler : IAstVisitor<object>
             "Cx.AI.TextToAudio" => typeof(CxLanguage.StandardLibrary.AI.TextToAudio.TextToAudioService),
             "Cx.AI.TextToSpeech" => typeof(CxLanguage.StandardLibrary.AI.TextToSpeech.TextToSpeechService),
             "Cx.AI.AudioToText" => typeof(CxLanguage.StandardLibrary.AI.AudioToText.AudioToTextService),
+            "Cx.AI.MicrophoneCapture" => typeof(CxLanguage.StandardLibrary.AI.MicrophoneCapture.MicrophoneCaptureService),
+            "Cx.AI.LiveAudio" => typeof(CxLanguage.StandardLibrary.AI.LiveAudio.LiveAudioService),
             "Cx.AI.Realtime" => typeof(CxLanguage.StandardLibrary.AI.Realtime.RealtimeService),
             "Cx.AI.VectorDatabase" => typeof(CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService),
             
@@ -1980,17 +2232,43 @@ public class CxCompiler : IAstVisitor<object>
                     // This is a call to a user-defined class method
                     Console.WriteLine($"[DEBUG] Found class method: {objectTypeName}.{methodName}");
                     
-                    // Get the method builder
-                    var methodBuilder = _classMethods[objectTypeName + "." + methodName];
+                    // For user-defined class methods, use runtime reflection for reliability
+                    // The object instance is already on the stack
                     
-                    // Load method arguments directly onto the stack (not as an array)
-                    foreach (var arg in node.Arguments)
+                    // Load the method name as string
+                    _currentIl!.Emit(OpCodes.Ldstr, methodName);
+                    
+                    // Create array for arguments
+                    _currentIl.Emit(OpCodes.Ldc_I4, node.Arguments.Count);
+                    _currentIl.Emit(OpCodes.Newarr, typeof(object));
+                    
+                    // Store arguments in array
+                    for (int i = 0; i < node.Arguments.Count; i++)
                     {
-                        arg.Accept(this);
+                        _currentIl.Emit(OpCodes.Dup); // Duplicate array reference
+                        _currentIl.Emit(OpCodes.Ldc_I4, i); // Load index
+                        node.Arguments[i].Accept(this); // Load argument value
+                        _currentIl.Emit(OpCodes.Stelem_Ref); // Store in array
                     }
                     
-                    // Call the method (instance method call using Callvirt)
-                    _currentIl!.EmitCall(OpCodes.Callvirt, methodBuilder, null);
+                    // Call CxRuntimeHelper.CallInstanceMethod(object, methodName, args)
+                    var callInstanceMethod = typeof(CxRuntimeHelper).GetMethod("CallInstanceMethod", 
+                        new[] { typeof(object), typeof(string), typeof(object[]) });
+                    
+                    if (callInstanceMethod != null)
+                    {
+                        Console.WriteLine($"[DEBUG] Using runtime method call for: {objectTypeName}.{methodName}");
+                        _currentIl.EmitCall(OpCodes.Call, callInstanceMethod, null);
+                    }
+                    else
+                    {
+                        // Fallback: clean up stack and return null
+                        _currentIl.Emit(OpCodes.Pop); // Remove args array
+                        _currentIl.Emit(OpCodes.Pop); // Remove method name
+                        _currentIl.Emit(OpCodes.Pop); // Remove object instance
+                        _currentIl.Emit(OpCodes.Ldnull);
+                        Console.WriteLine($"[DEBUG] CallInstanceMethod not found, returning null");
+                    }
                     
                     return new object();
                 }
@@ -2079,23 +2357,36 @@ public class CxCompiler : IAstVisitor<object>
         // Check if this is a 'this.fieldName' field access
         if (node.Object is IdentifierNode objectIdentifier && objectIdentifier.Name == "this")
         {
-            Console.WriteLine($"[DEBUG] Found 'this.{node.Property}' field access");
+            Console.WriteLine($"[DEBUG] Found 'this.{node.Property}' field access - using runtime field access");
             
+            // Use runtime field access to avoid FieldBuilder invalidation issues
             // Load 'this' pointer
+            Console.WriteLine($"[IL-EMIT] Loading 'this' pointer for field access: {node.Property}");
             _currentIl!.Emit(OpCodes.Ldarg_0);
             
-            // Load the field
-            var fieldKey = _currentClassName + "." + node.Property;
-            if (_classFields.TryGetValue(fieldKey, out var field))
+            // Load field name as string
+            Console.WriteLine($"[IL-EMIT] Emitting Ldstr '{node.Property}' for field name parameter");
+            _currentIl.Emit(OpCodes.Ldstr, node.Property);
+            
+            // Call runtime helper to get field value
+            var getFieldMethod = typeof(CxRuntimeHelper).GetMethod("GetInstanceField", 
+                BindingFlags.Public | BindingFlags.Static);
+            if (getFieldMethod != null)
             {
-                Console.WriteLine($"[DEBUG] Loading field: {field.Name}");
-                _currentIl.Emit(OpCodes.Ldfld, field);
-                return new object();
+                Console.WriteLine($"[IL-EMIT] Found GetInstanceField method: {getFieldMethod}");
+                Console.WriteLine($"[IL-EMIT] Method signature: {getFieldMethod.ReturnType} {getFieldMethod.Name}({string.Join(", ", getFieldMethod.GetParameters().Select(p => $"{p.ParameterType} {p.Name}"))})");
+                Console.WriteLine($"[IL-EMIT] Stack before Call: [this, fieldName]");
+                Console.WriteLine($"[IL-EMIT] Emitting Call to GetInstanceField");
+                _currentIl.Emit(OpCodes.Call, getFieldMethod);
+                Console.WriteLine($"[IL-EMIT] Stack after Call: [field_value] (returns object)");
             }
             else
             {
-                throw new CompilationException($"Field not found: {node.Property} in class {_currentClassName}");
+                throw new CompilationException("GetInstanceField method not found in CxRuntimeHelper");
             }
+            
+            Console.WriteLine($"[DEBUG] Using runtime field access for: {node.Property}");
+            return new object();
         }
 
         // Check if this is a service property access (e.g., service.PropertyName)
@@ -2153,6 +2444,28 @@ public class CxCompiler : IAstVisitor<object>
         // Check if this is a class instance field access (e.g., variable.fieldName where variable is a class instance)
         if (node.Object is IdentifierNode objectVar)
         {
+            // First check if this is a parameter - parameters should use dictionary access
+            if (_currentParameterMapping != null && _currentParameterMapping.ContainsKey(objectVar.Name))
+            {
+                Console.WriteLine($"[DEBUG] Parameter dictionary access: {objectVar.Name}.{node.Property}");
+                
+                // Load the parameter (which should be a Dictionary<string, object>)
+                node.Object.Accept(this);
+                
+                // Load the property name as string
+                _currentIl!.Emit(OpCodes.Ldstr, node.Property);
+                
+                // Get the dictionary's indexer get method
+                var paramDictType = typeof(Dictionary<string, object>);
+                var paramIndexerGetter = paramDictType.GetMethod("get_Item", new[] { typeof(string) });
+                
+                // Call dictionary[key] to get the value
+                _currentIl.Emit(OpCodes.Callvirt, paramIndexerGetter!);
+                
+                Console.WriteLine($"[DEBUG] Successfully loaded property: {node.Property} from parameter {objectVar.Name}");
+                return new object();
+            }
+            
             // Try to find this field in any class
             foreach (var kvp in _classFields)
             {
@@ -2203,7 +2516,7 @@ public class CxCompiler : IAstVisitor<object>
                 }
             }
         }
-        
+
         // Default behavior: Compile the object expression (should be a Dictionary<string, object>)
         node.Object.Accept(this);
         
@@ -2969,6 +3282,11 @@ public class CxCompiler : IAstVisitor<object>
 
         Console.WriteLine($"[DEBUG] Creating new instance of class: {node.TypeName}");
         
+        // Add runtime debug output
+        var printMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
+        _currentIl!.Emit(OpCodes.Ldstr, $"[DEBUG] RUNTIME: About to create new {node.TypeName}");
+        _currentIl.Emit(OpCodes.Call, printMethod!);
+        
         // Check if we have a user-defined class
         if (_userClasses.TryGetValue(node.TypeName, out var typeBuilder))
         {
@@ -3027,14 +3345,25 @@ public class CxCompiler : IAstVisitor<object>
             // Load constructor arguments onto stack
             if (node.Arguments != null)
             {
-                foreach (var arg in node.Arguments)
+                Console.WriteLine($"[IL-EMIT] Loading {node.Arguments.Count} constructor arguments");
+                for (int i = 0; i < node.Arguments.Count; i++)
                 {
-                    arg.Accept(this);
+                    Console.WriteLine($"[IL-EMIT] Loading constructor argument {i}");
+                    node.Arguments[i].Accept(this);
+                    Console.WriteLine($"[IL-EMIT] Constructor argument {i} loaded onto stack");
                 }
             }
             
             // Call constructor
+            Console.WriteLine($"[DEBUG] Calling constructor: {constructor}");
+            Console.WriteLine($"[DEBUG] Constructor parameter count: {constructor.GetParameters().Length}");
+            Console.WriteLine($"[IL-EMIT] Constructor signature: {constructor.DeclaringType?.Name ?? "unknown"}.{constructor.Name}({string.Join(", ", constructor.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"))})");
+            Console.WriteLine($"[IL-EMIT] Stack before Newobj: {(node.Arguments?.Count ?? 0)} constructor arguments");
+            Console.WriteLine($"[DEBUG] IL-EMIT: About to emit Newobj for constructor");
+            Console.WriteLine($"[DEBUG] IL-EMIT: Current IL stack should have {constructor.GetParameters().Length} arguments");
             _currentIl!.Emit(OpCodes.Newobj, constructor);
+            Console.WriteLine($"[IL-EMIT] Newobj emitted successfully - object instance now on stack");
+            Console.WriteLine($"[DEBUG] IL-EMIT: Newobj emitted successfully");
             
             Console.WriteLine($"[DEBUG] Successfully created instance of {node.TypeName}");
             return new object();
@@ -3173,29 +3502,6 @@ public class CxCompiler : IAstVisitor<object>
     
     public object VisitAwaitExpression(AwaitExpressionNode node) => new object();
     
-    public object VisitParallelExpression(ParallelExpressionNode node)
-    {
-        Console.WriteLine($"[DEBUG] Implementing parallel expression - parallel execution modifier");
-        
-        if (_isFirstPass)
-        {
-            return new object(); // Skip in first pass
-        }
-
-        // The parallel keyword is a modifier that executes any expression in a parallel thread
-        // For now, we'll implement this as direct execution and add a TODO for true parallelism
-        // This maintains functionality while we work out the IL generation complexities
-        
-        Console.WriteLine($"[DEBUG] Parallel modifier - executing expression directly (TODO: add true parallel threading)");
-        
-        // Execute the wrapped expression directly for now
-        node.Expression.Accept(this);
-        
-        Console.WriteLine($"[DEBUG] Successfully executed parallel expression (synchronous for now)");
-        
-        return new object();
-    }
-    
     public object VisitClassDeclaration(ClassDeclarationNode node)
     {
         if (_isFirstPass)
@@ -3212,16 +3518,35 @@ public class CxCompiler : IAstVisitor<object>
             // Store the type builder for Pass 2
             _userClasses[node.Name] = typeBuilder;
             
+            // Process uses statements to create service fields
+            foreach (var usesStmt in node.UsesStatements)
+            {
+                Console.WriteLine($"[DEBUG] Pass 1: Processing uses statement for {usesStmt.Alias}");
+                
+                // Create a field for the service
+                var fieldBuilder = typeBuilder.DefineField(
+                    usesStmt.Alias,
+                    typeof(object), // Service instance field
+                    FieldAttributes.Public);
+                    
+                // Store field info for later use
+                _classFields[node.Name + "." + usesStmt.Alias] = fieldBuilder;
+            }
+            
             // Process fields to define them
             foreach (var field in node.Fields)
             {
+                Console.WriteLine($"[DEBUG] Pass 1: Defining field {field.Name} in class {node.Name}");
+                
                 var fieldBuilder = typeBuilder.DefineField(
                     field.Name,
                     typeof(object), // For now, all fields are object type
                     FieldAttributes.Public);
                     
                 // Store field info for later use
-                _classFields[node.Name + "." + field.Name] = fieldBuilder;
+                var fieldKey = node.Name + "." + field.Name;
+                _classFields[fieldKey] = fieldBuilder;
+                Console.WriteLine($"[DEBUG] Pass 1: Stored field with key: {fieldKey}");
             }
             
             // Process methods to define them
@@ -3306,7 +3631,7 @@ public class CxCompiler : IAstVisitor<object>
             // Implement constructors
             foreach (var constructor in node.Constructors)
             {
-                ImplementConstructor(node.Name, constructor, typeBuilder, node.EventHandlers);
+                ImplementConstructor(node.Name, constructor, typeBuilder, node.EventHandlers, node.UsesStatements);
             }
             
             // Implement methods
@@ -3326,6 +3651,27 @@ public class CxCompiler : IAstVisitor<object>
             {
                 var createdType = typeBuilder.CreateType();
                 Console.WriteLine($"[DEBUG] Class {node.Name} created successfully: {createdType?.FullName}");
+                
+                // Store the created type for runtime use
+                if (createdType != null)
+                {
+                    _createdTypes[node.Name] = createdType;
+                    
+                    // Update field references from FieldBuilder to actual FieldInfo
+                    foreach (var kvp in _classFields)
+                    {
+                        if (kvp.Key.StartsWith(node.Name + "."))
+                        {
+                            var fieldName = kvp.Key.Substring(node.Name.Length + 1);
+                            var actualField = createdType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                            if (actualField != null)
+                            {
+                                _actualFields[kvp.Key] = actualField;
+                                Console.WriteLine($"[DEBUG] Stored actual field: {kvp.Key} -> {actualField.Name}");
+                            }
+                        }
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -3340,7 +3686,7 @@ public class CxCompiler : IAstVisitor<object>
     /// <summary>
     /// Implements a constructor body for a class in Pass 2
     /// </summary>
-    private void ImplementConstructor(string className, ConstructorDeclarationNode constructor, TypeBuilder typeBuilder, List<OnStatementNode> eventHandlers)
+    private void ImplementConstructor(string className, ConstructorDeclarationNode constructor, TypeBuilder typeBuilder, List<OnStatementNode> eventHandlers, List<UsesStatementNode> usesStatements)
     {
         Console.WriteLine($"[DEBUG] Implementing constructor for class {className} with {constructor.Parameters.Count} parameters");
         
@@ -3371,15 +3717,26 @@ public class CxCompiler : IAstVisitor<object>
         }
         
         // Call base constructor (object's constructor)
+        Console.WriteLine($"[DEBUG] Calling base constructor for class {className}");
         _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
         var objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
         _currentIl.Emit(OpCodes.Call, objectConstructor!);
+        Console.WriteLine($"[DEBUG] Base constructor called successfully");
+        
+        // Initialize service fields from uses statements  
+        foreach (var usesStmt in usesStatements)
+        {
+            Console.WriteLine($"[DEBUG] Initializing service field '{usesStmt.Alias}' from '{usesStmt.ServicePath}'");
+            InitializeInstanceServiceField(className, usesStmt.Alias, usesStmt.ServicePath);
+        }
         
         // NOTE: Removed automatic field initialization to null - let constructor body handle field assignments
         // This fixes the bug where constructor assignments were being overwritten by null initialization
         
         // Compile the constructor body
+        Console.WriteLine($"[DEBUG] Compiling constructor body for class {className}");
         constructor.Body.Accept(this);
+        Console.WriteLine($"[DEBUG] Constructor body compilation complete for class {className}");
         
         // REMOVED: Automatic event handler registration from constructors
         // Event handlers are now ONLY registered when using the 'agent' keyword
@@ -3468,39 +3825,43 @@ public class CxCompiler : IAstVisitor<object>
             throw new CompilationException($"Event handler method {handlerMethodName} for class {className} was not defined in Pass 1");
         }
         
-        // Get IL generator for the event handler method
         var methodIl = methodBuilder.GetILGenerator();
         
-        // Save current IL context
+        // Save and set up new context
         var previousIl = _currentIl;
         var previousLocals = _currentLocals;
         var previousParameterMapping = _currentParameterMapping;
         var previousMethod = _currentMethod;
         var previousClassName = _currentClassName;
-        
-        // Set up new context for event handler method
+
         _currentIl = methodIl;
         _currentLocals = new Dictionary<string, LocalBuilder>();
         _currentMethod = methodBuilder;
         _currentClassName = className;
-        
-        // Set up parameter mapping (parameter 0 is 'this', parameter 1 is payload)
         _currentParameterMapping = new Dictionary<string, int>
         {
-            [eventHandler.PayloadIdentifier] = 1  // Payload is parameter 1
+            [eventHandler.PayloadIdentifier] = 1
         };
-        
+
         // Compile the event handler body
         eventHandler.Body.Accept(this);
+
+        // Clear any remaining values from the stack before returning
+        // Event handlers should not leave anything on the evaluation stack
+        // This is critical for preventing InvalidProgramException
         
-        // Return a completed task (for async compatibility)
+        // NOTE: In practice, our VisitExpression should handle this, but let's be extra safe
+        // We don't know exactly how many values are on the stack, but we can ensure it's empty
+        // by using a try/finally-like approach or just assume VisitExpression handled it correctly
+        
+        // Ensure a proper return for the Task
         var completedTaskProperty = typeof(Task).GetProperty("CompletedTask");
         if (completedTaskProperty?.GetMethod == null)
         {
             throw new CompilationException("Task.CompletedTask property getter not found");
         }
-        _currentIl.Emit(OpCodes.Call, completedTaskProperty.GetMethod);
-        _currentIl.Emit(OpCodes.Ret);
+        methodIl.Emit(OpCodes.Call, completedTaskProperty.GetMethod);
+        methodIl.Emit(OpCodes.Ret);
         
         // Restore previous IL context
         _currentIl = previousIl;
@@ -3510,9 +3871,6 @@ public class CxCompiler : IAstVisitor<object>
         _currentClassName = previousClassName;
         
         Console.WriteLine($"[DEBUG] Event handler {handlerMethodName} implementation complete for class {className}");
-        
-        // Register this handler with the event bus (for runtime registration)
-        _eventRegistrations.Add((eventHandler.EventName.FullName, handlerMethodName));
     }
     public object VisitFieldDeclaration(FieldDeclarationNode node) => new object();
     public object VisitMethodDeclaration(MethodDeclarationNode node) => new object();

@@ -1,5 +1,4 @@
 // Simple test of agent keyword vs new keyword
-using textGen from "Cx.AI.TextGeneration";
 
 class SimpleBot
 {

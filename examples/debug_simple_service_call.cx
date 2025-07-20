@@ -1,5 +1,4 @@
 // Test simple service method call with minimal arguments
-using textGen from "Cx.AI.TextGeneration";
 
 function testSimpleServiceCall()
 {

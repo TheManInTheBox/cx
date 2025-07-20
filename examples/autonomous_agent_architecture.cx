@@ -1,9 +1,6 @@
 // CX Language - Autonomous Agent Architecture
 // Simplified event-driven agents that respond to signals automatically
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
-using vectorDb from "Cx.AI.VectorDatabase";
 
 // =============================================================================
 // AUTONOMOUS AGENT PATTERN - Self-Managing Event-Driven Agents

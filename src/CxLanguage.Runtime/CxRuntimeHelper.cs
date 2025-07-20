@@ -34,6 +34,65 @@ namespace CxLanguage.Runtime
         {
             return _staticServices.TryGetValue(serviceName, out var service) ? service : null;
         }
+
+        /// <summary>
+        /// Calls a method on a user-defined class instance using reflection.
+        /// This handles method resolution and parameter passing for CX user-defined classes.
+        /// </summary>
+        public static object? CallInstanceMethod(object instance, string methodName, object[] arguments)
+        {
+            if (instance == null)
+            {
+                Console.WriteLine($"[DEBUG] CallInstanceMethod: instance is null for method {methodName}");
+                return null;
+            }
+
+            var instanceType = instance.GetType();
+            Console.WriteLine($"[DEBUG] CallInstanceMethod: calling {methodName} on {instanceType.Name}");
+
+            try
+            {
+                // Find methods with the given name
+                var methods = instanceType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
+                    .Where(m => m.Name == methodName)
+                    .ToArray();
+
+                if (methods.Length == 0)
+                {
+                    Console.WriteLine($"[DEBUG] CallInstanceMethod: method {methodName} not found on {instanceType.Name}");
+                    return null;
+                }
+
+                // For simplicity, use the first method that matches the argument count
+                var method = methods.FirstOrDefault(m => m.GetParameters().Length == arguments.Length);
+                if (method == null)
+                {
+                    // Try the first method regardless of parameter count
+                    method = methods[0];
+                    Console.WriteLine($"[DEBUG] CallInstanceMethod: using first method {method.Name} with {method.GetParameters().Length} parameters");
+                }
+
+                Console.WriteLine($"[DEBUG] CallInstanceMethod: invoking {method.Name} on {instanceType.Name}");
+                var result = method.Invoke(instance, arguments);
+                Console.WriteLine($"[DEBUG] CallInstanceMethod: method invoked successfully, result: {result ?? "null"}");
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] CallInstanceMethod: exception during method call: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[DEBUG] CallInstanceMethod: inner exception: {ex.InnerException.Message}");
+                    Console.WriteLine($"[DEBUG] CallInstanceMethod: inner exception type: {ex.InnerException.GetType().Name}");
+                    if (ex.InnerException.StackTrace != null)
+                    {
+                        Console.WriteLine($"[DEBUG] CallInstanceMethod: inner stack trace:\n{ex.InnerException.StackTrace}");
+                    }
+                }
+                return null;
+            }
+        }
         /// <summary>
         /// Calls a method on a service instance dynamically using reflection.
         /// This method handles method overload resolution, optional parameters, and async Task results.
@@ -167,10 +226,10 @@ namespace CxLanguage.Runtime
                 return CxParameterConverter.ConvertToOptions(dict, targetType);
             }
             
-            // Handle array conversions for parallel operations
+            // Handle array conversions
             if (targetType == typeof(string[]) && arg is object[] objArray)
             {
-                // Convert object[] to string[] for parallel operations
+                // Convert object[] to string[]
                 return objArray.Select(o => o?.ToString() ?? "").ToArray();
             }
             
@@ -258,39 +317,6 @@ namespace CxLanguage.Runtime
             // If no exact match, return the first method with the same name
             // This handles cases where parameter conversion is needed
             return namedMethods.FirstOrDefault();
-        }
-
-        /// <summary>
-        /// Executes a function in a background task (parallel execution).
-        /// This provides the parallel keyword functionality.
-        /// </summary>
-        public static Task ExecuteParallel(Action action)
-        {
-            if (action == null)
-            {
-                throw new ArgumentNullException(nameof(action));
-            }
-
-            // Start the action in a background task
-            var task = Task.Run(action);
-            
-            // Don't wait for completion - let it run in background
-            return task;
-        }
-
-        /// <summary>
-        /// Executes a function in a background task and returns the result.
-        /// This provides parallel execution for functions that return values.
-        /// </summary>
-        public static Task<T> ExecuteParallel<T>(Func<T> func)
-        {
-            if (func == null)
-            {
-                throw new ArgumentNullException(nameof(func));
-            }
-
-            // Start the function in a background task
-            return Task.Run(func);
         }
 
         /// <summary>
@@ -611,6 +637,113 @@ namespace CxLanguage.Runtime
             {
                 Console.WriteLine($"[ERROR] Event handler execution failed: {ex.Message}");
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Convert any value to a truthy boolean following JavaScript-like semantics
+        /// - null, undefined -> false
+        /// - boolean -> as is 
+        /// - number 0, NaN -> false, otherwise true
+        /// - string empty/null -> false, otherwise true
+        /// - objects -> true if not null
+        /// </summary>
+        public static bool ConvertToBoolean(object? value)
+        {
+            if (value == null)
+                return false;
+            
+            // Handle boolean directly
+            if (value is bool boolValue)
+                return boolValue;
+            
+            // Handle numbers
+            if (value is int intValue)
+                return intValue != 0;
+            if (value is double doubleValue)
+                return doubleValue != 0.0 && !double.IsNaN(doubleValue);
+            if (value is float floatValue)
+                return floatValue != 0.0f && !float.IsNaN(floatValue);
+            if (value is decimal decimalValue)
+                return decimalValue != 0m;
+            
+            // Handle strings
+            if (value is string stringValue)
+                return !string.IsNullOrEmpty(stringValue);
+            
+            // Handle objects (including services)
+            // Any non-null object is truthy
+            return true;
+        }
+
+        /// <summary>
+        /// Gets a field value from an instance using reflection.
+        /// This handles runtime field access for CX classes to avoid FieldBuilder invalidation issues.
+        /// </summary>
+        public static object? GetInstanceField(object instance, string fieldName)
+        {
+            if (instance == null)
+            {
+                Console.WriteLine($"[DEBUG] GetInstanceField: instance is null for field {fieldName}");
+                return null;
+            }
+
+            try
+            {
+                var instanceType = instance.GetType();
+                Console.WriteLine($"[DEBUG] GetInstanceField: getting field {fieldName} from {instanceType.Name}");
+                
+                var field = instanceType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (field != null)
+                {
+                    var value = field.GetValue(instance);
+                    Console.WriteLine($"[DEBUG] GetInstanceField: field {fieldName} = {value ?? "null"}");
+                    return value;
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] GetInstanceField: field {fieldName} not found in {instanceType.Name}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetInstanceField: exception getting field {fieldName}: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Sets a field value on an instance using reflection.
+        /// This handles runtime field assignment for CX classes to avoid FieldBuilder invalidation issues.
+        /// </summary>
+        public static void SetInstanceField(object instance, string fieldName, object? value)
+        {
+            if (instance == null)
+            {
+                Console.WriteLine($"[DEBUG] SetInstanceField: instance is null for field {fieldName}");
+                return;
+            }
+
+            try
+            {
+                var instanceType = instance.GetType();
+                Console.WriteLine($"[DEBUG] SetInstanceField: setting field {fieldName} on {instanceType.Name} to {value ?? "null"}");
+                
+                var field = instanceType.GetField(fieldName, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+                if (field != null)
+                {
+                    field.SetValue(instance, value);
+                    Console.WriteLine($"[DEBUG] SetInstanceField: field {fieldName} set successfully");
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] SetInstanceField: field {fieldName} not found in {instanceType.Name}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] SetInstanceField: exception setting field {fieldName}: {ex.Message}");
             }
         }
     }

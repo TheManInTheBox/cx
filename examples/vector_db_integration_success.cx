@@ -1,7 +1,6 @@
 // Vector Database Service Integration SUCCESS TEST
 // Demonstrates that the core service resolution and compilation is working
 
-using memory from "Cx.AI.Memory";
 
 function demonstrateServiceIntegration()
 {

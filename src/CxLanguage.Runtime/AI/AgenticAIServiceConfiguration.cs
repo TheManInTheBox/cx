@@ -117,7 +117,6 @@ public class TaskPlanningConfiguration
     public TimeSpan MaxPlanningTime { get; set; } = TimeSpan.FromMinutes(5);
     public double Temperature { get; set; } = 0.7;
     public int MaxRetries { get; set; } = 3;
-    public bool EnableParallelExecution { get; set; } = true;
 }
 
 /// <summary>
