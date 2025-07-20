@@ -1,8 +1,6 @@
 // CX Language - Enhanced Autonomous Agent Context Pattern Demo
 // Simplified version demonstrating the embedded context approach
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 // =============================================================================
 // ENHANCED CONTEXT PATTERN DEMONSTRATION

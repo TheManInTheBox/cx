@@ -1,11 +1,4 @@
 // Comprehensive test of all AI models/services with multi-service configuration
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using embeddings from "Cx.AI.TextEmbeddings";
-using imageGen from "Cx.AI.TextToImage";
-using imageToText from "Cx.AI.ImageToText";
-using textToSpeech from "Cx.AI.TextToSpeech";
-using audioToText from "Cx.AI.AudioToText";
 
 function testAllAIModelsComprehensive()
 {

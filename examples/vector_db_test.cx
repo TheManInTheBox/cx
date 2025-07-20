@@ -3,7 +3,6 @@
 print("🔥 Vector Database Service Test");
 print("===============================");
 
-using vectorDb from "Cx.AI.Memory";
 
 print("✅ Vector database service imported successfully");
 print("Service: " + vectorDb);

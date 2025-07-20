@@ -1,10 +1,6 @@
 // 🏆 VECTOR DATABASE ACHIEVEMENT CELEBRATION - 100% COMPLETE!
 // Demonstrating the successful deployment and integration of text-embedding-3-small
 
-using vectorDB from "Cx.AI.VectorDatabase";
-using embeddings from "Cx.AI.TextEmbeddings";
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 print("🏆 PHASE 4 ACHIEVEMENT CELEBRATION");
 print("==================================");

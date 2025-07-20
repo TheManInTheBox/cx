@@ -1,0 +1,47 @@
+// DEBUG: Test basic agent functionality without events
+
+
+print("🔧 DEBUG: Testing basic agent functionality");
+
+class LiveEmbodiedAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("✅ Agent created: " + this.name);
+    }
+    
+    function testMethod(input)
+    {
+        print("✅ Method called with: " + input);
+        return "success";
+    }
+}
+
+try
+{
+    print("🎯 Creating agent...");
+    var liveAgent = agent LiveEmbodiedAgent("TEST-AGENT");
+    
+    print("🎯 Testing method call...");
+    var result = liveAgent.testMethod("hello world");
+    print("✅ Result: " + result);
+    
+    print("🎯 Testing AI service...");
+    if (textGen)
+    {
+        var response = textGen.GenerateAsync("Say hello!", {
+            temperature: 0.7,
+            maxTokens: 50
+        });
+        print("🤖 AI Response: " + response);
+    }
+    
+    print("🎯 All tests passed!");
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}

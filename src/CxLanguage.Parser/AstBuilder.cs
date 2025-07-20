@@ -120,6 +120,30 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return importStmt;
     }
 
+    public override AstNode VisitUsesStatement(UsesStatementContext context)
+    {
+        Console.WriteLine($"[DEBUG] AstBuilder: Processing 'uses' statement");
+        var usesStmt = new UsesStatementNode();
+        SetLocation(usesStmt, context);
+
+        // First IDENTIFIER is the alias (service name)
+        usesStmt.Alias = context.IDENTIFIER().GetText();
+        Console.WriteLine($"[DEBUG] AstBuilder: Uses alias = {usesStmt.Alias}");
+        // Service path from dottedIdentifier
+        var dottedIdentifier = (LiteralNode)Visit(context.dottedIdentifier());
+        usesStmt.ServicePath = dottedIdentifier?.Value?.ToString() ?? string.Empty;
+        Console.WriteLine($"[DEBUG] AstBuilder: Uses service path = {usesStmt.ServicePath}");
+
+        return usesStmt;
+    }
+
+    public override AstNode VisitDottedIdentifier(DottedIdentifierContext context)
+    {
+        // Build the dotted identifier string (e.g., "Cx.AI.TextGeneration")
+        var parts = context.IDENTIFIER().Select(id => id.GetText()).ToList();
+        return new LiteralNode { Value = string.Join(".", parts) };
+    }
+
     public override AstNode VisitBlockStatement(BlockStatementContext context)
     {
         var block = new BlockStatementNode();
@@ -315,16 +339,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         awaitExpr.Expression = (ExpressionNode)Visit(context.expression());
         
         return awaitExpr;
-    }
-
-    public override AstNode VisitParallelExpression(ParallelExpressionContext context)
-    {
-        var parallelExpr = new ParallelExpressionNode();
-        SetLocation(parallelExpr, context);
-        
-        parallelExpr.Expression = (ExpressionNode)Visit(context.expression());
-        
-        return parallelExpr;
     }
 
     public override AstNode VisitAdditiveExpression(AdditiveExpressionContext context)
@@ -642,6 +656,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
                     // Handle event handlers inside classes
                     var eventHandler = (OnStatementNode)Visit(memberContext.onStatement());
                     classDecl.EventHandlers.Add(eventHandler);
+                }
+                else if (memberContext.usesStatement() != null)
+                {
+                    // Handle uses statements inside classes for dependency injection
+                    var usesStmt = (UsesStatementNode)Visit(memberContext.usesStatement());
+                    classDecl.UsesStatements.Add(usesStmt);
                 }
             }
         }

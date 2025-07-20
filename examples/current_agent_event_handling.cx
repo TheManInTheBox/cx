@@ -1,7 +1,6 @@
 // CX Language - Agent Event Handling Demo (Current Working Implementation)
 // Shows how agents can handle events with the current architecture
 
-using textGen from "Cx.AI.TextGeneration";
 
 // Agent class with methods that can be triggered by events
 class SmartAgent

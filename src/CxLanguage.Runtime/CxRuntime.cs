@@ -208,27 +208,6 @@ public class BuiltinFunctions
             return result;
         }
 
-        public async Task<string[]> AiParallel(string[] prompts, object? options = null)
-        {
-            var requestOptions = ParseAiOptions(options);
-            var responses = await _runtime._aiService.ProcessBatchAsync(prompts, requestOptions);
-            
-            var results = new List<string>();
-            foreach (var response in responses)
-            {
-                if (response.IsSuccess)
-                {
-                    results.Add(response.Content);
-                }
-                else
-                {
-                    throw new InvalidOperationException($"AI parallel processing failed: {response.ErrorMessage}");
-                }
-            }
-
-            return results.ToArray();
-        }
-
         public async IAsyncEnumerable<string> AiStream(string prompt, object? options = null)
         {
             var requestOptions = ParseAiOptions(options);

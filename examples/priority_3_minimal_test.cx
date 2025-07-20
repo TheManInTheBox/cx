@@ -1,0 +1,43 @@
+// Priority #3 - Minimal Test for IL Issues
+
+print("🎯 MINIMAL PRIORITY #3 TEST");
+print("============================");
+
+class AuraAgent
+{
+    auraEnabled: boolean;
+    
+    constructor()
+    {
+        this.auraEnabled = false;
+        print("Agent initialized with auraEnabled: " + this.auraEnabled);
+    }
+    
+    on live.audio (payload)
+    {
+        print("Audio received: " + payload.transcript);
+        
+        if (payload.transcript == "aura on")
+        {
+            this.auraEnabled = true;
+            print("AURA SYSTEM ACTIVATED!");
+        }
+    }
+}
+
+try
+{
+    print("Creating agent...");
+    var auraAgent = agent AuraAgent();
+    
+    print("✅ Agent created successfully!");
+    print("Testing voice command...");
+    
+    emit live.audio, { transcript: "aura on", confidence: 0.95 };
+    
+    print("✅ Event emitted successfully!");
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}

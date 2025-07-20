@@ -1,7 +1,6 @@
 // CX Language - Simple Agent Event Demo (Current Working Version)
 // Shows how agents interact with events using current grammar
 
-using textGen from "Cx.AI.TextGeneration";
 
 class SimpleAgent
 {

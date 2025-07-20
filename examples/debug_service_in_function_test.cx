@@ -1,5 +1,4 @@
 // Test AI service calls within functions with static service registry
-using textGen from "Cx.AI.TextGeneration";
 
 print("Service in Function Test");
 

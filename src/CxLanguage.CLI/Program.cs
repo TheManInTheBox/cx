@@ -10,7 +10,9 @@ using CxLanguage.Compiler;
 using CxLanguage.Compiler.Modules;
 using CxLanguage.Azure.Services;
 using CxLanguage.StandardLibrary.AI.VectorDatabase;
+using CxLanguage.StandardLibrary.Extensions;
 using CxLanguage.CLI.Extensions;
+using CxLanguage.Core.Ast;
 using CxCoreAI = CxLanguage.Core.AI;
 
 namespace CxLanguage.CLI;
@@ -109,6 +111,18 @@ class Program
             {
                 aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
                 aiFunctions = host.Services.GetRequiredService<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
+                
+                // Debug: Check if TextGenerationService is registered
+                try
+                {
+                    var textGenService = host.Services.GetRequiredService<CxLanguage.StandardLibrary.AI.TextGeneration.TextGenerationService>();
+                    Console.WriteLine($"✅ DEBUG: TextGenerationService is registered and available: {textGenService.ServiceName}");
+                }
+                catch (Exception texGenEx)
+                {
+                    Console.WriteLine($"❌ DEBUG: TextGenerationService not registered: {texGenEx.Message}");
+                    Console.WriteLine($"    Exception type: {texGenEx.GetType()}");
+                }
             }
             catch (Exception ex)
             {
@@ -119,7 +133,7 @@ class Program
             }
             
             var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(file.Name), options, aiService, aiFunctions);
-            var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(file.Name), source);
+            var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, Path.GetFileNameWithoutExtension(file.Name), source);
             
             // Track compilation metrics
             var linesOfCode = source.Split('\n').Length;
@@ -152,6 +166,8 @@ class Program
             {
                 try
                 {
+                    Console.WriteLine($"[DEBUG] RUNTIME: About to create Program instance");
+                    
                     // Create instance with console, AI service, SemanticKernelAiFunctions, and service provider
                     var instance = Activator.CreateInstance(
                         compilationResult.ProgramType, 
@@ -160,13 +176,33 @@ class Program
                         aiFunctions,   // SemanticKernelAiFunctions service (can be null)
                         host.Services  // Service provider for DI
                     );
+                    
+                    Console.WriteLine($"[DEBUG] RUNTIME: Program instance created successfully");
+                    Console.WriteLine($"[DEBUG] RUNTIME: About to invoke Run method");
+                    
                     runMethod.Invoke(instance, null);
+                    
+                    Console.WriteLine($"[DEBUG] RUNTIME: Run method completed successfully");
                     
                     // Track successful execution
                     telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {
+                    Console.WriteLine($"[DEBUG] RUNTIME: TargetInvocationException caught");
+                    Console.WriteLine($"[DEBUG] RUNTIME: Outer exception: {ex.Message}");
+                    
+                    var innerEx = ex.InnerException;
+                    while (innerEx != null)
+                    {
+                        Console.WriteLine($"[DEBUG] RUNTIME: Inner exception: {innerEx.GetType().Name}: {innerEx.Message}");
+                        if (innerEx.StackTrace != null)
+                        {
+                            Console.WriteLine($"[DEBUG] RUNTIME: Inner stack trace: {innerEx.StackTrace}");
+                        }
+                        innerEx = innerEx.InnerException;
+                    }
+                    
                     var errorMessage = ex.InnerException?.Message ?? ex.Message;
                     Console.Error.WriteLine($"Runtime error: {errorMessage}");
                     if (ex.InnerException != null)
@@ -176,6 +212,17 @@ class Program
                     
                     // Track failed execution
                     telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, errorMessage);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[DEBUG] RUNTIME: General exception caught: {ex.GetType().Name}: {ex.Message}");
+                    Console.WriteLine($"[DEBUG] RUNTIME: Stack trace: {ex.StackTrace}");
+                    
+                    Console.Error.WriteLine($"Runtime error: {ex.Message}");
+                    Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
+                    
+                    // Track failed execution
+                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, ex.Message);
                 }
             }
             else
@@ -250,7 +297,7 @@ class Program
             
             var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(assemblyName), options, aiService, aiFunctions);
             var sourceText = File.ReadAllText(source.FullName);
-            var compilationResult = compiler.Compile(parseResult.Value!, Path.GetFileNameWithoutExtension(assemblyName), sourceText);
+            var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, Path.GetFileNameWithoutExtension(assemblyName), sourceText);
 
             if (!compilationResult.IsSuccess)
             {
@@ -291,12 +338,13 @@ class Program
             }
 
             Console.WriteLine("Parse successful!");
-            Console.WriteLine($"Program contains {parseResult.Value!.Statements.Count} statements");
-            Console.WriteLine($"Imports: {parseResult.Value.Imports.Count}");
+            var program = (ProgramNode)parseResult.Value!;
+            Console.WriteLine($"Program contains {program.Statements.Count} statements");
+            Console.WriteLine($"Imports: {program.Imports.Count}");
 
             // Display basic AST structure
             var astPrinter = new AstPrinter();
-            var output = astPrinter.Print(parseResult.Value);
+            var output = astPrinter.Print(parseResult.Value!);
             Console.WriteLine("\nAST Structure:");
             Console.WriteLine(output);
         }
@@ -370,6 +418,9 @@ class Program
                     {
                         // Register the simple Semantic Kernel AI service
                         services.AddSimpleSemanticKernelServices(context.Configuration);
+                        
+                        // Register Azure OpenAI Realtime API services
+                        services.AddAzureOpenAIRealtimeServices();
                         
                         // Register the new SemanticKernelAiFunctions instead of old AiFunctions
                         services.AddSingleton<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();

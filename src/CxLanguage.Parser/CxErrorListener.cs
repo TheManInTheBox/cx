@@ -1,18 +1,27 @@
 using Antlr4.Runtime;
 using System.Collections.Generic;
-using System.IO;
 
 namespace CxLanguage.Parser;
 
 /// <summary>
-/// Custom error listener for collecting parse errors
+/// Error listener for ANTLR parsing errors
 /// </summary>
 public class CxErrorListener : BaseErrorListener
 {
-    public List<ParseError> Errors { get; } = new List<ParseError>();
-
-    public override void SyntaxError(TextWriter output, IRecognizer recognizer, IToken offendingSymbol, int line, int charPositionInLine, string msg, RecognitionException e)
+    private readonly List<ParseError> _errors = new();
+    
+    public bool HasErrors => _errors.Count > 0;
+    public IReadOnlyList<ParseError> Errors => _errors;
+    
+    public override void SyntaxError(
+        TextWriter output,
+        IRecognizer recognizer, 
+        IToken offendingSymbol, 
+        int line, 
+        int charPositionInLine, 
+        string msg, 
+        RecognitionException e)
     {
-        Errors.Add(new ParseError(line, charPositionInLine, msg));
+        _errors.Add(new ParseError(line, charPositionInLine, msg, "<input>"));
     }
 }

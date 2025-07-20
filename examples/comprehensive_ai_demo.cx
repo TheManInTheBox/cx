@@ -1,9 +1,6 @@
 // Comprehensive AI Services Demo - Aura CX Language  
 // Testing all available AI capabilities
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using imageGen from "Cx.AI.TextToImage";
 
 print("=== AURA CX - COMPREHENSIVE AI SERVICES DEMO ===");
 

@@ -1,9 +1,6 @@
 // 🎯 TESTING IL OPTIMIZATION FIX
 // This script tests the fixed IL generation for service method calls
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using tts from "Cx.AI.TextToSpeech";
 
 print("🔧 Testing IL Optimization Fix");
 print("==============================");

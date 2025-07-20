@@ -1,9 +1,6 @@
 // 🗄️ VECTOR DATABASE FULL TEST - text-embedding-3-small
 // Complete test suite for the upgraded embedding model and vector operations
 
-using vectorDB from "Cx.AI.VectorDatabase";
-using embeddings from "Cx.AI.TextEmbeddings";
-using textGen from "Cx.AI.TextGeneration";
 
 print("🗄️ VECTOR DATABASE FULL TEST");
 print("=============================");

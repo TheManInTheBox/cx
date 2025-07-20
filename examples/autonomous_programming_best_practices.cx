@@ -1,8 +1,6 @@
 // CX Autonomous Programming Best Practices
 // Sophisticated patterns for real-world autonomous agents
 
-using textGen from "Cx.AI.TextGeneration";
-using vectorDb from "Cx.AI.VectorDatabase";
 
 // =============================================================================
 // BEST PRACTICE 1: Structured AI Responses for Reliable Processing
@@ -76,7 +74,6 @@ on "input.analyzed" (payload)
 // BEST PRACTICE 3: Semantic Similarity for Nuanced Pattern Detection
 // =============================================================================
 
-using embeddings from "Cx.AI.TextEmbeddings";
 
 on "input.analyzed" (payload)
 {

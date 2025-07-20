@@ -1,5 +1,4 @@
 // Test to verify service calls produce output and arguments are evaluated
-using vectorDB from "Cx.AI.VectorDatabase";
 
 function main()
 {

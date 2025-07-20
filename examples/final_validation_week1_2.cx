@@ -1,11 +1,6 @@
 // 🔥 FINAL VALIDATION TEST - WEEK 1-2 COMPLETE
 // Testing all Week 1-2 objectives with live Azure OpenAI services
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using embeddings from "Cx.AI.TextEmbeddings";
-using imageGen from "Cx.AI.TextToImage";
-using tts from "Cx.AI.TextToSpeech";
 
 print("🔥 === FINAL VALIDATION TEST - WEEK 1-2 COMPLETE ===");
 print("NO SIMULATIONS - LIVE AZURE OPENAI SERVICES ONLY");

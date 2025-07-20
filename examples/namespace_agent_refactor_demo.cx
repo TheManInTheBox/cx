@@ -1,7 +1,6 @@
 // CX Language - Namespace Event Scoping Applied to Agent System
 // Shows how to refactor global event handlers to use namespace-based scoping
 
-using textGen from "Cx.AI.TextGeneration";
 
 class SmartAgent
 {

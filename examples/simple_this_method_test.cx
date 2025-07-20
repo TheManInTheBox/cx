@@ -1,0 +1,52 @@
+
+class SimpleAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("SimpleAgent created: " + this.name);
+    }
+    
+    function simpleMethod(message)
+    {
+        var response = "SimpleAgent " + this.name + " says: " + message;
+        print(response);
+        return response;
+    }
+    
+    // Single class-scoped event handler to test 'this' binding
+    on simple.test (payload)
+    {
+        print("🎯 Event received: " + payload.message);
+        
+        // Test 'this' method call - this was failing before the fix
+        var result = this.simpleMethod("Handling event!");
+        
+        print("✅ Method result: " + result);
+        
+        emit simple.complete, { result: result };
+    }
+}
+
+print("🔧 Testing simple agent with 'this' method call fix");
+
+try
+{
+    var testAgent = agent SimpleAgent("TestBot");
+    
+    print("🎯 Triggering test event...");
+    emit simple.test, { message: "Hello from test" };
+    
+    print("✅ Test completed successfully!");
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}
+
+on simple.complete (payload)
+{
+    print("✅ Final result received: " + payload.result);
+}

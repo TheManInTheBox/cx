@@ -1,8 +1,6 @@
 // Amazing Multi-Agent Debate with Speech - Different Voice Tones
 // Each agent has distinct vocal personality and speaking characteristics
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 class DebateAgent
 {

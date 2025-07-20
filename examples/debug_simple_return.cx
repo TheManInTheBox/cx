@@ -1,9 +1,0 @@
-print("Simple Function Return Test");
-
-function simpleReturn()
-{
-    return "Hello from function";
-}
-
-var result = simpleReturn();
-print("Result: " + result);

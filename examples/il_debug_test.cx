@@ -1,0 +1,25 @@
+// Simple field access test to trigger IL instrumentation
+class TestAgent
+{
+    name: string;
+    value: number;
+}
+
+print("🔍 IL Emission Debug Test");
+print("=======================");
+
+try
+{
+    print("Creating agent with field assignment...");
+    var agent = agent TestAgent();
+    agent.name = "TestAgent";
+    agent.value = 42;
+    
+    print("Agent created successfully:");
+    print("Name: " + agent.name);
+    print("Value: " + agent.value);
+}
+catch (error)
+{
+    print("Error occurred: " + error);
+}

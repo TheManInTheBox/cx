@@ -1,140 +1,533 @@
 ---
- applyTo: "**/*.cx"
- description: "CX Cognitive Executor Language - Autonomous Programming Platform"
+applyTo: "**/*.cx"
+description: "CX Cognitive Executor Language - Official Language Patterns"
 ---
 
-## CX Language - Cognitive Executor for Autonomous Programming
+# CX Language - Official Patterns Reference
 
-### Overview
-CX (Cognitive Executor) is an autonomous programming language built on the Aura cognitive architecture framework. Designed for Safe, Quality, Productivity, and Autonomy in AI-driven development environments.
+## 🎯 Core Aura Architecture Pattern
 
-**Key Principles:**
-- **Safe**: Memory-safe IL generation with comprehensive error handling
-- **Quality**: Enterprise-grade reliability with production-tested AI integration  
-- **Productivity**: Ultra-fast compilation (~50ms) with intuitive syntax
-- **Autonomy**: First-class support for autonomous agents and self-modifying code
-
-**Architecture:**
-- **CX Language**: The Cognitive Executor - executable autonomous programming language
-- **Aura Framework**: The cognitive architecture powering autonomous decision-making
-- **Agent Integration**: Copilot and other AI agents can execute CX code directly
-
-## CX Language Syntax Reference
-
-### Basic Syntax Rules
-
-#### Code Style and Formatting
-- **ALWAYS use Allman-style brackets** (opening bracket on new line)
-- Use 4-space indentation consistently
-- Statements end with semicolons (`;`)
-- Comments: `//` for single-line, `/* */` for multi-line
-- Case-sensitive language
-
-#### Variables and Declarations
 ```cx
-// Variable declarations (required var keyword)
-var message = "Hello";
-var count = 10;
-var isActive = true;
+// ✅ PREFERRED PATTERN: Class scope service injection using 'uses' keyword
+// Services injected at class level - available in all methods and event handlers
+class AuraAnimalAgent
+{
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
+    
+    name: string;
+    isAwake: boolean;
+    inConversation: boolean;
+    
+    constructor(config)
+    {
+        this.name = config.name;
+        this.isAwake = false;
+        this.inConversation = false;
+        
+        // ✅ Services available in constructor due to class scope injection
+        if (textGen && tts)
+        {
+            print("✅ Class scope service injection active");
+        }
+    }
+    
+    function speakBeepBoop(message, isActivation)
+    {
+        if (isActivation)
+        {
+            // ✅ Services available in class methods
+            var sound = "[Wild Animal voice] BEEP-BOOP! " + message + " BEEP-BOOP!";
+            tts.SpeakAsync(sound);
+        }
+    }
+    
+    // Always-On Audio Processing - Priority #1
+    on live.audio (payload)
+    {
+        var audioText = payload.transcript;
+        
+        // Voice Command Detection
+        if (audioText == "aura on" || audioText == "AURA ON")
+        {
+            this.isAwake = true;
+            this.speakBeepBoop("ANIMAL AWAKE! AURA READY!", true);
+            emit aura.system.activated, this.name;
+        }
+        
+        // Multi-Modal State-Dependent Processing - Priority #4
+        if (this.isAwake && audioText.includes("hello"))
+        {
+            // ✅ Services available in event handlers
+            var response = textGen.GenerateAsync("Wild Animal greeting response");
+            tts.SpeakAsync(response);
+        }
+    }
+    
+    // State-Dependent Sensory Processing - Priority #3
+    on presence.detected (payload)
+    {
+        if (!this.isAwake) return;  // Intelligent state management
+        
+        // ✅ Services available in all event handlers
+        var reaction = textGen.GenerateAsync("Animal sees movement!");
+        tts.SpeakAsync(reaction);
+    }
+    
+    // Cross-namespace event handling - Priority #5
+    on aura.system.activated (payload)
+    {
+        emit coordination.start, { agent: this.name };
+        this.beginAutonomousBehavior();
+    }
+}
 
-// Assignment to existing variables (no var keyword)
-count = 20;
-message = "Updated message";
-isActive = false;
+// Autonomous Agent Creation with Event-Driven Coordination
+var animalAgent = agent AuraAnimalAgent({ name: "ANIMAL" });
+
+// System-Level Event Coordination
+emit live.audio, { transcript: "Aura on", confidence: 0.95 };
 ```
 
-#### Data Types
-- **String literals**: `"Hello, World!"` (double quotes)
-- **Number literals**: `42`, `3.14` (integers and floats)
-- **Boolean literals**: `true`, `false`
-- **Null literal**: `null`
+## 🚨 DEVELOPMENT STANDARDS: IMPLEMENTATION-ONLY ACCEPTANCE
 
-#### Operators
-- **Arithmetic**: `+`, `-`, `*`, `/`, `%`
-- **Comparison**: `==`, `!=`, `<`, `>`, `<=`, `>=`
-- **Logical**: `&&` (AND), `||` (OR), `!` (NOT)
-- **Assignment**: `=`, `+=`, `-=`, `*=`, `/=`
-- **Unary**: `+`, `-`, `!`
+**CRITICAL REQUIREMENT**: No coded simulations, mockups, or placeholder implementations are acceptable. All CX Language features and Aura capabilities must be implemented to completion with full operational capability.
 
-#### Control Flow
+**Acceptance Criteria:**
+- ✅ **Fully Functional**: Feature works end-to-end in production CX runtime
+- ✅ **No Simulations**: Real implementations only - no mock objects or placeholder code
+- ✅ **Complete Integration**: Seamless integration with CX Language compiler and runtime
+- ✅ **Tested & Verified**: Demonstrable working examples with measurable performance
+- ❌ **NOT Acceptable**: Proof-of-concept code, partial implementations, or simulation frameworks
+
+**Quality Gate**: Every feature must pass the "Demo Test" - can be demonstrated live with real CX code execution, not simulated behavior.
+
+**Implementation Standards:**
+- All Aura capabilities must compile and execute in CX runtime
+- AI service integrations must work with real Azure OpenAI endpoints
+- Event-driven architecture must function with production event bus
+- Agent coordination must demonstrate real multi-agent interactions
+- Voice processing must use actual audio capture and synthesis
+
+## 🧠 Aura Framework Implementation Patterns
+
+### Agent Event System Architecture
 ```cx
-// If-else statements
+class AuraAnimalAgent
+{
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
+    
+    auraEnabled: boolean;
+    isAwake: boolean;
+    inConversation: boolean;
+    
+    constructor(config)
+    {
+        this.auraEnabled = false;
+        this.isAwake = false;
+        this.inConversation = false;
+    }
+    
+    // ✅ CRITICAL: 'on' blocks INSIDE agent class definition
+    // These are NOT regular methods - they're event handlers
+    on live.audio (payload)
+    {
+        // Always processes audio - Priority #1: Always-On Audio Processing
+        var audioText = payload.transcript;
+        
+        if (audioText == "aura on" || audioText == "AURA ON")
+        {
+            this.auraEnabled = true;
+            this.isAwake = true;
+            this.inConversation = true;
+            this.speakBeepBoop("ANIMAL AWAKE! AURA READY!", true);
+            emit aura.system.activated, this.name;
+        }
+        
+        if (audioText == "aura off" || audioText == "AURA OFF")
+        {
+            this.auraEnabled = false;
+            this.isAwake = false;
+            this.inConversation = false;
+            this.speakBeepBoop("ANIMAL SLEEP NOW... AURA OFF...", false);
+            emit aura.system.deactivated, this.name;
+        }
+        
+        // Conversation processing when active
+        if (this.auraEnabled && this.isAwake && this.inConversation)
+        {
+            var response = this.generateAnimalResponse(payload.transcript);
+            this.speakAnimalResponse(response);
+        }
+    }
+    
+    // Priority #3: Intelligent State Management - State-dependent processing
+    on presence.detected (payload)
+    {
+        if (!this.auraEnabled || !this.isAwake) return; // Smart conditional processing
+        
+        var presenceResponse = this.generateAnimalResponse("Someone here! Animal see you!");
+        this.speakAnimalResponse(presenceResponse);
+    }
+    
+    on environment.change (payload)  
+    {
+        if (!this.auraEnabled || !this.isAwake) return; // State-dependent processing
+        
+        var envResponse = this.generateAnimalResponse("Something different! Animal notice!");
+        this.speakAnimalResponse(envResponse);
+    }
+    
+    // Priority #2: Animal Personality Integration
+    function speakBeepBoop(message, isActivation)
+    {
+        if (isActivation)
+        {
+            var activationSound = "[Wild, chaotic Animal from Muppets voice] BEEP-BOOP! BEEP-BOOP! " + message + " DRUMS! CYMBALS! BEEP-BOOP!";
+            tts.SpeakAsync(activationSound);
+        }
+        else
+        {
+            var shutdownSound = "[Tired Animal voice] beep-boop... " + message + " ...zzz...beep-boop";
+            tts.SpeakAsync(shutdownSound);
+        }
+    }
+    
+    function generateAnimalResponse(userInput)
+    {
+        var prompt = "Respond as Animal from the Muppets - wild, enthusiastic, broken English, drum references, short energetic phrases. To: '" + userInput + "'";
+        
+        return textGen.GenerateAsync(prompt, {
+            temperature: 0.9,
+            maxTokens: 60
+        });
+    }
+    
+    function speakAnimalResponse(response)
+    {
+        var voiceResponse = "[Wild Animal voice] BEEP-BOOP! " + response + " BEEP-BOOP!";
+        tts.SpeakAsync(voiceResponse);
+    }
+}
+
+// Priority #5: Event-Driven Architecture - Auto-registration
+var animalAgent = agent AuraAnimalAgent({ name: "ANIMAL" });
+```
+
+### Cognitive Processing Patterns
+```cx
+// Cognition: Environmental awareness triggers state transitions
+on presence.detected (payload)
+{
+    // Cognitive decision: Only process when aware/enabled
+    if (!this.auraEnabled) return; // Attention gating
+    
+    // Cognitive analysis: Process sensory input
+    var analysis = this.analyzePrescience(payload);
+    
+    // Cognitive action: Respond based on analysis
+    emit cognitive.response, { decision: analysis };
+}
+
+// Cognitive state introspection
+function getCurrentCognitiveState()
+{
+    return {
+        auraEnabled: this.auraEnabled,    // Conscious awareness toggle
+        isAwake: this.isAwake,           // Alertness level
+        inConversation: this.inConversation, // Social engagement state
+        isProcessingOptimal: this.auraEnabled && this.isAwake
+    };
+}
+```
+
+### Multi-Agent Cognitive Coordination
+```cx
+uses cognitiveOrchestrator from Cx.Aura.Coordination;
+
+// Aura detects environmental shifts, Cx coordinates cognitive responses
+function respondToAuraShift(agents, ambientChange)
+{
+    for (agent in agents)
+    {
+        // Cognitive sensory processing: Each agent perceives environmental changes
+        var cognitiveResponse = agent.perceiveAura(ambientChange);
+        
+        // Cognitive coordination: Orchestrate based on cognitive state analysis
+        var coordinationDecision = cognitiveOrchestrator.analyzeCognitiveStates(agent, cognitiveResponse);
+        
+        // Multi-agent cognitive integration
+        if (coordinationDecision.requiresCollaboration)
+        {
+            emit cognitive.collaboration.needed, {
+                initiatingAgent: agent.name,
+                cognitiveState: agent.getCurrentCognitiveState(),
+                collaborationPlan: coordinationDecision.plan
+            };
+        }
+        
+        // Execute cognitive coordination
+        cognitiveOrchestrator.coordinate(agent, cognitiveResponse);
+    }
+}
+```
+
+### Aura Sensory Processing Flow
+```cx
+class AuraSensorAgent
+{
+    uses textGen from Cx.AI.TextGeneration;
+    
+    auraEnabled: boolean;
+    
+    // Primary sensory input - always active
+    on live.audio (payload)
+    {
+        if (payload.transcript == "aura on")
+        {
+            this.auraEnabled = true;
+            emit aura.system.activated, this.name;
+        }
+    }
+    
+    // Secondary sensors - state-dependent
+    on presence.detected (payload)
+    {
+        if (!this.auraEnabled) return; // Intelligent state management
+        
+        var analysis = textGen.GenerateAsync("Analyze presence: " + payload.data);
+        emit presence.analyzed, {
+            raw: payload.data,
+            analysis: analysis,
+            sensor: this.name
+        };
+    }
+}
+```
+
+## 🏗️ CX Language Design Principles
+
+### Single-Object Constructor Pattern (Required)
+All CX classes must use the single-object constructor pattern for consistency and clean dependency injection:
+
+```cx
+// ✅ CORRECT: Single object parameter
+constructor(config)
+{
+    this.name = config.name;
+    this.age = config.age;
+    this.settings = config.settings;
+}
+
+// ✅ CORRECT: Async constructor for initialization requiring await
+async constructor(config)
+{
+    this.name = config.name;
+    this.config = config;
+    
+    // Async initialization - useful for AI service setup
+    if (config.autoInitialize)
+    {
+        await this.initializeAsync();
+    }
+}
+
+async function initializeAsync()
+{
+    // AI service initialization that requires await
+    var greeting = await textGen.GenerateAsync("Generate welcome message");
+    await tts.SpeakAsync(greeting);
+    
+    this.initialized = true;
+}
+
+// Usage with object literal
+var instance = new MyClass({
+    name: "test",
+    age: 25,
+    settings: { debug: true }
+});
+
+// Usage with async constructor (if needed)
+var asyncInstance = await new AsyncMyClass({
+    name: "async-test",
+    autoInitialize: true
+});
+
+// ❌ INCORRECT: Multiple parameters
+constructor(name, age, settings) // Not supported in CX
+```
+
+**Benefits:**
+- **Clean Service Injection**: Services handled separately from user config
+- **Flexible Initialization**: Easy to add new properties without breaking changes
+- **Consistent API**: All constructors follow the same pattern
+- **Object Composition**: Natural integration with CX object literals
+
+### Mandatory Code Style Rules
+```cx
+// ✅ REQUIRED: Allman-style braces (opening bracket on new line)
+function example()
+{
+    if (condition)
+    {
+        // code here
+    }
+    else
+    {
+        // alternative code
+    }
+}
+
+// ❌ FORBIDDEN: K&R-style brackets
+function example() {  // NOT ALLOWED
+    if (condition) {  // NOT ALLOWED
+```
+
+## 📋 Complete Language Reference
+
+### Variables and Data Types
+```cx
+var name: string = "value";
+var count: number = 42;
+var active: boolean = true;
+var data: object = { key: "value" };
+var items: array = [1, 2, 3];
+```
+
+### Control Flow
+```cx
+// Conditionals
 if (condition)
 {
-    statement1;
-    statement2;
+    // code
+}
+else if (otherCondition)
+{
+    // code
 }
 else
 {
-    statement3;
+    // code
 }
 
-// While loops
+// Loops
 while (condition)
 {
-    body;
+    // code
 }
 
-// For-in loops
-for (var item in collection)
-{
-    body;
-}
-
-// Alternative for-in syntax
 for (item in collection)
 {
-    body;
+    // code
 }
 ```
 
-#### Functions
+### Functions
 ```cx
-// Function declarations
+// Basic function
 function functionName()
 {
     body;
 }
 
-// Function with parameters
+// With parameters
 function functionName(param1, param2)
 {
     body;
 }
 
-// Function with typed parameters (grammar defined)
-function functionName(param1: type, param2: type)
+// With return type (optional)
+function functionName() -> string
 {
-    body;
+    return "value";
 }
 
-// Function with return type (grammar defined)
-function functionName() -> type
+// Async functions - Comprehensive patterns for asynchronous operations
+async function asyncFunction()
 {
-    return value;
+    var result = await someAsyncOperation();
+    return result;
 }
 
-// Async functions (grammar defined)
-async function functionName()
+// Async function with error handling
+async function safeAsyncFunction()
 {
-    body;
+    try
+    {
+        var result = await someAsyncOperation();
+        return result;
+    }
+    catch (error)
+    {
+        print("Async operation failed: " + error);
+        throw error;
+    }
 }
 
-// Function calls
-functionName();
-functionName(arg1, arg2);
+// Async function with multiple await operations
+async function multipleAsyncOperations()
+{
+    // Sequential execution - each waits for the previous
+    var first = await firstAsyncOperation();
+    var second = await secondAsyncOperation(first);
+    var third = await thirdAsyncOperation(second);
+    
+    return {
+        first: first,
+        second: second,
+        third: third
+    };
+}
+
+// Async function with conditional await
+async function conditionalAsync(shouldExecute)
+{
+    if (shouldExecute)
+    {
+        var result = await expensiveOperation();
+        return result;
+    }
+    
+    return "skipped";
+}
+
+// Async AI service patterns (common in CX)
+async function aiServiceAsync()
+{
+    try
+    {
+        // AI services return promises that need await
+        var generated = await textGen.GenerateAsync("Create a story", {
+            temperature: 0.8,
+            maxTokens: 500
+        });
+        
+        var spoken = await tts.SpeakAsync(generated);
+        
+        return {
+            text: generated,
+            audio: spoken
+        };
+    }
+    catch (error)
+    {
+        print("AI service failed: " + error);
+        return null;
+    }
+}
 ```
 
-#### Exception Handling
+### Exception Handling
 ```cx
-// Try-catch blocks
 try
 {
     riskyOperation();
 }
 catch (error)
 {
-    handleError();
+    handleError(error);
 }
 
 // Throw statements
@@ -142,28 +535,246 @@ throw "Error message";
 throw errorObject;
 ```
 
-#### Event-Driven Architecture (Critical Syntax Rules)
+### Object and Array Literals
 ```cx
-// Event handlers (Aura sensory layer) - FULLY OPERATIONAL
-on "event.name" (payload)
+// Object literals
+var obj = {
+    property1: value1,
+    property2: value2,
+    "string key": value3
+};
+
+// Array literals
+var arr = [item1, item2, item3];
+
+// Object property access
+var value = obj.property1;
+var value2 = obj["string key"];
+
+// Array indexing
+var element = arr[0];
+```
+
+## 🤖 AI Service Integration
+
+### Service Injection Patterns
+```cx
+// ✅ PREFERRED: Class scope service injection
+class MyAgent
 {
-    // Handle incoming event
-    print("Received: " + payload.data);
+    // Services available in all class methods, event handlers, and constructor
+    uses textGen from Cx.AI.TextGeneration;
+    uses chatBot from Cx.AI.ChatCompletion;
+    uses imageGen from Cx.AI.TextToImage;
+    uses embeddings from Cx.AI.TextEmbeddings;
+    uses tts from Cx.AI.TextToSpeech;
+    uses vectorDB from Cx.AI.VectorDatabase;
     
-    // CRITICAL: Use 'if' for conditionals everywhere
-    if (payload.priority > 5)
+    constructor(config)
     {
-        emit "high.priority", payload;
+        // Services available in constructor due to class scope injection
+        if (textGen && vectorDB)
+        {
+            print("Services available at class scope");
+        }
     }
     
-    if (payload.type == "urgent")
+    on document.process (payload)
     {
-        // More event-driven logic
-        emit "escalation.needed", { urgency: "high" };
+        // Services available in event handlers due to class scope injection
+        var summary = textGen.GenerateAsync("Summarize: " + payload.content);
+        vectorDB.IngestTextAsync(summary, "doc-" + payload.id);
+    }
+    
+    function processData(data)
+    {
+        // Services available in class methods due to class scope injection
+        var analysis = textGen.GenerateAsync("Analyze: " + data, {
+            temperature: 0.8,
+            maxTokens: 500
+        });
+        
+        return analysis;
     }
 }
 
-// ✅ NEW: Class-Based Event Handlers (Auto-Registration)
+// ❌ NOT RECOMMENDED: Global scope service injection
+// This makes services available everywhere but loses class encapsulation benefits
+uses globalTextGen from Cx.AI.TextGeneration;
+```
+
+### AI Service Usage Examples
+```cx
+// Text generation with parameters
+var content = textGen.GenerateAsync("Write a story", {
+    temperature: 0.8,
+    maxTokens: 500
+});
+
+// Chat completion with context
+var response = chatBot.CompleteAsync("You are helpful", "Explain AI");
+
+// DALL-E 3 image generation
+var image = imageGen.GenerateImageAsync("Futuristic city", {
+    size: "1024x1024",
+    quality: "hd"
+});
+
+// Text embeddings for semantic search
+var vector = embeddings.GenerateEmbeddingAsync("AI programming language");
+
+// Text-to-Speech with MP3 pure memory streaming (zero temp files!)
+tts.SpeakAsync("Welcome to the future of AI programming!");
+
+// Vector Database for RAG workflows (100% COMPLETE!)
+var ingestResult = vectorDB.IngestTextAsync("Document content", "doc-id");
+var searchResult = vectorDB.AskAsync("What information is stored?");
+```
+
+### Async/Await Patterns for AI Services
+```cx
+// ✅ PREFERRED: Async functions for AI service coordination
+async function coordinateAIServices()
+{
+    try
+    {
+        // Sequential AI operations - each waits for the previous
+        var story = await textGen.GenerateAsync("Write a short story", {
+            temperature: 0.8,
+            maxTokens: 200
+        });
+        
+        var image = await imageGen.GenerateImageAsync(
+            "Illustration for: " + story,
+            { size: "1024x1024", quality: "hd" }
+        );
+        
+        var audio = await tts.SpeakAsync(story);
+        
+        return {
+            story: story,
+            image: image,
+            audio: audio
+        };
+    }
+    catch (error)
+    {
+        print("AI coordination failed: " + error);
+        throw error;
+    }
+}
+
+// ✅ Async class methods with AI services
+class AICoordinator
+{
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
+    uses vectorDB from Cx.AI.VectorDatabase;
+    
+    // Async constructor pattern (if needed)
+    async constructor(config)
+    {
+        this.config = config;
+        
+        // Wait for initial AI setup
+        var greeting = await textGen.GenerateAsync("Generate welcome message");
+        await tts.SpeakAsync(greeting);
+        
+        print("AI Coordinator initialized with async setup");
+    }
+    
+    // Async method for complex AI workflows
+    async processDocument(document)
+    {
+        try
+        {
+            // Sequential processing
+            var summary = await textGen.GenerateAsync(
+                "Summarize this document: " + document.content
+            );
+            
+            var embedding = await embeddings.GenerateEmbeddingAsync(summary);
+            
+            var ingestResult = await vectorDB.IngestTextAsync(
+                summary, 
+                "doc-" + document.id
+            );
+            
+            await tts.SpeakAsync("Document processed: " + document.title);
+            
+            return {
+                summary: summary,
+                embedding: embedding,
+                stored: ingestResult
+            };
+        }
+        catch (error)
+        {
+            print("Document processing failed: " + error);
+            return null;
+        }
+    }
+    
+    // Async event handler
+    async on document.received (payload)
+    {
+        var result = await this.processDocument(payload.document);
+        
+        if (result)
+        {
+            emit document.processed, {
+                documentId: payload.document.id,
+                result: result
+            };
+        }
+    }
+}
+
+// ✅ Error-safe async patterns
+async function safeAIOperation(prompt)
+{
+    var maxRetries = 3;
+    var attempt = 0;
+    
+    while (attempt < maxRetries)
+    {
+        try
+        {
+            var result = await textGen.GenerateAsync(prompt, {
+                temperature: 0.7,
+                maxTokens: 150
+            });
+            
+            return result; // Success - exit retry loop
+        }
+        catch (error)
+        {
+            attempt++;
+            print("AI operation attempt " + attempt + " failed: " + error);
+            
+            if (attempt >= maxRetries)
+            {
+                throw "AI operation failed after " + maxRetries + " attempts";
+            }
+            
+            // Wait before retry (simple delay)
+            var delay = attempt * 1000; // Exponential backoff
+            await new Promise(resolve => setTimeout(resolve, delay));
+        }
+    }
+}
+```
+
+## ⚡ Event-Driven Architecture
+
+### Critical Syntax Rules
+- **`if`**: Used for ALL conditional logic everywhere (functions, classes, event handlers, standalone code)
+- **`emit`**: Globally available everywhere (functions, classes, standalone code, event handlers)  
+- **`on`**: Defines event receiver functions (global or class instance level)
+- **Event names**: UNQUOTED dot-separated identifiers (user.input, not "user.input")
+- **⚠️ CRITICAL: `emit` ALWAYS requires object literal payload** - never simple strings, variables, or primitive values### Event Handling Patterns
+```cx
+// ✅ Class-Based Event Handlers (Auto-Registration)
 class Agent
 {
     name: string;
@@ -193,339 +804,272 @@ class Agent
     }
 }
 
-// Event emission (globally available) - FULLY OPERATIONAL
-emit "event.name", payload;
-emit "notification", { message: "Hello", timestamp: "now" };
-
-// ✅ NEW: Extended Event Name Grammar
-// Supports keywords: new, critical, assigned, tickets, tasks, support, dev, system, alerts
-emit support.tickets.new, { ticketId: "T-001", priority: "high" };
-emit dev.tasks.assigned, { taskId: "TASK-123", assignee: "developer" };
-emit system.critical, { server: "web-01", issue: "high memory usage" };
-```
-
-**CRITICAL SCOPING RULES:**
-- **`on`**: Defines event receiver functions (global or class instance level)
-- **`emit`**: Event emission - **globally available everywhere** (functions, classes, standalone code, event handlers)
-- **`if`**: Regular conditional logic - **used everywhere** for all conditionals
-- **Event Names**: **UNQUOTED** dot-separated identifiers with keyword support
-  - ✅ `on support.tickets.new (payload) { ... }`
-  - ✅ `emit dev.tasks.assigned, { taskId: "T-123" };`
-  - ✅ `on any.critical (payload) { ... }` - matches ALL namespace critical events
-
-#### Object and Array Literals
-```cx
-// Object literals
-var obj = {
-    property1: value1,
-    property2: value2,
-    "string key": value3
+// CRITICAL RULE: emit ALWAYS requires object literal - never simple values
+// ✅ CORRECT: Object literal required
+emit support.tickets.new, { 
+    ticketId: "T-001", 
+    priority: "high" 
 };
 
-// Array literals
-var arr = [item1, item2, item3];
+emit dev.tasks.assigned, { 
+    taskId: "TASK-123", 
+    assignee: "developer" 
+};
 
-// Object property access
-var value = obj.property1;
-var value2 = obj["string key"];
+emit system.critical, { 
+    server: "web-01", 
+    issue: "high memory usage" 
+};
 
-// Array indexing
-var element = arr[0];
+// ❌ INCORRECT: Simple values not allowed
+emit support.tickets.new, "T-001";        // COMPILE ERROR
+emit dev.tasks.assigned, payload.data;    // COMPILE ERROR  
+emit system.critical, this.name;          // COMPILE ERROR
 ```
 
-#### AI-Native Functions
+### Async Event Handler Patterns
 ```cx
-// Core AI functions with single argument
-var result = task("prompt");
-var analysis = reason("problem");
-var content = synthesize("requirements");
-var output = generate("specification");
-var embedding = embed("text");
-var adapted = adapt("content");
-
-// AI functions with options (second argument)
-var result = task("prompt", options);
-var processed = process("input", "context", options);
-
-// Service-based AI functions (Phase 4 Complete!)
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using imageGen from "Cx.AI.TextToImage";
-using embeddings from "Cx.AI.TextEmbeddings";
-using tts from "Cx.AI.TextToSpeech";
-using vectorDB from "Cx.AI.VectorDatabase";
-
-// Text generation with parameters
-var content = textGen.GenerateAsync("Write a story", {
-    temperature: 0.8,
-    maxTokens: 500
-});
-
-// Chat completion with context
-var response = chatBot.CompleteAsync("You are helpful", "Explain AI");
-
-// DALL-E 3 image generation
-var image = imageGen.GenerateImageAsync("Futuristic city", {
-    size: "1024x1024",
-    quality: "hd"
-});
-
-// Text embeddings for semantic search
-var vector = embeddings.GenerateEmbeddingAsync("AI programming language");
-
-// Text-to-Speech with MP3 pure memory streaming (zero temp files!)
-tts.SpeakAsync("Welcome to the future of AI programming!");
-
-// Vector Database for RAG workflows (100% COMPLETE!)
-var ingestResult = vectorDB.IngestTextAsync("Document content", "doc-id");
-var searchResult = vectorDB.AskAsync("What information is stored?");
-```
-
-#### Classes and Interfaces (Grammar Defined)
-```cx
-// Class declarations
-class ClassName
+// ✅ Async event handlers for AI service integration
+class AIAgent
 {
-    property: type;
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
     
-    constructor(param1: type)
+    name: string;
+    
+    constructor(config)
     {
-        this.property = param1;
+        this.name = config.name;
     }
     
-    function methodName()
+    // Async event handler with await operations
+    async on document.process (payload)
     {
-        body;
-    }
-}
-
-// Class with inheritance
-class ChildClass extends ParentClass
-{
-    body;
-}
-
-// Interface declarations
-interface InterfaceName
-{
-    methodName(): returnType;
-    property: type;
-}
-```
-
-#### Access Modifiers
-- `public` - accessible from anywhere
-- `private` - accessible only within the same class
-- `protected` - accessible within the class and its subclasses
-
-#### Special Keywords
-- `self` - function introspection keyword (grammar defined, compiler pending)
-- `new` - object instantiation (✅ FULLY OPERATIONAL)
-- `await` - asynchronous operation waiting (grammar defined, compiler pending)
-- `parallel` - parallel execution (✅ FULLY OPERATIONAL - multi-agent coordination working!)
-- `on` - event receiver definition: **global or class instance level** (✅ FULLY OPERATIONAL - event-driven architecture foundation)
-- `emit` - event emission: **globally available anywhere** (functions, classes, standalone code, event handlers) (✅ FULLY OPERATIONAL - event-driven architecture foundation)
-- `if` - conditional logic: **used everywhere** for all conditionals (✅ FULLY OPERATIONAL)
-- `using` - import statement (✅ FULLY OPERATIONAL)
-- `return` - function return (✅ FULLY OPERATIONAL)
-- `null` - null value (✅ FULLY OPERATIONAL)
-
-#### Import Statements
-```cx
-using ModuleName from "module-path";
-```
-
-#### Built-in Functions
-- `print(value)` - output to console
-
-## Common Syntax Errors and Best Practices
-
-### ❌ CRITICAL ERRORS TO AVOID
-
-### ✅ CORRECT CONDITIONAL PATTERNS
-
-#### Universal 'if' Usage (All Contexts)
-```cx
-// ✅ CORRECT: 'if' in regular functions
-function processRequest(request)
-{
-    if (request.priority == "high")
-    {
-        emit priority.request, request; // 'emit' is OK anywhere
-        return "Processing high priority";
-    }
-}
-
-// ✅ CORRECT: 'if' in standalone code
-var score = calculateScore();
-if (score > 0.8)
-{
-    emit high.score, { score: score };
-}
-
-// ✅ CORRECT: Use 'if' in standalone code
-var score = calculateScore();
-if (score > 0.8)
-{
-}
-
-// ✅ CORRECT: 'if' in event handlers too
-on data.received (payload)
-{
-    if (payload.isValid)
-    {
-        emit data.validated, payload;
-    }
-}
-```
-
-### ✅ CORRECT PATTERNS
-
-#### Event-Driven Conditional Logic
-```cx
-on "user.input" (payload)
-{
-    // Use 'if' for event-driven conditionals
-    if (payload.intent == "question")
-    {
-        emit "question.detected", payload;
-    }
-    
-    if (payload.sentiment < 0.3)
-    {
-        emit negative.sentiment, payload;
-    }
-}
-```
-
-#### Function-Level Conditional Logic
-```cx
-function analyzeData(data)
-{
-    // Use 'if' for function conditionals
-    if (data.length == 0)
-    {
-        return null;
-    }
-    
-    if (data.confidence > 0.9)
-    {
-        emit high.confidence.result, data; // 'emit' works anywhere
-        return data.result;
-    }
-    
-    return data.fallback;
-}
-```
-
-#### Class Methods with Event Integration
-```cx
-class DataProcessor
-{
-    threshold: number;
-    
-    constructor(threshold)
-    {
-        this.threshold = threshold;
-    }
-    
-    function process(data)
-    {
-        // Use 'if' in class methods
-        if (data.score > this.threshold)
+        try
         {
-            emit threshold.exceeded, { 
-                processor: this, 
-                data: data 
-            }; // 'emit' works in class methods too
-            return "processed";
+            print("Processing document: " + payload.documentId);
+            
+            // Sequential async operations
+            var summary = await textGen.GenerateAsync(
+                "Summarize: " + payload.content,
+                { maxTokens: 200 }
+            );
+            
+            var audioSummary = await tts.SpeakAsync(
+                "Document processed: " + summary
+            );
+            
+            // Emit completion event
+            emit document.completed, {
+                documentId: payload.documentId,
+                summary: summary,
+                processedBy: this.name
+            };
         }
+        catch (error)
+        {
+            print("Document processing failed: " + error);
+            
+            emit document.failed, {
+                documentId: payload.documentId,
+                error: error,
+                agent: this.name
+            };
+        }
+    }
+    
+    // Async event handler with conditional await
+    async on user.query (payload)
+    {
+        if (payload.requiresAI)
+        {
+            var response = await textGen.GenerateAsync(
+                "Answer: " + payload.question
+            );
+            
+            emit user.response, {
+                queryId: payload.queryId,
+                answer: response
+            };
+        }
+        else
+        {
+            // Synchronous response for simple queries
+            emit user.response, {
+                queryId: payload.queryId,
+                answer: "Simple response: " + payload.question
+            };
+        }
+    }
+    
+    // Async event handler with error handling and retries
+    async on ai.retry.needed (payload)
+    {
+        var maxRetries = 3;
+        var attempt = 0;
         
-        return "rejected";
-    }
-    
-    // Instance-level event receiver
-    on external.trigger (payload)
-    {
-        // Use 'if' in instance event handlers
-        if (payload.targetProcessor == this)
+        while (attempt < maxRetries)
         {
-            var result = this.process(payload.data);
-            emit processing.complete, result;
+            try
+            {
+                var result = await textGen.GenerateAsync(payload.prompt);
+                
+                emit ai.retry.success, {
+                    originalPayload: payload,
+                    result: result,
+                    attempts: attempt + 1
+                };
+                
+                return; // Success - exit retry loop
+            }
+            catch (error)
+            {
+                attempt++;
+                
+                if (attempt >= maxRetries)
+                {
+                    emit ai.retry.failed, {
+                        originalPayload: payload,
+                        finalError: error,
+                        totalAttempts: attempt
+                    };
+                }
+                
+                // Wait before retry
+                await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+            }
         }
     }
 }
 ```
 
----
-
-## CRITICAL SYNTAX RULE SUMMARY
-
-### Event-Driven Architecture Keywords - Scoping Rules
-
-| Keyword | Scope | Usage | Status |
-|---------|-------|-------|--------|
-| **`on`** | Global or Class Instance | Defines event receiver functions | ✅ OPERATIONAL |
-| **`emit`** | **Globally available** | Event emission - usable anywhere | ✅ OPERATIONAL |
-| **`if`** | **Everywhere** | Universal conditional logic | ✅ OPERATIONAL |
-
-### Memory Aid for Developers
+### Extended Event Name Grammar Support
+Keywords supported in event names: new, critical, assigned, tickets, tasks, support, dev, system, alerts
 
 ```cx
-// ✅ ALWAYS CORRECT PATTERNS
+// ✅ All these patterns work:
+on support.tickets.new (payload) { ... }
+on dev.tasks.assigned (payload) { ... }
+on system.critical (payload) { ... }
+on any.critical (payload) { ... }  // Wildcard matching
 
-// 1. Event handlers use 'if' for conditionals
-on event.name (payload)
+emit support.tickets.new, { ticketId: "T-001" };
+emit dev.tasks.assigned, { taskId: "TASK-123" };
+emit system.critical, { server: "web-01" };
+```
+
+## 🎯 Priority Capabilities Implementation Patterns
+
+### 1. Always-On Audio Processing
+```cx
+on live.audio (payload)  // Continuous listening capability
 {
-    if (condition) { /* event logic */ }
-}
-
-// 2. Functions and standalone code use 'if' for conditionals  
-function name() 
-{ 
-    if (condition) { /* regular logic */ } 
-}
-
-// 3. 'emit' works everywhere - functions, classes, events, standalone
-emit event.name, data; // Valid anywhere in CX code
-
-// 4. Class instances can have their own event receivers
-class Agent
-{
-    on message (payload) 
-    { 
-        if (payload.target == this) { /* instance event logic */ } 
+    var audioText = payload.transcript;
+    
+    // Voice activation detection
+    if (audioText == "aura on" || audioText == "AURA ON")
+    {
+        this.isAwake = true;
+        emit aura.system.activated, payload;
     }
 }
 ```
 
-### Phase 5 Status: EVENT-DRIVEN ARCHITECTURE ✅ BREAKTHROUGH COMPLETE
+### 2. Animal Personality Integration
+```cx
+function speakBeepBoop(message, isActivation)
+{
+    if (isActivation)
+    {
+        var animalSound = "[Wild Animal voice] BEEP-BOOP! " + message + " BEEP-BOOP!";
+        tts.SpeakAsync(animalSound);
+    }
+    else
+    {
+        var response = textGen.GenerateAsync("Respond as wild animal character");
+        tts.SpeakAsync(response);
+    }
+}
+```
 
-#### 🏆 MAJOR ACHIEVEMENT - Complete Event-Driven Architecture Operational
-- **Native `emit` Syntax**: `emit event.name, payload` - **WORKING PERFECTLY** ✅
-- **Class-Based Event Handlers**: `on event.name (payload) { ... }` inside classes ✅
-- **Auto-Registration**: Agents automatically register with namespace bus based on `on` handlers ✅
-- **Namespace Scoping**: Event names as namespaces with dot-notation routing ✅
-- **Wildcard Support**: `any.critical` matching ALL namespace critical events ✅
-- **Grammar Enhancement**: Extended eventNamePart to support keywords like 'new', 'critical', 'assigned' ✅
+### 3. Intelligent State Management
+```cx
+class AuraAgent
+{
+    isAwake: boolean;
+    inConversation: boolean;
+    
+    on environment.change (payload)
+    {
+        if (!this.isAwake) return;  // State-conditional processing
+        
+        // Only process when agent is active
+        this.processEnvironment(payload);
+    }
+}
+```
 
-#### ✅ COMPLETE - Event-Driven Foundation
-- Grammar implementation: **COMPLETE** ✅ (`on`, `emit`, `if` + extended keywords)
-- AST node generation: **COMPLETE** ✅  
-- IL compilation: **COMPLETE** ✅
-- Runtime event bus: **OPERATIONAL** ✅
-- Working demonstration: **FULLY OPERATIONAL** ✅ (`proper_event_driven_demo.cx`)
+### 4. Multi-Modal Coordination
+```cx
+// Audio always active, other modalities state-dependent
+on live.audio (payload)
+{
+    // Always processes audio input
+    this.processAudio(payload);
+}
 
-#### ✅ COMPLETE - Agent Auto-Registration System
-- **Instance Event Handlers**: `on` statements inside classes auto-register agents ✅
-- **Namespace-Based Routing**: Events routed by namespace patterns (support.*, dev.*, system.*) ✅
-- **Wildcard Registration**: `any.critical` registers for ALL namespace critical events ✅
-- **Zero Manual Registration**: No `RegisterNamespacedAgent()` calls needed ✅
+on presence.detected (payload)
+{
+    if (!this.isAwake) return;  // Only when active
+    this.processPresence(payload);
+}
 
-#### 🎯 NEXT PRIORITY - Enhanced Wildcard Matching & Cross-Namespace Routing
-- **Wildcard Event Delivery**: `any.critical` should receive `system.critical`, `alerts.critical`, etc.
-- **Cross-Namespace Patterns**: Advanced routing patterns for multi-agent coordination
-- **Dynamic Agent Management**: Runtime addition/removal of agents from event bus
-- **Event Bus Statistics**: Real-time monitoring of agent registrations and event flows
+on environment.change (payload)
+{
+    if (!this.isAwake) return;  // Only when active
+    this.processEnvironment(payload);
+}
+```
 
-**Strategic Impact**: CX Language is now a **true autonomous programming platform** where agents can be created with simple, intuitive syntax and operate with full AI capabilities.
+### 5. Event-Driven Architecture
+```cx
+// Complex agent interactions
+on aura.system.activated (payload)
+{
+    emit coordination.start, { agent: this.name };
+    this.beginAutonomousBehavior();
+}
+
+on coordination.start (payload)
+{
+    if (payload.agent != this.name)
+    {
+        // React to other agents activating
+        emit agent.acknowledgment, { responder: this.name };
+    }
+}
+```
+
+## 📋 Quick Implementation Checklist
+- ✅ **Agent Creation**: Use `agent ClassName()` for autonomous agents
+- ✅ **Class Service Injection**: Use `uses` statements at class scope (preferred)
+- ✅ **Async/Await**: Use `async function` and `await` for asynchronous operations
+- ✅ **AI Service Async**: Always await AI service calls (`await textGen.GenerateAsync()`)
+- ✅ **Async Constructors**: Use `async constructor()` for initialization requiring await
+- ✅ **Async Event Handlers**: Use `async on event.name` for asynchronous event processing
+- ✅ **Always-On Audio**: Implement `on live.audio` handlers that always process
+- ✅ **State Management**: Use boolean flags (`isAwake`, `inConversation`) for conditional processing
+- ✅ **Animal Personality**: Wild character voices with "BEEP-BOOP" acknowledgments
+- ✅ **Multi-Modal Coordination**: Audio always active, other senses state-dependent
+- ✅ **Event-Driven Flow**: Complex agent interactions via `emit` and `on` patterns
+- ✅ **Allman Braces**: Opening bracket on new line (mandatory)
+- ✅ **Single Object Constructor**: All constructors take one config parameter
+
+## 🚫 What's Not Supported
+- **`using` keyword**: Completely removed, use `uses` instead
+- **`parallel` keyword**: Removed - use async/await for concurrency
+- **K&R-style braces**: Must use Allman style
+- **Multiple constructor parameters**: Use single config object
+- **Quoted event names**: Use unquoted dot-notation
+- **String methods**: `.toLowerCase()`, `.indexOf()`, `.substring()` - Use basic string operations and comparisons instead
+- **JavaScript-style string methods**: CX uses basic string concatenation (`+`) and equality (`==`) only

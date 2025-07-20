@@ -1,0 +1,34 @@
+// Test simple field assignment without parameters
+
+class SimpleClass
+{
+    name: string;
+    
+    constructor(config)
+    {
+        print("Constructor: about to assign field");
+        this.name = "hardcoded";
+        print("Constructor: field assigned successfully");
+    }
+    
+    function getName()
+    {
+        print("getName: about to access field");
+        var result = this.name;
+        print("getName: field accessed successfully: " + result);
+        return result;
+    }
+}
+
+try
+{
+    print("Creating instance...");
+    var obj = new SimpleClass({ name: "test" });
+    print("Calling getName...");
+    var result = obj.getName();
+    print("Got result: " + result);
+}
+catch (error)
+{
+    print("Error: " + error);
+}

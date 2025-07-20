@@ -1,0 +1,87 @@
+
+// SIMPLE VOICE LISTENING TEST - Minimal Always-On Audio Processing
+// Demonstrates core capability: continuous listening until stop command
+// Based on your successful aura_target_scenario_demo.cx pattern
+
+class SimpleVoiceListener
+{
+    name: string;
+    isActive: boolean;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.isActive = true;
+        
+        print("🎤 " + this.name + " - Simple Voice Test Started");
+        print("📋 Say 'stop test' to end");
+        print("📋 Say anything else for echo response");
+        print("=====================================");
+        
+        // Initial audio confirmation
+        tts.SpeakAsync("Simple voice test ready! I'm listening for your voice.");
+    }
+    
+    // ALWAYS-ON AUDIO PROCESSING - Core capability demonstration
+    on live.audio (payload)
+    {
+        if (!this.isActive)
+        {
+            return; // Stop processing if deactivated
+        }
+        
+        var audioText = payload.toLowerCase();
+        print("🎤 Heard: " + payload);
+        
+        // STOP COMMAND - Test termination
+        if (audioText.includes("stop test"))
+        {
+            this.isActive = false;
+            
+            print("✅ Voice test completed - listener stopped");
+            tts.SpeakAsync("Voice test completed! Goodbye!");
+            
+            emit test.finished, this.name;
+            return;
+        }
+        
+        // ECHO TEST - Validate audio capture and TTS response
+        if (audioText.length > 2)
+        {
+            var response = "I heard you say: " + payload;
+            print("🔊 Responding: " + response);
+            tts.SpeakAsync(response);
+            
+            emit audio.echoed, payload;
+        }
+        else
+        {
+            print("🔇 Ignoring short audio input");
+        }
+    }
+}
+
+// Simple monitoring
+on test.finished (payload)
+{
+    print("📊 Test completed for agent: " + payload);
+}
+
+on audio.echoed (payload)  
+{
+    print("📈 Audio successfully echoed: " + payload);
+}
+
+// Initialize simple voice test
+print("🚀 STARTING SIMPLE VOICE LISTENING TEST");
+print("=====================================");
+
+var listener = agent SimpleVoiceListener("SimpleListener");
+
+print("🎤 Voice test is ACTIVE - start speaking!");
+print("📋 Commands:");
+print("   • Say anything - get echo response");  
+print("   • Say 'stop test' - end the test");
+print("=====================================");
+
+emit test.started, "Simple voice listening test initialized";

@@ -1,8 +1,6 @@
 // Working AI Services Demo - Aura CX Language  
 // Testing confirmed working AI capabilities
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
 
 print("=== AURA CX - WORKING AI SERVICES DEMO ===");
 

@@ -1,0 +1,63 @@
+// Priority #3: Minimal Agent State Management Debug
+// Testing compilation with simplified agent implementation
+
+
+// Minimal AuraAnimalAgent for debugging
+class AuraAnimalAgent
+{
+    name: string;
+    auraEnabled: boolean;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.auraEnabled = false;
+        print("🤖 " + this.name + " created!");
+    }
+    
+    // Basic voice synthesis
+    function speakBeepBoop(message)
+    {
+        var sound = "[Wild Animal voice] BEEP-BOOP! " + message + " BEEP-BOOP!";
+        tts.SpeakAsync(sound);
+    }
+    
+    // Always-On Audio Processing - Priority #1
+    on live.audio (payload)
+    {
+        print("📻 " + this.name + " received audio: " + payload);
+        
+        if (payload.includes("aura on"))
+        {
+            this.auraEnabled = true;
+            this.speakBeepBoop("ANIMAL AWAKE!");
+            print("✅ Aura system ACTIVATED!");
+            emit aura.system.activated, this.name;
+        }
+    }
+    
+    // State-Dependent Processing - Priority #3
+    on presence.detected (payload)
+    {
+        if (!this.auraEnabled)
+        {
+            return;
+        }
+        
+        print("👁️ " + this.name + " sees presence!");
+        this.speakBeepBoop("Someone here!");
+    }
+}
+
+print("🎯 PRIORITY #3: MINIMAL STATE MANAGEMENT DEBUG");
+print("==============================================");
+
+// Create autonomous agent
+var animal = agent AuraAnimalAgent("ANIMAL");
+
+print("🧪 Testing agent state management...");
+
+// Test voice activation
+emit live.audio, "aura on";
+
+print("✅ Minimal Priority #3 test complete!");

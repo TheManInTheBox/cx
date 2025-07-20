@@ -1,7 +1,5 @@
 // Test the exact same pattern as the failing debate demo but simpler
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 class TestAgent
 {

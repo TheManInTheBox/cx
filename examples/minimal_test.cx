@@ -1,5 +1,0 @@
-// Ultra minimal test
-print("Test 1");
-var message = "Hello";
-print("Test 2: " + message);
-print("Test complete");

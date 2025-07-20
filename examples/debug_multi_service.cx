@@ -1,6 +1,4 @@
 // Test multiple AI services with debug logging
-using textToSpeech from "Cx.AI.TextToSpeech";
-using chatBot from "Cx.AI.ChatCompletion";
 
 print("=== Multi-Service Debug Test ===");
 

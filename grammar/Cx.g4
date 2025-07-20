@@ -22,16 +22,22 @@ statement
     | emitStatement
     ;
 
-importStatement: 'using' IDENTIFIER 'from' STRING_LITERAL ';';
+// Import statement for CX modules
+importStatement: 'import' IDENTIFIER 'from' STRING_LITERAL ';';
+
+// Uses statement for dependency injection inside classes
+usesStatement: 'uses' IDENTIFIER 'from' dottedIdentifier ';';
+
+dottedIdentifier: IDENTIFIER ('.' IDENTIFIER)*;
 
 // Function declarations with optional async support
 functionDeclaration
     : accessModifier? 'async'? 'function' IDENTIFIER '(' parameterList? ')' ('->' type)? blockStatement
     ;
 
-// Class declarations with inheritance support
+// Class declarations with inheritance support (use : instead of implements)
 classDeclaration
-    : accessModifier? 'class' IDENTIFIER ('extends' IDENTIFIER)? ('implements' interfaceList)? classBody
+    : accessModifier? 'class' IDENTIFIER ('extends' IDENTIFIER)? (':' interfaceList)? classBody
     ;
 
 classBody: '{' classMember* '}';
@@ -41,6 +47,7 @@ classMember
     | methodDeclaration
     | constructorDeclaration
     | onStatement
+    | usesStatement
     ;
 
 fieldDeclaration: accessModifier? IDENTIFIER ':' type ('=' expression)? ';';
@@ -105,7 +112,6 @@ expression
     | expression '(' argumentList? ')'                  # FunctionCall
     | expression '[' expression ']'                     # IndexAccess
     | 'await' expression                                # AwaitExpression
-    | 'parallel' expression                             # ParallelExpression
     | ('!' | '-' | '+') expression                      # UnaryExpression
     | expression ('*' | '/' | '%') expression           # MultiplicativeExpression
     | expression ('+' | '-') expression                 # AdditiveExpression
@@ -146,7 +152,8 @@ type
 CLASS: 'class';
 INTERFACE: 'interface';
 EXTENDS: 'extends';
-IMPLEMENTS: 'implements';
+IMPORT: 'import';
+USES: 'uses';
 CONSTRUCTOR: 'constructor';
 PUBLIC: 'public';
 PRIVATE: 'private';
@@ -162,7 +169,7 @@ ON: 'on';
 EMIT: 'emit';
 AGENT: 'agent';
 
-// Thread context keyword - provides access to current thread context and state
+// Agent context keyword - provides access to current agent context and state within agent/class scope
 SELF: 'self';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;

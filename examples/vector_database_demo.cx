@@ -6,7 +6,6 @@ print("Enterprise RAG with Kernel Memory Integration");
 print("==============================================");
 
 // Using the new vector database service
-using vectorDb from "Cx.AI.Memory";
 
 try
 {

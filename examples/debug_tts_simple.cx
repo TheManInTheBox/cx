@@ -1,5 +1,4 @@
 // Simple debug test for TTS service
-using textToSpeech from "Cx.AI.TextToSpeech";
 
 print("=== Simple TTS Debug Test ===");
 print("Testing single TTS service call");

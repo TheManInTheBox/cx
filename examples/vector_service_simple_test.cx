@@ -1,7 +1,6 @@
 // Simple vector database service validation test
 // This test just checks if the service import works without invoking methods
 
-using memory from "Cx.AI.Memory";
 
 function simpleServiceTest()
 {

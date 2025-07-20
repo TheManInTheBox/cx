@@ -1,7 +1,6 @@
 // AI Service Test - Aura CX Language
 // Testing service-based AI integration
 
-using textGen from "Cx.AI.TextGeneration";
 
 print("=== AURA CX - AI SERVICE TEST ===");
 

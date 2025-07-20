@@ -1,7 +1,6 @@
 // CX Language - Event-Driven Agent Communication Demo
 // Demonstrating autonomous agents communicating through events
 
-using textGen from "Cx.AI.TextGeneration";
 
 // Advanced Agent Class with Event-Driven Communication
 class EventDrivenAgent

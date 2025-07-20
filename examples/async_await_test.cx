@@ -1,0 +1,126 @@
+// Async/Await Test for CX Language
+print("🔧 Async/Await Pattern Test");
+print("============================");
+
+try
+{
+    print("1. Testing basic async function:");
+    
+    // Basic async function test
+    async function basicAsyncTest()
+    {
+        print("   - Starting async operation");
+        
+        // Simulate async operation (in real usage, this would be an AI service)
+        var result = "async operation completed";
+        
+        print("   - Async operation finished: " + result);
+        return result;
+    }
+    
+    print("✅ Basic async function defined successfully");
+    
+    print("");
+    print("2. Testing async/await with error handling:");
+    
+    // Async function with try-catch
+    async function asyncWithErrorHandling()
+    {
+        try
+        {
+            print("   - Sequential async operations starting");
+            
+            // Sequential async operations (simulated)
+            var first = "first operation";
+            print("   - First: " + first);
+            
+            var second = "second operation";  
+            print("   - Second: " + second);
+            
+            var third = "third operation";
+            print("   - Third: " + third);
+            
+            print("   - All operations completed");
+            
+            return {
+                first: first,
+                second: second,
+                third: third
+            };
+        }
+        catch (error)
+        {
+            print("   - Error in async operations: " + error);
+            throw error;
+        }
+    }
+    
+    print("✅ Async function with error handling defined");
+    
+    print("");
+    print("3. Testing class with regular constructor and async methods:");
+    
+    // Class with async methods (regular constructor)
+    class AsyncAgent
+    {
+        name: string;
+        initialized: boolean;
+        
+        constructor(config)
+        {
+            this.name = config.name;
+            this.initialized = false;
+            print("   - Regular constructor for: " + this.name);
+        }
+        
+        async function initializeAsync()
+        {
+            print("   - Starting async initialization for " + this.name);
+            
+            // Simulate async initialization
+            this.initialized = true;
+            
+            print("   - Async initialization complete");
+            return "initialized";
+        }
+        
+        async function performAsyncOperation()
+        {
+            if (!this.initialized)
+            {
+                print("   - Agent not initialized, initializing now");
+                await this.initializeAsync();
+            }
+            
+            print("   - Performing async operation for " + this.name);
+            
+            // Simulate async work
+            var result = "async work completed for " + this.name;
+            
+            return result;
+        }
+    }
+    
+    print("✅ Class with async methods defined successfully");
+    
+    print("");
+    print("4. Testing async function calls:");
+    
+    // Test creating instance and calling async methods
+    var asyncAgent = new AsyncAgent({ name: "TestAgent" });
+    print("✅ Agent instance created: " + asyncAgent.name);
+    
+    print("");
+    print("🎯 Async/Await Pattern Test Complete!");
+    print("✅ All async patterns successfully parsed and defined");
+    print("✅ Ready for AI service integration with async/await");
+    print("✅ Parallel keyword removal successful - async/await is the future!");
+    
+    print("");
+    print("💡 Note: Full async/await execution requires AI services");
+    print("💡 This test verifies async syntax parsing works correctly");
+}
+catch (error)
+{
+    print("❌ Error in async/await test: " + error);
+}

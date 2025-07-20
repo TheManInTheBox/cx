@@ -1,5 +1,4 @@
 // Test for the new SpeakAsync method - let's hear it speak! (Fixed version)
-using textToSpeech from "Cx.AI.TextToSpeech";
 
 print("🎵 Testing TTS SpeakAsync - Let's hear it speak!");
 print("================================================");

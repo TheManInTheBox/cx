@@ -1,15 +1,6 @@
 // 🧪 Complete AI Services Test - All Available Services
 // Testing all registered AI services to see what's working
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using embeddings from "Cx.AI.TextEmbeddings";
-using imageGen from "Cx.AI.TextToImage";
-using imageAnalysis from "Cx.AI.ImageToText";
-using tts from "Cx.AI.TextToSpeech";
-using stt from "Cx.AI.AudioToText";
-using audioGen from "Cx.AI.TextToAudio";
-using realtime from "Cx.AI.Realtime";
 
 print("🔬 === COMPLETE AI SERVICES AUDIT ===");
 print("Testing all registered AI services...\n");

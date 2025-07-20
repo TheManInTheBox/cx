@@ -1,5 +1,4 @@
 // Test service call with object literal - matching working pattern
-using textGen from "Cx.AI.TextGeneration";
 
 print("🧪 Object Literal Service Call Test");
 print("===================================");

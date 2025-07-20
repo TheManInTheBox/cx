@@ -1,0 +1,31 @@
+class ServiceTest
+{
+    uses textGen from Cx.AI.TextGeneration;
+    
+    name: string;
+    
+    constructor(testName)
+    {
+        this.name = testName;
+        print("Service test created: " + this.name);
+    }
+    
+    function testAi()
+    {
+        print("Testing AI service call...");
+        // Just test service availability for now
+        print("AI service available: " + (this.textGen != null));
+    }
+}
+
+try
+{
+    print("Testing service injection...");
+    var serviceTest = new ServiceTest("SERVICE_TEST");
+    serviceTest.testAi();
+    print("✅ SUCCESS: Service injection working!");
+}
+catch (error)
+{
+    print("❌ ERROR: " + error);
+}

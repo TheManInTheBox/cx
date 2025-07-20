@@ -2,11 +2,6 @@
 // Testing all Week 1-2 AI services with live Azure OpenAI integration
 // NO SIMULATIONS - PRODUCTION SERVICES ONLY
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using embeddings from "Cx.AI.TextEmbeddings";
-using imageGen from "Cx.AI.TextToImage";
-using tts from "Cx.AI.TextToSpeech";
 
 print("🔥 === LIVE FUNCTIONAL TEST - ALL AI SERVICES ===");
 print("Testing ALL Week 1-2 objectives with real Azure OpenAI services");

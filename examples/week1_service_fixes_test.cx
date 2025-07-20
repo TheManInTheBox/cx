@@ -1,11 +1,6 @@
 // 🧪 Quick AI Service Test - Week 1-2 Progress Check
 // Testing the fixes for Image Generation, Speech services
 
-using textGen from "Cx.AI.TextGeneration";
-using chatBot from "Cx.AI.ChatCompletion";
-using embeddings from "Cx.AI.TextEmbeddings";
-using imageGen from "Cx.AI.TextToImage";
-using tts from "Cx.AI.TextToSpeech";
 
 print("🔬 === WEEK 1-2 AI SERVICE FIXES TEST ===");
 

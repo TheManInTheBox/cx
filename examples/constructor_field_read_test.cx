@@ -1,0 +1,26 @@
+class SimpleClass
+{
+    name: string;
+    
+    constructor(defaultName)
+    {
+        print("Constructor: about to assign field");
+        this.name = "TestName";
+        print("Constructor: field assigned successfully");
+        
+        // Try to read the field immediately in the constructor
+        print("Constructor: reading field immediately:");
+        print(this.name);
+    }
+}
+
+try
+{
+    print("Creating instance...");
+    var obj = new SimpleClass("unused");
+    print("Instance created successfully!");
+}
+catch (error)
+{
+    print("Error: " + error);
+}

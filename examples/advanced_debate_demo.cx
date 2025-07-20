@@ -4,8 +4,6 @@
 //              strengths of CX's agentic programming model and its current limitations,
 //              particularly the need for a fully implemented event bus and true parallelism.
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 // --- Agent Definition ---
 // Represents a participant in the debate, with a specific perspective.

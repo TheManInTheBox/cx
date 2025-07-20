@@ -1,8 +1,6 @@
 // 🔧 EMBEDDING MODEL UPGRADE TEST - text-embedding-3-small
 // Testing the upgrade from ada-002 to 3-small for better performance
 
-using vectorDB from "Cx.AI.VectorDatabase";
-using embeddings from "Cx.AI.TextEmbeddings";
 
 print("🔧 EMBEDDING MODEL UPGRADE TEST");
 print("===============================");

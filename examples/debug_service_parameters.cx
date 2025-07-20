@@ -1,5 +1,3 @@
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 print("Testing service availability...");
 print("textGen type: " + textGen);

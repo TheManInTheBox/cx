@@ -1,8 +1,6 @@
 // CX Language - Autonomous Agent Architecture Working Demo
 // Event-driven agents using current CX syntax capabilities
 
-using textGen from "Cx.AI.TextGeneration";
-using tts from "Cx.AI.TextToSpeech";
 
 // =============================================================================
 // AGENT CLASS - DESIGNED FOR AUTONOMOUS BEHAVIOR

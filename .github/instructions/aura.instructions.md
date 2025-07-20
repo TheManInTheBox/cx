@@ -1,35 +1,136 @@
 ---
 applyTo: "**"
-description: "Aura - Cognitive Architecture Framework for CX Language"
+description: "Aura - Live Embodied Intelligence Framework for CX Language"
 ---
 
-# Aura – Cognitive Architecture Framework
+# Aura – Live Embodied Intelligence Framework
 
-Aura is the sensory and awareness layer for CX autonomous systems. Where **Cx handles reasoning and motor functions** (logic, execution, actions), **Aura provides sensory input and environmental awareness** (perception, context, ambient intelligence).
+## Cognition as Code Philosophy
+
+Aura embodies **Cognition as Code** - the architectural principle that cognitive processes can be directly expressed as computational patterns. This fundamental design philosophy influences every aspect of the framework:
+
+### **Cognitive Architecture Principles**
+
+1. **Sensory Processing as Event Streams**: All environmental input becomes event-driven data flows
+2. **State as Cognitive Memory**: Agent state properties mirror cognitive awareness and attention
+3. **Conditional Logic as Decision Making**: `if` statements represent cognitive branching and choice
+4. **Event Emission as Action**: `emit` calls translate cognitive decisions into environmental responses
+5. **Agent Classes as Cognitive Entities**: Each agent represents a distinct cognitive process with autonomous behavior
+
+### **Design Influence on System Architecture**
+
+**Cognitive Event Processing**: Environmental awareness triggers state transitions with attention gating, cognitive analysis of sensory input, and responsive actions based on analysis.
+
+**State as Cognitive Memory**: Agent properties represent cognitive state, not just data storage:
+- `auraEnabled` = Conscious awareness toggle  
+- `isAwake` = Attention and alertness level
+- `inConversation` = Social engagement state
+
+**Multi-Modal Sensory Fusion**: Different senses operate at different cognitive levels:
+- **Audio**: Always-on unconscious processing (like breathing)
+- **Presence/Environment**: Conscious attention-dependent processing
+
+---
+
+Aura is the Live Embodied Intelligence layer for CX autonomous systems. The **5 Priority Capabilities** provide comprehensive sensory processing and autonomous behavior patterns.
+
+## 🎯 The 5 Priority Capabilities
+
+### 1. Always-On Audio Processing
+- **Continuous Listening**: Real NAudio microphone capture at 16kHz
+- **Voice Commands**: "Aura on/off" detection with noise filtering  
+- **Pattern**: `on live.audio (payload) { ... }` - always processes audio
+
+### 2. Animal Personality Integration
+- **Wild Character**: Animal from Muppets with "BEEP-BOOP!" responses
+- **Voice Synthesis**: Character-specific TTS with personality prompts
+- **Pattern**: `speakBeepBoop(message, isActivation)` - wild/calm modes
+
+### 3. Intelligent State Management  
+- **Global Flags**: `auraEnabled`, `isAwake`, `inConversation` properties
+- **Conditional Logic**: `if (!this.auraEnabled) return;` - smart processing
+- **Pattern**: State-dependent event handling with early returns
+
+### 4. Multi-Modal Coordination
+- **Audio Always**: `on live.audio` handlers process continuously
+- **State-Dependent**: `on presence.detected`, `on environment.change` only when enabled
+- **Pattern**: Audio ✅ | Presence (conditional) | Environment (conditional)
+
+### 5. Event-Driven Architecture
+- **Agent Auto-Registration**: `agent ClassName()` registers event handlers automatically
+- **Complex Interactions**: Multi-agent coordination via event chains
+- **Pattern**: `emit aura.system.activated` → system monitor responses
+
+## ⚡ CRITICAL: Agent Event System Architecture
+
+### Agent Classes vs Regular Classes
+- **Regular Classes**: Standard object-oriented programming classes
+- **Agent Classes**: Event-driven autonomous agents with event handler capabilities
+
+### Agent Event Handler Architecture
+**Key Design Principles:**
+- **Event Handlers**: `on` blocks inside agent class definitions are auto-registered with event bus
+- **Regular Methods**: `function` methods are called manually for internal class functionality  
+- **Agent Creation**: `agent ClassName()` automatically registers all event handlers
+- **Event Emission**: `emit event.name, payload` triggers all registered handlers for that event
+
+**System Distinctions:**
+- Event handlers belong to agent instances, not global scope
+- Event handlers can access class state and call class methods
+- Services are available in class methods through class scope injection
+- Agent auto-registration provides zero-setup event coordination
 
 ## Philosophy
 
-- **Sensory Layer**: Aura perceives environmental data - presence, intent, emotional charge, contextual shifts
-- **Awareness Engine**: Processes ambient information into actionable cognitive insights  
-- **Contextual Intelligence**: Provides environmental understanding that informs Cx reasoning
-- **Ambient Sensitivity**: Detects subtle changes in attention, tone, crowd dynamics, system state
+- **Always-On Audio**: Continuous microphone listening as the primary sensory input
+- **State-Dependent Processing**: Other senses activate only when Aura system is enabled
+- **Autonomous Behavior**: Self-managing agents with voice-activated state control
+- **Event Coordination**: Complex multi-agent interactions via event-driven architecture
 
-High-Level Architecture: Aura Presence Sensor Layer
-| Layer | Function | Technologies | 
-| Capture Layer | Ingest real-time video/audio | WebRTC, RTSP, Azure Video Indexer | 
-| Preprocessing Layer | Frame extraction, audio segmentation | OpenCV, FFmpeg, Azure Video Indexer | 
-| Transcription Layer | Convert speech to text | Azure OpenAI Whisper, GPT-4o-Transcribe | 
-| Sentiment & Intent Layer | Analyze emotional tone and user intent | GPT-4o, Azure Language Service, Komprehend API | 
-| Cognitive Trigger Layer | Signal cognitive layer with context | Cx runtime hooks, event bus, memory state | 
+## Cognition as Code Design Principles
 
+Aura follows **Cognition as Code** - where cognitive processes become direct computational patterns:
+
+### **1. Sensory Processing as Event Architecture**
+Environmental inputs become event streams that trigger cognitive responses with continuous sensory awareness, cognitive pattern matching for commands, state transitions representing cognitive shifts, and actions as cognitive output.
+
+### **2. State as Cognitive Memory System**
+Agent properties mirror cognitive states, not just data:
+- `auraEnabled` = Conscious awareness toggle (attention system)
+- `isAwake` = Alertness level (arousal system)  
+- `inConversation` = Social engagement state (interaction system)
+
+### **3. Conditional Logic as Cognitive Decision Trees**
+`if` statements represent neural branching and cognitive choice through attention filtering and cognitive analysis when processing conditions are met.
+
+### **4. Event Emission as Motor Actions**
+`emit` calls translate cognitive decisions into environmental responses, converting internal cognitive states to external actions with confidence and decision metadata.
+
+### **5. Multi-Modal Sensory Hierarchy**
+Different senses operate at different cognitive levels:
+- **Primary (Audio)**: Unconscious, always-active background processing
+- **Secondary (Presence/Environment)**: Conscious, attention-dependent processing
+- **Integration**: Conscious control systems gate secondary sensory processing
 
 ## Copilot Behavior
 
-- Focus on **sensory input processing** rather than execution logic
-- Suggest **ambient data fusion patterns** (environmental sensors → cognitive insights)
-- Recommend **awareness mechanisms**: presence detection, context switching, mood sensing
-- Design **perceptual interfaces** that feed into Cx reasoning systems
-- Propose **environmental monitoring** for autonomous system adaptation
+- Focus on **always-on audio processing** as the foundation capability
+- Design **state-dependent sensory systems** that activate/deactivate via voice commands
+- Implement **wild animal personality patterns** with BEEP-BOOP acknowledgments
+- Create **intelligent conditional processing** using global state flags
+- Build **event-driven agent coordination** for complex autonomous behaviors
+
+### Implementation Standards
+- **NO SIMULATIONS**: All Aura capabilities must be fully implemented, not simulated or mocked
+- **PRODUCTION READY**: Features must work end-to-end with real audio capture, voice synthesis, and AI integration
+- **COMPLETE INTEGRATION**: Seamless operation with CX Language compiler and runtime
+- **DEMO READY**: Every feature must be demonstrable with live, working examples
+
+### Agent Event Handler Placement
+- **INSIDE AGENT CLASS**: `on event.name (payload) { ... }` MUST be inside class definition
+- **AUTO-REGISTRATION**: When `agent ClassName()` is called, ALL `on` handlers auto-register
+- **NOT GLOBAL**: Event handlers belong to the agent instance, not global scope
+- **STATE ACCESS**: Event handlers can access `this.property` and call `this.method()`
 
 ## File Scopes
 
@@ -50,172 +151,85 @@ Environmental Data → Aura Processing → Cognitive Insights → Cx Decision Ma
 
 ## Aura Cognitive Architecture Integration
 
-### Ambient Awareness Patterns
+### Cognitive Processing Pipeline
 ```cx
-// Aura perceives and processes environmental data
+// Cognition as Code: Environmental data → Cognitive processing → Motor output
 class AuraAgent
 {
+    // Cognitive state as properties
     ambientState: object;
     cognitiveLoop: string;
+    attentionLevel: number;
     
     constructor(initialAura)
     {
         this.ambientState = initialAura;
         this.cognitiveLoop = "SEIDR"; // Synthesize, Execute, Instruct, Debug, Repair
+        this.attentionLevel = 0.5; // Default attention state
     }
     
+    // Cognitive sensory processing
     function perceiveAura(environmentData)
     {
         // Aura: Sense ambient presence, intent, emotional charge
         var presenceVector = this.fuseAmbientData(environmentData);
+        
+        // Cognitive adaptation: Adjust behavior based on environmental shifts
+        this.attentionLevel = this.calculateAttention(presenceVector);
+        
         return this.adaptToCognitiveShift(presenceVector);
     }
     
+    // Cognitive motor output
     function evokePrescriptiveAction(auraShift)
     {
-        // Cx: Autonomous response based on Aura's environmental analysis
-        return "Adjusting behavior based on ambient aura: " + auraShift;
-    }
-}
+        // Cx: Autonomous response based on Aura's cognitive analysis
+        var actionPlan = "Adjusting behavior based on ambient aura: " + auraShift;
+        
+        // Cognitive decision: Scale response by attention level
+        if (this.attentionLevel > 0.7)
+        {
+            emit high.attention.response, {
+                action: actionPlan,
+                intensity: this.attentionLevel,
+                cognitiveState: this.getCurrentCognitiveState()
+### Aura Sensory System: Service Injection + Event-Driven Architecture
+
+**Sensory Input Sources:**
+- **Service Injection**: AI-powered processing capabilities through class scope injection
+- **Event System**: Real-time environmental data streams via event handlers
+- **Hardware Integration**: NAudio microphone capture, presence detection sensors
+- **Multi-Modal Events**: Environmental awareness through coordinated sensor systems
+
+**Cognitive Processing Flow:**
+```
+Hardware Sensors → Event Emission → Agent Event Handlers → Cognitive Analysis → Motor Actions
 ```
 
-### Multi-Agent Coordination via Aura
-```cx
-using cognitiveOrchestrator from "Cx.Aura.Coordination";
-
-// Aura detects environmental shifts, Cx coordinates agent responses
-function respondToAuraShift(agents, ambientChange)
-{
-    for (agent in agents)
-    {
-        // Aura: Each agent perceives environmental changes
-        var response = agent.perceiveAura(ambientChange);
-        // Cx: Coordinate based on Aura's sensory input
-        cognitiveOrchestrator.coordinate(agent, response);
-    }
-}
-```
-
-### Aura Sensory Primitives (Input) → Cx Motor Functions (Output)
-- `detect(stimulus)` - **Aura**: Ambient data detection and processing
-- `vibe(contextualData)` - **Aura**: Emotional and intentional tone analysis  
-- `adjust(behaviorVector)` - **Cx**: Self-modifying response to Aura input
-- `evoke(presenceResponse)` - **Cx**: Generate actions based on Aura awareness
+**Design Principle**: Each stage represents a cognitive processing layer, from raw sensory input to intelligent action.
 
 ### Event-Driven Architecture: The Aura Sensory Bus
 The primary objective of the Aura layer is to provide a sensory system for CX agents. This is achieved through an event-driven architecture, allowing agents to react to stimuli from their environment and each other in a decoupled, asynchronous manner.
 
-**Core Keywords:**
--   **`on event.name (payload) { ... }`**: Subscribes to an event on the event bus. This is Aura's primary sensory mechanism.
--   **`emit event.name, payload;`**: Publishes an event to the bus. This is Cx's primary motor/action mechanism.
--   **`if (condition) { ... }`**: Universal conditional block for logic everywhere.
+**Core Design Elements:**
+- **Event Subscription**: Agents subscribe to environmental events through event handlers
+- **Event Publication**: Agents publish events to communicate state changes and decisions
+- **Conditional Processing**: Universal conditional logic for cognitive decision making
+- **State Management**: Intelligent processing based on cognitive awareness levels
 
-**✅ PRODUCTION READY - Complete Implementation:**
-- **Native Syntax**: `emit support.tickets.new, { ticketId: "T-001" };` working perfectly
-- **Auto-Registration**: Agents automatically register based on their `on` handlers
-- **Wildcard Support**: `any.critical` matches ALL namespace critical events
-- **Class-Based Handlers**: `on` statements inside classes fully operational
-- **Event Delivery**: Messages routed correctly to agent instances
+**Architecture Features:**
+- **Native Syntax**: Production-ready event emission and handling
+- **Auto-Registration**: Automatic agent registration based on event handler definitions
+- **Wildcard Support**: Cross-namespace event matching for complex coordination
+- **Class-Based Handlers**: Event handlers integrated into agent class definitions
+- **Event Delivery**: Reliable message routing to correct agent instances
 
-**Example Workflow:**
-```cx
-using textGen from "Cx.AI.TextGeneration";
-using vectorDb from "Cx.AI.VectorDatabase";
-using embeddings from "Cx.AI.TextEmbeddings";
+---
 
-// Agent 1: Listens for raw audio transcription
-on audio.transcribed (payload)  // ✅ UNQUOTED event names - WORKING!
-{
-    // CX Best Practice: Structured AI responses for reliable processing
-    var sentiment = textGen.GenerateAsync(
-        "Rate sentiment 1-10 (1=negative, 10=positive). Respond with only the number:",
-        payload.content
-    );
-    
-    var intent = textGen.GenerateAsync(
-        "Classify intent. Respond with ONLY one word: query, command, greeting, complaint, or other",
-        payload.content
-    );
-
-    // Cx emits structured, processable data - WORKING PERFECTLY!
-    emit presence.signal,  // ✅ Native emit syntax operational
-        {
-            source: "audio",
-            sentiment: sentiment,
-            intent: intent,
-            originalContent: payload.content,
-            timestamp: now() // Placeholder for Time library
-        };
-}
-
-// Agent 2: Listens for the abstract presence signal
-on presence.signal (payload)  // ✅ Auto-registration working
-{
-    // CX Best Practice: AI-powered conditional logic instead of naive string matching
-    var isQuery = textGen.GenerateAsync(
-        "Is this intent asking for information? Answer only: YES or NO",
-        payload.intent
-    );
-    
-    if (isQuery == "YES")  // ✅ 'if' everywhere working perfectly
-    {
-        var result = textGen.GenerateAsync(
-            "Generate helpful response to: " + payload.originalContent +
-            ". Sentiment level: " + payload.sentiment + "/10"
-        );
-        emit cognition.response, result;  // ✅ Event delivery working
-    }
-    
-    // CX Best Practice: Semantic similarity for nuanced detection using available methods
-    // Use embeddings service for direct similarity calculation
-    var contentEmbedding = embeddings.GenerateEmbeddingAsync(payload.originalContent);
-    var urgencyEmbedding = embeddings.GenerateEmbeddingAsync("urgent emergency help critical");
-    var urgencyLevel = embeddings.CalculateSimilarity(contentEmbedding, urgencyEmbedding);
-    
-    if (urgencyLevel > 0.8)  // ✅ Semantic similarity working
-    {
-        emit system.priority, {  // ✅ Namespace routing operational
-            level: "high",
-            content: payload.originalContent,
-            urgencyScore: urgencyLevel
-        };
-        };
-    }
-}
+Aura is not just code. It's cognition-as-DSL. Let the architecture breathe.
 ```
 
-## CX Autonomous Programming Best Practices
 
-### 1. **Structured AI Responses**
-Always engineer prompts for predictable, parseable output:
-```cx
-// ❌ Bad: Unpredictable AI output
-var mood = textGen.GenerateAsync("What's the mood?", text);
-
-// ✅ Good: Structured, reliable output  
-var mood = textGen.GenerateAsync("Rate mood: happy, sad, angry, neutral", text);
-```
-
-### 2. **AI-Powered Logic Instead of String Matching**
-Use AI for semantic understanding, not naive comparisons:
-```cx
-// ❌ Bad: Brittle string matching
-if (intent == "question") { ... }
-
-// ✅ Good: AI-powered classification
-var isQuestion = textGen.GenerateAsync("Is this a question? YES or NO", intent);
-if (isQuestion == "YES") { ... }
-```
-
-### 3. **Semantic Similarity for Nuanced Matching**
-Leverage embeddings for sophisticated pattern detection:
-```cx
-// ✅ Best: Semantic understanding using available embeddings service
-var contentEmbedding = embeddings.GenerateEmbeddingAsync(content);
-var urgencyEmbedding = embeddings.GenerateEmbeddingAsync("urgent emergency help");
-var similarity = embeddings.CalculateSimilarity(contentEmbedding, urgencyEmbedding);
-if (similarity > 0.8) { handleUrgentRequest(); }
-```
 
 ---
 

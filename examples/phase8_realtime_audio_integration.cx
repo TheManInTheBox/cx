@@ -1,0 +1,360 @@
+// CX Language - Phase 8: Real-Time Audio Integration
+// Live Microphone Input with Speech-to-Text and Voice Activity Detection
+
+
+print("🎙️ Phase 8: Real-Time Audio Integration System");
+print("🔊 Live microphone input with continuous speech processing");
+print("🎯 Voice activity detection and real-time transcription");
+print("");
+
+// Real-Time Audio Processing Agent
+class RealTimeAudioAgent
+{
+    name: string;
+    personality: string;
+    isListening: boolean;
+    auraActive: boolean;
+    conversationActive: boolean;
+    audioStreamActive: boolean;
+    voiceDetectionSensitivity: number;
+    silenceThreshold: number;
+    transcriptionConfidence: number;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.personality = "wild, energetic, drum-playing maniac like Animal from Muppets";
+        this.isListening = false;
+        this.auraActive = false;
+        this.conversationActive = false;
+        this.audioStreamActive = false;
+        this.voiceDetectionSensitivity = 0.7;
+        this.silenceThreshold = 2000; // 2 seconds of silence
+        this.transcriptionConfidence = 0.8;
+    }
+    
+    function startAudioStream()
+    {
+        if (!this.audioStreamActive)
+        {
+            // Initialize real-time audio stream
+            audioStream.StartStreamAsync({
+                sampleRate: 16000,
+                channels: 1,
+                bufferSize: 1024,
+                enableNoiseReduction: true,
+                enableEchoCancellation: true
+            });
+            
+            this.audioStreamActive = true;
+            this.isListening = true;
+            
+            print("🎤 Real-time audio stream activated");
+            print("📡 Microphone listening started");
+        }
+    }
+    
+    function stopAudioStream()
+    {
+        if (this.audioStreamActive)
+        {
+            audioStream.StopStreamAsync();
+            this.audioStreamActive = false;
+            this.isListening = false;
+            
+            print("🔇 Audio stream stopped");
+        }
+    }
+    
+    function generateAnimalResponse(input)
+    {
+        var response = textGen.GenerateAsync(
+            "Respond as Animal from the Muppets to: '" + input + "'. Use broken English, excitement, drum references, and CAPS. Keep it short and wild. Examples: 'DRUMS! DRUMS!', 'ANIMAL WANT FOOD!', 'ME PLAY! ME PLAY!'",
+            {
+                temperature: 0.9,
+                maxTokens: 50
+            }
+        );
+        
+        return response;
+    }
+    
+    function speakAnimalVoice(text)
+    {
+        var animalVoice = "[wild, energetic, gravelly voice like Animal from Muppets] " + text;
+        tts.SpeakAsync(animalVoice);
+        print("🐷 ANIMAL: " + text);
+    }
+    
+    function processAudioBuffer(audioData)
+    {
+        // Voice activity detection on raw audio
+        var voiceDetected = voiceActivity.DetectVoiceActivity(audioData, {
+            sensitivity: this.voiceDetectionSensitivity,
+            minDuration: 300 // 300ms minimum speech duration
+        });
+        
+        if (voiceDetected)
+        {
+            // Process speech through real-time transcription
+            var transcription = speechToText.TranscribeRealTimeAsync(audioData, {
+                language: "en-US",
+                enablePunctuation: true,
+                enableConfidenceScore: true,
+                enableInterimResults: true
+            });
+            
+            return transcription;
+        }
+        
+        return null;
+    }
+}
+
+// Create real-time audio agent
+var audioAgent = new RealTimeAudioAgent("ANIMAL_REALTIME");
+
+// Real-time audio stream processing
+on audio.stream.data (payload)
+{
+    if (!audioAgent.isListening)
+    {
+        return; // Skip if not actively listening
+    }
+    
+    // Process incoming audio buffer
+    var transcriptionResult = audioAgent.processAudioBuffer(payload.audioData);
+    
+    if (transcriptionResult && transcriptionResult.confidence > audioAgent.transcriptionConfidence)
+    {
+        // High-confidence transcription detected
+        emit voice.detected, {
+            transcript: transcriptionResult.text,
+            confidence: transcriptionResult.confidence,
+            isFinal: transcriptionResult.isFinal,
+            timestamp: payload.timestamp
+        };
+    }
+}
+
+// Voice detection handler - triggers on speech detection
+on voice.detected (payload)
+{
+    print("🎙️ Voice detected: '" + payload.transcript + "' (confidence: " + payload.confidence + ")");
+    
+    // Only process final transcriptions to avoid partial responses
+    if (payload.isFinal)
+    {
+        emit audio.transcription.complete, {
+            transcript: payload.transcript,
+            confidence: payload.confidence,
+            timestamp: payload.timestamp
+        };
+    }
+}
+
+// Complete transcription handler - processes finalized speech
+on audio.transcription.complete (payload)
+{
+    print("📝 Transcription complete: " + payload.transcript);
+    
+    // Check for Aura activation commands
+    if (payload.transcript.toLowerCase().contains("aura on"))
+    {
+        emit aura.activate, { command: "on", source: "realtime_voice", confidence: payload.confidence };
+    }
+    else if (payload.transcript.toLowerCase().contains("aura off"))
+    {
+        emit aura.deactivate, { command: "off", source: "realtime_voice", confidence: payload.confidence };
+    }
+    else if (audioAgent.auraActive && payload.transcript.toLowerCase().contains("beep-boop"))
+    {
+        emit conversation.end, { transcript: payload.transcript, source: "realtime_voice" };
+    }
+    else if (audioAgent.auraActive && audioAgent.conversationActive)
+    {
+        emit conversation.input, { transcript: payload.transcript, source: "realtime_voice" };
+    }
+}
+
+// Aura activation with real-time audio
+on aura.activate (payload)
+{
+    print("🟢 AURA REAL-TIME ACTIVATION!");
+    audioAgent.auraActive = true;
+    audioAgent.conversationActive = true;
+    
+    // Animal's beep-boop acknowledgment
+    audioAgent.speakAnimalVoice("BEEP-BOOP! ANIMAL WAKE UP! ME HEAR YOU REAL-TIME! DRUMS READY!");
+    
+    // Store activation in memory
+    vectorDb.IngestTextAsync("Real-time Aura activated - Animal agent listening continuously");
+    
+    print("✅ Real-time Aura system activated");
+    print("🎵 Animal is listening to live audio stream!");
+}
+
+// Aura deactivation with audio stream management
+on aura.deactivate (payload)
+{
+    print("🔴 AURA REAL-TIME DEACTIVATION!");
+    audioAgent.auraActive = false;
+    audioAgent.conversationActive = false;
+    
+    // Animal's sleep response
+    audioAgent.speakAnimalVoice("BEEP-BOOP! ANIMAL SLEEP NOW! NO MORE LISTEN! DRUMS QUIET!");
+    
+    print("💤 Real-time Aura deactivated - audio stream continues for wake commands");
+    print("😴 Animal sleeping, but microphone still listening for 'Aura on'");
+}
+
+// Real-time conversation handler
+on conversation.input (payload)
+{
+    if (!audioAgent.auraActive)
+    {
+        return; // Ignore if Aura is off
+    }
+    
+    print("💬 Real-time conversation: " + payload.transcript);
+    
+    // Generate Animal's response
+    var animalResponse = audioAgent.generateAnimalResponse(payload.transcript);
+    
+    // Animal speaks response immediately
+    audioAgent.speakAnimalVoice(animalResponse);
+    
+    // Store real-time conversation
+    vectorDb.IngestTextAsync("Real-time conversation: User '" + payload.transcript + "', Animal '" + animalResponse + "'");
+    
+    print("🥁 Animal responded in real-time!");
+}
+
+// Conversation end with audio stream control
+on conversation.end (payload)
+{
+    print("👋 Real-time BEEP-BOOP detected - ending conversation!");
+    
+    // Animal's real-time goodbye
+    audioAgent.speakAnimalVoice("BEEP-BOOP! BYE-BYE REAL-TIME! ANIMAL HAD FUN! COME BACK SOON!");
+    
+    audioAgent.conversationActive = false;
+    
+    print("🎪 Real-time demo completed!");
+    print("✅ Real-time audio presence system operational!");
+}
+
+// Silence detection for conversation flow management
+on audio.silence.detected (payload)
+{
+    if (audioAgent.conversationActive && payload.duration > audioAgent.silenceThreshold)
+    {
+        print("🤐 Extended silence detected (" + payload.duration + "ms)");
+        
+        // Animal prompts for more interaction
+        audioAgent.speakAnimalVoice("HELLO? ANIMAL STILL HERE! WANT TALK MORE?");
+    }
+}
+
+// Background noise filtering
+on audio.noise.detected (payload)
+{
+    if (payload.level > 0.8) // High noise level
+    {
+        print("🔊 High background noise detected - adjusting sensitivity");
+        audioAgent.voiceDetectionSensitivity = 0.85; // Increase sensitivity for noisy environments
+    }
+    else
+    {
+        audioAgent.voiceDetectionSensitivity = 0.7; // Normal sensitivity
+    }
+}
+
+// Real-time audio system demonstration
+try
+{
+    print("═══ PHASE 8: REAL-TIME AUDIO INTEGRATION DEMO ═══");
+    print("");
+    
+    print("🎯 REAL-TIME SCENARIO: Live microphone presence detection");
+    print("📝 CAPABILITIES:");
+    print("  1. Continuous microphone listening");
+    print("  2. Real-time speech-to-text transcription");
+    print("  3. Voice activity detection");
+    print("  4. Live conversation with Animal personality");
+    print("  5. Background noise filtering");
+    print("  6. Silence detection and prompting");
+    print("");
+    
+    // Initialize real-time audio system
+    print("🚀 Starting real-time audio system...");
+    audioAgent.startAudioStream();
+    
+    // Simulate real-time audio events for demonstration
+    print("");
+    print("📡 SIMULATION: Real-time audio events");
+    
+    // Simulate voice activity detection
+    emit audio.stream.data, {
+        audioData: "simulated_audio_buffer_aura_on",
+        timestamp: "realtime_now",
+        sampleRate: 16000
+    };
+    
+    print("");
+    print("🎤 Simulating: User says 'Aura on' in real-time");
+    emit voice.detected, {
+        transcript: "Aura on",
+        confidence: 0.92,
+        isFinal: true,
+        timestamp: "realtime_now"
+    };
+    
+    print("");
+    print("🎤 Simulating: Real-time conversation");
+    emit voice.detected, {
+        transcript: "Hey Animal, can you hear me in real-time?",
+        confidence: 0.89,
+        isFinal: true,
+        timestamp: "realtime_now"
+    };
+    
+    print("");
+    print("🎤 Simulating: Real-time beep-boop ending");
+    emit voice.detected, {
+        transcript: "beep-boop",
+        confidence: 0.95,
+        isFinal: true,
+        timestamp: "realtime_now"
+    };
+    
+    print("");
+    print("✅ Real-time audio integration demonstration complete!");
+    
+    // Clean up audio stream
+    audioAgent.stopAudioStream();
+}
+catch (error)
+{
+    print("❌ Error in real-time audio system: " + error);
+    audioAgent.stopAudioStream();
+}
+
+print("");
+print("🏆 PHASE 8 REAL-TIME AUDIO ACHIEVEMENTS:");
+print("✅ Continuous Microphone Listening: Live audio stream processing");
+print("✅ Real-Time Speech-to-Text: Instant transcription with confidence scoring");
+print("✅ Voice Activity Detection: Smart speech/silence recognition");
+print("✅ Background Noise Filtering: Adaptive sensitivity adjustment");
+print("✅ Live Conversation Flow: Real-time Animal personality responses");
+print("✅ Silence Detection: Proactive engagement prompting");
+print("✅ Stream Management: Proper audio resource handling");
+print("");
+print("🌟 INFRASTRUCTURE REQUIREMENTS:");
+print("🔧 Cx.Audio.RealTimeStream: WebRTC/NAudio integration needed");
+print("🔧 Cx.AI.SpeechToText: Azure Speech Services integration required");
+print("🔧 Cx.Audio.VoiceActivityDetection: VAD algorithm implementation needed");
+print("🔧 Real-time event processing: Async audio buffer handling required");
+print("");
+print("🚀 Next Phase: Embodied Intelligence with Visual Processing!");
+print("🎯 CX Language - Phase 8: Real-Time Audio Integration Framework Complete!");

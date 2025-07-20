@@ -1,7 +1,6 @@
 // CX Language - Class-Based Event Handlers Demo
 // Demonstrating agents that handle events within their class definition
 
-using textGen from "Cx.AI.TextGeneration";
 
 // Agent class with INTERNAL event handlers
 class AutonomousAgent
