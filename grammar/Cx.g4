@@ -123,7 +123,8 @@ primary
     : IDENTIFIER
     | STRING_LITERAL
     | NUMBER_LITERAL
-    | BOOLEAN_LITERAL
+    | TRUE
+    | FALSE
     | NULL
     | SELF
     | '(' expression ')'
@@ -156,6 +157,9 @@ TRUE: 'true';
 FALSE: 'false';
 ON: 'on';
 EMIT: 'emit';
+
+// Additional tokens
+SELF: 'self';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';

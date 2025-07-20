@@ -236,11 +236,11 @@ public class AstBuilder : CxBaseVisitor<AstNode>
             literal.Type = LiteralType.Number;
             return literal;
         }
-        else if (context.BOOLEAN_LITERAL() != null)
+        else if (context.TRUE() != null || context.FALSE() != null)
         {
             var literal = new LiteralNode();
             SetLocation(literal, context);
-            literal.Value = bool.Parse(context.BOOLEAN_LITERAL().GetText());
+            literal.Value = context.TRUE() != null ? true : false;
             literal.Type = LiteralType.Boolean;
             return literal;
         }
