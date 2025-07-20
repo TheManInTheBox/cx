@@ -64,14 +64,14 @@ description: "CX Language Development Status - Live Embodied Intelligence Platfo
    - Hardware audio device detection and configuration
    - Real-time audio stream management with proper cleanup
 
-2. **🗣️ Azure Speech Service Integration** ⭐ **CRITICAL PATH**
-   - Real-time speech-to-text conversion from microphone input
-   - Azure Speech Service continuous recognition mode
-   - Audio chunk processing with confidence scoring
-   - Wake word detection from actual voice commands
+2. **🗣️ Azure OpenAI Realtime API Integration** ⭐ **CRITICAL PATH**
+   - Real-time speech-to-text conversion from microphone input using OpenAI Realtime API
+   - Azure OpenAI Realtime continuous recognition mode
+   - Audio chunk processing with confidence scoring via OpenAI models
+   - Wake word detection from actual voice commands through OpenAI processing
 
 3. **🔄 Live Audio Event Pipeline** 📈 **HIGH PRIORITY**
-   - Bridge real microphone → speech service → live.audio events
+   - Bridge real microphone → Azure OpenAI Realtime → live.audio events
    - Maintain existing event-driven architecture from Phase 8.2
    - Audio quality monitoring and error handling
    - Latency optimization for real-time responsiveness
@@ -235,15 +235,15 @@ Transform CX Language into a true live conversational platform where agents acti
    - **Audio Quality Control**: Volume monitoring, noise filtering, and audio enhancement
    - **Resource Management**: Proper audio resource cleanup and memory management
 
-2. **🗣️ Azure Speech Service Real-Time Integration** ⭐ **CRITICAL PATH**
+2. **🗣️ Azure OpenAI Realtime API Real-Time Integration** ⭐ **CRITICAL PATH**
    - **Continuous Recognition Mode**: Real-time speech-to-text from live microphone input
    - **Wake Word Detection**: Actual "Aura on/off" detection from spoken voice commands
    - **Confidence Scoring**: Real-time audio confidence analysis for speech recognition quality
    - **Audio Chunk Processing**: Efficient audio buffer management for low-latency processing
-   - **Error Handling**: Robust speech service error recovery and reconnection capabilities
+   - **Error Handling**: Robust OpenAI Realtime API error recovery and reconnection capabilities
 
 3. **🔄 Live Audio-to-Event Pipeline** 📈 **HIGH PRIORITY**
-   - **Hardware-to-Event Bridge**: Connect real microphone → Azure Speech → live.audio event emission
+   - **Hardware-to-Event Bridge**: Connect real microphone → Azure OpenAI Realtime → live.audio event emission
    - **Maintain Phase 8.2 Architecture**: Preserve existing AuraListeningAgent event handling system
    - **Real-Time Event Generation**: Sub-second latency from voice input to agent processing
    - **Audio State Synchronization**: Coordinate hardware audio state with agent wake/sleep modes

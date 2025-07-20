@@ -25,7 +25,7 @@ CX Language has achieved complete **Live Embodied Intelligence** with:
 **🚀 PHASE 8.3: HIGHEST PRIORITY - Real-Time Microphone Integration**
 - Transform Phase 8.2 simulation into live hardware integration
 - Real NAudio microphone capture with continuous audio streaming  
-- Azure Speech Service integration for live speech-to-text
+- Azure OpenAI Realtime API integration for live speech-to-text
 - Hardware-to-event pipeline maintaining existing agent architecture
 - Production audio controls with device management and privacy features
 
@@ -136,8 +136,8 @@ Method resolution prioritizes string parameters for CX function calls, enabling 
 
 ### 🚀 NEXT PHASE 8.3 - Real-Time Microphone Integration (HIGHEST PRIORITY)
 - **🎤 Live Hardware Integration**: Replace simulation with real NAudio microphone capture
-- **🗣️ Azure Speech Service**: Real-time speech-to-text from live microphone input
-- **🔄 Hardware-to-Event Pipeline**: Bridge microphone → speech service → live.audio events
+- **🗣️ Azure OpenAI Realtime API**: Real-time speech-to-text from live microphone input
+- **🔄 Hardware-to-Event Pipeline**: Bridge microphone → OpenAI Realtime → live.audio events
 - **🎛️ Production Audio Controls**: Device management, privacy controls, background operation
 
 ### Previous Phase 6 Achievement - Agent Keyword Semantic Distinction Foundation

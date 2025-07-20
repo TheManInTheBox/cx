@@ -53,14 +53,14 @@ Aura is the Live Embodied Intelligence layer for CX autonomous systems. The **5 
    - Hardware audio device detection and configuration
    - Real-time audio stream management with proper cleanup
 
-2. **🗣️ Azure Speech Service Integration** ⭐ **CRITICAL PATH**
-   - Real-time speech-to-text conversion from microphone input
-   - Azure Speech Service continuous recognition mode
-   - Audio chunk processing with confidence scoring
-   - Wake word detection from actual voice commands
+2. **🗣️ Azure OpenAI Realtime API Integration** ⭐ **CRITICAL PATH**
+   - Real-time speech-to-text conversion from microphone input using OpenAI Realtime API
+   - Azure OpenAI Realtime continuous recognition mode
+   - Audio chunk processing with confidence scoring via OpenAI models
+   - Wake word detection from actual voice commands through OpenAI processing
 
 3. **🔄 Live Audio Event Pipeline** 📈 **HIGH PRIORITY**
-   - Bridge real microphone → speech service → live.audio events
+   - Bridge real microphone → Azure OpenAI Realtime → live.audio events
    - Maintain existing event-driven architecture from Phase 8.2
    - Audio quality monitoring and error handling
    - Latency optimization for real-time responsiveness
@@ -233,13 +233,6 @@ The primary objective of the Aura layer is to provide a sensory system for CX ag
 - **Wildcard Support**: Cross-namespace event matching for complex coordination
 - **Class-Based Handlers**: Event handlers integrated into agent class definitions
 - **Event Delivery**: Reliable message routing to correct agent instances
-
----
-
-Aura is not just code. It's cognition-as-DSL. Let the architecture breathe.
-```
-
-
 
 ---
 
