@@ -957,13 +957,15 @@ public class CxCompiler : IAstVisitor<object>
                     
                     // Evaluate the value
                     node.Right.Accept(this);
-                    _currentIl.Emit(OpCodes.Dup); // Duplicate for return value
                     
                     // Store to field
                     var fieldKey = _currentClassName + "." + memberNode.Property;
                     if (_classFields.TryGetValue(fieldKey, out var field))
                     {
                         _currentIl.Emit(OpCodes.Stfld, field);
+                        
+                        // Load null as expression result (assignments don't return meaningful values)
+                        _currentIl.Emit(OpCodes.Ldnull);
                     }
                     else
                     {
@@ -972,7 +974,42 @@ public class CxCompiler : IAstVisitor<object>
                 }
                 else
                 {
-                    throw new CompilationException("Only 'this.property' assignments are supported currently");
+                    // Handle variable.property = value (e.g., agent1.name = "value")
+                    if (memberNode.Object is IdentifierNode objectIdentifier)
+                    {
+                        // Load the object variable first
+                        objectIdentifier.Accept(this);
+                        
+                        // Evaluate the value
+                        node.Right.Accept(this);
+                        _currentIl!.Emit(OpCodes.Dup); // Duplicate for return value
+                        
+                        // We need to determine the field to store to
+                        // For now, we'll try to find it in our class fields using a simple pattern
+                        // This is a simplified approach - in a full implementation, we'd need type inference
+                        var potentialFieldKey = "";
+                        foreach (var classFieldKey in _classFields.Keys)
+                        {
+                            if (classFieldKey.EndsWith("." + memberNode.Property))
+                            {
+                                potentialFieldKey = classFieldKey;
+                                break;
+                            }
+                        }
+                        
+                        if (!string.IsNullOrEmpty(potentialFieldKey) && _classFields.TryGetValue(potentialFieldKey, out var objectField))
+                        {
+                            _currentIl.Emit(OpCodes.Stfld, objectField);
+                        }
+                        else
+                        {
+                            throw new CompilationException($"Field not found: {memberNode.Property} for object assignment");
+                        }
+                    }
+                    else
+                    {
+                        throw new CompilationException("Only 'this.property' and 'variable.property' assignments are supported currently");
+                    }
                 }
             }
             else
@@ -1195,6 +1232,14 @@ public class CxCompiler : IAstVisitor<object>
             return new object();
         }
 
+        // Check for service fields (imported AI services)
+        if (_serviceFields.TryGetValue(node.Name, out var serviceField))
+        {
+            Console.WriteLine($"[DEBUG] Loading service identifier: {node.Name}");
+            _currentIl!.Emit(OpCodes.Ldsfld, serviceField);
+            return new object();
+        }
+
         // Look up identifier in symbol table for globals
         var symbol = _scopes.Peek().Lookup(node.Name);
         
@@ -1250,8 +1295,7 @@ public class CxCompiler : IAstVisitor<object>
         var concatMethod = typeof(string).GetMethod("Concat", new Type[] { typeof(string), typeof(string) });
         _currentIl.EmitCall(OpCodes.Call, concatMethod!, null);
         
-        // Box the result as object
-        _currentIl.Emit(OpCodes.Box, typeof(string));
+        // String is already a reference type - no boxing needed
     }
 
     /// <summary>
@@ -1375,17 +1419,14 @@ public class CxCompiler : IAstVisitor<object>
                 var serviceField = _programTypeBuilder.DefineField(
                     $"_{node.Alias}", 
                     serviceType,
-                    FieldAttributes.Private);
+                    FieldAttributes.Private | FieldAttributes.Static);
                     
                 _serviceFields[node.Alias] = serviceField;
                 
                 // Add service instantiation to constructor
                 if (_constructorIl != null)
                 {
-                    // Load 'this' pointer
-                    _constructorIl.Emit(OpCodes.Ldarg_0);
-                    
-                    // Load service provider (arg 4)
+                    // Load service provider (arg 4) - no need to load 'this' for static fields
                     _constructorIl.Emit(OpCodes.Ldarg, 4);
                     
                     // Get the GetRequiredService<T> method
@@ -1396,13 +1437,12 @@ public class CxCompiler : IAstVisitor<object>
                     // Call serviceProvider.GetRequiredService<ServiceType>()
                     _constructorIl.Emit(OpCodes.Call, getServiceMethod);
                     
-                    // Store in service field
-                    _constructorIl.Emit(OpCodes.Stfld, serviceField);
+                    // Store in static service field
+                    _constructorIl.Emit(OpCodes.Stsfld, serviceField);
                     
                     // Register service in static registry for function access
                     _constructorIl.Emit(OpCodes.Ldstr, node.Alias); // Service name
-                    _constructorIl.Emit(OpCodes.Ldarg_0); // 'this' pointer
-                    _constructorIl.Emit(OpCodes.Ldfld, serviceField); // Load service instance
+                    _constructorIl.Emit(OpCodes.Ldsfld, serviceField); // Load service instance from static field
                     
                     // Call CxRuntimeHelper.RegisterService(serviceName, serviceInstance)
                     var registerServiceMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper)
@@ -1998,6 +2038,35 @@ public class CxCompiler : IAstVisitor<object>
                 // Property not found - emit placeholder
                 _currentIl!.Emit(OpCodes.Ldstr, $"[Property '{node.Property}' not found on service '{serviceIdentifier.Name}']");
                 return new object();
+            }
+        }
+
+        // Check if this is a class instance field access (e.g., variable.fieldName where variable is a class instance)
+        if (node.Object is IdentifierNode objectVar)
+        {
+            // Try to find this field in any class
+            foreach (var kvp in _classFields)
+            {
+                var fieldKey = kvp.Key;
+                var field = kvp.Value;
+                
+                // Field key format is "ClassName.fieldName"
+                if (fieldKey.EndsWith("." + node.Property))
+                {
+                    Console.WriteLine($"[DEBUG] Found field access: {objectVar.Name}.{node.Property} (field key: {fieldKey})");
+                    
+                    // Load the object variable
+                    node.Object.Accept(this);
+                    
+                    // Cast to the appropriate class type if needed (for now, assume it's already correct type)
+                    // TODO: Type checking for safety
+                    
+                    // Load the field from the instance
+                    _currentIl!.Emit(OpCodes.Ldfld, field);
+                    
+                    Console.WriteLine($"[DEBUG] Successfully loaded field: {node.Property} from object {objectVar.Name}");
+                    return new object();
+                }
             }
         }
         
@@ -2634,6 +2703,45 @@ public class CxCompiler : IAstVisitor<object>
         Console.WriteLine($"[DEBUG] Throw statement compilation complete");
         return new object();
     }
+
+    public object VisitOnStatement(OnStatementNode node)
+    {
+        if (_isFirstPass)
+        {
+            return new object();
+        }
+
+        Console.WriteLine($"[DEBUG] Processing 'on' event handler statement - Event: {node.EventName.FullName}");
+        
+        // For now, we'll create a placeholder implementation
+        // TODO: Implement event bus registration in Phase 5
+        Console.WriteLine($"[WARNING] Event-driven architecture not yet implemented. 'on' statement is a placeholder.");
+        
+        return new object();
+    }
+
+    public object VisitEventName(EventNameNode node)
+    {
+        // EventName nodes are simple - just return the full name as a string
+        return node.FullName;
+    }
+
+    public object VisitEmitStatement(EmitStatementNode node)
+    {
+        if (_isFirstPass)
+        {
+            return new object();
+        }
+
+        Console.WriteLine($"[DEBUG] Processing 'emit' event statement - Event: {node.EventName.FullName}");
+        
+        // For now, we'll create a placeholder implementation  
+        // TODO: Implement event emission in Phase 5
+        Console.WriteLine($"[WARNING] Event-driven architecture not yet implemented. 'emit' statement is a placeholder.");
+        
+        return new object();
+    }
+
     public object VisitNewExpression(NewExpressionNode node)
     {
         if (_isFirstPass)
@@ -2883,18 +2991,8 @@ public class CxCompiler : IAstVisitor<object>
         var objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
         _currentIl.Emit(OpCodes.Call, objectConstructor!);
         
-        // Initialize fields with default values if they have initializers
-        var classFields = _classFields.Where(kvp => kvp.Key.StartsWith(className + ".")).ToList();
-        foreach (var fieldKvp in classFields)
-        {
-            var fieldName = fieldKvp.Key.Substring(className.Length + 1); // Remove "ClassName." prefix
-            var field = typeBuilder.GetType().GetField(fieldName) ?? fieldKvp.Value;
-            
-            // For now, initialize all fields to null
-            _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
-            _currentIl.Emit(OpCodes.Ldnull);  // Load null value
-            _currentIl.Emit(OpCodes.Stfld, fieldKvp.Value); // Store to field
-        }
+        // NOTE: Removed automatic field initialization to null - let constructor body handle field assignments
+        // This fixes the bug where constructor assignments were being overwritten by null initialization
         
         // Compile the constructor body
         constructor.Body.Accept(this);

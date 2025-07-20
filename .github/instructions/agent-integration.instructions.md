@@ -16,206 +16,135 @@ CX (Cognitive Executor) is designed as an autonomous programming platform where 
 - **Code Generation & Execution**: Dynamic creation and immediate execution of solutions
 - **Multi-Step Workflows**: Chain multiple CX operations for complex tasks
 
-### Autonomous Programming Patterns
+### Autonomous Programming Examples
 
-# Aura Project – Cognitive Executor (Cx)
+### **1. Aura: Event-Driven Sensory Agent**
+This example showcases sophisticated autonomous programming with structured AI responses and semantic decision-making. Demonstrates proper prompt engineering and AI-powered event processing.
 
-This repository contains the core runtime and DSL source for the Cx language — an autonomous programming language driven by a Cognitive Architecture.
-
-## Coding Principles
-
-- All Cx modules are agentic: they reason, act, and learn from runtime feedback.
-- Cx follows the SEIDR loop: Synthesize, Execute, Instruct, Debug, Repair.
-- Execution units are "thoughtlets" — composable microagents with state, memory, and goals.
-- Prioritize declarative logic and expressive syntax for vibe-coded improvisation.
-- Code should be self-modifying when feedback suggests improvement.
-
-## Copilot Behavior
-
-- Prefer functional-reactive patterns for memory and cognition modeling.
-- Suggest Roslyn-powered source generators to implement runtime synthesis and mutation.
-- Help craft DSL features that interface with Azure OpenAI and Azure Quantum workflows.
-- Avoid imperative boilerplate unless needed for orchestration.
-- Generate unit tests as speculative questions the agent should answer.
-
-## File Scoping (use with `.instructions.md`)
-
-| Pattern | Instruction Summary |
-|--------|----------------------|
-| `**/*.cx` | Treat as Cx source. Suggest autonomous logic, agent definitions, and SEIDR loops. |
-| `**/*.workflow.json` | Assume orchestration intent. Suggest declarative task flows and runtime goals. |
-| `**/*.agent.cs` | Use Roslyn source generators. Embed self-modifying logic and LLM-driven synthesis. |
-
----
-
-Aura is not just code. It’s cognition-as-DSL. Let the architecture breathe.
-
-#### Agent Execution Workflow
-```cx
-// Agent can dynamically create and execute code like this:
-class AutonomousTask
-{
-    description: string;
-    cognitiveModel: string;
-    
-    constructor(taskDesc, model)
-    {
-        this.description = taskDesc;
-        this.cognitiveModel = model; // Aura framework
-    }
-    
-    function execute()
-    {
-        // Agent performs autonomous reasoning and execution
-        return "Task completed autonomously: " + this.description;
-    }
-}
-
-// Copilot can generate, compile, and execute this pattern
-var task = new AutonomousTask("Data analysis workflow", "Aura-v2.0");
-var result = task.execute();
-```
-
-#### AI Service Integration for Agents
 ```cx
 using textGen from "Cx.AI.TextGeneration";
 using vectorDb from "Cx.AI.VectorDatabase";
-using chatBot from "Cx.AI.ChatCompletion";
+using embeddings from "Cx.AI.TextEmbeddings";
 
-// Agents can orchestrate multiple AI services
-function autonomousAnalysis(data)
+// Agent 1: Structured AI Analysis with Reliable Output
+on audio.transcribed (payload)  // ✅ Unquoted event names
 {
-    // Step 1: Generate analysis plan
-    var plan = textGen.GenerateAsync("Create analysis plan for: " + data);
+    // CX Best Practice: Structured AI responses for reliable processing
+    var intentClassification = textGen.GenerateAsync(
+        "Analyze the user intent. Respond with ONLY one word: query, command, greeting, complaint, or other",
+        payload.content
+    );
     
-    // Step 2: Query knowledge base
-    var context = vectorDb.AskAsync("Relevant information for: " + data);
-    
-    // Step 3: Perform reasoning
-    var analysis = chatBot.ChatAsync("Analyze based on plan and context", {
-        temperature: 0.7,
-        maxTokens: 1000
-    });
-    
-    return analysis;
+    var sentimentScore = textGen.GenerateAsync(
+        "Rate sentiment from 1-10 (1=very negative, 10=very positive). Respond with only the number:",
+        payload.content
+    );
+
+    // Cx emits structured, processable data
+    emit presence.signal, {  // ✅ Unquoted event names
+        source: "audio", 
+        intent: intentClassification,
+        sentiment: sentimentScore,
+        originalContent: payload.content
+    };
 }
-```
 
-### Agent Capabilities in CX
-
-#### 1. **Real-Time Code Generation**
-- Agents can write CX code based on task requirements
-- Ultra-fast compilation (~50ms) enables immediate execution
-- No intermediate files or complex deployment processes
-
-#### 2. **Autonomous Problem Solving**
-- Agents analyze problems and generate custom CX solutions
-- Self-modifying code capabilities for iterative improvement
-- Error handling and recovery through try/catch mechanisms
-
-#### 3. **Multi-Agent Coordination**
-```cx
-class AgentCoordinator
+// Agent 2: AI-Powered Decision Making with Semantic Understanding
+on presence.signal (payload)  // ✅ Unquoted event names
 {
-    agents: array;
+    // CX Best Practice: AI-powered conditional logic
+    var isQuestionIntent = textGen.GenerateAsync(
+        "Is this intent asking for information or help? Answer only: YES or NO",
+        payload.intent
+    );
     
-    constructor()
+    if (isQuestionIntent == "YES")  // ✅ Simplified: 'if' everywhere
     {
-        this.agents = [];
+        // CX Best Practice: Context-aware AI reasoning
+        var response = textGen.GenerateAsync(
+            "Generate a helpful response to: " + payload.originalContent + 
+            ". User sentiment level is " + payload.sentiment + "/10",
+            {
+                temperature: 0.7,
+                maxTokens: 150
+            }
+        );
+        
+        emit cognition.response, {  // ✅ Unquoted event names
+            response: response,
+            confidence: "high",
+            processingAgent: "query-handler"
+        };
     }
     
-    function addAgent(agent)
-    {
-        this.agents += [agent];
-    }
+    // CX Best Practice: Semantic similarity for nuanced matching
+    var contentEmbedding = embeddings.GenerateEmbeddingAsync(payload.originalContent);
+    var urgencyEmbedding = embeddings.GenerateEmbeddingAsync("urgent important help emergency");
+    var urgencyScore = embeddings.CalculateSimilarity(contentEmbedding, urgencyEmbedding);
     
-    function distributeTask(task)
+    if (urgencyScore > 0.8)  // ✅ Simplified: 'if' everywhere
     {
-        for (agent in this.agents)
-        {
-            // Each agent processes part of the task autonomously
-            agent.processAsync(task);
-        }
-    }
-}
-```
-
-#### 4. **Dynamic Adaptation**
-- Agents can modify their own code based on outcomes
-- Learning from execution results to improve performance
-- Runtime optimization through the Cx.Ai.Adaptations library
-
-### Aura Cognitive Architecture Integration
-
-#### Cognitive Decision Making
-```cx
-class CognitiveAgent
-{
-    name: string;
-    memory: object;
-    reasoningModel: string;
-    
-    constructor(agentName)
-    {
-        this.name = agentName;
-        this.memory = {};
-        this.reasoningModel = "Aura-Cognitive-v2.0";
-    }
-    
-    function reason(problem)
-    {
-        // Autonomous reasoning using Aura framework
-        // Agents can implement complex decision trees
-        if (problem.complexity > 0.8)
-        {
-            return this.complexReasoning(problem);
-        }
-        else
-        {
-            return this.simpleReasoning(problem);
-        }
-    }
-    
-    function learn(experience)
-    {
-        // Update agent's memory and capabilities
-        this.memory.experiences += [experience];
-        // Agent can modify its own behavior
+        emit system.alert, {  // ✅ Unquoted event names
+            level: "high",
+            reason: "High urgency content detected",
+            content: payload.originalContent,
+            urgencyScore: urgencyScore
+        };
     }
 }
 ```
 
-### Agent Execution Patterns
+### **2. Cx: Parallel Multi-Agent Coordination**
+This demonstrates true multi-agent autonomy. Four different AI agents are instantiated and run in parallel to debate a topic from their unique perspectives, showcasing the `parallel` keyword.
 
-#### Pattern 1: Task Decomposition
 ```cx
-function decomposeTask(complexTask)
+using textGen from "Cx.AI.TextGeneration";
+
+class DebateAgent
 {
-    var subtasks = [];
-    // Agent analyzes and breaks down complex tasks
-    // Each subtask becomes autonomous CX code
-    return subtasks;
+    perspective: string;
+    constructor(p) { this.perspective = p; }
+    function argue(topic)
+    {
+        return textGen.GenerateAsync("Argue about " + topic + " from the perspective of " + this.perspective);
+    }
+}
+
+var agents = [
+    new DebateAgent("a climate scientist"),
+    new DebateAgent("an industrial CEO"),
+    new DebateAgent("a policy maker"),
+    new DebateAgent("a citizen activist")
+];
+
+// Run all agents concurrently
+parallel for (agent in agents)
+{
+    var argument = agent.argue("climate change");
+    print(agent.perspective + ": " + argument);
 }
 ```
 
-#### Pattern 2: Iterative Improvement
-```cx
-function iterativeImprovement(solution, feedback)
-{
-    var improvedSolution = solution;
-    // Agent modifies code based on execution results
-    return improvedSolution;
-}
-```
+### **3. Integrated AI: RAG & Multi-Modal Workflow**
+This example highlights the seamless integration of CX's most advanced AI services, combining Retrieval Augmented Generation (RAG) with multi-modal image generation.
 
-#### Pattern 3: Context-Aware Execution
 ```cx
-function contextAwareExecution(task, environment)
-{
-    // Agent adapts behavior based on execution context
-    // Utilizes Aura framework for environmental awareness
-    return adaptedExecution(task, environment);
-}
+using vectorDb from "Cx.AI.VectorDatabase";
+using imageGen from "Cx.AI.ImageGeneration";
+
+// 1. Ingest knowledge into the vector database
+vectorDb.IngestTextAsync("The CX language enables agents to achieve autonomy through an event-driven architecture called Aura.");
+
+// 2. Use RAG to ask a question against the knowledge
+var context = vectorDb.AskAsync("How do agents achieve autonomy in CX?");
+
+// 3. Use the retrieved context to generate a relevant image
+var image = imageGen.GenerateAsync("A visual representation of: " + context, {
+    quality: "hd",
+    size: "1024x1024"
+});
+
+print("Generated image based on retrieved context: " + image);
 ```
 
 ## Benefits for AI Agents

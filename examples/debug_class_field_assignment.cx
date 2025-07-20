@@ -1,0 +1,66 @@
+// Diagnostic test to isolate the class field assignment bug
+// This tests if fields assigned in constructor are available in methods
+
+using textGen from "Cx.AI.TextGeneration";
+
+class SimpleAgent
+{
+    name: string;
+    service: object;
+    
+    constructor(agentName, genService)
+    {
+        print("Constructor: Setting fields for " + agentName);
+        this.name = agentName;
+        this.service = genService;
+        
+        // Debug: Check if fields were set immediately
+        print("Constructor: this.name = " + this.name);
+        if (this.service == null)
+        {
+            print("Constructor: ERROR - this.service is NULL!");
+        }
+        else
+        {
+            print("Constructor: this.service is set correctly");
+        }
+    }
+    
+    function testMethod()
+    {
+        print("testMethod: Starting test for " + this.name);
+        
+        // Check if fields are still available
+        if (this.service == null)
+        {
+            print("testMethod: ERROR - this.service is NULL in method!");
+            return "FAILED - service is null";
+        }
+        else
+        {
+            print("testMethod: this.service is available");
+        }
+        
+        // Try to call the AI service
+        try
+        {
+            var result = this.service.GenerateAsync("Say hello", { maxTokens: 50 });
+            print("testMethod: AI call succeeded: " + result);
+            return "SUCCESS";
+        }
+        catch (error)
+        {
+            print("testMethod: AI call failed: " + error);
+            return "FAILED - AI call error";
+        }
+    }
+}
+
+print("=== Class Field Assignment Diagnostic Test ===");
+
+// Create instance with dependency injection
+var agent = new SimpleAgent("TestAgent", textGen);
+
+print("\n=== Calling method on instance ===");
+var result = agent.testMethod();
+print("Final result: " + result);
