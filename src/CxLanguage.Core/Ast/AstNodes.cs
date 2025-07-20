@@ -47,6 +47,7 @@ public interface IAstVisitor<T>
     
     // Object creation visitor method
     T VisitNewExpression(NewExpressionNode node);
+    T VisitAgentExpression(AgentExpressionNode node);
     
     // Async/await visitor methods
     T VisitAwaitExpression(AwaitExpressionNode node);
@@ -519,6 +520,17 @@ public class NewExpressionNode : ExpressionNode
 }
 
 /// <summary>
+/// Agent expression for autonomous agent creation  
+/// </summary>
+public class AgentExpressionNode : ExpressionNode
+{
+    public string TypeName { get; set; } = string.Empty;
+    public List<ExpressionNode> Arguments { get; set; } = new();
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAgentExpression(this);
+}
+
+/// <summary>
 /// Await expression for async operations
 /// </summary>
 public class AwaitExpressionNode : ExpressionNode
@@ -558,6 +570,7 @@ public class ClassDeclarationNode : StatementNode
     public List<FieldDeclarationNode> Fields { get; set; } = new();
     public List<MethodDeclarationNode> Methods { get; set; } = new();
     public List<ConstructorDeclarationNode> Constructors { get; set; } = new();
+    public List<OnStatementNode> EventHandlers { get; set; } = new();
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitClassDeclaration(this);
 }

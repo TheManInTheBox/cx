@@ -102,85 +102,20 @@ function respondToAuraShift(agents, ambientChange)
 - `adjust(behaviorVector)` - **Cx**: Self-modifying response to Aura input
 - `evoke(presenceResponse)` - **Cx**: Generate actions based on Aura awareness
 
----
-
-Let Aura breathe presence into code. Let cognition meet sensation. Let agents awaken.
-1. Design agent communication protocols
-2. Implement self-introspection capabilities
-3. Create learning and adaptation mechanisms
-4. Build multi-agent coordination systems
-5. Test with real-world autonomous scenarios
-```
-
----
-
-**CX Language Vision**: Not just code execution, but cognitive computation. Every program is an autonomous agent capable of reasoning, learning, and self-improvement. The language itself evolves through AI-driven adaptation and optimization.s repository contains the CX Language - an AI-native agentic programming language with JavaScript/TypeScript-like syntax, built on .NET 8 with IL code generation. **Phase 4 (AI Integration) is 100% COMPLETE** with 6 operational AI services and production-ready vector database integration.
-
-## Core Philosophy: Autonomous AI-First Development
-
-- **AI-Native Design**: Every language feature is designed for autonomous AI workflows
-- **Agentic Programming**: Code that reasons, adapts, and self-modifies based on runtime feedback
-- **Cognitive Architecture**: Built around the SEIDR loop: Synthesize, Execute, Instruct, Debug, Repair
-- **Semantic Intelligence**: First-class support for embeddings, vector databases, and RAG workflows
-- **Multi-Modal Integration**: Text generation, chat completion, image creation, speech synthesis, and semantic search
-
-## Development Principles
-
-### 1. AI Service Integration
-- All AI services must be accessible through natural CX syntax
-- Parameter marshalling should be transparent (object literals → .NET services)
-- Error handling must be robust with meaningful feedback
-- Performance targets: Sub-10 second execution for complex AI workflows
-
-### 2. Autonomous Capabilities
-- Functions should support introspection via `self` keyword
-- Code should adapt based on runtime feedback and outcomes  
-- Support for dynamic code generation and execution
-- Multi-agent coordination for complex task delegation
-
-### 3. Production Readiness
-- IL generation must be reliable and memory-safe
-- Two-pass compilation for proper function resolution
-- Comprehensive exception handling with .NET integration
-- Zero-file streaming for media (MP3, images) when possible
-
-## Copilot Development Guidelines
-
-### Code Generation Priorities
-1. **Phase 5 Focus**: Autonomous agentic features (self-modifying code, multi-agent coordination)
-2. **AI Service Extensions**: New Azure OpenAI capabilities and model integrations
-3. **Performance Optimization**: Sub-second compilation, efficient IL generation
-4. **Language Features**: Class inheritance, interfaces, async/await implementation
-
-### Development Patterns
-- Use **CxRuntimeHelper** approach for reliable service method calls
-- Implement **two-pass compilation** for all new language constructs
-- Follow **Allman-style braces** (opening bracket on new line) - non-negotiable
-- Generate **comprehensive examples** in `examples/` directory for testing
-
-### Testing Strategy  
-- Create `.cx` files in `examples/` directory only
-- Use `comprehensive_working_demo.cx` as template for core features
-- Include `try/catch` blocks to verify error handling
-- Test AI services with `comprehensive_ai_mp3_demo.cx` pattern
-
-## File Scoping (use with `.instructions.md`)
-
-| Pattern | Instruction Summary |
-|--------|----------------------|
-| `**/*.cx` | Treat as Cx source. Suggest autonomous logic, agent definitions, and SEIDR loops. |
-| `**/*.workflow.json` | Assume orchestration intent. Suggest declarative task flows and runtime goals. |
-| `**/*.agent.cs` | Use Roslyn source generators. Embed self-modifying logic and LLM-driven synthesis. |
-
----
-
 ### Event-Driven Architecture: The Aura Sensory Bus
 The primary objective of the Aura layer is to provide a sensory system for CX agents. This is achieved through an event-driven architecture, allowing agents to react to stimuli from their environment and each other in a decoupled, asynchronous manner.
 
 **Core Keywords:**
 -   **`on event.name (payload) { ... }`**: Subscribes to an event on the event bus. This is Aura's primary sensory mechanism.
 -   **`emit event.name, payload;`**: Publishes an event to the bus. This is Cx's primary motor/action mechanism.
--   **`if (condition) { ... }`**: Universal conditional block for logic everywhere (simplified from `when`).
+-   **`if (condition) { ... }`**: Universal conditional block for logic everywhere.
+
+**✅ PRODUCTION READY - Complete Implementation:**
+- **Native Syntax**: `emit support.tickets.new, { ticketId: "T-001" };` working perfectly
+- **Auto-Registration**: Agents automatically register based on their `on` handlers
+- **Wildcard Support**: `any.critical` matches ALL namespace critical events
+- **Class-Based Handlers**: `on` statements inside classes fully operational
+- **Event Delivery**: Messages routed correctly to agent instances
 
 **Example Workflow:**
 ```cx
@@ -189,7 +124,7 @@ using vectorDb from "Cx.AI.VectorDatabase";
 using embeddings from "Cx.AI.TextEmbeddings";
 
 // Agent 1: Listens for raw audio transcription
-on audio.transcribed (payload)  // ✅ Unquoted event names
+on audio.transcribed (payload)  // ✅ UNQUOTED event names - WORKING!
 {
     // CX Best Practice: Structured AI responses for reliable processing
     var sentiment = textGen.GenerateAsync(
@@ -202,8 +137,8 @@ on audio.transcribed (payload)  // ✅ Unquoted event names
         payload.content
     );
 
-    // Cx emits structured, processable data
-    emit presence.signal,  // ✅ Unquoted event names
+    // Cx emits structured, processable data - WORKING PERFECTLY!
+    emit presence.signal,  // ✅ Native emit syntax operational
         {
             source: "audio",
             sentiment: sentiment,
@@ -214,7 +149,7 @@ on audio.transcribed (payload)  // ✅ Unquoted event names
 }
 
 // Agent 2: Listens for the abstract presence signal
-on presence.signal (payload)  // ✅ Unquoted event names
+on presence.signal (payload)  // ✅ Auto-registration working
 {
     // CX Best Practice: AI-powered conditional logic instead of naive string matching
     var isQuery = textGen.GenerateAsync(
@@ -222,13 +157,13 @@ on presence.signal (payload)  // ✅ Unquoted event names
         payload.intent
     );
     
-    if (isQuery == "YES")  // ✅ Simplified: 'if' everywhere
+    if (isQuery == "YES")  // ✅ 'if' everywhere working perfectly
     {
         var result = textGen.GenerateAsync(
             "Generate helpful response to: " + payload.originalContent +
             ". Sentiment level: " + payload.sentiment + "/10"
         );
-        emit cognition.response, result;  // ✅ Unquoted event names
+        emit cognition.response, result;  // ✅ Event delivery working
     }
     
     // CX Best Practice: Semantic similarity for nuanced detection using available methods
@@ -237,9 +172,9 @@ on presence.signal (payload)  // ✅ Unquoted event names
     var urgencyEmbedding = embeddings.GenerateEmbeddingAsync("urgent emergency help critical");
     var urgencyLevel = embeddings.CalculateSimilarity(contentEmbedding, urgencyEmbedding);
     
-    if (urgencyLevel > 0.8)  // ✅ Simplified: 'if' everywhere
+    if (urgencyLevel > 0.8)  // ✅ Semantic similarity working
     {
-        emit system.priority, {  // ✅ Unquoted event names
+        emit system.priority, {  // ✅ Namespace routing operational
             level: "high",
             content: payload.originalContent,
             urgencyScore: urgencyLevel

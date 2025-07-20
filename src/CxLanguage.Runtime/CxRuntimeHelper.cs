@@ -292,5 +292,326 @@ namespace CxLanguage.Runtime
             // Start the function in a background task
             return Task.Run(func);
         }
+
+        /// <summary>
+        /// Event Bus Support for CX Event-Driven Architecture
+        /// </summary>
+        
+        /// <summary>
+        /// Emit an event to the namespaced event bus
+        /// </summary>
+        public static void EmitEvent(string eventName, object? data = null, string source = "CxScript")
+        {
+            Console.WriteLine($"[DEBUG] Emitting event: {eventName} from {source}");
+            NamespacedEventBusRegistry.Instance.Emit(eventName, data, source);
+        }
+
+        /// <summary>
+        /// Register an event handler with the global event bus
+        /// This is called by compiled 'on' statements
+        /// </summary>
+        public static void RegisterEventHandler(string eventName, CxEventHandler handler)
+        {
+            Console.WriteLine($"[DEBUG] Registering event handler for: {eventName}");
+            GlobalEventBus.Instance.Subscribe(eventName, handler);
+        }
+
+        /// <summary>
+        /// Advanced Event Bus Service Integration
+        /// </summary>
+
+        /// <summary>
+        /// Join the Event Bus Service as an agent
+        /// </summary>
+        public static string JoinEventBus(string agentName, string role = "agent", 
+            string scope = "Global", string[]? channels = null, string[]? eventFilters = null, object? agentInstance = null)
+        {
+            if (!Enum.TryParse<EventBusScope>(scope, true, out var scopeEnum))
+            {
+                scopeEnum = EventBusScope.Global;
+            }
+
+            var agentId = EventBusServiceRegistry.Instance.JoinBus(agentName, role, scopeEnum, channels, eventFilters, agentInstance);
+            Console.WriteLine($"[INFO] Agent {agentName} joined event bus with ID: {agentId}");
+            return agentId;
+        }
+
+        /// <summary>
+        /// Leave the Event Bus Service
+        /// </summary>
+        public static bool LeaveEventBus(string agentId)
+        {
+            var success = EventBusServiceRegistry.Instance.LeaveBus(agentId);
+            if (success)
+            {
+                Console.WriteLine($"[INFO] Agent {agentId} left the event bus");
+            }
+            else
+            {
+                Console.WriteLine($"[WARNING] Failed to remove agent {agentId} from event bus");
+            }
+            return success;
+        }
+
+        /// <summary>
+        /// Subscribe to events through Event Bus Service
+        /// </summary>
+        public static bool SubscribeToEvent(string agentId, string eventName, CxEventHandler handler)
+        {
+            var success = EventBusServiceRegistry.Instance.Subscribe(agentId, eventName, handler);
+            if (success)
+            {
+                Console.WriteLine($"[INFO] Agent {agentId} subscribed to event: {eventName}");
+            }
+            return success;
+        }
+
+        /// <summary>
+        /// Emit event through Event Bus Service with advanced scoping
+        /// </summary>
+        public static void EmitScopedEvent(string eventName, object? data = null, string source = "CxScript",
+            string? scope = null, string? targetChannel = null, string? targetRole = null)
+        {
+            EventBusScope? scopeEnum = null;
+            if (scope != null && Enum.TryParse<EventBusScope>(scope, true, out var parsed))
+            {
+                scopeEnum = parsed;
+            }
+
+            Console.WriteLine($"[DEBUG] Emitting scoped event: {eventName} from {source} (scope: {scope}, channel: {targetChannel}, role: {targetRole})");
+            EventBusServiceRegistry.Instance.Emit(eventName, data, source, scopeEnum, targetChannel, targetRole);
+        }
+
+        /// <summary>
+        /// Join a channel in the Event Bus Service
+        /// </summary>
+        public static bool JoinChannel(string agentId, string channel)
+        {
+            var success = EventBusServiceRegistry.Instance.JoinChannel(agentId, channel);
+            Console.WriteLine($"[INFO] Agent {agentId} joined channel: {channel} (success: {success})");
+            return success;
+        }
+
+        /// <summary>
+        /// Leave a channel in the Event Bus Service
+        /// </summary>
+        public static bool LeaveChannel(string agentId, string channel)
+        {
+            var success = EventBusServiceRegistry.Instance.LeaveChannel(agentId, channel);
+            Console.WriteLine($"[INFO] Agent {agentId} left channel: {channel} (success: {success})");
+            return success;
+        }
+
+        /// <summary>
+        /// Get Event Bus Service statistics
+        /// </summary>
+        public static Dictionary<string, object> GetBusStatistics()
+        {
+            var stats = EventBusServiceRegistry.Instance.GetBusStatistics();
+            var result = new Dictionary<string, object>
+            {
+                ["TotalAgents"] = stats.TotalAgents,
+                ["TotalChannels"] = stats.TotalChannels,
+                ["TotalRoles"] = stats.TotalRoles,
+                ["ScopeDistribution"] = stats.ScopeDistribution,
+                ["TopChannels"] = stats.TopChannels,
+                ["TopRoles"] = stats.TopRoles
+            };
+
+            Console.WriteLine($"[INFO] Bus Statistics: {stats.TotalAgents} agents, {stats.TotalChannels} channels, {stats.TotalRoles} roles");
+            return result;
+        }
+
+        /// <summary>
+        /// Namespace-based Event Bus Functions - Event names as scopes
+        /// </summary>
+
+        /// <summary>
+        /// Register agent for namespace-based event routing
+        /// </summary>
+        public static string RegisterNamespacedAgent(string agentName, string? team = null, string? role = null, 
+            string[]? channels = null, object? agentInstance = null)
+        {
+            var agentId = NamespacedEventBusRegistry.Instance.RegisterAgent(agentName, team, role, channels, agentInstance);
+            Console.WriteLine($"[INFO] Agent {agentName} registered for namespaced events with ID: {agentId}");
+            return agentId;
+        }
+
+        /// <summary>
+        /// Unregister agent from namespace-based event routing
+        /// </summary>
+        public static bool UnregisterNamespacedAgent(string agentId)
+        {
+            var success = NamespacedEventBusRegistry.Instance.UnregisterAgent(agentId);
+            Console.WriteLine($"[INFO] Agent {agentId} unregistered from namespaced events: {success}");
+            return success;
+        }
+
+        /// <summary>
+        /// Subscribe to namespace-based event patterns
+        /// Supports wildcards: team.any.task, role.manager.any, global.any
+        /// </summary>
+        public static bool SubscribeToNamespacedEvent(string agentId, string eventPattern, CxEventHandler handler)
+        {
+            var success = NamespacedEventBusRegistry.Instance.Subscribe(agentId, eventPattern, handler);
+            Console.WriteLine($"[INFO] Agent {agentId} subscribed to pattern: {eventPattern} (success: {success})");
+            return success;
+        }
+
+        /// <summary>
+        /// Auto-subscribe agent to relevant patterns based on their properties
+        /// </summary>
+        public static void AutoSubscribeNamespacedAgent(string agentId, CxEventHandler handler)
+        {
+            NamespacedEventBusRegistry.Instance.AutoSubscribeAgent(agentId, handler);
+            Console.WriteLine($"[INFO] Agent {agentId} auto-subscribed to relevant namespace patterns");
+        }
+
+        /// <summary>
+        /// Emit namespace-scoped event
+        /// Event name determines routing: global.any, team.name.any, role.name.any, agent.name.any, channel.name.any
+        /// </summary>
+        public static void EmitNamespacedEvent(string eventName, object? data = null, string source = "CxScript")
+        {
+            Console.WriteLine($"[DEBUG] Emitting namespaced event: {eventName} from {source}");
+            NamespacedEventBusRegistry.Instance.Emit(eventName, data, source);
+        }
+
+        /// <summary>
+        /// Get namespace-based event bus statistics
+        /// </summary>
+        public static Dictionary<string, object> GetNamespacedBusStatistics()
+        {
+            var stats = NamespacedEventBusRegistry.Instance.GetStatistics();
+            var result = new Dictionary<string, object>
+            {
+                ["TotalAgents"] = stats.TotalAgents,
+                ["TotalEventPatterns"] = stats.TotalEventPatterns,
+                ["EventsByScope"] = stats.EventsByScope,
+                ["AgentsByRole"] = stats.AgentsByRole,
+                ["TopEventPatterns"] = stats.TopEventPatterns
+            };
+
+            Console.WriteLine($"[INFO] Namespaced Bus Stats: {stats.TotalAgents} agents, {stats.TotalEventPatterns} patterns");
+            return result;
+        }
+
+        /// <summary>
+        /// Register an instance event handler for a specific object
+        /// This is called when class instances with event handlers are created
+        /// </summary>
+        public static void RegisterInstanceEventHandler(object instance, string eventName, string methodName)
+        {
+            Console.WriteLine($"[DEBUG] Registering instance event handler: {eventName} -> {instance.GetType().Name}.{methodName}");
+            
+            // Get the method from the instance type
+            var instanceType = instance.GetType();
+            var method = instanceType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+            
+            if (method == null)
+            {
+                Console.WriteLine($"[ERROR] Event handler method {methodName} not found in {instanceType.Name}");
+                return;
+            }
+            
+            // Create a wrapper that calls the instance method
+            CxEventHandler handler = async (payload) =>
+            {
+                try
+                {
+                    // Call the instance method with the payload data (not the whole payload object)
+                    // The CX event handlers expect the raw data, not the CxEventPayload wrapper
+                    var result = method.Invoke(instance, new[] { payload.Data });
+                    
+                    // If the method returns a Task, await it
+                    if (result is Task task)
+                    {
+                        await task;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Instance event handler {instanceType.Name}.{methodName} failed: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Exception details: {ex}");
+                }
+            };
+            
+            // Register with the NamespacedEventBusService instead of GlobalEventBus
+            // First register a temporary agent if needed
+            var agentName = $"{instanceType.Name}_{instance.GetHashCode()}";
+            var agentId = NamespacedEventBusRegistry.Instance.RegisterAgent(agentName);
+            
+            // Subscribe to the event pattern
+            NamespacedEventBusRegistry.Instance.Subscribe(agentId, eventName, handler);
+            Console.WriteLine($"[INFO] Instance event handler registered: {eventName} -> {instanceType.Name}.{methodName}");
+        }
+
+        /// <summary>
+        /// Convert Func<object, Task> to CxEventHandler for event registration
+        /// </summary>
+        public static CxEventHandler ConvertToEventHandler(Func<object, Task> handler)
+        {
+            return async (payload) => 
+            {
+                try
+                {
+                    await handler(payload.Data ?? new object());
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Event handler execution failed: {ex.Message}");
+                    throw;
+                }
+            };
+        }
+
+        /// <summary>
+        /// Convert object data to dictionary for event payloads
+        /// </summary>
+        public static Dictionary<string, object?> ConvertToEventData(object? data)
+        {
+            if (data == null)
+                return new Dictionary<string, object?>();
+
+            if (data is Dictionary<string, object?> dict)
+                return dict;
+
+            // Convert object properties to dictionary using reflection
+            var result = new Dictionary<string, object?>();
+            var properties = data.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            
+            foreach (var prop in properties)
+            {
+                try
+                {
+                    var value = prop.GetValue(data);
+                    result[prop.Name] = value;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[WARNING] Error converting property {prop.Name}: {ex.Message}");
+                    result[prop.Name] = null;
+                }
+            }
+
+            return result;
+        }
+
+        /// <summary>
+        /// Execute event handler function with payload
+        /// This bridges compiled CX event handlers with the event bus
+        /// </summary>
+        public static async Task ExecuteEventHandler(Func<object, Task> handler, CxEventPayload payload)
+        {
+            try
+            {
+                await handler(payload.Data ?? new object());
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Event handler execution failed: {ex.Message}");
+                throw;
+            }
+        }
     }
 }

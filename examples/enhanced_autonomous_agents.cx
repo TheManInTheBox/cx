@@ -1,0 +1,426 @@
+// CX Language - Enhanced Autonomous Agent Architecture with Agent Context
+// Demonstrates dual-parameter event pattern: (agentContext, payload)
+
+using textGen from "Cx.AI.TextGeneration";
+using tts from "Cx.AI.TextToSpeech";
+
+// =============================================================================
+// ENHANCED AUTONOMOUS AGENT SYSTEM WITH CONTEXT TRACKING
+// =============================================================================
+
+// Global agent registry for autonomous behavior
+var autonomousAgents = [];
+var eventHistory = [];
+
+// Enhanced agent factory with context tracking
+function createAutonomousAgent(name, role, specialties)
+{
+    var agent = {
+        name: name,
+        role: role,
+        specialties: specialties,
+        status: "listening",
+        taskCount: 0,
+        responseHistory: [],
+        createdAt: "2025-07-19"  // Placeholder for timestamp
+    };
+    
+    autonomousAgents.push(agent);
+    
+    // Log agent creation with context
+    var creationContext = {
+        caller: "system",
+        timestamp: "now",
+        originalEvent: "agent.creation",
+        sessionId: "init-session"
+    };
+    
+    eventHistory.push({
+        event: "agent.created",
+        context: creationContext,
+        payload: { agent: agent.name, role: agent.role }
+    });
+    
+    print("🤖 Enhanced autonomous agent " + name + " (" + role + ") listening with specialties: " + specialties.join(", "));
+    
+    return agent;
+}
+
+// Enhanced agent lookup with context logging
+function findAgentByRole(role, requestContext)
+{
+    for (agent in autonomousAgents)
+    {
+        if (agent.role == role)
+        {
+            // Log agent selection with context
+            eventHistory.push({
+                event: "agent.selected",
+                context: requestContext,
+                payload: { selectedAgent: agent.name, criteria: "role:" + role }
+            });
+            return agent;
+        }
+    }
+    return null;
+}
+
+function findBestAgentForTask(taskDescription, requestContext)
+{
+    // AI-powered agent selection based on specialties
+    var bestAgent = null;
+    var bestScore = 0;
+    
+    for (agent in autonomousAgents)
+    {
+        // Use AI to score agent suitability
+        var suitabilityPrompt = "Rate from 1-10 how suitable '" + agent.role + 
+                               "' with specialties [" + agent.specialties.join(", ") + 
+                               "] is for task: " + taskDescription + ". Respond with only the number.";
+        
+        var scoreStr = textGen.GenerateAsync(suitabilityPrompt, { temperature: 0.1, maxTokens: 5 });
+        var score = parseFloat(scoreStr) || 0;
+        
+        if (score > bestScore)
+        {
+            bestScore = score;
+            bestAgent = agent;
+        }
+    }
+    
+    if (bestAgent)
+    {
+        eventHistory.push({
+            event: "agent.ai.selected",
+            context: requestContext,
+            payload: { 
+                selectedAgent: bestAgent.name, 
+                score: bestScore,
+                method: "ai-powered-selection",
+                task: taskDescription
+            }
+        });
+    }
+    
+    return bestAgent;
+}
+
+// =============================================================================
+// ENHANCED EVENT HANDLERS WITH DUAL PARAMETERS
+// =============================================================================
+
+// Enhanced task assignment with agent context and payload separation
+on task.assigned (agentContext, payload)
+{
+    print("📡 Enhanced task assignment detected:");
+    print("   Context - Caller: " + agentContext.caller + ", Session: " + agentContext.sessionId);
+    print("   Payload - Task: " + payload.description + ", Priority: " + payload.priority);
+    
+    var agent = null;
+    
+    // Enhanced routing with context awareness
+    if (payload.useAiSelection == true)
+    {
+        agent = findBestAgentForTask(payload.description, agentContext);
+    }
+    else if (payload.role)
+    {
+        agent = findAgentByRole(payload.role, agentContext);
+    }
+    
+    if (agent)
+    {
+        print("✅ " + agent.name + " autonomously accepting task with context awareness");
+        
+        // Enhanced AI processing with caller context
+        var enhancedPrompt = "CONTEXT: Request from " + agentContext.caller + 
+                           " in session " + agentContext.sessionId + 
+                           ". TASK: As a " + agent.role + " with specialties [" + 
+                           agent.specialties.join(", ") + "], handle: " + 
+                           payload.description + ". Priority: " + payload.priority + 
+                           ". Provide specific action plan with context awareness.";
+        
+        var response = textGen.GenerateAsync(enhancedPrompt, { temperature: 0.7, maxTokens: 200 });
+        
+        agent.taskCount = agent.taskCount + 1;
+        agent.status = "task-completed";
+        agent.responseHistory.push({
+            task: payload.description,
+            response: response,
+            caller: agentContext.caller,
+            sessionId: agentContext.sessionId
+        });
+        
+        // Enhanced completion event with full context chain
+        var completionContext = {
+            caller: agent.name,
+            timestamp: "now",
+            originalEvent: "task.assigned",
+            sessionId: agentContext.sessionId,
+            processingChain: [agentContext.caller, agent.name]
+        };
+        
+        emit task.completed, completionContext, {
+            processor: agent.name,
+            processorRole: agent.role,
+            task: payload.description,
+            result: response,
+            taskNumber: agent.taskCount,
+            originalCaller: agentContext.caller,
+            priority: payload.priority,
+            specialtiesUsed: agent.specialties
+        };
+        
+        tts.SpeakAsync(agent.name + " completed task with context: " + agentContext.caller + " to " + agent.name);
+    }
+    else
+    {
+        print("❌ No suitable autonomous agent found for: " + payload.description);
+        
+        // Emit failure event with context
+        var failureContext = {
+            caller: "system",
+            timestamp: "now", 
+            originalEvent: "task.assigned",
+            sessionId: agentContext.sessionId
+        };
+        
+        emit task.assignment.failed, failureContext, {
+            reason: "no-suitable-agent",
+            originalTask: payload.description,
+            originalCaller: agentContext.caller
+        };
+    }
+}
+
+// Enhanced user message handling with session context
+on user.message (agentContext, payload)
+{
+    print("📡 Enhanced user message with context:");
+    print("   Context - Session: " + agentContext.sessionId + ", User: " + payload.userId);
+    print("   Payload - Message: " + payload.text);
+    
+    if (autonomousAgents.length > 0)
+    {
+        // Select most suitable agent based on message content
+        var agent = findBestAgentForTask(payload.text, agentContext);
+        
+        if (!agent)
+        {
+            agent = autonomousAgents[0]; // Fallback to first agent
+        }
+        
+        print("💬 " + agent.name + " autonomously responding with session context");
+        
+        var contextAwarePrompt = "CONTEXT: User " + payload.userId + 
+                               " in session " + agentContext.sessionId + 
+                               " says: '" + payload.text + "'. " +
+                               "RESPONSE: As a " + agent.role + " with specialties [" + 
+                               agent.specialties.join(", ") + "], provide helpful response.";
+        
+        var response = textGen.GenerateAsync(contextAwarePrompt, { temperature: 0.8, maxTokens: 150 });
+        
+        agent.responseHistory.push({
+            userMessage: payload.text,
+            response: response,
+            userId: payload.userId,
+            sessionId: agentContext.sessionId
+        });
+        
+        var responseContext = {
+            caller: agent.name,
+            timestamp: "now",
+            originalEvent: "user.message", 
+            sessionId: agentContext.sessionId
+        };
+        
+        emit agent.response, responseContext, {
+            respondingAgent: agent.name,
+            agentRole: agent.role,
+            userMessage: payload.text,
+            response: response,
+            userId: payload.userId,
+            specialtiesApplied: agent.specialties
+        };
+    }
+}
+
+// Enhanced system status with detailed context reporting
+on system.status (agentContext, payload)
+{
+    print("📊 Enhanced system status request with context:");
+    print("   Requestor: " + agentContext.caller + ", Detail Level: " + payload.detailLevel);
+    
+    print("📈 AUTONOMOUS AGENT STATUS REPORT:");
+    
+    for (agent in autonomousAgents)
+    {
+        print("   🤖 " + agent.name + " (" + agent.role + "):");
+        print("      Status: " + agent.status + " | Tasks: " + agent.taskCount);
+        print("      Specialties: " + agent.specialties.join(", "));
+        print("      Response History: " + agent.responseHistory.length + " interactions");
+    }
+    
+    print("📜 Event History: " + eventHistory.length + " events tracked");
+    
+    var statusContext = {
+        caller: "system",
+        timestamp: "now",
+        originalEvent: "system.status",
+        sessionId: agentContext.sessionId
+    };
+    
+    emit system.status.complete, statusContext, {
+        totalAgents: autonomousAgents.length,
+        totalTasks: getTotalTaskCount(),
+        totalEvents: eventHistory.length,
+        requestor: agentContext.caller,
+        systemHealth: "operational"
+    };
+}
+
+// Utility function for status reporting
+function getTotalTaskCount()
+{
+    var total = 0;
+    for (agent in autonomousAgents)
+    {
+        total = total + agent.taskCount;
+    }
+    return total;
+}
+
+// =============================================================================
+// ENHANCED RESPONSE HANDLERS WITH CONTEXT AWARENESS
+// =============================================================================
+
+on task.completed (agentContext, payload)
+{
+    print("🎉 ENHANCED AUTONOMOUS TASK COMPLETION!");
+    print("   Processing Chain: " + agentContext.processingChain.join(" → "));
+    print("   Processor: " + payload.processor + " (" + payload.processorRole + ")");
+    print("   Task #" + payload.taskNumber + " (Priority: " + payload.priority + "): " + payload.task);
+    print("   Specialties Used: " + payload.specialtiesUsed.join(", "));
+    print("   Result: " + payload.result);
+    print("   Original Caller: " + payload.originalCaller);
+    print("");
+}
+
+on agent.response (agentContext, payload)
+{
+    print("💬 ENHANCED AUTONOMOUS AGENT RESPONSE!");
+    print("   Session: " + agentContext.sessionId);
+    print("   Agent: " + payload.respondingAgent + " (" + payload.agentRole + ")");
+    print("   User " + payload.userId + ": " + payload.userMessage);
+    print("   Response: " + payload.response);
+    print("   Specialties Applied: " + payload.specialtiesApplied.join(", "));
+    print("");
+}
+
+on task.assignment.failed (agentContext, payload)
+{
+    print("❌ TASK ASSIGNMENT FAILURE!");
+    print("   Session: " + agentContext.sessionId);
+    print("   Reason: " + payload.reason);
+    print("   Original Task: " + payload.originalTask);
+    print("   Original Caller: " + payload.originalCaller);
+    print("   💡 Consider creating specialized agents for this task type");
+    print("");
+}
+
+// =============================================================================
+// ENHANCED AUTONOMOUS AGENT DEMONSTRATION
+// =============================================================================
+
+print("🚀 CX Language - Enhanced Autonomous Agent Architecture Demo");
+print("============================================================");
+print("🎯 Key Enhancement: Dual-parameter events (agentContext, payload)");
+print("📊 Features: Context tracking, AI selection, processing chains");
+print("");
+
+// Create enhanced autonomous agents with specialties
+print("🤖 Initializing enhanced autonomous agents with specialties:");
+
+var alice = createAutonomousAgent("Alice", "developer", ["backend", "databases", "performance"]);
+var bob = createAutonomousAgent("Bob", "analyst", ["data-analysis", "reporting", "metrics"]);
+var carol = createAutonomousAgent("Carol", "designer", ["ui-ux", "wireframes", "user-experience"]);
+
+print("✅ " + autonomousAgents.length + " enhanced autonomous agents active");
+print("");
+
+// Demonstrate enhanced context-aware events
+print("📡 Broadcasting enhanced events with context and payload separation:");
+print("");
+
+// Event 1: High-priority task with AI selection
+var taskContext1 = {
+    caller: "project-manager",
+    timestamp: "2025-07-19T10:30:00Z",
+    originalEvent: "project.milestone",
+    sessionId: "proj-session-001"
+};
+
+emit task.assigned, taskContext1, {
+    description: "Optimize database query performance for user dashboard",
+    priority: "high",
+    useAiSelection: true,
+    deadline: "end-of-week"
+};
+
+// Event 2: User interaction with session context
+var userContext = {
+    caller: "chat-system",
+    timestamp: "2025-07-19T10:35:00Z", 
+    originalEvent: "user.chat.initiated",
+    sessionId: "chat-session-123"
+};
+
+emit user.message, userContext, {
+    text: "I need help improving the mobile app navigation experience",
+    userId: "user_jane_doe",
+    userType: "premium-customer"
+};
+
+// Event 3: Specific agent task with context chain
+var specificContext = {
+    caller: "design-lead",
+    timestamp: "2025-07-19T10:40:00Z",
+    originalEvent: "design.review",
+    sessionId: "design-session-456"
+};
+
+emit task.assigned, specificContext, {
+    description: "Create wireframes for the new admin dashboard interface",
+    role: "designer",
+    priority: "medium",
+    specifications: "mobile-first-responsive"
+};
+
+// Event 4: System status with detailed context
+var statusContext = {
+    caller: "system-admin",
+    timestamp: "2025-07-19T10:45:00Z",
+    originalEvent: "health.check",
+    sessionId: "admin-session-789"
+};
+
+emit system.status, statusContext, {
+    detailLevel: "comprehensive",
+    includeHistory: true
+};
+
+print("⚡ All enhanced events broadcast - observing context-aware autonomous responses!");
+print("");
+print("🌟 ENHANCED AUTONOMOUS AGENT DEMONSTRATION COMPLETE!");
+print("====================================================");
+print("✅ Dual-parameter event pattern: (agentContext, payload)");
+print("✅ Context tracking through processing chains");
+print("✅ AI-powered agent selection and task routing");
+print("✅ Session awareness and conversation continuity");
+print("✅ Comprehensive event history and audit trail");
+print("✅ Enhanced autonomous decision-making with context");
+print("");
+print("🔮 SYNTAX VISION:");
+print("   on eventName (agentContext, payload) { ... }");
+print("   emit eventName, context, payload;");
+print("   // Perfect separation of concerns!");

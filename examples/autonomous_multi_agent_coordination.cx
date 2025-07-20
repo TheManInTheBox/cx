@@ -1,0 +1,325 @@
+// CX Language - Multi-Agent Coordination with Event Bus Service
+// Demonstrates advanced pub/sub patterns for autonomous agent coordination
+
+using textGen from "Cx.AI.TextGeneration";
+
+class AutonomousAgent
+{
+    name: string;
+    specialty: string;
+    busId: string;
+    workload: number;
+    
+    constructor(agentName, agentSpecialty)
+    {
+        this.name = agentName;
+        this.specialty = agentSpecialty;
+        this.busId = "";
+        this.workload = 0;
+        print("🤖 Autonomous Agent " + this.name + " (" + this.specialty + ") initialized");
+    }
+    
+    // Intelligent bus joining with specialty-based channels
+    function joinBusWithSpecialty()
+    {
+        var channels = [this.specialty, "coordination", "status"];
+        this.busId = JoinEventBus(this.name, "autonomous-agent", "Channel", channels, null, this);
+        print("🚀 " + this.name + " joined event bus for " + this.specialty + " operations");
+        return this.busId;
+    }
+    
+    // Process work requests intelligently
+    function processWorkRequest(request)
+    {
+        this.workload = this.workload + 1;
+        print("⚡ " + this.name + " processing " + this.specialty + " request: " + request.task);
+        
+        var prompt = "As an autonomous " + this.specialty + " agent named " + this.name + 
+                    ", process this request: " + request.task + 
+                    ". Be efficient and professional. Current workload: " + this.workload;
+        
+        var response = textGen.GenerateAsync(prompt, {
+            temperature: 0.6,
+            maxTokens: 200
+        });
+        
+        print("✅ " + this.name + " completed: " + response);
+        
+        // Emit work completion with load balancing info
+        emit work.completed, {
+            agent: this.name,
+            specialty: this.specialty,
+            task: request.task,
+            result: response,
+            currentWorkload: this.workload,
+            timeCompleted: "now"
+        };
+        
+        this.workload = this.workload - 1;
+        return response;
+    }
+    
+    // Handle coordination requests from other agents
+    function handleCoordination(coordinationRequest)
+    {
+        print("🤝 " + this.name + " coordinating with: " + coordinationRequest.requestor);
+        
+        var response = textGen.GenerateAsync(
+            "Agent " + this.name + " (" + this.specialty + ") coordinating with " + 
+            coordinationRequest.requestor + " on: " + coordinationRequest.topic,
+            { temperature: 0.7, maxTokens: 100 }
+        );
+        
+        // Emit coordination response
+        emit coordination.response, {
+            responder: this.name,
+            requestor: coordinationRequest.requestor,
+            topic: coordinationRequest.topic,
+            response: response
+        };
+        
+        return response;
+    }
+    
+    // Report agent status
+    function reportStatus()
+    {
+        var statusReport = {
+            agent: this.name,
+            specialty: this.specialty,
+            workload: this.workload,
+            busId: this.busId,
+            status: this.workload > 0 ? "busy" : "available",
+            timestamp: "now"
+        };
+        
+        emit agent.status, statusReport;
+        print("📊 " + this.name + " status: " + statusReport.status + " (workload: " + this.workload + ")");
+        return statusReport;
+    }
+}
+
+// Coordination Manager - Orchestrates agent interactions
+class CoordinationManager
+{
+    name: string;
+    busId: string;
+    agentRegistry: object;
+    
+    constructor()
+    {
+        this.name = "CoordinationManager";
+        this.busId = "";
+        this.agentRegistry = {};
+        print("🎯 Coordination Manager initialized");
+    }
+    
+    function joinBus()
+    {
+        // Manager joins with Global scope to monitor all agents
+        this.busId = JoinEventBus(this.name, "coordination-manager", "Global", null, 
+            ["work.completed", "agent.status", "coordination.request"], this);
+        print("👁️ Coordination Manager monitoring all agent activities");
+        return this.busId;
+    }
+    
+    // Distribute work based on agent availability and specialty
+    function distributeWork(workRequests)
+    {
+        print("📋 Coordination Manager distributing " + workRequests.length + " work requests");
+        
+        for (var i = 0; i < workRequests.length; i++)
+        {
+            var request = workRequests[i];
+            print("📤 Distributing " + request.specialty + " work: " + request.task);
+            
+            // Emit targeted work request to specialty channel
+            EmitScopedEvent("work.request", {
+                task: request.task,
+                priority: request.priority,
+                deadline: request.deadline,
+                requestId: "req-" + i
+            }, this.name, "Channel", request.specialty, null);
+        }
+    }
+    
+    // Handle work completion notifications
+    function handleWorkCompletion(completion)
+    {
+        print("✅ Manager: Work completed by " + completion.agent + 
+              " (workload: " + completion.currentWorkload + ")");
+        
+        // Track agent performance
+        if (!this.agentRegistry[completion.agent])
+        {
+            this.agentRegistry[completion.agent] = {
+                completedTasks: 0,
+                specialty: completion.specialty,
+                averageWorkload: 0
+            };
+        }
+        
+        this.agentRegistry[completion.agent].completedTasks = 
+            this.agentRegistry[completion.agent].completedTasks + 1;
+        this.agentRegistry[completion.agent].averageWorkload = completion.currentWorkload;
+        
+        // Emit performance update
+        emit performance.update, {
+            agent: completion.agent,
+            completedTasks: this.agentRegistry[completion.agent].completedTasks,
+            performance: "excellent"
+        };
+    }
+    
+    // Request cross-agent coordination
+    function requestCoordination(topic, involvedAgents)
+    {
+        print("🤝 Manager requesting coordination on: " + topic);
+        
+        for (var i = 0; i < involvedAgents.length; i++)
+        {
+            emit coordination.request, {
+                topic: topic,
+                requestor: this.name,
+                targetAgent: involvedAgents[i],
+                urgency: "normal"
+            };
+        }
+    }
+    
+    function generateReport()
+    {
+        print("📈 COORDINATION MANAGER REPORT");
+        print("===============================");
+        
+        var totalTasks = 0;
+        var agentNames = Object.keys(this.agentRegistry);
+        
+        for (var i = 0; i < agentNames.length; i++)
+        {
+            var agentName = agentNames[i];
+            var agent = this.agentRegistry[agentName];
+            totalTasks = totalTasks + agent.completedTasks;
+            
+            print("🤖 " + agentName + " (" + agent.specialty + "):");
+            print("   Completed Tasks: " + agent.completedTasks);
+            print("   Current Workload: " + agent.averageWorkload);
+        }
+        
+        print("📊 Total Tasks Completed: " + totalTasks);
+        print("📊 Active Agents: " + agentNames.length);
+        
+        return {
+            totalTasks: totalTasks,
+            activeAgents: agentNames.length,
+            agentDetails: this.agentRegistry
+        };
+    }
+}
+
+print("🌟 MULTI-AGENT COORDINATION DEMO");
+print("=================================");
+print("");
+
+print("📋 PHASE 1: Agent Initialization");
+print("---------------------------------");
+
+// Create specialized autonomous agents
+var aiBot = new AutonomousAgent("AiBot", "ai-development");
+var dataBot = new AutonomousAgent("DataBot", "data-analysis");  
+var testBot = new AutonomousAgent("TestBot", "quality-assurance");
+var secBot = new AutonomousAgent("SecBot", "security-audit");
+
+// Create coordination manager
+var manager = new CoordinationManager();
+
+// All agents join the bus
+aiBot.joinBusWithSpecialty();
+dataBot.joinBusWithSpecialty();
+testBot.joinBusWithSpecialty();
+secBot.joinBusWithSpecialty();
+manager.joinBus();
+
+print("");
+print("📋 PHASE 2: Work Distribution");
+print("------------------------------");
+
+// Manager distributes specialized work
+var workQueue = [
+    {
+        task: "Implement neural network for customer sentiment analysis",
+        specialty: "ai-development",
+        priority: "high",
+        deadline: "3 days"
+    },
+    {
+        task: "Analyze user behavior patterns from last quarter",
+        specialty: "data-analysis", 
+        priority: "medium",
+        deadline: "1 week"
+    },
+    {
+        task: "Create comprehensive test suite for payment system",
+        specialty: "quality-assurance",
+        priority: "high",
+        deadline: "2 days" 
+    },
+    {
+        task: "Audit API endpoints for security vulnerabilities",
+        specialty: "security-audit",
+        priority: "critical",
+        deadline: "1 day"
+    }
+];
+
+manager.distributeWork(workQueue);
+
+print("");
+print("📋 PHASE 3: Agent Status Monitoring");
+print("------------------------------------");
+
+// Agents report their status
+aiBot.reportStatus();
+dataBot.reportStatus();
+testBot.reportStatus();
+secBot.reportStatus();
+
+print("");
+print("📋 PHASE 4: Cross-Agent Coordination");
+print("-------------------------------------");
+
+// Manager requests coordination between agents
+manager.requestCoordination("Integration Testing for AI Features", ["AiBot", "TestBot"]);
+manager.requestCoordination("Security Review of Data Pipeline", ["DataBot", "SecBot"]);
+
+print("");
+print("📋 PHASE 5: Bus Statistics and Performance");
+print("-------------------------------------------");
+
+// Show comprehensive bus statistics
+var busStats = GetBusStatistics();
+print("🚌 Event Bus Statistics:");
+print("   Active Agents: " + busStats.TotalAgents);
+print("   Communication Channels: " + busStats.TotalChannels);
+print("   Agent Roles: " + busStats.TotalRoles);
+
+// Manager generates performance report  
+var performanceReport = manager.generateReport();
+
+print("");
+print("✅ MULTI-AGENT COORDINATION COMPLETE!");
+print("");
+print("🎯 DEMONSTRATED COORDINATION PATTERNS:");
+print("   ✓ Specialized agent roles with targeted channels");
+print("   ✓ Intelligent work distribution by specialty");
+print("   ✓ Cross-agent coordination and collaboration");
+print("   ✓ Real-time status monitoring and reporting");
+print("   ✓ Performance tracking and analytics");
+print("   ✓ Dynamic load balancing through event bus");
+print("");
+print("🏗️ AUTONOMOUS ARCHITECTURE ACHIEVED:");
+print("   • Agents operate independently within specializations");
+print("   • Event-driven coordination eliminates central control");
+print("   • Scalable pub/sub communication patterns");
+print("   • Self-organizing work distribution");
+print("   • Real-time performance optimization");

@@ -1,0 +1,99 @@
+// CX Language - Simple Agent Event Demo (Current Working Version)
+// Shows how agents interact with events using current grammar
+
+using textGen from "Cx.AI.TextGeneration";
+
+class SimpleAgent
+{
+    name: string;
+    role: string;
+    
+    constructor(agentName, agentRole)
+    {
+        this.name = agentName;
+        this.role = agentRole;
+        print("🤖 Agent " + this.name + " (" + this.role + ") created");
+    }
+    
+    function handleTask(taskDesc)
+    {
+        print("📋 " + this.name + " handling: " + taskDesc);
+        
+        var result = textGen.GenerateAsync(
+            "As " + this.name + " (" + this.role + "), handle: " + taskDesc,
+            { temperature: 0.7, maxTokens: 100 }
+        );
+        
+        print("✅ " + this.name + " result: " + result);
+        return result;
+    }
+}
+
+// Global variables for agents
+var developer = new SimpleAgent("Alice", "developer");
+var designer = new SimpleAgent("Bob", "designer");
+
+// ✅ CURRENT WORKING APPROACH: Global event handlers that call agent methods
+on task.request (payload)
+{
+    print("📨 SYSTEM: Task request received");
+    print("   Description: " + payload.description);
+    print("   Target: " + payload.targetRole);
+    
+    if (payload.targetRole == "developer")
+    {
+        developer.handleTask(payload.description);
+    }
+    else if (payload.targetRole == "designer")
+    {
+        designer.handleTask(payload.description);
+    }
+    else
+    {
+        print("❌ No agent found for role: " + payload.targetRole);
+    }
+}
+
+on agent.status (payload)
+{
+    print("📊 SYSTEM: Status check requested");
+    print("   Developer: " + developer.name + " (active)");
+    print("   Designer: " + designer.name + " (active)");
+}
+
+print("🚀 AGENT EVENT SYSTEM DEMO");
+print("===========================");
+print("");
+
+print("📤 Emitting development task...");
+emit task.request, {
+    description: "Fix login bug",
+    targetRole: "developer",
+    priority: "high"
+};
+
+print("");
+print("📤 Emitting design task...");
+emit task.request, {
+    description: "Create wireframes for dashboard",
+    targetRole: "designer",
+    priority: "medium"
+};
+
+print("");
+print("📤 Requesting agent status...");
+emit agent.status, {
+    requestedBy: "admin"
+};
+
+print("");
+print("✅ DEMONSTRATION COMPLETE!");
+print("");
+print("🎯 CURRENT ARCHITECTURE:");
+print("   • Agents are classes with methods");
+print("   • Global event handlers route to agent methods");
+print("   • Events trigger specific agent behaviors");
+print("");
+print("🔮 FUTURE GOAL: Class-based event handlers");
+print("   • Event handlers INSIDE agent classes");
+print("   • Direct event → agent response (no routing layer)");

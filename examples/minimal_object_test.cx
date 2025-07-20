@@ -1,0 +1,31 @@
+// Minimal object creation test
+class TestClass
+{
+    name: string;
+}
+
+print("Testing basic object creation...");
+
+try
+{
+    print("Step 1: About to create object with new");
+    var obj = new TestClass();
+    print("Step 2: Object created, about to set field");
+    
+    if (obj == null)
+    {
+        print("ERROR: obj is null!");
+    }
+    else
+    {
+        print("Step 3: Object is not null, setting field");
+        obj.name = "test";
+        print("Step 4: Field set, reading back");
+        print("Name: " + obj.name);
+        print("SUCCESS: Object creation working!");
+    }
+}
+catch (error)
+{
+    print("ERROR caught: " + error);
+}

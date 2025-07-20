@@ -1,5 +1,5 @@
-// 🔥 AMAZING AI DEBATE: CLIMATE CHANGE SOLUTIONS - WORKING VERSION
-// Fixed approach: Direct AI calls + Simple classes without constructor parameters
+// 🔥 AMAZING AI DEBATE: CLIMATE CHANGE SOLUTIONS - AGENT KEYWORD VERSION
+// Phase 6 Achievement: Using 'agent' keyword for autonomous agent creation
 using textGen from "Cx.AI.TextGeneration";
 using tts from "Cx.AI.TextToSpeech";
 
@@ -12,34 +12,35 @@ class DebateAgent
 print("🔥 AMAZING AI DEBATE: CLIMATE CHANGE SOLUTIONS");
 print("===============================================");
 print("🤖 CX Autonomous Programming Platform Demo");
+print("🚀 Phase 6: Agent Keyword Semantic Distinction");
 print("");
 
 try
 {
-    // Create agents without constructor parameters (working approach)
-    var agent1 = new DebateAgent();
+    // Create autonomous agents with 'agent' keyword (Phase 6 Achievement!)
+    var agent1 = agent DebateAgent();
     agent1.name = "Dr. Sarah Chen";
     agent1.position = "Technology Solutions";
     
-    var agent2 = new DebateAgent();
+    var agent2 = agent DebateAgent();
     agent2.name = "Prof. Marcus Green"; 
     agent2.position = "Nature-Based Solutions";
     
-    var agent3 = new DebateAgent();
+    var agent3 = agent DebateAgent();
     agent3.name = "Dr. Lisa Martinez";
     agent3.position = "Economic Transformation";
     
-    var agent4 = new DebateAgent();
+    var agent4 = agent DebateAgent();
     agent4.name = "Dr. James Wilson";
     agent4.position = "Policy & Governance";
     
     var agents = [agent1, agent2, agent3, agent4];
     
     print("🎭 Debate Participants:");
-    for (var agent in agents)
+    for (var debater in agents)
     {
         // Field access works! (no constructor corruption)
-        print("   → " + agent.name + " (" + agent.position + ")");
+        print("   → " + debater.name + " (" + debater.position + ")");
     }
     
     print("");
@@ -88,16 +89,16 @@ try
     print("=============================================");
     
     // ROUND 2: Each agent responds to the others
-    for (var agent in agents)
+    for (var debater in agents)
     {
         print("");
-        print("💭 " + agent.name + " responds:");
+        print("💭 " + debater.name + " responds:");
         var response = textGen.GenerateAsync(
-            "As " + agent.name + " with focus on " + agent.position + ", respond thoughtfully to the other climate arguments you've heard. Challenge at least one other approach while finding common ground. Be specific. 2-3 sentences.",
+            "As " + debater.name + " with focus on " + debater.position + ", respond thoughtfully to the other climate arguments you've heard. Challenge at least one other approach while finding common ground. Be specific. 2-3 sentences.",
             { temperature: 0.9, maxTokens: 150 }
         );
         print(response);
-        tts.SpeakAsync(agent.name + " responds: " + response);
+        tts.SpeakAsync(debater.name + " responds: " + response);
     }
     
     print("");
@@ -118,11 +119,11 @@ try
     print("✨ =====================================");
     print("✨ AMAZING AI DEBATE DEMO COMPLETE!");
     print("✨ =====================================");
-    print("🤖 4 AI Agents in Turn-Based Coordination");
+    print("🤖 4 Autonomous AI Agents (agent keyword)");
     print("🎵 Full Text-to-Speech Integration");  
     print("🧠 Dynamic Multi-Agent Argumentation");
     print("🔥 CX Language: Autonomous Programming Platform");
-    print("🚀 Phase 5: Multi-Agent Coordination ACHIEVED!");
+    print("🚀 Phase 6: Agent Keyword Semantic Distinction ACHIEVED!");
 }
 catch (error)
 {

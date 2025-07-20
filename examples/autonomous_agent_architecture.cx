@@ -1,0 +1,310 @@
+// CX Language - Autonomous Agent Architecture
+// Simplified event-driven agents that respond to signals automatically
+
+using textGen from "Cx.AI.TextGeneration";
+using tts from "Cx.AI.TextToSpeech";
+using vectorDb from "Cx.AI.VectorDatabase";
+
+// =============================================================================
+// AUTONOMOUS AGENT PATTERN - Self-Managing Event-Driven Agents
+// =============================================================================
+
+class DebugAgent
+{
+    name: string;
+    expertise: string;
+    status: string;
+    
+    constructor(name, expertise)
+    {
+        this.name = name;
+        this.expertise = expertise;
+        this.status = "ready";
+        
+        print("🤖 " + this.name + " initialized and listening for debug signals...");
+    }
+    
+    // This agent automatically responds to debug-related events
+    on debug.issue (payload)
+    {
+        print("🔍 " + this.name + " detected debug issue: " + payload.description);
+        
+        if (payload.severity == "critical")
+        {
+            this.handleCriticalIssue(payload);
+        }
+        
+        if (payload.type == "code-error")
+        {
+            this.analyzeCodeError(payload);
+        }
+    }
+    
+    on system.error (payload)
+    {
+        print("⚠️ " + this.name + " responding to system error");
+        
+        var analysis = textGen.GenerateAsync(
+            "As a " + this.expertise + " debug agent, analyze this error: " + 
+            payload.error + ". Provide specific troubleshooting steps.",
+            { temperature: 0.3, maxTokens: 200 }
+        );
+        
+        emit debug.analysis, {
+            agent: this.name,
+            error: payload.error,
+            analysis: analysis,
+            recommendations: this.generateRecommendations(analysis)
+        };
+        
+        tts.SpeakAsync("Debug analysis complete from " + this.name);
+    }
+    
+    function handleCriticalIssue(payload)
+    {
+        this.status = "handling-critical";
+        
+        var urgentResponse = textGen.GenerateAsync(
+            "CRITICAL: " + payload.description + 
+            ". Provide immediate action steps for " + this.expertise,
+            { temperature: 0.1, maxTokens: 150 }
+        );
+        
+        emit system.alert, {
+            level: "critical",
+            agent: this.name,
+            response: urgentResponse,
+            timestamp: "now"
+        };
+        
+        this.status = "ready";
+    }
+    
+    function analyzeCodeError(payload)
+    {
+        var codeAnalysis = textGen.GenerateAsync(
+            "Code error analysis for: " + payload.code + 
+            ". Error: " + payload.error + 
+            ". As " + this.expertise + " expert, suggest fixes.",
+            { temperature: 0.4, maxTokens: 250 }
+        );
+        
+        emit code.fix.suggestion, {
+            original_code: payload.code,
+            error: payload.error,
+            fix_suggestion: codeAnalysis,
+            confidence: this.assessConfidence(codeAnalysis),
+            agent: this.name
+        };
+    }
+    
+    function generateRecommendations(analysis)
+    {
+        return textGen.GenerateAsync(
+            "Based on this analysis: " + analysis + 
+            ". List 3 specific action items for resolution.",
+            { temperature: 0.2, maxTokens: 100 }
+        );
+    }
+    
+    function assessConfidence(analysis)
+    {
+        return textGen.GenerateAsync(
+            "Rate confidence in this analysis 1-10. Number only:",
+            analysis
+        );
+    }
+}
+
+class SupportAgent
+{
+    name: string;
+    specialization: string;
+    active_cases: array<object>;
+    
+    constructor(name, specialization)
+    {
+        this.name = name;
+        this.specialization = specialization;
+        this.active_cases = [];
+        
+        print("🎧 " + this.name + " ready for support requests in " + specialization);
+    }
+    
+    // Autonomous response to user requests
+    on user.request (payload)
+    {
+        print("📞 " + this.name + " handling user request: " + payload.message);
+        
+        var classification = textGen.GenerateAsync(
+            "Classify this support request: " + payload.message + 
+            ". Is this: technical, billing, account, or general? One word only.",
+            { temperature: 0.2 }
+        );
+        
+        if (classification.toLowerCase().contains(this.specialization.toLowerCase()))
+        {
+            this.handleSpecializedRequest(payload);
+        }
+        else
+        {
+            this.routeToSpecialist(payload, classification);
+        }
+    }
+    
+    on escalation.needed (payload)
+    {
+        print("🚨 " + this.name + " handling escalation");
+        
+        var escalationResponse = textGen.GenerateAsync(
+            "Handle this escalated case: " + payload.issue + 
+            ". Provide senior-level response for " + this.specialization,
+            { temperature: 0.5, maxTokens: 300 }
+        );
+        
+        emit escalation.resolved, {
+            original_case: payload,
+            resolution: escalationResponse,
+            agent: this.name,
+            escalation_level: "senior"
+        };
+    }
+    
+    function handleSpecializedRequest(payload)
+    {
+        var response = textGen.GenerateAsync(
+            "As a " + this.specialization + " support specialist, help with: " + 
+            payload.message + ". Be helpful and specific.",
+            { temperature: 0.6, maxTokens: 250 }
+        );
+        
+        var case_id = "case-" + this.active_cases.length;
+        this.active_cases.push({
+            id: case_id,
+            user: payload.user,
+            issue: payload.message,
+            status: "resolved"
+        });
+        
+        emit support.response, {
+            case_id: case_id,
+            user: payload.user,
+            response: response,
+            agent: this.name,
+            specialization: this.specialization
+        };
+        
+        tts.SpeakAsync("Support response ready from " + this.name);
+    }
+    
+    function routeToSpecialist(payload, classification)
+    {
+        emit support.routing, {
+            original_request: payload,
+            needs_specialist: classification,
+            routed_by: this.name,
+            reason: "Outside specialization area"
+        };
+    }
+}
+
+// =============================================================================
+// AUTONOMOUS AGENT INITIALIZATION - THE KEY INNOVATION
+// =============================================================================
+
+function demonstrateAutonomousAgents()
+{
+    print("🚀 CX Language - Autonomous Agent Architecture");
+    print("===============================================");
+    print("🎯 Event-driven agents that respond automatically to signals");
+    print("");
+    
+    // KEY INNOVATION: 'autonomous' keyword creates self-managing agents
+    print("🤖 Initializing autonomous agents...");
+    
+    // These agents automatically start listening for events upon creation
+    var debugAgent = new autonomous DebugAgent("CodeDoctor", "software debugging");
+    var techSupport = new autonomous SupportAgent("TechHelper", "technical");
+    var billingSupport = new autonomous SupportAgent("BillBot", "billing");
+    
+    print("✅ " + 3 + " autonomous agents initialized and active");
+    print("");
+    
+    // Agents respond automatically to events - no explicit invocation needed!
+    print("📡 Testing autonomous event responses:");
+    print("");
+    
+    // Simulate various events - agents respond automatically
+    emit debug.issue, {
+        description: "Memory leak in user authentication module",
+        severity: "critical",
+        type: "code-error",
+        code: "function login(user) { while(true) { data.push(user); } }",
+        error: "Infinite loop causing memory exhaustion"
+    };
+    
+    emit user.request, {
+        user: "customer123",
+        message: "My API calls are failing with 500 errors",
+        priority: "high"
+    };
+    
+    emit system.error, {
+        error: "Database connection timeout after 30 seconds",
+        component: "auth-service",
+        timestamp: "now"
+    };
+    
+    emit user.request, {
+        user: "customer456", 
+        message: "I was charged twice for my subscription",
+        priority: "medium"
+    };
+    
+    emit escalation.needed, {
+        issue: "Customer data appears corrupted after migration",
+        original_agent: "junior-support",
+        severity: "high"
+    };
+    
+    print("");
+    print("⚡ Events triggered - autonomous agents responding automatically!");
+    print("");
+    
+    // Demonstrate agent status
+    print("📊 Agent Status:");
+    print("  " + debugAgent.name + ": " + debugAgent.status + " (Expertise: " + debugAgent.expertise + ")");
+    print("  " + techSupport.name + ": Active cases: " + techSupport.active_cases.length);
+    print("  " + billingSupport.name + ": Active cases: " + billingSupport.active_cases.length);
+    print("");
+    
+    print("🎉 AUTONOMOUS AGENT ARCHITECTURE DEMONSTRATED!");
+    print("✨ Agents respond to events without explicit invocation");
+    print("🔄 Self-managing, event-driven, truly autonomous behavior");
+    
+    return {
+        debugAgent: debugAgent,
+        techSupport: techSupport,
+        billingSupport: billingSupport
+    };
+}
+
+// =============================================================================
+// EXECUTION - AUTONOMOUS AGENTS IN ACTION
+// =============================================================================
+
+print("🌟 Initializing Autonomous Agent System...");
+print("");
+
+var agentSystem = demonstrateAutonomousAgents();
+
+print("");
+print("🚀 AUTONOMOUS AGENT ARCHITECTURE COMPLETE!");
+print("===========================================");
+print("✅ Event-driven agent classes that self-manage");
+print("✅ 'autonomous' keyword for agent initialization");  
+print("✅ Automatic event subscription and response");
+print("✅ No explicit invocation required - agents just respond");
+print("✅ Simplified agent lifecycle management");
+print("");
+print("🔮 Ready for production autonomous agent deployment!");

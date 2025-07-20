@@ -1,0 +1,23 @@
+print("Creating class instance...");
+
+class TestObject
+{
+    value: string;
+    
+    constructor()
+    {
+        print("Constructor called");
+    }
+}
+
+print("About to create object");
+var obj = new TestObject();
+print("Object created successfully: " + obj);
+
+print("About to assign field");
+obj.value = "test";
+print("Field assigned successfully");
+
+print("About to read field");
+print("Field value: " + obj.value);
+print("Test complete");
