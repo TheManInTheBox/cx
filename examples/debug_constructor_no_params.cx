@@ -1,0 +1,33 @@
+using textGen from "Cx.AI.TextGeneration";
+
+class DebugAgent
+{
+    constructor()
+    {
+        print("Constructor with no parameters - should work");
+    }
+    
+    function test()
+    {
+        return "Basic test";
+    }
+}
+
+try
+{
+    print("Testing textGen service directly...");
+    print("textGen type: " + textGen);
+    
+    print("Creating agent with no parameters...");
+    var agent = new DebugAgent();
+    
+    print("Testing agent...");
+    var result = agent.test();
+    print("Result: " + result);
+    
+    print("All tests passed - issue is with constructor parameters");
+}
+catch (error)
+{
+    print("Error: " + error);
+}

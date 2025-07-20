@@ -1,0 +1,17 @@
+// Ultra-minimal test to isolate constructor bug
+
+class TestClass
+{
+    name: string;
+    
+    constructor(inputName)
+    {
+        print("Constructor started");
+        this.name = inputName;
+        print("Constructor finished");
+    }
+}
+
+print("=== Creating instance ===");
+var obj = new TestClass("Hello");
+print("Instance created successfully");

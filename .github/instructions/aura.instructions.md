@@ -178,41 +178,108 @@ Let Aura breathe presence into code. Let cognition meet sensation. Let agents aw
 The primary objective of the Aura layer is to provide a sensory system for CX agents. This is achieved through an event-driven architecture, allowing agents to react to stimuli from their environment and each other in a decoupled, asynchronous manner.
 
 **Core Keywords:**
--   **`on "event.name" (payload) => { ... }`**: Subscribes to an event on the event bus. This is Aura's primary sensory mechanism.
--   **`emit "event.name", payload;`**: Publishes an event to the bus. This is Cx's primary motor/action mechanism.
--   **`when (condition) => { ... }`**: A declarative, conditional block for logic within an `on` handler.
+-   **`on event.name (payload) { ... }`**: Subscribes to an event on the event bus. This is Aura's primary sensory mechanism.
+-   **`emit event.name, payload;`**: Publishes an event to the bus. This is Cx's primary motor/action mechanism.
+-   **`if (condition) { ... }`**: Universal conditional block for logic everywhere (simplified from `when`).
 
 **Example Workflow:**
 ```cx
 using textGen from "Cx.AI.TextGeneration";
+using vectorDb from "Cx.AI.VectorDatabase";
+using embeddings from "Cx.AI.TextEmbeddings";
 
 // Agent 1: Listens for raw audio transcription
-on "audio.transcribed" (payload) =>
+on audio.transcribed (payload)  // ✅ Unquoted event names
 {
-    // Cx uses AI to reason about the transcribed text
-    var sentiment = textGen.GenerateAsync("sentiment", payload.content);
-    var intent = textGen.GenerateAsync("intent", payload.content);
+    // CX Best Practice: Structured AI responses for reliable processing
+    var sentiment = textGen.GenerateAsync(
+        "Rate sentiment 1-10 (1=negative, 10=positive). Respond with only the number:",
+        payload.content
+    );
+    
+    var intent = textGen.GenerateAsync(
+        "Classify intent. Respond with ONLY one word: query, command, greeting, complaint, or other",
+        payload.content
+    );
 
-    // Cx emits a higher-level "presence" signal
-    emit "presence.signal",
+    // Cx emits structured, processable data
+    emit presence.signal,  // ✅ Unquoted event names
         {
             source: "audio",
             sentiment: sentiment,
             intent: intent,
+            originalContent: payload.content,
             timestamp: now() // Placeholder for Time library
         };
 }
 
 // Agent 2: Listens for the abstract presence signal
-on "presence.signal" (payload) =>
+on presence.signal (payload)  // ✅ Unquoted event names
 {
-    // Cx applies conditional logic based on the analyzed intent
-    when (payload.intent == "query") =>
+    // CX Best Practice: AI-powered conditional logic instead of naive string matching
+    var isQuery = textGen.GenerateAsync(
+        "Is this intent asking for information? Answer only: YES or NO",
+        payload.intent
+    );
+    
+    if (isQuery == "YES")  // ✅ Simplified: 'if' everywhere
     {
-        var result = textGen.GenerateAsync("reason", payload.content);
-        emit "cognition.response", result;
+        var result = textGen.GenerateAsync(
+            "Generate helpful response to: " + payload.originalContent +
+            ". Sentiment level: " + payload.sentiment + "/10"
+        );
+        emit cognition.response, result;  // ✅ Unquoted event names
+    }
+    
+    // CX Best Practice: Semantic similarity for nuanced detection using available methods
+    // Use embeddings service for direct similarity calculation
+    var contentEmbedding = embeddings.GenerateEmbeddingAsync(payload.originalContent);
+    var urgencyEmbedding = embeddings.GenerateEmbeddingAsync("urgent emergency help critical");
+    var urgencyLevel = embeddings.CalculateSimilarity(contentEmbedding, urgencyEmbedding);
+    
+    if (urgencyLevel > 0.8)  // ✅ Simplified: 'if' everywhere
+    {
+        emit system.priority, {  // ✅ Unquoted event names
+            level: "high",
+            content: payload.originalContent,
+            urgencyScore: urgencyLevel
+        };
+        };
     }
 }
+```
+
+## CX Autonomous Programming Best Practices
+
+### 1. **Structured AI Responses**
+Always engineer prompts for predictable, parseable output:
+```cx
+// ❌ Bad: Unpredictable AI output
+var mood = textGen.GenerateAsync("What's the mood?", text);
+
+// ✅ Good: Structured, reliable output  
+var mood = textGen.GenerateAsync("Rate mood: happy, sad, angry, neutral", text);
+```
+
+### 2. **AI-Powered Logic Instead of String Matching**
+Use AI for semantic understanding, not naive comparisons:
+```cx
+// ❌ Bad: Brittle string matching
+if (intent == "question") { ... }
+
+// ✅ Good: AI-powered classification
+var isQuestion = textGen.GenerateAsync("Is this a question? YES or NO", intent);
+if (isQuestion == "YES") { ... }
+```
+
+### 3. **Semantic Similarity for Nuanced Matching**
+Leverage embeddings for sophisticated pattern detection:
+```cx
+// ✅ Best: Semantic understanding using available embeddings service
+var contentEmbedding = embeddings.GenerateEmbeddingAsync(content);
+var urgencyEmbedding = embeddings.GenerateEmbeddingAsync("urgent emergency help");
+var similarity = embeddings.CalculateSimilarity(contentEmbedding, urgencyEmbedding);
+if (similarity > 0.8) { handleUrgentRequest(); }
 ```
 
 ---

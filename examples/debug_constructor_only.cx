@@ -1,0 +1,23 @@
+using textGen from "Cx.AI.TextGeneration";
+using tts from "Cx.AI.TextToSpeech";
+
+class SimpleAgent
+{
+    name: string;
+    genService: object;
+    speechService: object;
+    
+    constructor(name, gen, speech)
+    {
+        this.name = name;
+        this.genService = gen;
+        this.speechService = speech;
+        print("Constructor complete for " + name);
+    }
+}
+
+print("Creating single agent...");
+var agent = new SimpleAgent("TestBot", textGen, tts);
+print("Agent created successfully");
+print("Agent name: " + agent.name);
+print("Done");

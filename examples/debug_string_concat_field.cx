@@ -1,0 +1,25 @@
+// Test string concatenation with field access specifically
+class DebateAgent
+{
+    name: string;
+}
+
+try
+{
+    print("Creating and setting up agent...");
+    var agent1 = new DebateAgent();
+    agent1.name = "Dr. Sarah Chen";
+    
+    print("Testing field access in isolation...");
+    var testName = agent1.name;
+    print("Field access worked - got value");
+    
+    print("Testing string concatenation with field access...");
+    print("Name: " + agent1.name);  // This is where it might fail
+    print("String concatenation test completed");
+    
+}
+catch (error)
+{
+    print("Error: " + error);
+}

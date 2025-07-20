@@ -1,5 +1,15 @@
 ---
-applyTo: '**'
+a### 🚀 Phase 5: Autonomous Agentic Features (ACTIVE)
+- **✅ Event-Driven Architecture Foundation COMPLETE**
+  - **Description**: Implements a reactive model for autonomous agents using `on`, `when`, `emit` keywords. This is the foundational syntax for the Aura sensory layer.
+  - **Keywords**: `on` (event handler), `when` (conditional handler), `emit` (event emission).
+  - **Status**:
+    - **✅ Grammar**: Keywords added to `Cx.g4` with clean syntax (removed redundant `=>` operator)
+    - **✅ Parser**: ANTLR generation complete and functional
+    - **✅ AST**: `OnStatementNode`, `WhenStatementNode`, `EmitStatementNode` implemented
+    - **✅ Compiler**: Visitor methods with placeholder implementations complete
+    - **⏳ Runtime**: Event Bus implementation pending (next major milestone)
+- **✅ Parallel Keyword Implementation** - FULLY OPERATIONAL! Multi-agent coordination achieved (✅ Grammar ✅ AST ✅ Compiler ✅ Runtime - synchronous execution working, true parallel threading pending)**'
 ---
 # Copilot Instructions for CX Language
 

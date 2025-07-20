@@ -52,6 +52,11 @@ public interface IAstVisitor<T>
     T VisitAwaitExpression(AwaitExpressionNode node);
     T VisitParallelExpression(ParallelExpressionNode node);
     
+    // Event-driven architecture visitor methods
+    T VisitEventName(EventNameNode node);
+    T VisitOnStatement(OnStatementNode node);
+    T VisitEmitStatement(EmitStatementNode node);
+    
     // Class system visitor methods
     T VisitClassDeclaration(ClassDeclarationNode node);
     T VisitFieldDeclaration(FieldDeclarationNode node);
@@ -632,4 +637,39 @@ public class InterfacePropertySignatureNode : AstNode
     public CxType Type { get; set; } = CxType.Any;
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitInterfacePropertySignature(this);
+}
+
+/// <summary>
+/// Event name (dot-separated identifiers like user.input or system.startup.complete)
+/// </summary>
+public class EventNameNode : AstNode
+{
+    public List<string> Parts { get; set; } = new List<string>();
+
+    public string FullName => string.Join(".", Parts);
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitEventName(this);
+}
+
+/// <summary>
+/// Event handler statement (on user.input (payload) => { ... })
+/// </summary>
+public class OnStatementNode : StatementNode
+{
+    public EventNameNode EventName { get; set; } = null!;
+    public string PayloadIdentifier { get; set; } = string.Empty;
+    public BlockStatementNode Body { get; set; } = null!;
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitOnStatement(this);
+}
+
+/// <summary>
+/// Event emission statement (emit user.input, payload;)
+/// </summary>
+public class EmitStatementNode : StatementNode
+{
+    public EventNameNode EventName { get; set; } = null!;
+    public ExpressionNode? Payload { get; set; }
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitEmitStatement(this);
 }

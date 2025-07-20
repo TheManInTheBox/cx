@@ -18,9 +18,10 @@ statement
     | blockStatement
     | tryStatement
     | throwStatement
+    | onStatement
+    | emitStatement
     ;
 
-// Import statements for AI services
 importStatement: 'using' IDENTIFIER 'from' STRING_LITERAL ';';
 
 // Function declarations with optional async support
@@ -84,6 +85,11 @@ returnStatement: 'return' expression? ';';
 tryStatement: 'try' blockStatement ('catch' '(' IDENTIFIER ')' blockStatement)?;
 throwStatement: 'throw' expression ';';
 
+// Event-driven statements
+eventName: IDENTIFIER ('.' IDENTIFIER)*;
+onStatement: 'on' eventName '(' IDENTIFIER ')' blockStatement;
+emitStatement: 'emit' eventName (',' expression)? ';';
+
 // Blocks
 blockStatement: '{' statement* '}';
 expressionStatement: expression ';';
@@ -107,7 +113,6 @@ expression
     | '[' argumentList? ']'                             # ArrayLiteral
     ;
 
-// Object properties for AI configuration
 objectPropertyList: objectProperty (',' objectProperty)*;
 objectProperty: (IDENTIFIER | STRING_LITERAL) ':' expression;
 
@@ -124,7 +129,6 @@ primary
     | '(' expression ')'
     ;
 
-// Types
 type
     : 'string'
     | 'number'
@@ -135,7 +139,6 @@ type
     | IDENTIFIER  // Custom types including classes and interfaces
     ;
 
-// Tokens
 CLASS: 'class';
 INTERFACE: 'interface';
 EXTENDS: 'extends';
@@ -149,9 +152,12 @@ CATCH: 'catch';
 THROW: 'throw';
 NEW: 'new';
 NULL: 'null';
-SELF: 'self';
-BOOLEAN_LITERAL: 'true' | 'false';
-IDENTIFIER: [a-zA-Z_][a-zA-Z0-9_]*;
+TRUE: 'true';
+FALSE: 'false';
+ON: 'on';
+EMIT: 'emit';
+
+IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';
 NUMBER_LITERAL: [0-9]+ ('.' [0-9]+)?;
 

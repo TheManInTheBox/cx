@@ -1,0 +1,31 @@
+// Test if AI imports break constructor field access
+
+using textGen from "Cx.AI.TextGeneration";
+
+class TestNoFields
+{
+    constructor(name)
+    {
+        print("Constructor with no field assignments: " + name);
+    }
+}
+
+class TestWithFields
+{
+    name: string;
+    
+    constructor(name)
+    {
+        print("About to assign field");
+        this.name = name;  // This should crash
+        print("Field assigned successfully");
+    }
+}
+
+print("=== Testing no field assignments ===");
+var obj1 = new TestNoFields("Test1");
+
+print("=== Testing with field assignments ===");  
+var obj2 = new TestWithFields("Test2");
+
+print("Both tests completed successfully");

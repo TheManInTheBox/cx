@@ -804,6 +804,54 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return propSig;
     }
 
+    public override AstNode VisitEventName(EventNameContext context)
+    {
+        var eventName = new EventNameNode();
+        SetLocation(eventName, context);
+
+        // Parse all IDENTIFIER tokens separated by dots
+        foreach (var identifier in context.IDENTIFIER())
+        {
+            eventName.Parts.Add(identifier.GetText());
+        }
+
+        return eventName;
+    }
+
+    public override AstNode VisitOnStatement(OnStatementContext context)
+    {
+        var onStmt = new OnStatementNode();
+        SetLocation(onStmt, context);
+
+        // Parse event name (now using eventName rule)
+        onStmt.EventName = (EventNameNode)Visit(context.eventName());
+
+        // Parse payload identifier
+        onStmt.PayloadIdentifier = context.IDENTIFIER().GetText();
+
+        // Parse body
+        onStmt.Body = (BlockStatementNode)Visit(context.blockStatement());
+
+        return onStmt;
+    }
+
+    public override AstNode VisitEmitStatement(EmitStatementContext context)
+    {
+        var emitStmt = new EmitStatementNode();
+        SetLocation(emitStmt, context);
+
+        // Parse event name (now using eventName rule)
+        emitStmt.EventName = (EventNameNode)Visit(context.eventName());
+
+        // Parse payload (expression, if present)
+        if (context.expression() != null)
+        {
+            emitStmt.Payload = (ExpressionNode)Visit(context.expression());
+        }
+
+        return emitStmt;
+    }
+
     private AccessModifier ParseAccessModifier(AccessModifierContext context)
     {
         var text = context.GetText();
