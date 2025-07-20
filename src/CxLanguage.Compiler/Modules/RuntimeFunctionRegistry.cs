@@ -155,7 +155,29 @@ public static class RuntimeFunctionRegistry
             {
                 Console.WriteLine($"✅ EXECUTION: Found function {functionName} in registry");
                 
-                // Find the assembly that contains this method
+                // Handle static methods (built-in functions)
+                if (method.IsStatic)
+                {
+                    Console.WriteLine($"🔧 EXECUTION: Executing static built-in function: {functionName}");
+                    
+                    // Log method details
+                    var parameters = method.GetParameters();
+                    Console.WriteLine($"📋 EXECUTION: Method signature: {method.ReturnType.Name} {functionName}({string.Join(", ", parameters.Select(p => p.ParameterType.Name))})");
+                    
+                    // Convert arguments to match parameter types
+                    var convertedArgs = ConvertArguments(args, parameters);
+                    
+                    // Execute the static method
+                    Console.WriteLine($"⚡ EXECUTION: Invoking static method {functionName}");
+                    var result = method.Invoke(null, convertedArgs);
+                    
+                    Console.WriteLine($"🎉 EXECUTION SUCCESS: Static function {functionName} executed successfully");
+                    Console.WriteLine($"📤 EXECUTION: Result type: {result?.GetType().Name ?? "null"}");
+                    
+                    return result;
+                }
+                
+                // Handle instance methods (user-defined functions)
                 var assemblyInfo = _registeredAssemblies.Values.FirstOrDefault(a => a.AvailableFunctions.Contains(functionName));
                 if (assemblyInfo != null)
                 {
@@ -178,9 +200,12 @@ public static class RuntimeFunctionRegistry
                     var parameters = method.GetParameters();
                     Console.WriteLine($"📋 EXECUTION: Method signature: {method.ReturnType.Name} {functionName}({string.Join(", ", parameters.Select(p => p.ParameterType.Name))})");
                     
+                    // Convert arguments to match parameter types
+                    var convertedArgs = ConvertArguments(args, parameters);
+                    
                     // Execute the method
                     Console.WriteLine($"⚡ EXECUTION: Invoking method {functionName}");
-                    var result = method.Invoke(assemblyInfo.ProgramInstance, args);
+                    var result = method.Invoke(assemblyInfo.ProgramInstance, convertedArgs);
                     
                     Console.WriteLine($"🎉 EXECUTION SUCCESS: Function {functionName} executed successfully");
                     Console.WriteLine($"📤 EXECUTION: Result type: {result?.GetType().Name ?? "null"}");
@@ -206,5 +231,127 @@ public static class RuntimeFunctionRegistry
         
         // If we reach here, the function was not found or execution failed
         throw new Exception($"Function not found or execution failed: {functionName}");
+    }
+
+    /// <summary>
+    /// Register a built-in static function for runtime access
+    /// </summary>
+    public static void RegisterBuiltInFunction(string functionName, MethodInfo method)
+    {
+        Console.WriteLine($"🔧 REGISTRY: Registering built-in function: {functionName}");
+        _registeredMethods.TryAdd(functionName, method);
+    }
+
+    /// <summary>
+    /// Register all built-in functions from CxRuntimeHelper
+    /// </summary>
+    public static void RegisterBuiltInFunctions()
+    {
+        // Use reflection to get the CxRuntimeHelper type from the Runtime assembly
+        var runtimeAssembly = AppDomain.CurrentDomain.GetAssemblies()
+            .FirstOrDefault(a => a.GetName().Name == "CxLanguage.Runtime");
+        
+        if (runtimeAssembly == null)
+        {
+            Console.WriteLine($"❌ REGISTRY: Could not find CxLanguage.Runtime assembly");
+            return;
+        }
+
+        var runtimeHelperType = runtimeAssembly.GetType("CxLanguage.Runtime.CxRuntimeHelper");
+        if (runtimeHelperType == null)
+        {
+            Console.WriteLine($"❌ REGISTRY: Could not find CxRuntimeHelper type in Runtime assembly");
+            return;
+        }
+
+        var methods = runtimeHelperType.GetMethods(BindingFlags.Public | BindingFlags.Static);
+
+        // Register namespace event functions
+        var namespacedFunctions = new[]
+        {
+            "RegisterNamespacedAgent",
+            "UnregisterNamespacedAgent", 
+            "SubscribeToNamespacedEvent",
+            "AutoSubscribeNamespacedAgent",
+            "EmitNamespacedEvent",
+            "GetNamespacedBusStatistics"
+        };
+
+        foreach (var functionName in namespacedFunctions)
+        {
+            var method = methods.FirstOrDefault(m => m.Name == functionName);
+            if (method != null)
+            {
+                RegisterBuiltInFunction(functionName, method);
+                Console.WriteLine($"✅ REGISTRY: Built-in function registered: {functionName}");
+            }
+            else
+            {
+                Console.WriteLine($"❌ REGISTRY: Built-in function not found: {functionName}");
+            }
+        }
+    }
+
+    /// <summary>
+    /// Convert CX arguments to match C# method parameter types
+    /// </summary>
+    private static object[] ConvertArguments(object[] args, ParameterInfo[] parameters)
+    {
+        if (args.Length != parameters.Length)
+        {
+            Console.WriteLine($"⚠️ ARGUMENT MISMATCH: Expected {parameters.Length} arguments, got {args.Length}");
+            return args; // Return as-is and let reflection handle the error
+        }
+
+        var convertedArgs = new object[args.Length];
+        
+        for (int i = 0; i < args.Length; i++)
+        {
+            var arg = args[i];
+            var paramType = parameters[i].ParameterType;
+            
+            if (arg == null)
+            {
+                convertedArgs[i] = null!;
+                continue;
+            }
+            
+            var argType = arg.GetType();
+            
+            // Direct type match
+            if (paramType.IsAssignableFrom(argType))
+            {
+                convertedArgs[i] = arg;
+                continue;
+            }
+            
+            // Handle object[] to string[] conversion
+            if (paramType == typeof(string[]) && arg is object[] objectArray)
+            {
+                Console.WriteLine($"🔄 CONVERTING: object[] to string[] for parameter {i}");
+                convertedArgs[i] = objectArray.Select(o => o?.ToString()).ToArray();
+                continue;
+            }
+            
+            // Handle other array conversions if needed
+            if (paramType.IsArray && arg is object[] sourceArray)
+            {
+                var elementType = paramType.GetElementType();
+                Console.WriteLine($"🔄 CONVERTING: object[] to {elementType?.Name}[] for parameter {i}");
+                
+                var targetArray = Array.CreateInstance(elementType!, sourceArray.Length);
+                for (int j = 0; j < sourceArray.Length; j++)
+                {
+                    targetArray.SetValue(Convert.ChangeType(sourceArray[j], elementType!), j);
+                }
+                convertedArgs[i] = targetArray;
+                continue;
+            }
+            
+            // Default: try direct assignment
+            convertedArgs[i] = arg;
+        }
+        
+        return convertedArgs;
     }
 }

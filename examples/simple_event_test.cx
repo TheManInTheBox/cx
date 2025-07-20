@@ -1,0 +1,15 @@
+// CX Language - Simple Event Test
+// Testing basic on/emit syntax
+
+print("Testing basic event syntax");
+
+// Simple event handler
+on user.input (payload)
+{
+    print("Received user input: " + payload);
+}
+
+// Simple event emission
+emit user.input, "Hello World";
+
+print("Event test complete");

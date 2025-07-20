@@ -40,6 +40,7 @@ classMember
     : fieldDeclaration
     | methodDeclaration
     | constructorDeclaration
+    | onStatement
     ;
 
 fieldDeclaration: accessModifier? IDENTIFIER ':' type ('=' expression)? ';';
@@ -86,7 +87,8 @@ tryStatement: 'try' blockStatement ('catch' '(' IDENTIFIER ')' blockStatement)?;
 throwStatement: 'throw' expression ';';
 
 // Event-driven statements
-eventName: IDENTIFIER ('.' IDENTIFIER)*;
+eventNamePart: IDENTIFIER | 'any' | 'agent' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts';
+eventName: eventNamePart ('.' eventNamePart)*;
 onStatement: 'on' eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName (',' expression)? ';';
 
@@ -98,6 +100,7 @@ expressionStatement: expression ';';
 expression
     : primary                                           # PrimaryExpression
     | 'new' IDENTIFIER '(' argumentList? ')'           # NewExpression
+    | 'agent' IDENTIFIER '(' argumentList? ')'         # AgentExpression
     | expression '.' IDENTIFIER                         # MemberAccess
     | expression '(' argumentList? ')'                  # FunctionCall
     | expression '[' expression ']'                     # IndexAccess
@@ -157,6 +160,7 @@ TRUE: 'true';
 FALSE: 'false';
 ON: 'on';
 EMIT: 'emit';
+AGENT: 'agent';
 
 // Thread context keyword - provides access to current thread context and state
 SELF: 'self';

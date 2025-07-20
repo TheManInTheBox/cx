@@ -1,0 +1,97 @@
+// CX Language - Simple Event Bus Service Test
+// Testing the new pub/sub system with basic agent operations
+
+class TestAgent
+{
+    name: string;
+    busId: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.busId = "";
+        print("🤖 Agent " + this.name + " created");
+    }
+    
+    function joinBus()
+    {
+        // Join with Global scope to receive all events
+        this.busId = JoinEventBus(this.name, "test-agent", "Global", null, null, this);
+        print("✅ " + this.name + " joined event bus with ID: " + this.busId);
+        return this.busId;
+    }
+    
+    function leaveBus()
+    {
+        if (this.busId != "")
+        {
+            var success = LeaveEventBus(this.busId);
+            print("👋 " + this.name + " left event bus: " + success);
+            this.busId = "";
+            return success;
+        }
+        return false;
+    }
+    
+    function joinTestChannel()
+    {
+        if (this.busId != "")
+        {
+            var success = JoinChannel(this.busId, "test-channel");
+            print("📡 " + this.name + " joined test-channel: " + success);
+            return success;
+        }
+        return false;
+    }
+}
+
+print("🚀 EVENT BUS SERVICE TEST");
+print("=========================");
+print("");
+
+// Create test agents
+var alice = new TestAgent("Alice");
+var bob = new TestAgent("Bob");
+
+print("📋 Phase 1: Joining the Bus");
+print("----------------------------");
+alice.joinBus();
+bob.joinBus();
+
+print("");
+print("📋 Phase 2: Channel Management");
+print("-------------------------------");
+alice.joinTestChannel();
+bob.joinTestChannel();
+
+print("");
+print("📋 Phase 3: Bus Statistics");
+print("---------------------------");
+var stats = GetBusStatistics();
+print("📊 Bus Statistics:");
+print("   Total Agents: " + stats.TotalAgents);
+print("   Total Channels: " + stats.TotalChannels);
+print("   Total Roles: " + stats.TotalRoles);
+
+print("");
+print("📋 Phase 4: Event Broadcasting");
+print("-------------------------------");
+print("🔸 Broadcasting test event:");
+EmitScopedEvent("test.message", {
+    message: "Hello from Event Bus Service!",
+    priority: "normal"
+}, "TestSystem", "Global", null, null);
+
+print("");
+print("📋 Phase 5: Cleanup");
+print("--------------------");
+alice.leaveBus();
+bob.leaveBus();
+
+print("");
+var finalStats = GetBusStatistics();
+print("📊 Final Statistics:");
+print("   Remaining Agents: " + finalStats.TotalAgents);
+
+print("");
+print("✅ EVENT BUS SERVICE TEST COMPLETE!");

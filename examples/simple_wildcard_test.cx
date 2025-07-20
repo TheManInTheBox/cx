@@ -1,0 +1,48 @@
+// Simple test to isolate wildcard matching issue
+print("🔍 Simple Wildcard Test Starting");
+
+class SimpleAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("SimpleAgent " + this.name + " created");
+    }
+    
+    // Simple wildcard handler
+    on any.test (payload)
+    {
+        print("🎯 " + this.name + " received any.test: " + payload);
+    }
+    
+    // Specific handler for comparison
+    on system.test (payload)
+    {
+        print("📡 " + this.name + " received system.test: " + payload);
+    }
+}
+
+try
+{
+    var testAgent = new SimpleAgent("TestAgent");
+    print("✅ Agent created successfully");
+    
+    print("📤 Emitting system.test...");
+    emit system.test, "system message";
+    
+    print("📤 Emitting alerts.test...");
+    emit alerts.test, "alerts message";
+    
+    print("📤 Emitting dev.test...");
+    emit dev.test, "dev message";
+    
+    print("✅ All events emitted");
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}
+
+print("🏁 Simple Wildcard Test Complete");

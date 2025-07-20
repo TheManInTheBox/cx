@@ -1,0 +1,47 @@
+// Field Assignment Test - Isolating Agent ID Storage Issue
+print("🔧 Field Assignment Test Starting");
+
+class TestAgent
+{
+    name: string;
+    agentId: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.agentId = "initial";
+    }
+}
+
+try
+{
+    // Test simple string assignment
+    var agent = new TestAgent("TestBot");
+    print("Initial agentId: " + agent.agentId);
+    
+    // Test direct string assignment 
+    agent.agentId = "simple-test-id";
+    print("After direct assignment: " + agent.agentId);
+    
+    // Test RegisterNamespacedAgent call
+    var realAgentId = RegisterNamespacedAgent("TestBot", "test", "bot", null, agent);
+    print("RegisterNamespacedAgent returned: " + realAgentId);
+    
+    // Test assignment from function result
+    agent.agentId = realAgentId;
+    print("After function assignment: " + agent.agentId);
+    
+    // Test UnregisterNamespacedAgent with stored ID
+    var unregResult = UnregisterNamespacedAgent(agent.agentId);
+    print("Unregister with stored ID result: " + unregResult);
+    
+    // Test UnregisterNamespacedAgent with original ID
+    var unregDirect = UnregisterNamespacedAgent(realAgentId);
+    print("Unregister with original ID result: " + unregDirect);
+    
+    print("✅ Field Assignment Test Complete");
+}
+catch (error)
+{
+    print("❌ Error in Field Assignment Test: " + error);
+}

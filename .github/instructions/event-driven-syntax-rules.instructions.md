@@ -26,54 +26,147 @@ description: "CX Event-Driven Architecture - Critical Syntax Rules Quick Referen
 ## ✅ CORRECT PATTERNS
 
 ```cx
-// Event receiver with conditional logic
-on user.input (payload)  // ✅ UNQUOTED event name
+// Enhanced event receiver with embedded context in payload
+on user.input (payload)  // ✅ UNQUOTED event name, single parameter
 {
-    // Handle incoming event
-    print("Received: " + payload.data);
+    // payload.context contains caller info, session, timestamp, processing chain
+    // payload.data contains the actual event data and business logic
+    print("Event from: " + payload.context.caller + " in session: " + payload.context.sessionId);
+    print("Data: " + payload.data + ", Priority: " + payload.priority);
     
     // ✅ CORRECT: Use 'if' for ALL conditionals
     if (payload.priority > 5)
     {
-        emit high.priority, payload;  // ✅ UNQUOTED event name
+        emit high.priority, payload;  // ✅ UNQUOTED event name, embedded context
     }
     
-    if (payload.type == "urgent")
+    if (payload.context.caller == "system")
     {
-        // More conditional logic
-        emit escalation.needed, { urgency: "high" };
+        // Enhanced context-aware processing
+        emit escalation.needed, { 
+            context: payload.context,
+            data: {
+                urgency: "high",
+                originalData: payload.data,
+                reason: "system-level-request"
+            }
+        };
     }
 }
 
-// Function with conditional logic  
-function processData(data)
+// ✅ BREAKTHROUGH: Extended Event Name Grammar Support
+on support.tickets.new (payload)  // ✅ Keywords in event names working!
+{
+    if (payload.ticketId)
+    {
+        print("🎫 New ticket: " + payload.ticketId);
+        emit alerts.high, { ticket: payload };
+    }
+}
+
+on dev.tasks.assigned (payload)  // ✅ Multiple keywords supported
+{
+    if (payload.assignee)
+    {
+        print("📋 Task assigned to: " + payload.assignee);
+        emit notifications.task, payload;
+    }
+}
+
+// ✅ WILDCARD SUPPORT: 'any' keyword for cross-namespace matching
+on any.critical (payload)  // ✅ Matches system.critical, alerts.critical, etc.
+{
+    if (payload.severity > 8)
+    {
+        print("🚨 CRITICAL EVENT from any namespace!");
+        emit emergency.response, payload;
+    }
+}
+
+// Enhanced function with context-aware event emission
+function processData(data, requestContext)
 {
     if (data.score > 0.8)         // ✅ CORRECT: 'if' everywhere
     {
-        emit data.processed, data;   // ✅ CORRECT: 'emit' anywhere, unquoted
+        // Enhanced emit with embedded context
+        emit data.processed, {
+            context: requestContext,
+            result: {
+                data: data,
+                confidence: data.score,
+                processor: "processData"
+            }
+        };
         return "processed";
     }
     
     return "rejected";
 }
 
-// Class with instance event receiver
+// Enhanced class with instance event receiver  
 class Agent
 {
-    on task.assigned (payload)   // ✅ CORRECT: unquoted event name
+    name: string;
+    
+    constructor(agentName)
     {
-        if (payload.target == this.name)  // ✅ CORRECT: 'if' in event handlers
+        this.name = agentName;
+    }
+    
+    // ✅ AUTO-REGISTRATION: Class event handlers automatically register with namespace bus
+    on task.assigned (payload)   // ✅ CORRECT: single parameter with embedded context
+    {
+        if (payload.task.assignee == this.name)     // ✅ CORRECT: 'if' in event handlers
         {
-            emit task.accepted, payload;   // ✅ CORRECT: unquoted emit
+            var responseContext = {
+                caller: this.name,
+                timestamp: "now",
+                originalEvent: "task.assigned",
+                sessionId: payload.context.sessionId,
+                processingChain: payload.context.processingChain + " → " + this.name
+            };
+            
+            emit task.accepted, {
+                context: responseContext,
+                result: {
+                    agent: this.name,
+                    task: payload.task,
+                    acceptedAt: "now"
+                }
+            };
+        }
+    }
+    
+    // ✅ WILDCARD HANDLERS: Auto-register for all namespace patterns
+    on support.any (payload)  // Matches support.tickets, support.users, etc.
+    {
+        if (payload.priority == "urgent")
+        {
+            print("🎯 " + this.name + " handling urgent support event");
+            emit priority.escalation, payload;
         }
     }
 }
 
-// Standalone code
+// Enhanced standalone code with context tracking
 var result = calculateSomething();
 if (result.success)               // ✅ CORRECT: 'if' in standalone code
 {
-    emit calculation.done, result;  // ✅ CORRECT: unquoted emit anywhere
+    var completionContext = {
+        caller: "main-process",
+        timestamp: "now",
+        originalEvent: "calculation.started", 
+        sessionId: "main-session"
+    };
+    
+    emit calculation.done, {
+        context: completionContext,
+        result: {
+            data: result.data,
+            duration: result.processingTime,
+            method: "calculateSomething"
+        }
+    };
 }
 ```
 
@@ -82,6 +175,9 @@ if (result.success)               // ✅ CORRECT: 'if' in standalone code
 **"if" = ALL conditionals EVERywhere**  
 **"emit" = EVERywhere Means It's Totally allowed**  
 **Event names = NO quotes needed (user.input, not "user.input")**
+**Keywords supported = new, critical, assigned, tickets, tasks, support, dev, system, alerts**
+**Wildcards = 'any' keyword matches ALL namespaces**
+**Auto-registration = Class event handlers automatically register with namespace bus**
 
 ## 🔄 QUICK DECISION TREE
 
@@ -89,22 +185,41 @@ if (result.success)               // ✅ CORRECT: 'if' in standalone code
    - **ALWAYS** → Use `if` (no exceptions!)
 
 2. Do you want to publish an event?
-   - **ANYWHERE** → Use `emit eventName, payload` (no quotes on event name)
+   - **ANYWHERE** → Use `emit eventName, payload` (context embedded in payload)
 
 3. Do you want to listen for events?
-   - **Global level** → Use `on eventName (payload) { ... }` (no quotes)
-   - **Class instance** → Use `on eventName (payload) { ... }` inside class (no quotes)
+   - **ALWAYS** → Use `on eventName (payload) { ... }` (context in payload.context)
+   - **Location** → Global level or inside classes (no quotes on event names)
 
-## 📝 RECENT SIMPLIFICATIONS
+4. Do you need context tracking?
+   - **YES** → Use payload.context structure for caller, session, processing chain
+   - **NO** → Use simple payload structure for basic event handling
 
-### ✅ REMOVED: `when` keyword
-- **Old**: `when (condition) { ... }` inside event handlers
-- **New**: `if (condition) { ... }` everywhere (simpler!)
+5. Do you need wildcard matching?
+   - **YES** → Use `any.critical` for ALL namespace critical events
+   - **NO** → Use specific namespace patterns like `support.tickets.new`
 
-### ✅ REMOVED: Quoted event names  
-- **Old**: `on "user.input" (payload) { ... }`
-- **New**: `on user.input (payload) { ... }` (cleaner!)
+6. Do you need auto-registration?
+   - **YES** → Put `on` handlers inside class definitions for automatic namespace bus registration
+   - **NO** → Use global `on` handlers for manual registration
+
+## 📝 RECENT BREAKTHROUGHS
+
+### ✅ COMPLETE: Extended Event Name Grammar
+- **Keywords Supported**: `new`, `critical`, `assigned`, `tickets`, `tasks`, `support`, `dev`, `system`, `alerts`
+- **Event Names**: `support.tickets.new`, `dev.tasks.assigned`, `system.critical`
+- **Grammar**: `eventNamePart: IDENTIFIER | 'any' | 'agent' | 'new' | 'critical' | ...`
+
+### ✅ COMPLETE: Auto-Registration System
+- **Class-Based**: `on` handlers inside classes auto-register with namespace bus
+- **Wildcard Support**: `any.critical` matches ALL namespace critical events
+- **Zero Manual Setup**: No `RegisterNamespacedAgent()` calls needed
+
+### ✅ COMPLETE: Native Emit Syntax
+- **Working**: `emit support.tickets.new, { ticketId: "T-001" };`
+- **Object Payloads**: Complex object literals passed correctly
+- **Event Delivery**: Messages delivered to correct agent instances
 
 ---
 
-**Remember**: These simplified rules eliminate complexity and potential errors while maintaining full event-driven architecture capabilities.
+**Remember**: These simplified rules eliminate complexity and potential errors while maintaining full event-driven architecture capabilities with production-ready auto-registration and wildcard matching.

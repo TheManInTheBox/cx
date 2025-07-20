@@ -1,0 +1,155 @@
+// CX Language - Simplified Agent Infrastructure
+// Reduced complexity while maintaining autonomous capabilities
+
+using textGen from "Cx.AI.TextGeneration";
+using tts from "Cx.AI.TextToSpeech";
+using vectorDb from "Cx.AI.VectorDatabase";
+
+// =============================================================================
+// SIMPLIFIED AGENT PATTERN 1: Core Agent (Class-Based)
+// =============================================================================
+
+class Agent
+{
+    name: string;
+    role: string;
+    
+    constructor(name, role)
+    {
+        this.name = name;
+        this.role = role;
+    }
+    
+    // Single processing method handles all scenarios
+    function process(input)
+    {
+        var response = textGen.GenerateAsync(
+            "As " + this.role + ", respond to: " + input,
+            { temperature: 0.7 }
+        );
+        
+        return response;
+    }
+    
+    // Optional voice capability
+    function speak(message)
+    {
+        tts.SpeakAsync(this.name + ": " + message);
+    }
+}
+
+// =============================================================================
+// SIMPLIFIED AGENT PATTERN 2: Function-Based Utilities
+// =============================================================================
+
+// Simple autonomous functions without complex orchestration
+function classifyInput(text)
+{
+    return textGen.GenerateAsync(
+        "Classify as: question, command, or comment. One word only:",
+        text
+    );
+}
+
+function routeToAgent(text, agents)
+{
+    var routing = textGen.GenerateAsync(
+        "Which agent should handle this? Available: " + 
+        agents.map(a => a.role).join(", ") + ". Answer with role only:",
+        text
+    );
+    
+    // Find matching agent
+    for (agent in agents)
+    {
+        if (agent.role.toLowerCase().contains(routing.toLowerCase()))
+        {
+            return agent;
+        }
+    }
+    
+    return agents[0]; // Default to first agent
+}
+
+// =============================================================================
+// SIMPLIFIED AGENT PATTERN 3: Event-Driven (Essential Only)
+// =============================================================================
+
+// Basic event handling without complex orchestration
+on user.input (payload)
+{
+    var classification = classifyInput(payload.text);
+    
+    if (classification == "question")
+    {
+        emit question.detected, payload;
+    }
+    
+    if (classification == "command")
+    {
+        emit command.detected, payload;
+    }
+}
+
+on question.detected (payload)
+{
+    var answer = textGen.GenerateAsync(
+        "Answer this question concisely: " + payload.text
+    );
+    
+    emit response.ready, { 
+        original: payload.text, 
+        response: answer 
+    };
+}
+
+// =============================================================================
+// SIMPLIFIED DEMONSTRATION
+// =============================================================================
+
+function demonstrateSimplifiedAgents()
+{
+    print("🤖 CX Language - Simplified Agent Infrastructure");
+    print("================================================");
+    
+    // Create simple agents
+    var agents = [
+        new Agent("Alex", "technical expert"),
+        new Agent("Sam", "business analyst"),
+        new Agent("Jordan", "creative writer")
+    ];
+    
+    print("✅ Created " + agents.length + " simplified agents");
+    
+    // Test simple routing
+    var testInputs = [
+        "How do I fix this code bug?",
+        "What's our revenue forecast?", 
+        "Write a creative story about AI"
+    ];
+    
+    for (input in testInputs)
+    {
+        print("\n📝 Input: " + input);
+        
+        var selectedAgent = routeToAgent(input, agents);
+        print("🎯 Routed to: " + selectedAgent.name + " (" + selectedAgent.role + ")");
+        
+        var response = selectedAgent.process(input);
+        print("💬 Response: " + response);
+        
+        selectedAgent.speak(response);
+    }
+    
+    // Test event-driven pattern
+    print("\n📡 Testing simplified event system:");
+    emit user.input, { text: "What is artificial intelligence?" };
+    
+    print("\n✨ Simplified agent infrastructure complete!");
+    print("🎉 Reduced complexity while maintaining autonomy");
+    
+    return agents;
+}
+
+// Execute demonstration
+var result = demonstrateSimplifiedAgents();

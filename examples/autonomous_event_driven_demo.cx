@@ -1,0 +1,133 @@
+// CX Language - Autonomous Agent Architecture (Current Syntax)
+// Testing event-driven agents without the 'autonomous' keyword for now
+
+using textGen from "Cx.AI.TextGeneration";
+using tts from "Cx.AI.TextToSpeech";
+
+// =============================================================================
+// AUTONOMOUS AGENT CONCEPT WITH CURRENT SYNTAX
+// =============================================================================
+
+class Agent
+{
+    name: string;
+    role: string;
+    
+    constructor(name, role)
+    {
+        this.name = name;
+        this.role = role;
+        print("🤖 " + this.name + " (" + this.role + ") is now autonomous and listening...");
+    }
+    
+    // The key insight: Agents respond to events automatically
+    on task.assigned (payload)
+    {
+        if (payload.role == this.role || payload.agent == this.name)
+        {
+            print("✅ " + this.name + " autonomously handling: " + payload.description);
+            
+            var response = textGen.GenerateAsync(
+                "As a " + this.role + ", handle this task: " + payload.description,
+                { temperature: 0.7 }
+            );
+            
+            emit task.completed, {
+                agent: this.name,
+                task: payload.description,
+                result: response
+            };
+        }
+    }
+    
+    on user.message (payload)
+    {
+        print("💬 " + this.name + " autonomously responding to user");
+        
+        var response = textGen.GenerateAsync(
+            "User says: " + payload.text + ". Respond as a helpful " + this.role,
+            { temperature: 0.8 }
+        );
+        
+        emit agent.response, {
+            agent: this.name,
+            response: response
+        };
+        
+        tts.SpeakAsync(this.name + " responded autonomously");
+    }
+}
+
+// =============================================================================
+// DEMONSTRATION OF AUTONOMOUS BEHAVIOR
+// =============================================================================
+
+print("🚀 Autonomous Agent Architecture Demo");
+print("====================================");
+print("🎯 Agents that respond automatically to signals");
+print("");
+
+// Create agents - they become autonomous event listeners immediately
+print("🤖 Initializing autonomous agents:");
+
+// In future: var coder = new autonomous Agent("Alice", "developer");
+// For now: var coder = new Agent("Alice", "developer");
+var coder = new Agent("Alice", "developer");
+var analyst = new Agent("Bob", "business analyst");
+var designer = new Agent("Carol", "UX designer");
+
+print("✅ 3 autonomous agents active and listening");
+print("");
+
+// Test autonomous responses
+print("📡 Broadcasting signals to autonomous agents:");
+print("");
+
+// Signal 1: Task for developer
+emit task.assigned, {
+    description: "Optimize database queries for user authentication",
+    role: "developer", 
+    priority: "high"
+};
+
+// Signal 2: General user message
+emit user.message, {
+    text: "I need help with improving my app's user interface",
+    user: "client123"
+};
+
+// Signal 3: Specific agent task
+emit task.assigned, {
+    description: "Create user journey map for onboarding flow",
+    agent: "Carol",
+    priority: "medium"
+};
+
+print("");
+print("⚡ Signals sent - agents responding autonomously!");
+print("");
+
+// Listen for agent responses
+on task.completed (payload)
+{
+    print("🎉 Task completed autonomously by " + payload.agent);
+    print("   Task: " + payload.task);
+    print("   Result: " + payload.result);
+    print("");
+}
+
+on agent.response (payload)
+{
+    print("💬 Autonomous response from " + payload.agent + ":");
+    print("   " + payload.response);
+    print("");
+}
+
+print("🌟 AUTONOMOUS AGENT DEMO COMPLETE!");
+print("==================================");
+print("✅ Agents listen and respond automatically");
+print("✅ No explicit method invocation needed");
+print("✅ Pure event-driven autonomous behavior");
+print("✅ Self-managing agent lifecycle");
+print("");
+print("🔮 Future syntax: var agent = new autonomous AgentClass(params);");

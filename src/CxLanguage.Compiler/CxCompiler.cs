@@ -53,7 +53,16 @@ public class CxCompiler : IAstVisitor<object>
     private readonly Dictionary<string, FieldBuilder> _classFields = new();
     private readonly Dictionary<string, MethodBuilder> _classMethods = new();
     private readonly Dictionary<string, ConstructorBuilder> _classConstructors = new();
+    private readonly Dictionary<string, List<(string EventName, string MethodName)>> _classEventHandlers = new();
     private string? _currentClassName = null; // Track current class being compiled
+
+    // Event system support
+    private readonly Dictionary<string, MethodBuilder> _eventHandlers = new();
+    private readonly List<(string EventName, string HandlerMethodName)> _eventRegistrations = new();
+    private int _eventHandlerCounter = 0;
+    
+    // Track event handler method names for Pass 2
+    private Dictionary<OnStatementNode, string> _eventHandlerMethodNames = new();
 
     // Two-pass compilation state
     private bool _isFirstPass = true;
@@ -196,6 +205,9 @@ public class CxCompiler : IAstVisitor<object>
             Console.WriteLine("[DEBUG] Compiling main program statements");
             ast.Accept(this);
             
+            // Generate event handler registration code
+            GenerateEventHandlerRegistrations();
+            
             // Return null by default
             Console.WriteLine("[DEBUG] Adding final return to main method");
             _currentIl.Emit(OpCodes.Ldnull);
@@ -212,6 +224,70 @@ public class CxCompiler : IAstVisitor<object>
         {
             return CompilationResult.Failure(ex.Message);
         }
+    }
+
+    /// <summary>
+    /// Generate IL code to register all compiled event handlers with the runtime event bus
+    /// </summary>
+    private void GenerateEventHandlerRegistrations()
+    {
+        if (_eventRegistrations.Count == 0)
+        {
+            Console.WriteLine("[DEBUG] No event handlers to register");
+            return;
+        }
+
+        Console.WriteLine($"[DEBUG] Generating registration code for {_eventRegistrations.Count} event handlers");
+
+        foreach (var (eventName, handlerMethodName) in _eventRegistrations)
+        {
+            if (!_eventHandlers.TryGetValue(eventName, out var handlerMethod))
+            {
+                Console.WriteLine($"[ERROR] Handler method not found for event: {eventName}");
+                continue;
+            }
+
+            Console.WriteLine($"[DEBUG] Registering event handler: {eventName} -> {handlerMethodName}");
+
+            // Load the event name as string parameter
+            _currentIl!.Emit(OpCodes.Ldstr, eventName);
+
+            // Create delegate for the handler method
+            // Load null for target (static method)
+            _currentIl.Emit(OpCodes.Ldnull);
+            
+            // Load function pointer to the handler method
+            _currentIl.Emit(OpCodes.Ldftn, handlerMethod);
+            
+            // Create Func<object, Task> delegate
+            var funcType = typeof(Func<object, Task>);
+            var funcConstructor = funcType.GetConstructor(new[] { typeof(object), typeof(IntPtr) });
+            if (funcConstructor == null)
+            {
+                throw new CompilationException("Could not find Func<object, Task> constructor");
+            }
+            _currentIl.Emit(OpCodes.Newobj, funcConstructor);
+
+            // Convert Func<object, Task> to CxEventHandler using helper method
+            var convertMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("ConvertToEventHandler");
+            if (convertMethod == null)
+            {
+                throw new CompilationException("ConvertToEventHandler method not found in CxRuntimeHelper");
+            }
+            _currentIl.Emit(OpCodes.Call, convertMethod);
+
+            // Call CxRuntimeHelper.RegisterEventHandler(string eventName, CxEventHandler handler)
+            var registerMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("RegisterEventHandler");
+            if (registerMethod == null)
+            {
+                throw new CompilationException("RegisterEventHandler method not found in CxRuntimeHelper");
+            }
+            _currentIl.Emit(OpCodes.Call, registerMethod);
+
+            Console.WriteLine($"[DEBUG] Generated registration IL for: {eventName}");
+        }
+
+        Console.WriteLine($"[DEBUG] Event handler registration complete - {_eventRegistrations.Count} handlers registered");
     }
 
     /// <summary>
@@ -977,16 +1053,7 @@ public class CxCompiler : IAstVisitor<object>
                     // Handle variable.property = value (e.g., agent1.name = "value")
                     if (memberNode.Object is IdentifierNode objectIdentifier)
                     {
-                        // Load the object variable first
-                        objectIdentifier.Accept(this);
-                        
-                        // Evaluate the value
-                        node.Right.Accept(this);
-                        _currentIl!.Emit(OpCodes.Dup); // Duplicate for return value
-                        
                         // We need to determine the field to store to
-                        // For now, we'll try to find it in our class fields using a simple pattern
-                        // This is a simplified approach - in a full implementation, we'd need type inference
                         var potentialFieldKey = "";
                         foreach (var classFieldKey in _classFields.Keys)
                         {
@@ -999,7 +1066,49 @@ public class CxCompiler : IAstVisitor<object>
                         
                         if (!string.IsNullOrEmpty(potentialFieldKey) && _classFields.TryGetValue(potentialFieldKey, out var objectField))
                         {
-                            _currentIl.Emit(OpCodes.Stfld, objectField);
+                            // Extract class name from field key (format: "ClassName.fieldName")
+                            var className = potentialFieldKey.Substring(0, potentialFieldKey.LastIndexOf('.'));
+                            
+                            // Load the object variable
+                            objectIdentifier.Accept(this);
+                            
+                            // Get the class type and cast the object to the correct type
+                            if (_userClasses.TryGetValue(className, out var typeBuilder))
+                            {
+                                // Try to get the actual created type
+                                Type? classType = null;
+                                try
+                                {
+                                    classType = _moduleBuilder.GetType(className);
+                                    if (classType == null)
+                                    {
+                                        classType = typeBuilder.CreateType();
+                                    }
+                                }
+                                catch
+                                {
+                                    classType = typeBuilder.CreateType();
+                                }
+                                
+                                if (classType != null)
+                                {
+                                    // Cast the object to the correct class type
+                                    _currentIl!.Emit(OpCodes.Castclass, classType);
+                                }
+                            }
+                            
+                            // Evaluate the value to assign
+                            node.Right.Accept(this);
+                            
+                            // Duplicate the value for return (stack: [object, value, value])
+                            _currentIl!.Emit(OpCodes.Dup);
+                            
+                            // Store the field: [object, value] -> []
+                            // We need to reorder stack to put object first, then value
+                            var tempLocal = _currentIl!.DeclareLocal(typeof(object));
+                            _currentIl.Emit(OpCodes.Stloc, tempLocal); // Store duplicate value temporarily
+                            _currentIl.Emit(OpCodes.Stfld, objectField); // Store field: [object, value] -> []
+                            _currentIl.Emit(OpCodes.Ldloc, tempLocal); // Load the value back for return
                         }
                         else
                         {
@@ -2055,11 +2164,36 @@ public class CxCompiler : IAstVisitor<object>
                 {
                     Console.WriteLine($"[DEBUG] Found field access: {objectVar.Name}.{node.Property} (field key: {fieldKey})");
                     
+                    // Extract class name from field key (format: "ClassName.fieldName")
+                    var className = fieldKey.Substring(0, fieldKey.LastIndexOf('.'));
+                    
                     // Load the object variable
                     node.Object.Accept(this);
                     
-                    // Cast to the appropriate class type if needed (for now, assume it's already correct type)
-                    // TODO: Type checking for safety
+                    // Get the class type and cast the object to the correct type
+                    if (_userClasses.TryGetValue(className, out var typeBuilder))
+                    {
+                        // Try to get the actual created type
+                        Type? classType = null;
+                        try
+                        {
+                            classType = _moduleBuilder.GetType(className);
+                            if (classType == null)
+                            {
+                                classType = typeBuilder.CreateType();
+                            }
+                        }
+                        catch
+                        {
+                            classType = typeBuilder.CreateType();
+                        }
+                        
+                        if (classType != null)
+                        {
+                            // Cast the object to the correct class type
+                            _currentIl!.Emit(OpCodes.Castclass, classType);
+                        }
+                    }
                     
                     // Load the field from the instance
                     _currentIl!.Emit(OpCodes.Ldfld, field);
@@ -2711,11 +2845,65 @@ public class CxCompiler : IAstVisitor<object>
             return new object();
         }
 
-        Console.WriteLine($"[DEBUG] Processing 'on' event handler statement - Event: {node.EventName.FullName}");
+        Console.WriteLine($"[DEBUG] Compiling 'on' event handler statement - Event: {node.EventName.FullName}");
         
-        // For now, we'll create a placeholder implementation
-        // TODO: Implement event bus registration in Phase 5
-        Console.WriteLine($"[WARNING] Event-driven architecture not yet implemented. 'on' statement is a placeholder.");
+        // Generate a unique method name for this event handler
+        var handlerMethodName = $"EventHandler_{node.EventName.FullName.Replace(".", "_")}_{_ifCounter++}";
+        
+        // Create the event handler method
+        var handlerMethod = _programTypeBuilder.DefineMethod(
+            handlerMethodName,
+            MethodAttributes.Private | MethodAttributes.Static,
+            typeof(Task),
+            new[] { typeof(object) });
+            
+        var handlerIl = handlerMethod.GetILGenerator();
+        
+        // Store current IL context
+        var previousIl = _currentIl;
+        var previousMethod = _currentMethod;
+        var previousLocals = _currentLocals;
+        
+        // Switch to handler method context
+        _currentIl = handlerIl;
+        _currentMethod = handlerMethod;
+        _currentLocals = new Dictionary<string, LocalBuilder>();
+        
+        try
+        {
+            // Create local variable for payload parameter
+            var payloadLocal = handlerIl.DeclareLocal(typeof(object));
+            _currentLocals[node.PayloadIdentifier] = payloadLocal;
+            
+            // Store the payload parameter
+            handlerIl.Emit(OpCodes.Ldarg_0);
+            handlerIl.Emit(OpCodes.Stloc, payloadLocal);
+            
+            // Generate code for the handler body statements
+            foreach (var statement in node.Body.Statements)
+            {
+                statement.Accept(this);
+            }
+            
+            // Create a completed task for the return value
+            handlerIl.Emit(OpCodes.Call, typeof(Task).GetMethod("get_CompletedTask")!);
+            handlerIl.Emit(OpCodes.Ret);
+            
+            Console.WriteLine($"[DEBUG] Generated event handler method: {handlerMethodName}");
+        }
+        finally
+        {
+            // Restore previous IL context
+            _currentIl = previousIl;
+            _currentMethod = previousMethod;
+            _currentLocals = previousLocals;
+        }
+        
+        // Track this event handler for runtime registration
+        _eventHandlers[node.EventName.FullName] = handlerMethod;
+        _eventRegistrations.Add((node.EventName.FullName, handlerMethodName));
+        
+        Console.WriteLine($"[INFO] Event handler registered for runtime hookup: {node.EventName.FullName} -> {handlerMethodName}");
         
         return new object();
     }
@@ -2733,12 +2921,42 @@ public class CxCompiler : IAstVisitor<object>
             return new object();
         }
 
-        Console.WriteLine($"[DEBUG] Processing 'emit' event statement - Event: {node.EventName.FullName}");
+        Console.WriteLine($"[DEBUG] Compiling 'emit' event statement - Event: {node.EventName.FullName}");
+        Console.WriteLine($"[DEBUG] Current IL generator is null: {_currentIl == null}");
+        Console.WriteLine($"[DEBUG] Current class name: {_currentClassName}");
         
-        // For now, we'll create a placeholder implementation  
-        // TODO: Implement event emission in Phase 5
-        Console.WriteLine($"[WARNING] Event-driven architecture not yet implemented. 'emit' statement is a placeholder.");
+        // Load the event name as string parameter
+        _currentIl!.Emit(OpCodes.Ldstr, node.EventName.FullName);
         
+        // Generate code for the payload (if present)
+        if (node.Payload != null)
+        {
+            // Evaluate the payload expression
+            node.Payload.Accept(this);
+        }
+        else
+        {
+            // No payload - load null
+            _currentIl.Emit(OpCodes.Ldnull);
+        }
+        
+        // Load source identifier (for debugging)
+        _currentIl.Emit(OpCodes.Ldstr, _currentClassName ?? "MainScript");
+        
+        // Call CxRuntimeHelper.EmitEvent(string eventName, object data, string source)
+        var emitMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("EmitEvent", 
+            new[] { typeof(string), typeof(object), typeof(string) });
+            
+        if (emitMethod == null)
+        {
+            throw new CompilationException("EmitEvent method not found in CxRuntimeHelper");
+        }
+        
+        Console.WriteLine($"[DEBUG] Found EmitEvent method: {emitMethod.Name}");
+        
+        _currentIl.Emit(OpCodes.Call, emitMethod);
+        
+        Console.WriteLine($"[DEBUG] Event emission code generated for: {node.EventName.FullName}");
         return new object();
     }
 
@@ -2826,6 +3044,133 @@ public class CxCompiler : IAstVisitor<object>
             throw new CompilationException($"Unknown class: {node.TypeName}");
         }
     }
+
+    public object VisitAgentExpression(AgentExpressionNode node)
+    {
+        if (_isFirstPass)
+        {
+            return new object();
+        }
+
+        Console.WriteLine($"[DEBUG] Creating autonomous agent of class: {node.TypeName}");
+        
+        // Check if we have a user-defined class
+        if (_userClasses.TryGetValue(node.TypeName, out var typeBuilder))
+        {
+            Console.WriteLine($"[DEBUG] Found user-defined agent class: {node.TypeName}");
+            
+            // In Pass 2, the class type should already be created by VisitClassDeclaration
+            // Try to get the actual Type from the module
+            Type? actualType = null;
+            
+            try
+            {
+                // Try to find the type in the module first
+                actualType = _moduleBuilder.GetType(node.TypeName);
+                
+                if (actualType == null)
+                {
+                    // If not found, try to create it from the TypeBuilder
+                    actualType = typeBuilder.CreateType();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] Error resolving agent type {node.TypeName}: {ex.Message}");
+                throw new CompilationException($"Could not resolve type for agent class: {node.TypeName}");
+            }
+            
+            if (actualType == null)
+            {
+                throw new CompilationException($"Could not resolve type for agent class: {node.TypeName}");
+            }
+            
+            // Find the constructor
+            ConstructorInfo? constructor = null;
+            
+            if (node.Arguments?.Count > 0)
+            {
+                // Constructor with parameters - find matching constructor
+                var paramTypes = new Type[node.Arguments.Count];
+                for (int i = 0; i < node.Arguments.Count; i++)
+                {
+                    paramTypes[i] = typeof(object); // All parameters are object type for now
+                }
+                constructor = actualType.GetConstructor(paramTypes);
+            }
+            else
+            {
+                // Default constructor (no parameters)
+                constructor = actualType.GetConstructor(Type.EmptyTypes);
+            }
+            
+            if (constructor == null)
+            {
+                throw new CompilationException($"No matching constructor found for agent class {node.TypeName} with {node.Arguments?.Count ?? 0} parameters");
+            }
+            
+            // Load constructor arguments onto stack
+            if (node.Arguments != null)
+            {
+                foreach (var arg in node.Arguments)
+                {
+                    arg.Accept(this);
+                }
+            }
+            
+            // Call constructor
+            _currentIl!.Emit(OpCodes.Newobj, constructor);
+            
+            // AGENT KEYWORD IMPLEMENTATION: Auto-register agent with event bus for autonomous behavior
+            // This enables the agent to receive events and participate in the Aura architecture
+            
+            // Store the created agent instance on the stack for registration
+            _currentIl!.Emit(OpCodes.Dup); // Duplicate the agent instance reference
+            
+            // Call RegisterInstanceEventHandler for each event handler this agent class has
+            if (_classEventHandlers.TryGetValue(node.TypeName, out var eventHandlers))
+            {
+                Console.WriteLine($"[DEBUG] Auto-registering {eventHandlers.Count} event handlers for agent {node.TypeName}");
+                
+                foreach (var eventHandler in eventHandlers)
+                {
+                    Console.WriteLine($"[DEBUG] Registering agent event handler: {eventHandler.EventName} -> {eventHandler.MethodName}");
+                    
+                    // Duplicate the agent instance for each registration call
+                    _currentIl!.Emit(OpCodes.Dup);
+                    
+                    // Load event name as string
+                    _currentIl!.Emit(OpCodes.Ldstr, eventHandler.EventName);
+                    
+                    // Load method name as string  
+                    _currentIl!.Emit(OpCodes.Ldstr, eventHandler.MethodName);
+                    
+                    // Call RegisterInstanceEventHandler(object instance, string eventName, string methodName)
+                    var registerMethod = typeof(CxRuntimeHelper).GetMethod("RegisterInstanceEventHandler", 
+                        new Type[] { typeof(object), typeof(string), typeof(string) });
+                    
+                    if (registerMethod != null)
+                    {
+                        _currentIl!.Emit(OpCodes.Call, registerMethod);
+                    }
+                }
+                
+                Console.WriteLine($"[DEBUG] Agent {node.TypeName} auto-registered with {eventHandlers.Count} event handlers");
+            }
+            else
+            {
+                Console.WriteLine($"[DEBUG] Agent {node.TypeName} has no event handlers to register");
+            }
+            
+            Console.WriteLine($"[DEBUG] Successfully created autonomous agent of {node.TypeName}");
+            return new object();
+        }
+        else
+        {
+            throw new CompilationException($"Unknown agent class: {node.TypeName}");
+        }
+    }
+    
     public object VisitAwaitExpression(AwaitExpressionNode node) => new object();
     
     public object VisitParallelExpression(ParallelExpressionNode node)
@@ -2915,6 +3260,39 @@ public class CxCompiler : IAstVisitor<object>
                 // Store constructor info for later use
                 _classConstructors[node.Name] = constructorBuilder;
             }
+            
+            // Process event handlers to define them as methods
+            var classEventHandlerList = new List<(string EventName, string MethodName)>();
+            
+            foreach (var eventHandler in node.EventHandlers)
+            {
+                // Create a unique method name for the event handler
+                var handlerMethodName = $"EventHandler_{eventHandler.EventName.FullName.Replace('.', '_')}_{_eventHandlerCounter++}";
+                
+                // Store the method name for Pass 2
+                _eventHandlerMethodNames[eventHandler] = handlerMethodName;
+                
+                // Track event handlers for agent auto-registration
+                classEventHandlerList.Add((eventHandler.EventName.FullName, handlerMethodName));
+                
+                var methodBuilder = typeBuilder.DefineMethod(
+                    handlerMethodName,
+                    MethodAttributes.Public | MethodAttributes.Virtual,
+                    typeof(Task),  // Event handlers return Task for async support
+                    new Type[] { typeof(object) });  // Single payload parameter
+                    
+                // Store handler method info for later use
+                _classMethods[node.Name + "." + handlerMethodName] = methodBuilder;
+                
+                Console.WriteLine($"[INFO] Class event handler registered: {node.Name}.{eventHandler.EventName.FullName} -> {handlerMethodName}");
+            }
+            
+            // Store class event handlers for agent auto-registration
+            if (classEventHandlerList.Count > 0)
+            {
+                _classEventHandlers[node.Name] = classEventHandlerList;
+                Console.WriteLine($"[DEBUG] Stored {classEventHandlerList.Count} event handlers for class {node.Name}");
+            }
         }
         else
         {
@@ -2928,13 +3306,19 @@ public class CxCompiler : IAstVisitor<object>
             // Implement constructors
             foreach (var constructor in node.Constructors)
             {
-                ImplementConstructor(node.Name, constructor, typeBuilder);
+                ImplementConstructor(node.Name, constructor, typeBuilder, node.EventHandlers);
             }
             
             // Implement methods
             foreach (var method in node.Methods)
             {
                 ImplementMethod(node.Name, method, typeBuilder);
+            }
+            
+            // Implement event handlers
+            foreach (var eventHandler in node.EventHandlers)
+            {
+                ImplementEventHandler(node.Name, eventHandler, typeBuilder);
             }
             
             // Create the type immediately after implementing methods - this finalizes the class definition
@@ -2956,7 +3340,7 @@ public class CxCompiler : IAstVisitor<object>
     /// <summary>
     /// Implements a constructor body for a class in Pass 2
     /// </summary>
-    private void ImplementConstructor(string className, ConstructorDeclarationNode constructor, TypeBuilder typeBuilder)
+    private void ImplementConstructor(string className, ConstructorDeclarationNode constructor, TypeBuilder typeBuilder, List<OnStatementNode> eventHandlers)
     {
         Console.WriteLine($"[DEBUG] Implementing constructor for class {className} with {constructor.Parameters.Count} parameters");
         
@@ -2996,6 +3380,10 @@ public class CxCompiler : IAstVisitor<object>
         
         // Compile the constructor body
         constructor.Body.Accept(this);
+        
+        // REMOVED: Automatic event handler registration from constructors
+        // Event handlers are now ONLY registered when using the 'agent' keyword
+        // This ensures semantic distinction: 'new' = regular objects, 'agent' = autonomous agents
         
         // Return from constructor
         _currentIl.Emit(OpCodes.Ret);
@@ -3060,6 +3448,71 @@ public class CxCompiler : IAstVisitor<object>
         _currentClassName = previousClassName;
         
         Console.WriteLine($"[DEBUG] Method {method.Name} implementation complete for class {className}");
+    }
+    
+    /// <summary>
+    /// Implements an event handler method for a class in Pass 2
+    /// </summary>
+    private void ImplementEventHandler(string className, OnStatementNode eventHandler, TypeBuilder typeBuilder)
+    {
+        // Get the method name that was created in Pass 1
+        if (!_eventHandlerMethodNames.TryGetValue(eventHandler, out var handlerMethodName))
+        {
+            throw new CompilationException($"Event handler method name for {eventHandler.EventName.FullName} was not stored in Pass 1");
+        }
+        
+        Console.WriteLine($"[DEBUG] Implementing event handler {handlerMethodName} for class {className}");
+        
+        if (!_classMethods.TryGetValue(className + "." + handlerMethodName, out var methodBuilder))
+        {
+            throw new CompilationException($"Event handler method {handlerMethodName} for class {className} was not defined in Pass 1");
+        }
+        
+        // Get IL generator for the event handler method
+        var methodIl = methodBuilder.GetILGenerator();
+        
+        // Save current IL context
+        var previousIl = _currentIl;
+        var previousLocals = _currentLocals;
+        var previousParameterMapping = _currentParameterMapping;
+        var previousMethod = _currentMethod;
+        var previousClassName = _currentClassName;
+        
+        // Set up new context for event handler method
+        _currentIl = methodIl;
+        _currentLocals = new Dictionary<string, LocalBuilder>();
+        _currentMethod = methodBuilder;
+        _currentClassName = className;
+        
+        // Set up parameter mapping (parameter 0 is 'this', parameter 1 is payload)
+        _currentParameterMapping = new Dictionary<string, int>
+        {
+            [eventHandler.PayloadIdentifier] = 1  // Payload is parameter 1
+        };
+        
+        // Compile the event handler body
+        eventHandler.Body.Accept(this);
+        
+        // Return a completed task (for async compatibility)
+        var completedTaskProperty = typeof(Task).GetProperty("CompletedTask");
+        if (completedTaskProperty?.GetMethod == null)
+        {
+            throw new CompilationException("Task.CompletedTask property getter not found");
+        }
+        _currentIl.Emit(OpCodes.Call, completedTaskProperty.GetMethod);
+        _currentIl.Emit(OpCodes.Ret);
+        
+        // Restore previous IL context
+        _currentIl = previousIl;
+        _currentLocals = previousLocals;
+        _currentParameterMapping = previousParameterMapping;
+        _currentMethod = previousMethod;
+        _currentClassName = previousClassName;
+        
+        Console.WriteLine($"[DEBUG] Event handler {handlerMethodName} implementation complete for class {className}");
+        
+        // Register this handler with the event bus (for runtime registration)
+        _eventRegistrations.Add((eventHandler.EventName.FullName, handlerMethodName));
     }
     public object VisitFieldDeclaration(FieldDeclarationNode node) => new object();
     public object VisitMethodDeclaration(MethodDeclarationNode node) => new object();

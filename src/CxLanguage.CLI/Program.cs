@@ -142,6 +142,9 @@ class Program
                     compilationResult.ProgramType
                 );
             }
+            
+            // Register built-in functions for namespace event system
+            CxLanguage.Compiler.Modules.RuntimeFunctionRegistry.RegisterBuiltInFunctions();
 
             // Execute the compiled assembly
             var runMethod = compilationResult.ProgramType!.GetMethod("Run");

@@ -1,0 +1,52 @@
+// Simplified class-based event handlers test
+print("=== CX CLASS-BASED EVENT HANDLERS TEST ===");
+
+class SimpleAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("Agent " + this.name + " initialized");
+    }
+    
+    // CLASS-BASED EVENT HANDLER: Handle tasks assigned to this agent
+    on task.assigned (payload)
+    {
+        print("Agent " + this.name + " received task event");
+        
+        if (payload.target == this.name)
+        {
+            print("Task accepted by " + this.name);
+            emit task.completed, payload;
+        }
+    }
+    
+    // CLASS-BASED EVENT HANDLER: Handle urgent tasks
+    on urgent.task (payload) 
+    {
+        print("URGENT: Agent " + this.name + " handling urgent task");
+        emit urgent.completed, payload;
+    }
+}
+
+print("Creating agent with class-based event handlers...");
+
+var testAgent = new SimpleAgent("TestBot");
+
+print("");
+print("Testing class-based event handlers:");
+
+// Test 1: Regular task assignment
+print("Test 1: Regular task");
+emit task.assigned, { target: "TestBot", task: "simple" };
+
+print("");
+
+// Test 2: Urgent task  
+print("Test 2: Urgent task");
+emit urgent.task, { target: "TestBot", task: "urgent" };
+
+print("");
+print("✅ Class-based event handlers test complete!");

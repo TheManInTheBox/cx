@@ -573,6 +573,24 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return newExpr;
     }
 
+    public override AstNode VisitAgentExpression(AgentExpressionContext context)
+    {
+        var agentExpr = new AgentExpressionNode();
+        SetLocation(agentExpr, context);
+
+        agentExpr.TypeName = context.IDENTIFIER().GetText();
+
+        if (context.argumentList() != null)
+        {
+            foreach (var argContext in context.argumentList().expression())
+            {
+                agentExpr.Arguments.Add((ExpressionNode)Visit(argContext));
+            }
+        }
+
+        return agentExpr;
+    }
+
     // Class system visitors
     public override AstNode VisitClassDeclaration(ClassDeclarationContext context)
     {
@@ -618,6 +636,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
                 else if (memberContext.constructorDeclaration() != null)
                 {
                     classDecl.Constructors.Add((ConstructorDeclarationNode)Visit(memberContext.constructorDeclaration()));
+                }
+                else if (memberContext.onStatement() != null)
+                {
+                    // Handle event handlers inside classes
+                    var eventHandler = (OnStatementNode)Visit(memberContext.onStatement());
+                    classDecl.EventHandlers.Add(eventHandler);
                 }
             }
         }
@@ -809,10 +833,10 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         var eventName = new EventNameNode();
         SetLocation(eventName, context);
 
-        // Parse all IDENTIFIER tokens separated by dots
-        foreach (var identifier in context.IDENTIFIER())
+        // Parse all eventNamePart tokens separated by dots
+        foreach (var eventNamePart in context.eventNamePart())
         {
-            eventName.Parts.Add(identifier.GetText());
+            eventName.Parts.Add(eventNamePart.GetText());
         }
 
         return eventName;

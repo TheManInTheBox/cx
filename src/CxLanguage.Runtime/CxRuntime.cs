@@ -61,6 +61,98 @@ public class BuiltinFunctions
             Console.WriteLine(value?.ToString() ?? "null");
         }
 
+        /// <summary>
+        /// Event Bus Service Functions - Advanced Pub/Sub for CX Agents
+        /// </summary>
+
+        /// <summary>
+        /// Join the Event Bus Service as an agent
+        /// </summary>
+        public string JoinEventBus(string agentName, string role = "agent", 
+            string scope = "Global", string[]? channels = null, string[]? eventFilters = null, object? agentInstance = null)
+        {
+            return CxRuntimeHelper.JoinEventBus(agentName, role, scope, channels, eventFilters, agentInstance);
+        }
+
+        /// <summary>
+        /// Leave the Event Bus Service
+        /// </summary>
+        public bool LeaveEventBus(string agentId)
+        {
+            return CxRuntimeHelper.LeaveEventBus(agentId);
+        }
+
+        /// <summary>
+        /// Emit event through Event Bus Service with advanced scoping
+        /// </summary>
+        public void EmitScopedEvent(string eventName, object? data = null, string source = "CxScript",
+            string? scope = null, string? targetChannel = null, string? targetRole = null)
+        {
+            CxRuntimeHelper.EmitScopedEvent(eventName, data, source, scope, targetChannel, targetRole);
+        }
+
+        /// <summary>
+        /// Join a channel in the Event Bus Service
+        /// </summary>
+        public bool JoinChannel(string agentId, string channel)
+        {
+            return CxRuntimeHelper.JoinChannel(agentId, channel);
+        }
+
+        /// <summary>
+        /// Leave a channel in the Event Bus Service
+        /// </summary>
+        public bool LeaveChannel(string agentId, string channel)
+        {
+            return CxRuntimeHelper.LeaveChannel(agentId, channel);
+        }
+
+        /// <summary>
+        /// Get Event Bus Service statistics
+        /// </summary>
+        public Dictionary<string, object> GetBusStatistics()
+        {
+            return CxRuntimeHelper.GetBusStatistics();
+        }
+
+        /// <summary>
+        /// Namespace-based Event Bus Functions - Event names as scopes
+        /// </summary>
+
+        /// <summary>
+        /// Register agent for namespace-based event routing
+        /// </summary>
+        public string RegisterNamespacedAgent(string agentName, string? team = null, string? role = null, 
+            string[]? channels = null, object? agentInstance = null)
+        {
+            return CxRuntimeHelper.RegisterNamespacedAgent(agentName, team, role, channels, agentInstance);
+        }
+
+        /// <summary>
+        /// Unregister agent from namespace-based event routing
+        /// </summary>
+        public bool UnregisterNamespacedAgent(string agentId)
+        {
+            return CxRuntimeHelper.UnregisterNamespacedAgent(agentId);
+        }
+
+        /// <summary>
+        /// Emit namespace-scoped event where event name determines routing
+        /// Examples: global.announcement, team.dev.task, role.manager.update, agent.alice.message
+        /// </summary>
+        public void EmitNamespacedEvent(string eventName, object? data = null, string source = "CxScript")
+        {
+            CxRuntimeHelper.EmitNamespacedEvent(eventName, data, source);
+        }
+
+        /// <summary>
+        /// Get namespace-based event bus statistics
+        /// </summary>
+        public Dictionary<string, object> GetNamespacedBusStatistics()
+        {
+            return CxRuntimeHelper.GetNamespacedBusStatistics();
+        }
+
         public async Task<object> AiGenerate(string prompt, object? options = null)
         {
             var requestOptions = ParseAiOptions(options);
