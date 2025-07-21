@@ -313,3 +313,28 @@ public class AsyncContext
         _cancellationTokenSource?.Dispose();
     }
 }
+
+/// <summary>
+/// Runtime helper methods for CX language execution
+/// </summary>
+public static class CxRuntimeHelpers
+{
+    /// <summary>
+    /// Helper method to get Task results safely within async method compilation context
+    /// This avoids invalid IL generation when calling .Result directly in async methods
+    /// </summary>
+    public static object GetTaskResult(Task<object> task)
+    {
+        try
+        {
+            // Use synchronous task access to get the result
+            // This is safe because we're in a runtime helper, not in compiled IL
+            return task.Result;
+        }
+        catch (Exception ex)
+        {
+            // Return null if task access fails
+            return "Task execution failed: " + ex.Message;
+        }
+    }
+}

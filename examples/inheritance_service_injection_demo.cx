@@ -1,0 +1,95 @@
+// CX Language - Inheritance-Based Service Injection Demo
+// Shows the new cleaner syntax without explicit 'uses' declarations
+
+print("🔄 Testing Inheritance-Based Service Injection");
+print("==============================================");
+
+// Method 1: Interface-based service injection
+// Classes that implement service interfaces automatically get those services
+class SmartAgent : ITextGeneration, ITextToSpeech
+{
+    async function greet(name)
+    {
+        print("🤖 Smart Agent initializing...");
+        
+        // Service access without 'uses' declarations!
+        // textGen and tts are automatically available through inheritance
+        var greeting = await textGen.GenerateAsync("Generate a friendly greeting for " + name);
+        
+        print("💬 Generated greeting: " + greeting);
+        
+        // TTS also automatically available
+        await tts.SpeakAsync(greeting);
+        
+        return greeting;
+    }
+}
+
+// Method 2: Base class inheritance with specific interfaces
+class AdvancedAgent : ServiceBase, IFullAICapabilities
+{
+    async function processRequest(query)
+    {
+        print("🧠 Advanced Agent processing: " + query);
+        
+        // All AI services automatically available:
+        // textGen, tts, chat, embeddings, imageGen, audioToText, etc.
+        
+        var response = await textGen.GenerateAsync("Process this request: " + query);
+        var embedding = await embeddings.GenerateEmbeddingAsync(query);
+        
+        print("📊 Generated embedding vector length: " + embedding.length);
+        
+        await tts.SpeakAsync(response);
+        
+        return {
+            response: response,
+            embedding: embedding,
+            processed: true
+        };
+    }
+}
+
+// Method 3: Selective service interfaces
+class ImageProcessor : IImageGeneration, IImageAnalysis
+{
+    async function createAndAnalyze(prompt)
+    {
+        print("🎨 Image Processor working on: " + prompt);
+        
+        // Only imageGen and imageToText available (as requested via interfaces)
+        var imageUrl = await imageGen.GenerateAsync(prompt);
+        var analysis = await imageToText.AnalyzeAsync(imageUrl);
+        
+        return {
+            imageUrl: imageUrl,
+            analysis: analysis
+        };
+    }
+}
+
+try
+{
+    print("\n🎯 Test 1: Interface-based service injection");
+    var agent1 = new SmartAgent();
+    var greeting = await agent1.greet("Developer");
+    print("✅ Test 1 passed: " + greeting);
+    
+    print("\n🎯 Test 2: Full AI capabilities inheritance");
+    var agent2 = new AdvancedAgent();
+    var result = await agent2.processRequest("What's the weather like?");
+    print("✅ Test 2 passed - Response: " + result.response);
+    
+    print("\n🎯 Test 3: Selective service interfaces");
+    var processor = new ImageProcessor();
+    var imageResult = await processor.createAndAnalyze("A beautiful sunset");
+    print("✅ Test 3 passed - Image: " + imageResult.imageUrl);
+    
+    print("\n🎉 ALL TESTS PASSED!");
+    print("🚀 Inheritance-based service injection working perfectly!");
+    
+}
+catch (error)
+{
+    print("❌ Test failed: " + error.message);
+}

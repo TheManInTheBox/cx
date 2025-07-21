@@ -1,0 +1,50 @@
+// Test async event handlers with "on async" syntax
+print("🧪 Testing Async Event Handlers");
+
+class AsyncEventAgent
+{
+    // Regular synchronous event handler
+    on system.ready (payload)
+    {
+        print("📢 Sync event handler: system ready");
+        emit sync.complete, { handler: "sync" };
+    }
+    
+    // Simple async event handler (no await expressions)
+    on async user.input (payload)
+    {
+        print("📞 Simple async event handler: " + payload.message);
+        emit async.simple.complete, { handler: "simple_async", input: payload };
+    }
+    
+    // Complex async event handler (with await expressions)
+    on async ai.request (payload)
+    {
+        print("🤖 Complex async event handler processing: " + payload.request);
+        
+        // This should use the placeholder approach due to await expressions
+        var thought = await this.Think(payload.request);
+        var response = await this.Generate("Response to: " + thought);
+        
+        print("✅ Complex async processing complete: " + response);
+        emit async.complex.complete, { 
+            handler: "complex_async",
+            request: payload.request,
+            response: response 
+        };
+    }
+}
+
+print("Creating async event agent...");
+var agent = new AsyncEventAgent();
+
+print("Testing sync event handler...");
+emit system.ready, { timestamp: "now" };
+
+print("Testing simple async event handler...");
+emit user.input, { message: "Hello from user" };
+
+print("Testing complex async event handler...");
+emit ai.request, { request: "Generate a creative story" };
+
+print("✅ All async event handler tests initiated!");

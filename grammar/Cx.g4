@@ -37,7 +37,12 @@ functionDeclaration
 
 // Class declarations with inheritance support (use : instead of implements)
 classDeclaration
-    : accessModifier? 'class' IDENTIFIER ('extends' IDENTIFIER)? (':' interfaceList)? classBody
+    : decorator* accessModifier? 'class' IDENTIFIER ('extends' IDENTIFIER)? (':' interfaceList)? classBody
+    ;
+
+// Decorator support for classes
+decorator
+    : '@' IDENTIFIER
     ;
 
 classBody: '{' classMember* '}';
@@ -94,9 +99,9 @@ tryStatement: 'try' blockStatement ('catch' '(' IDENTIFIER ')' blockStatement)?;
 throwStatement: 'throw' expression ';';
 
 // Event-driven statements
-eventNamePart: IDENTIFIER | 'any' | 'agent' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts';
+eventNamePart: IDENTIFIER | 'any' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'async' | 'sync';
 eventName: eventNamePart ('.' eventNamePart)*;
-onStatement: 'on' eventName '(' IDENTIFIER ')' blockStatement;
+onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName (',' expression)? ';';
 
 // Blocks
@@ -107,7 +112,6 @@ expressionStatement: expression ';';
 expression
     : primary                                           # PrimaryExpression
     | 'new' IDENTIFIER '(' argumentList? ')'           # NewExpression
-    | 'agent' IDENTIFIER '(' argumentList? ')'         # AgentExpression
     | expression '.' IDENTIFIER                         # MemberAccess
     | expression '(' argumentList? ')'                  # FunctionCall
     | expression '[' expression ']'                     # IndexAccess
@@ -135,7 +139,7 @@ primary
     | TRUE
     | FALSE
     | NULL
-    | SELF
+    | 'this'
     | '(' expression ')'
     ;
 
@@ -167,10 +171,6 @@ TRUE: 'true';
 FALSE: 'false';
 ON: 'on';
 EMIT: 'emit';
-AGENT: 'agent';
-
-// Agent context keyword - provides access to current agent context and state within agent/class scope
-SELF: 'self';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';

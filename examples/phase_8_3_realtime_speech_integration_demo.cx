@@ -1,0 +1,354 @@
+// Phase 8.3 Real-Time Speech Integration Demo
+// Complete pipeline: Hardware microphone → Azure OpenAI Realtime API → live.audio events
+// Tests the full end-to-end speech processing system
+
+class AuraRealtimeSpeechAgent
+{
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
+    uses realtimeSpeech from Cx.AI.RealtimeSpeech;
+    
+    auraEnabled: boolean;
+    isListening: boolean;
+    conversationActive: boolean;
+    
+    constructor()
+    {
+        this.auraEnabled = false;
+        this.isListening = false;
+        this.conversationActive = false;
+        
+        print("🎤🧠🔊 Phase 8.3 Real-Time Speech Agent initialized");
+        print("Hardware → Azure OpenAI → Events pipeline ready");
+    }
+    
+    // Start real-time speech processing
+    on system.ready (payload)
+    {
+        try
+        {
+            print("🚀 Starting real-time speech pipeline...");
+            this.isListening = true;
+            
+            // This will start the complete pipeline:
+            // NAudio microphone → Azure OpenAI Realtime API → events
+            realtimeSpeech.StartAsync();
+            
+            tts.SpeakAsync("[Wild Animal] BEEP-BOOP! Real-time speech system ONLINE! Say 'Aura on' to activate me!");
+        }
+        catch (error)
+        {
+            print("❌ Error starting speech pipeline:", error.message);
+        }
+    }
+    
+    // Handle hardware audio events from the new pipeline
+    on system.speech.ready (payload)
+    {
+        print("✅ Speech pipeline active:", payload.pipeline);
+        print("🎛️ Capabilities:", payload.capabilities.join(", "));
+        
+        tts.SpeakAsync("BEEP-BOOP! Hardware audio capture is LIVE! I can hear you!");
+    }
+    
+    on system.speech.started (payload)
+    {
+        if (this.auraEnabled)
+        {
+            print("🎤 Speech detected - Audio level:", payload.audioLevel.toFixed(3));
+        }
+    }
+    
+    on system.speech.ended (payload)
+    {
+        if (this.auraEnabled)
+        {
+            print("🤫 Speech ended - Processing...");
+        }
+    }
+    
+    // Handle live audio transcription from Azure OpenAI
+    on live.audio (payload)
+    {
+        var command = payload.transcript.toLowerCase();
+        print("🎤→📝 Real-time transcript:", payload.transcript);
+        print("📊 Confidence:", payload.confidence, "Source:", payload.source);
+        
+        // Wake word detection
+        if (command.includes("aura on") && !this.auraEnabled)
+        {
+            this.auraEnabled = true;
+            this.conversationActive = true;
+            
+            tts.SpeakAsync("[Wild Animal] BEEP-BOOP! AURA AWAKENS! Real-time speech mode ACTIVATED!");
+            emit aura.system.activated, { 
+                mode: "realtime_speech",
+                pipeline: "hardware-azure-events",
+                source: "Aura"
+            };
+            
+            print("🟢 Aura activated - Real-time conversation mode");
+            return;
+        }
+        
+        if (command.includes("aura off") && this.auraEnabled)
+        {
+            this.auraEnabled = false;
+            this.conversationActive = false;
+            
+            tts.SpeakAsync("BEEP-BOOP! Aura going to sleep mode. Hardware still listening for wake word.");
+            emit aura.system.deactivated, { reason: "voice_command" };
+            
+            print("🔴 Aura deactivated - Wake word detection only");
+            return;
+        }
+        
+        // Process commands only when active
+        if (this.auraEnabled && payload.confidence > 0.7)
+        {
+            this.ProcessRealtimeCommand(payload.transcript);
+        }
+    }
+    
+    // Handle AI responses from Azure OpenAI Realtime API
+    on ai.response.generated (payload)
+    {
+        if (this.conversationActive)
+        {
+            print("🧠 Real-time AI response:", payload.response);
+            
+            // The response comes pre-processed from Azure OpenAI Realtime API
+            // No need for separate TTS - the API handles voice synthesis
+            emit aura.response.ready, {
+                response: payload.response,
+                source: "azure_realtime_api",
+                mode: "integrated_voice"
+            };
+        }
+    }
+    
+    // Handle audio responses (voice synthesis from Azure OpenAI)
+    on ai.audio.response (payload)
+    {
+        print("🔊 Real-time voice response received");
+        
+        // Azure OpenAI Realtime API provides integrated voice synthesis
+        // Audio is streamed directly to speakers through the service
+        emit aura.voice.active, {
+            source: "azure_openai_realtime",
+            integrated: true
+        };
+    }
+    
+    // Process real-time voice commands
+    function ProcessRealtimeCommand(transcript)
+    {
+        print("🎯 Processing real-time command:", transcript);
+        
+        // Real-time command processing
+        if (transcript.toLowerCase().includes("hello"))
+        {
+            // Response will be generated through Azure OpenAI Realtime API
+            // and handled by ai.response.generated event
+            emit aura.command.received, {
+                command: "greeting",
+                transcript: transcript,
+                mode: "realtime_processing"
+            };
+        }
+        else if (transcript.toLowerCase().includes("test") || transcript.toLowerCase().includes("demo"))
+        {
+            emit aura.command.received, {
+                command: "system_test",
+                transcript: transcript,
+                mode: "realtime_processing"
+            };
+        }
+        else if (transcript.toLowerCase().includes("status"))
+        {
+            this.ReportSystemStatus();
+        }
+        else
+        {
+            // General conversation through Azure OpenAI Realtime API
+            emit aura.command.received, {
+                command: "conversation",
+                transcript: transcript,
+                mode: "realtime_processing"
+            };
+        }
+    }
+    
+    // System status reporting
+    function ReportSystemStatus()
+    {
+        var pipelineStatus = "inactive";
+        if (this.isListening)
+        {
+            pipelineStatus = "active";
+        }
+        
+        var auraStatus = "standby";
+        if (this.auraEnabled)
+        {
+            auraStatus = "active";
+        }
+        
+        var conversationStatus = "inactive";
+        if (this.conversationActive)
+        {
+            conversationStatus = "active";
+        }
+        
+        print("📊 System Status:");
+        print("  Speech Pipeline: " + pipelineStatus);
+        print("  Aura Mode: " + auraStatus);
+        print("  Conversation: " + conversationStatus);
+        print("  Integration: azure_openai_realtime_api");
+        print("  Hardware: naudio_microphone");
+        
+        var pipelineMsg = "INACTIVE";
+        if (this.isListening)
+        {
+            pipelineMsg = "ACTIVE";
+        }
+        
+        var auraMsg = "STANDBY";
+        if (this.auraEnabled)
+        {
+            auraMsg = "ONLINE";
+        }
+        
+        var apiMsg = "READY";
+        if (this.conversationActive)
+        {
+            apiMsg = "CONNECTED";
+        }
+        
+        var statusMessage = "BEEP-BOOP! System status: " +
+            "Speech pipeline " + pipelineMsg + ", " +
+            "Aura mode " + auraMsg + ", " +
+            "Real-time API " + apiMsg;
+            
+        tts.SpeakAsync(statusMessage);
+    }
+    
+    // Handle system errors
+    on system.speech.error (payload)
+    {
+        print("❌ Speech system error:", payload.error);
+        tts.SpeakAsync("BEEP-BOOP! Speech system error detected. Attempting recovery...");
+    }
+    
+    on system.openai.error (payload)
+    {
+        print("❌ Azure OpenAI error:", payload.error);
+        tts.SpeakAsync("BEEP-BOOP! Azure OpenAI connection issue. Checking realtime API...");
+    }
+    
+    on system.audio.error (payload)
+    {
+        print("❌ Hardware audio error:", payload.error);
+        tts.SpeakAsync("BEEP-BOOP! Microphone hardware error. Check audio device connections.");
+    }
+    
+    // Shutdown handler
+    on system.shutdown (payload)
+    {
+        print("🛑 Shutting down real-time speech system...");
+        
+        try
+        {
+            realtimeSpeech.StopAsync();
+            this.auraEnabled = false;
+            this.isListening = false;
+            this.conversationActive = false;
+            
+            tts.SpeakAsync("BEEP-BOOP! Real-time speech system shutting down. Goodbye!");
+        }
+        catch (error)
+        {
+            print("Error during shutdown:", error.message);
+        }
+    }
+}
+
+// Multi-agent coordination with real-time speech
+class TechnicalAnalystAgent
+{
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
+    
+    name: string;
+    expertise: string;
+    
+    constructor()
+    {
+        this.name = "Dr. Neural";
+        this.expertise = "AI and Speech Processing";
+        
+        print("🔬 Technical Analyst Agent ready - Specializing in real-time AI");
+    }
+    
+    on aura.system.activated (payload)
+    {
+        if (payload.mode == "realtime_speech")
+        {
+            var analysis = "Real-time speech pipeline analysis: Hardware capture via NAudio, " +
+                "Azure OpenAI Realtime API integration, event-driven architecture with " +
+                payload.pipeline + " data flow. System is operating at optimal parameters.";
+                
+            print("🔬 Technical Analysis:", analysis);
+            
+            tts.SpeakAsync("Technical analysis complete. Phase 8.3 real-time integration is OPTIMAL!");
+        }
+    }
+    
+    on aura.command.received (payload)
+    {
+        if (payload.command == "system_test")
+        {
+            this.PerformSystemAnalysis();
+        }
+    }
+    
+    function PerformSystemAnalysis()
+    {
+        print("🔬 Real-Time System Analysis:");
+        print("  Pipeline: Hardware → Azure OpenAI Realtime → Events");
+        print("  Latency: Sub-second speech processing");
+        print("  Integration: NAudio + Azure OpenAI Realtime API");
+        print("  Architecture: Event-driven autonomous agents");
+        print("  Capabilities: Speech-to-Text, AI Processing, Text-to-Speech, Real-time");
+        
+        var report = "BEEP-BOOP! Technical analysis confirms: " +
+            "Phase 8.3 real-time integration is FULLY OPERATIONAL! " +
+            "Sub-second speech processing with Azure OpenAI Realtime API!";
+            
+        tts.SpeakAsync(report);
+    }
+}
+
+// Create autonomous agents using standard constructor
+print("🚀 Phase 8.3 Real-Time Speech Integration Demo");
+print("Testing: Hardware Microphone → Azure OpenAI Realtime API → Live Events");
+
+var auraAgent = new AuraRealtimeSpeechAgent();
+var techAgent = new TechnicalAnalystAgent();
+
+// Note: Agent functionality is automatically enabled by the event system
+
+// Initialize the system
+print("");
+print("🎤 Say 'Aura on' to activate real-time speech mode");
+print("🗣️  Try: 'Hello', 'Test the system', 'System status'");
+print("🔇 Say 'Aura off' to return to wake word detection only");
+print("🛑 Say 'shutdown' to stop the system");
+print("");
+
+// Start the system
+emit system.ready, {
+    phase: "8.3",
+    feature: "realtime_speech_integration",
+    pipeline: "hardware→azure→events"
+};

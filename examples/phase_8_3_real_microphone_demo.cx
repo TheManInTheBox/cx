@@ -274,9 +274,9 @@ console.log("===================================================================
 
 try
 {
-    // Initialize Phase 8.3 hardware agents
-    var hardwareAudioAgent = agent Phase8dot3HardwareAudioAgent();
-    var hardwareMonitorAgent = agent Phase8dot3HardwareMonitorAgent();
+    // Initialize Phase 8.3 hardware agents using event-driven pattern
+    var hardwareAudioAgent = new Phase8dot3HardwareAudioAgent();
+    var hardwareMonitorAgent = new Phase8dot3HardwareMonitorAgent();
     
     console.log("✅ Phase 8.3 agents created successfully");
     console.log("🎤 Real-time microphone integration ready");

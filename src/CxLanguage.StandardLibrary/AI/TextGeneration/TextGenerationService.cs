@@ -2,7 +2,7 @@ using CxLanguage.StandardLibrary.Core;
 using CxLanguage.StandardLibrary.AI.Common;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
-using Microsoft.SemanticKernel.TextGeneration;
+using Microsoft.SemanticKernel.ChatCompletion;
 using System.ComponentModel;
 
 namespace CxLanguage.StandardLibrary.AI.TextGeneration;
@@ -13,7 +13,7 @@ namespace CxLanguage.StandardLibrary.AI.TextGeneration;
 /// </summary>
 public class TextGenerationService : CxAiServiceBase
 {
-    private readonly ITextGenerationService _textGenerationService;
+    private readonly IChatCompletionService _chatCompletionService;
 
     /// <summary>
     /// Initializes a new instance of the TextGenerationService
@@ -23,7 +23,7 @@ public class TextGenerationService : CxAiServiceBase
     public TextGenerationService(Kernel kernel, ILogger<TextGenerationService> logger) 
         : base(kernel, logger)
     {
-        _textGenerationService = kernel.GetRequiredService<ITextGenerationService>();
+        _chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
     }
 
     /// <summary>
@@ -89,11 +89,15 @@ public class TextGenerationService : CxAiServiceBase
                 }
             }
 
-            var textContent = await _textGenerationService.GetTextContentAsync(prompt, settings);
+            // Convert the prompt to a chat message
+            var chatHistory = new ChatHistory();
+            chatHistory.AddUserMessage(prompt);
+
+            var chatMessageContent = await _chatCompletionService.GetChatMessageContentAsync(chatHistory, settings);
 
             result.IsSuccess = true;
-            result.GeneratedText = textContent.Text ?? string.Empty;
-            result.TokenCount = textContent.Metadata?.Count ?? 0;
+            result.GeneratedText = chatMessageContent.Content ?? string.Empty;
+            result.TokenCount = chatMessageContent.Metadata?.Count ?? 0;
             result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
 
             _logger.LogInformation("Text generation completed successfully. Generated {Length} characters", 
@@ -120,12 +124,16 @@ public class TextGenerationService : CxAiServiceBase
     {
         var startTime = DateTimeOffset.UtcNow;
 
-        await foreach (var streamContent in _textGenerationService.GetStreamingTextContentsAsync(prompt))
+        // Convert the prompt to a chat message
+        var chatHistory = new ChatHistory();
+        chatHistory.AddUserMessage(prompt);
+
+        await foreach (var streamContent in _chatCompletionService.GetStreamingChatMessageContentsAsync(chatHistory))
         {
             yield return new TextGenerationStreamResult
             {
                 IsSuccess = true,
-                TextChunk = streamContent.Text ?? string.Empty,
+                TextChunk = streamContent.Content ?? string.Empty,
                 IsComplete = false,
                 ExecutionTime = DateTimeOffset.UtcNow - startTime
             };

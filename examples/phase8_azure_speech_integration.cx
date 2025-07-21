@@ -398,11 +398,11 @@ print("");
 try
 {
     // Create realtime-powered agents
-    var realtimeAgent = agent AzureRealtimeAgent({
+    var realtimeAgent = new AzureRealtimeAgent({
         name: "AZURE-REALTIME-AGENT"
     });
     
-    var responseAgent = agent RealtimeResponseAgent({
+    var responseAgent = new RealtimeResponseAgent({
         name: "REALTIME-RESPONSE-AGENT" 
     });
     

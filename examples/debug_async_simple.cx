@@ -1,0 +1,21 @@
+// Ultra-simple async method test to debug IL generation issue
+
+print("🔍 Debug: Ultra-simple async method test");
+
+class SimpleAgent
+{
+    async function justReturn()
+    {
+        print("Inside async method");
+        return "simple result";
+    }
+}
+
+print("Creating simple agent...");
+var agent = new SimpleAgent();
+
+print("Calling justReturn method...");
+var result = await agent.justReturn();
+
+print("Result: " + result);
+print("✅ Simple async test complete");

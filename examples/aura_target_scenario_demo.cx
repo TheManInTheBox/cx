@@ -185,7 +185,7 @@ try
 {
     // Create the Aura system agents
     var animalAgent = agent AuraAnimalAgent("ANIMAL");
-    var systemMonitor = agent AuraSystemMonitor();
+    var systemMonitor = new AuraSystemMonitor();
     
     print("🎤 SIMULATION: Live audio processing scenario");
     print("");

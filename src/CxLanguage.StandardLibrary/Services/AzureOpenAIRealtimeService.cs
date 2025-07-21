@@ -206,6 +206,112 @@ namespace CxLanguage.StandardLibrary.Services
         }
         
         /// <summary>
+        /// Send audio data to the realtime session for processing
+        /// </summary>
+        public async Task SendAudioAsync(byte[] audioData)
+        {
+            if (!_isSessionActive || _webSocket?.State != WebSocketState.Open)
+            {
+                _logger.LogWarning("Cannot send audio - session not active");
+                return;
+            }
+            
+            try
+            {
+                // Convert audio bytes to base64 for WebSocket transmission
+                var base64Audio = Convert.ToBase64String(audioData);
+                
+                var audioMessage = new
+                {
+                    type = "input_audio_buffer.append",
+                    audio = base64Audio
+                };
+                
+                await SendWebSocketMessageAsync(audioMessage);
+                
+                _logger.LogDebug($"Audio chunk sent: {audioData.Length} bytes");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send audio data");
+                await _eventBus.EmitAsync("realtime.error", new
+                {
+                    error = "audio_send_failed",
+                    details = ex.Message
+                });
+            }
+        }
+        
+        /// <summary>
+        /// Commit the audio buffer and trigger processing
+        /// </summary>
+        public async Task CommitAudioAsync()
+        {
+            if (!_isSessionActive || _webSocket?.State != WebSocketState.Open)
+            {
+                _logger.LogWarning("Cannot commit audio - session not active");
+                return;
+            }
+            
+            try
+            {
+                var commitMessage = new
+                {
+                    type = "input_audio_buffer.commit"
+                };
+                
+                await SendWebSocketMessageAsync(commitMessage);
+                
+                // Trigger response creation
+                var responseMessage = new
+                {
+                    type = "response.create",
+                    response = new
+                    {
+                        modalities = new[] { "text", "audio" },
+                        instructions = "Process the audio input and respond naturally as Aura."
+                    }
+                };
+                
+                await SendWebSocketMessageAsync(responseMessage);
+                
+                _logger.LogDebug("Audio buffer committed and response triggered");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to commit audio buffer");
+                await _eventBus.EmitAsync("realtime.error", new
+                {
+                    error = "audio_commit_failed",
+                    details = ex.Message
+                });
+            }
+        }
+        
+        /// <summary>
+        /// Method alias for compatibility with existing code
+        /// </summary>
+        public async Task<bool> StartSessionAsync()
+        {
+            var config = new RealtimeSessionConfig
+            {
+                Instructions = "You are Aura, an enthusiastic programming assistant. Use BEEP-BOOP in your responses and help with programming tasks energetically.",
+                Voice = "alloy",
+                Temperature = 0.8
+            };
+            
+            return await StartRealtimeSessionAsync(config);
+        }
+        
+        /// <summary>
+        /// Method alias for compatibility with existing code  
+        /// </summary>
+        public async Task StopSessionAsync()
+        {
+            await StopRealtimeSessionAsync("session_ended");
+        }
+        
+        /// <summary>
         /// Listen for messages from Azure OpenAI Realtime API
         /// </summary>
         private async Task ListenForMessagesAsync(CancellationToken cancellationToken)

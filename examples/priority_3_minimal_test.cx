@@ -28,7 +28,7 @@ class AuraAgent
 try
 {
     print("Creating agent...");
-    var auraAgent = agent AuraAgent();
+    var auraAgent = new AuraAgent();
     
     print("✅ Agent created successfully!");
     print("Testing voice command...");
