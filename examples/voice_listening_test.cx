@@ -149,7 +149,7 @@ print("🚀 INITIALIZING VOICE LISTENING TEST");
 print("====================================");
 
 var voiceListener = agent VoiceListenerAgent("VoiceTestAgent");
-var monitor = agent TestMonitor();
+var monitor = new TestMonitor();
 
 print("🎤 Voice Listening Test is now ACTIVE");
 print("📋 Commands you can try:");

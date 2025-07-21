@@ -1,0 +1,41 @@
+// 🔬 Async Method Polish Test - CX Language
+// Testing complex async patterns to identify IL generation issues
+
+print("=== Async Method Polish Test ===");
+
+class AsyncTestAgent
+{
+    async function simpleAsync(input)
+    {
+        print("🧠 Simple async test: " + input);
+        var result = await this.ThinkAsync(input);
+        return result;
+    }
+    
+    function nonAsync(input)
+    {
+        print("📝 Non-async test: " + input);
+        return "processed: " + input;
+    }
+}
+
+// Test 1: Non-async methods (known working)
+print("\n🧪 Test 1: Non-async methods");
+var agent = new AsyncTestAgent();
+var result1 = agent.nonAsync("test data");
+print("✅ Non-async result: " + result1);
+
+// Test 2: Simple async methods (may fail)
+print("\n🧪 Test 2: Simple async method");
+try 
+{
+    var result2 = await agent.simpleAsync("test async");
+    print("✅ Simple async result: " + result2);
+}
+catch (ex)
+{
+    print("❌ Simple async failed: " + ex.message);
+}
+
+print("\n🎯 Async Polish Test Complete");
+print("📊 Results will show which async patterns need IL generation fixes");

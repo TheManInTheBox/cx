@@ -12,10 +12,45 @@ namespace CxLanguage.Parser;
 public class AstBuilder : CxBaseVisitor<AstNode>
 {
     private readonly string? _fileName;
+    
+    // Reserved keywords that cannot be used as identifiers in most contexts
+    // Note: Agent behavior determined by event handlers - no special keywords needed
+    private static readonly HashSet<string> ReservedKeywords = new HashSet<string>
+    {
+        "class", "interface", "extends", "import", "uses", "constructor",
+        "public", "private", "protected", "try", "catch", "throw", "new",
+        "null", "true", "false", "on", "emit", "self", "function",
+        "var", "if", "else", "while", "for", "return", "in", "async", "await"
+    };
 
     public AstBuilder(string? fileName = null)
     {
         _fileName = fileName;
+    }
+
+    /// <summary>
+    /// Validates that an identifier is not a reserved keyword in contexts where keywords are forbidden
+    /// </summary>
+    private void ValidateIdentifierNotKeyword(string identifier, IParseTree context, string contextDescription)
+    {
+        if (ReservedKeywords.Contains(identifier))
+        {
+            throw new InvalidOperationException(
+                $"Keyword '{identifier}' cannot be used as {contextDescription} at {GetLocationString(context)}");
+        }
+    }
+    
+    /// <summary>
+    /// Gets location string for error reporting
+    /// </summary>
+    private string GetLocationString(IParseTree context)
+    {
+        if (context is ParserRuleContext ruleContext)
+        {
+            var start = ruleContext.Start;
+            return $"line {start.Line}, column {start.Column}";
+        }
+        return "unknown location";
     }
 
     public AstNode BuildAst(IParseTree tree)
@@ -58,7 +93,9 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         var varDecl = new VariableDeclarationNode();
         SetLocation(varDecl, context);
 
-        varDecl.Name = context.IDENTIFIER().GetText();
+        var identifier = context.IDENTIFIER().GetText();
+        ValidateIdentifierNotKeyword(identifier, context, "variable name");
+        varDecl.Name = identifier;
         varDecl.Initializer = (ExpressionNode)Visit(context.expression());
 
         return varDecl;
@@ -69,7 +106,9 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         var funcDecl = new FunctionDeclarationNode();
         SetLocation(funcDecl, context);
 
-        funcDecl.Name = context.IDENTIFIER().GetText();
+        var identifier = context.IDENTIFIER().GetText();
+        ValidateIdentifierNotKeyword(identifier, context, "function name");
+        funcDecl.Name = identifier;
         funcDecl.IsAsync = context.GetText().StartsWith("async");
         
         // Store source position information for self keyword
@@ -276,11 +315,11 @@ public class AstBuilder : CxBaseVisitor<AstNode>
             literal.Type = LiteralType.Null;
             return literal;
         }
-        else if (context.SELF() != null)
+        else if (context.GetText() == "this")
         {
-            var selfRef = new SelfReferenceNode();
-            SetLocation(selfRef, context);
-            return selfRef;
+            var identifier = new IdentifierNode { Name = "this" };
+            SetLocation(identifier, context);
+            return identifier;
         }
         else if (context.expression() != null)
         {
@@ -462,11 +501,14 @@ public class AstBuilder : CxBaseVisitor<AstNode>
                 // Get the key (identifier or string literal)
                 if (propContext.IDENTIFIER() != null)
                 {
-                    property.Key = propContext.IDENTIFIER().GetText();
+                    var identifier = propContext.IDENTIFIER().GetText();
+                    // Validate that keywords cannot be used as object property names
+                    ValidateIdentifierNotKeyword(identifier, propContext, "object property name");
+                    property.Key = identifier;
                 }
                 else if (propContext.STRING_LITERAL() != null)
                 {
-                    // Remove quotes from string literal
+                    // Remove quotes from string literal - string literals can contain any text including keywords
                     var stringLiteral = propContext.STRING_LITERAL().GetText();
                     property.Key = stringLiteral.Substring(1, stringLiteral.Length - 2);
                 }
@@ -587,31 +629,25 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return newExpr;
     }
 
-    public override AstNode VisitAgentExpression(AgentExpressionContext context)
-    {
-        var agentExpr = new AgentExpressionNode();
-        SetLocation(agentExpr, context);
-
-        agentExpr.TypeName = context.IDENTIFIER().GetText();
-
-        if (context.argumentList() != null)
-        {
-            foreach (var argContext in context.argumentList().expression())
-            {
-                agentExpr.Arguments.Add((ExpressionNode)Visit(argContext));
-            }
-        }
-
-        return agentExpr;
-    }
-
     // Class system visitors
     public override AstNode VisitClassDeclaration(ClassDeclarationContext context)
     {
         var classDecl = new ClassDeclarationNode();
         SetLocation(classDecl, context);
 
-        classDecl.Name = context.IDENTIFIER(0).GetText();
+        // Parse decorators if present
+        if (context.decorator() != null && context.decorator().Length > 0)
+        {
+            foreach (var decoratorContext in context.decorator())
+            {
+                var decorator = (DecoratorNode)Visit(decoratorContext);
+                classDecl.Decorators.Add(decorator);
+            }
+        }
+
+        var className = context.IDENTIFIER(0).GetText();
+        ValidateIdentifierNotKeyword(className, context, "class name");
+        classDecl.Name = className;
         
         // Parse access modifier if present
         if (context.accessModifier() != null)
@@ -667,6 +703,16 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
 
         return classDecl;
+    }
+
+    public override AstNode VisitDecorator(DecoratorContext context)
+    {
+        var decorator = new DecoratorNode();
+        SetLocation(decorator, context);
+        
+        decorator.Name = context.IDENTIFIER().GetText();
+        
+        return decorator;
     }
 
     public override AstNode VisitFieldDeclaration(FieldDeclarationContext context)
@@ -866,6 +912,9 @@ public class AstBuilder : CxBaseVisitor<AstNode>
     {
         var onStmt = new OnStatementNode();
         SetLocation(onStmt, context);
+
+        // Check if this is an async event handler
+        onStmt.IsAsync = context.GetText().StartsWith("onasync");
 
         // Parse event name (now using eventName rule)
         onStmt.EventName = (EventNameNode)Visit(context.eventName());

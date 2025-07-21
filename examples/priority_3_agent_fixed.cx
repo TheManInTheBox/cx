@@ -71,7 +71,8 @@ class AuraAgent
 try
 {
     print("Creating Aura agent...");
-    var auraAgent = agent AuraAgent();
+    // Using event-driven pattern - class with event handlers automatically becomes agent
+    var auraAgent = new AuraAgent();
     
     print("✅ Agent created successfully!");
     print("");

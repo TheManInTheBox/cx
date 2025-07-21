@@ -156,7 +156,7 @@ print("✅ Intelligent Behavior: State-dependent sensory processing");
 print("");
 
 // PRIORITY #5: Event-Driven Architecture - Autonomous agent creation
-var animalAgent = agent AuraAnimalAgent();
+var animalAgent = new AuraAnimalAgent();
 
 // Initialize agent state like the working example
 animalAgent.name = "ANIMAL";

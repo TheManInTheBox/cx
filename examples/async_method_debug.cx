@@ -1,0 +1,23 @@
+// Test async method call IL generation specifically
+print("Testing async method call...");
+
+try 
+{
+    var textGen = GetService("TextGeneration");
+    if (textGen != null) 
+    {
+        print("Service available, calling GenerateAsync...");
+        var result = textGen.GenerateAsync("Hello");
+        print("After GenerateAsync call");
+    }
+    else 
+    {
+        print("TextGeneration service not available");
+    }
+}
+catch (error) 
+{
+    print("Error: " + error.Message);
+}
+
+print("Async test complete");

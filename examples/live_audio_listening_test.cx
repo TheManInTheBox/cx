@@ -58,7 +58,7 @@ print("🛑 Say 'stop listening' when you're done testing");
 print("");
 
 // Create the live audio agent
-var audioAgent = agent LiveAudioAgent();
+var audioAgent = new LiveAudioAgent();
 
 print("✅ Live audio agent created and listening!");
 print("🎤 Ready for your voice input...");

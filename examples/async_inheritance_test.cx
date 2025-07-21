@@ -1,0 +1,21 @@
+print("🔬 Testing async inheritance methods");
+
+class CognitiveAgent
+{
+    async function test()
+    {
+        print("Testing inherited async method...");
+        var result = await this.Think("simple test");
+        print("Think result: " + result);
+        return "cognitive test complete";
+    }
+}
+
+print("Creating cognitive agent...");
+var agent = new CognitiveAgent();
+
+print("Calling complex async method...");
+var result = await agent.test();
+
+print("Final result: " + result);
+print("✅ Async inheritance test complete");

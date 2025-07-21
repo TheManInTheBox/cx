@@ -1,0 +1,23 @@
+// Test to isolate if the issue is with variable assignment vs direct usage
+
+print("🧪 Debug: Variable assignment vs direct usage");
+
+class TestAgent  
+{
+    async function testDirectUsage()
+    {
+        print("Before await");
+        print("Thinking result: " + await this.ThinkAsync("test"));
+        print("After await");
+        return "completed";
+    }
+}
+
+print("Creating test agent...");
+var agent = new TestAgent();
+
+print("Calling testDirectUsage method...");
+var result = await agent.testDirectUsage();
+
+print("Final result: " + result);
+print("✅ Test complete");

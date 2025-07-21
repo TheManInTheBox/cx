@@ -8,6 +8,10 @@ print("🤖 Animal personality with intelligent state transitions");
 // Priority #3: Agent with intelligent state management
 class AuraAnimalAgent
 {
+    // Service injection for AI capabilities
+    uses textGen from Cx.AI.TextGeneration;
+    uses tts from Cx.AI.TextToSpeech;
+    
     name: string;
     auraEnabled: boolean;
     isAwake: boolean;
@@ -265,8 +269,8 @@ try
     print("🎯 PHASE 1: CREATE AUTONOMOUS AGENT");
     print("===================================");
     
-    // Create autonomous agent with parameterless constructor
-    var animalAgent = agent AuraAnimalAgent();
+    // Create autonomous agent using event-driven pattern - class has event handlers
+    var animalAgent = new AuraAnimalAgent();
     
     print("");
     print("🎯 PHASE 2: EVENT-DRIVEN STATE MANAGEMENT TESTING");
@@ -319,7 +323,7 @@ try
     
     print("🏆 PRIORITY #3: AGENT-BASED INTELLIGENT STATE MANAGEMENT - SUCCESS!");
     print("===================================================================");
-    print("✅ Agent Architecture: `agent AuraAnimalAgent()` with event handlers");
+    print("✅ Agent Architecture: `new AuraAnimalAgent()` with event handlers (dual pattern)");
     print("✅ Event-Driven State Control: `on live.audio` inside agent class");
     print("✅ Instance State Management: `this.auraEnabled`, `this.isAwake`, `this.inConversation`");
     print("✅ Smart Conditional Processing: State-dependent behavior operational");

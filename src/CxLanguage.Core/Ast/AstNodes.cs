@@ -48,7 +48,6 @@ public interface IAstVisitor<T>
     
     // Object creation visitor method
     T VisitNewExpression(NewExpressionNode node);
-    T VisitAgentExpression(AgentExpressionNode node);
     
     // Async/await visitor methods
     T VisitAwaitExpression(AwaitExpressionNode node);
@@ -59,6 +58,7 @@ public interface IAstVisitor<T>
     T VisitEmitStatement(EmitStatementNode node);
     
     // Class system visitor methods
+    T VisitDecorator(DecoratorNode node);
     T VisitClassDeclaration(ClassDeclarationNode node);
     T VisitFieldDeclaration(FieldDeclarationNode node);
     T VisitMethodDeclaration(MethodDeclarationNode node);
@@ -531,17 +531,6 @@ public class NewExpressionNode : ExpressionNode
 }
 
 /// <summary>
-/// Agent expression for autonomous agent creation  
-/// </summary>
-public class AgentExpressionNode : ExpressionNode
-{
-    public string TypeName { get; set; } = string.Empty;
-    public List<ExpressionNode> Arguments { get; set; } = new();
-
-    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAgentExpression(this);
-}
-
-/// <summary>
 /// Await expression for async operations
 /// </summary>
 public class AwaitExpressionNode : ExpressionNode
@@ -560,10 +549,21 @@ public enum AccessModifier
 }
 
 /// <summary>
+/// Decorator node for class attributes
+/// </summary>
+public class DecoratorNode : AstNode
+{
+    public string Name { get; set; } = string.Empty;
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitDecorator(this);
+}
+
+/// <summary>
 /// Class declaration statement
 /// </summary>
 public class ClassDeclarationNode : StatementNode
 {
+    public List<DecoratorNode> Decorators { get; set; } = new();
     public string Name { get; set; } = string.Empty;
     public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
     public string? BaseClass { get; set; }
@@ -674,6 +674,7 @@ public class OnStatementNode : StatementNode
     public EventNameNode EventName { get; set; } = null!;
     public string PayloadIdentifier { get; set; } = string.Empty;
     public BlockStatementNode Body { get; set; } = null!;
+    public bool IsAsync { get; set; }
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitOnStatement(this);
 }

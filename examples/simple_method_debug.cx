@@ -1,0 +1,13 @@
+// Test case with simple class method - no AI services
+class SimpleTest
+{
+    function simpleMethod()
+    {
+        print("Simple method called");
+        return "success";
+    }
+}
+
+var test = new SimpleTest();
+var result = test.simpleMethod();
+print("Result: " + result);

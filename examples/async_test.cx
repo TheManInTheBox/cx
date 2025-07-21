@@ -1,0 +1,41 @@
+// Specific test for async method calls on AI services
+class AsyncTest  
+{
+    uses textGen from Cx.AI.TextGeneration;
+
+    function testAsyncCall()
+    {
+        print("🔧 Testing Async Method Call on AI Service");
+        print("=========================================");
+        
+        try 
+        {
+            // Test accessing service properties first (sync calls)
+            print("Testing sync property access...");
+            print("Service name: " + this.textGen.ServiceName);
+            print("Service version: " + this.textGen.Version);
+            print("✅ Sync access works!");
+            print("");
+            
+            // Now try the async method call that causes the crash
+            print("Testing async method call...");
+            print("About to call textGen.GenerateAsync()...");
+            
+            // This should crash with AccessViolationException
+            var result = this.textGen.GenerateAsync("Hello test");
+            print("✅ Async call returned: " + result);
+        }
+        catch (error)
+        {
+            print("❌ Error in async call: " + error);
+        }
+    }
+}
+
+try {
+    var tester = new AsyncTest();
+    tester.testAsyncCall();
+    print("🚀 All tests completed!");
+} catch (error) {
+    print("❌ MAIN ERROR: " + error);
+}

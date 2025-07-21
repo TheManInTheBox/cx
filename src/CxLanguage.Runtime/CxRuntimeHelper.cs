@@ -75,6 +75,7 @@ namespace CxLanguage.Runtime
                 Console.WriteLine($"[DEBUG] CallInstanceMethod: invoking {method.Name} on {instanceType.Name}");
                 var result = method.Invoke(instance, arguments);
                 Console.WriteLine($"[DEBUG] CallInstanceMethod: method invoked successfully, result: {result ?? "null"}");
+                Console.WriteLine($"[DEBUG] CallInstanceMethod: result type: {result?.GetType()?.FullName ?? "null"}");
 
                 return result;
             }
@@ -710,6 +711,86 @@ namespace CxLanguage.Runtime
             {
                 Console.WriteLine($"[DEBUG] GetInstanceField: exception getting field {fieldName}: {ex.Message}");
                 return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets a property value from a service field on an instance using reflection.
+        /// This combines field access and property access for service property access like this.textGen.ServiceName.
+        /// </summary>
+        public static object? GetInstanceProperty(object instance, string fieldName, string propertyName)
+        {
+            if (instance == null)
+            {
+                Console.WriteLine($"[DEBUG] GetInstanceProperty: instance is null for {fieldName}.{propertyName}");
+                return null;
+            }
+
+            try
+            {
+                Console.WriteLine($"[DEBUG] GetInstanceProperty: accessing {fieldName}.{propertyName}");
+                
+                // First get the field value (which should be the service instance)
+                var serviceInstance = GetInstanceField(instance, fieldName);
+                if (serviceInstance == null)
+                {
+                    Console.WriteLine($"[DEBUG] GetInstanceProperty: field {fieldName} is null");
+                    return null;
+                }
+
+                // Then get the property from the service instance
+                return GetObjectProperty(serviceInstance, propertyName);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetInstanceProperty: exception getting {fieldName}.{propertyName}: {ex.Message}");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Gets a property value from an object using reflection.
+        /// This handles runtime property access for any object.
+        /// </summary>
+        public static object? GetObjectProperty(object instance, string propertyName)
+        {
+            if (instance == null)
+            {
+                Console.WriteLine($"[DEBUG] GetObjectProperty: instance is null for property {propertyName}");
+                return null;
+            }
+
+            try
+            {
+                var instanceType = instance.GetType();
+                Console.WriteLine($"[DEBUG] GetObjectProperty: getting property {propertyName} from {instanceType.Name}");
+                
+                var property = instanceType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
+                if (property != null)
+                {
+                    var getter = property.GetMethod;
+                    if (getter != null)
+                    {
+                        var value = getter.Invoke(instance, null);
+                        Console.WriteLine($"[DEBUG] GetObjectProperty: property {propertyName} = {value ?? "null"}");
+                        return value;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] GetObjectProperty: property {propertyName} has no getter on {instanceType.Name}");
+                        return $"[Property {propertyName} has no getter]";
+                    }
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] GetObjectProperty: property {propertyName} not found on {instanceType.Name}");
+                    return $"[Property {propertyName} not found]";
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[DEBUG] GetObjectProperty: exception getting property {propertyName}: {ex.Message}");
+                return $"[Error accessing property {propertyName}: {ex.Message}]";
             }
         }
 

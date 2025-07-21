@@ -331,7 +331,7 @@ try
     
     print("🏆 PRIORITY #3: AGENT-BASED INTELLIGENT STATE MANAGEMENT - SUCCESS!");
     print("===================================================================");
-    print("✅ Agent Architecture: `agent AuraAnimalAgent()` with event handlers");
+    print("✅ Agent Architecture: `new AuraAnimalAgent()` with event handlers automatically registers as agent");
     print("✅ Event-Driven State Control: `on live.audio` inside agent class");
     print("✅ Instance State Management: `this.auraEnabled`, `this.isAwake`, `this.inConversation`");
     print("✅ Smart Conditional Processing: State-dependent behavior operational");
