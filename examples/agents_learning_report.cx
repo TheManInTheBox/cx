@@ -1,0 +1,166 @@
+// Agents Learning Report Demo - Showcasing Vector Memory Retrieval
+class LearningAgent
+{
+    name: string;
+    specialty: string;
+    
+    constructor(agentName, agentSpecialty)
+    {
+        this.name = agentName;
+        this.specialty = agentSpecialty;
+        print("📚 Learning Agent Created: " + this.name + " (" + this.specialty + ")");
+    }
+    
+    // Event handler for search results from vector memory
+    on ai.search.complete (payload)
+    {
+        print("🔍 " + this.name + " found learning results:");
+        print("   Query: " + payload.query);
+        print("   Results count: " + payload.results.length);
+        
+        // Display each learned experience
+        var i = 0;
+        while (i < payload.results.length)
+        {
+            var result = payload.results[i];
+            print("   📖 Experience " + (i + 1) + ":");
+            print("      Content: " + result.content.substring(0, 80) + "...");
+            print("      Relevance: " + (result.score * 100).toFixed(1) + "%");
+            if (result.metadata.timestamp)
+            {
+                print("      Learned: " + result.metadata.timestamp);
+            }
+            i = i + 1;
+        }
+        print("");
+    }
+    
+    // Learn something new and store it
+    function learn(experience, topic)
+    {
+        print("💡 " + this.name + " learning: " + experience.substring(0, 50) + "...");
+        
+        var learningContext = {
+            topic: topic,
+            specialty: this.specialty,
+            agent: this.name,
+            type: "knowledge_acquisition",
+            timestamp: "learning_session"
+        };
+        
+        // Fire-and-forget learning - stores in vector memory
+        this.Learn(experience, learningContext);
+        
+        return "Learning initiated - stored in vector memory";
+    }
+    
+    // Search and report what has been learned
+    function reportLearnings(searchQuery)
+    {
+        print("🔍 " + this.name + " searching memory for: '" + searchQuery + "'");
+        
+        // Fire-and-forget search - results will come via events
+        this.Search(searchQuery);
+        
+        return "Memory search initiated - results via events";
+    }
+    
+    // Share knowledge with other agents
+    function shareKnowledge(knowledge, topic)
+    {
+        print("📢 " + this.name + " sharing knowledge: " + knowledge.substring(0, 40) + "...");
+        
+        // Learn it ourselves first
+        this.learn(knowledge, topic);
+        
+        // Share via event system
+        emit knowledge.shared, {
+            sender: this.name,
+            specialty: this.specialty,
+            knowledge: knowledge,
+            topic: topic,
+            timestamp: "shared_knowledge"
+        };
+        
+        return "Knowledge shared with all agents";
+    }
+    
+    // Event handler for receiving shared knowledge
+    on knowledge.shared (payload)
+    {
+        if (payload.sender != this.name)  // Don't learn from ourselves
+        {
+            print("📨 " + this.name + " received knowledge from " + payload.sender + ":");
+            print("   Topic: " + payload.topic);
+            print("   Knowledge: " + payload.knowledge.substring(0, 60) + "...");
+            
+            // Learn the shared knowledge
+            var sharedContext = {
+                source: "peer_sharing",
+                sender: payload.sender,
+                sender_specialty: payload.specialty,
+                topic: payload.topic,
+                specialty: this.specialty,
+                type: "knowledge_sharing"
+            };
+            
+            this.Learn(payload.knowledge, sharedContext);
+            print("   💾 Stored shared knowledge in memory");
+        }
+    }
+}
+
+// Create learning agents with different specialties
+var aiResearcher = new LearningAgent("Dr. AI", "Artificial Intelligence Research");
+var ethicsExpert = new LearningAgent("Dr. Ethics", "AI Ethics and Safety");
+var futurist = new LearningAgent("Dr. Future", "Technology Futures");
+
+print("🌟 ========== AGENT LEARNING DEMONSTRATION ==========");
+print("");
+
+// Phase 1: Agents learn different things
+print("📚 Phase 1: Initial Learning");
+aiResearcher.learn("Large Language Models are transformer-based neural networks that can process and generate human-like text by learning patterns from vast amounts of text data.", "LLM Architecture");
+
+ethicsExpert.learn("AI systems must be designed with fairness, accountability, and transparency in mind. Bias in training data can lead to discriminatory outcomes that harm vulnerable populations.", "AI Ethics Principles");
+
+futurist.learn("By 2030, we expect to see widespread adoption of multimodal AI systems that can seamlessly process text, images, audio, and video simultaneously for more natural human-AI interaction.", "Future AI Trends");
+
+print("");
+
+// Phase 2: Agents share knowledge with each other
+print("🤝 Phase 2: Knowledge Sharing");
+aiResearcher.shareKnowledge("Attention mechanisms in transformers allow models to focus on relevant parts of input sequences, enabling better understanding of context and long-range dependencies.", "Attention Mechanisms");
+
+ethicsExpert.shareKnowledge("Algorithmic auditing is essential for identifying and mitigating bias in AI systems. Regular testing with diverse datasets helps ensure equitable outcomes across different user groups.", "Algorithmic Auditing");
+
+futurist.shareKnowledge("Quantum computing may revolutionize AI by enabling exponentially faster training of certain types of neural networks, particularly those involving optimization problems.", "Quantum AI");
+
+print("");
+
+// Phase 3: Wait a moment for learning to complete, then search memories
+print("🔍 Phase 3: Memory Retrieval and Reporting");
+print("Searching agent memories for learned experiences...");
+print("");
+
+// Each agent searches their memory for different topics
+aiResearcher.reportLearnings("transformer neural networks");
+ethicsExpert.reportLearnings("bias fairness AI ethics");
+futurist.reportLearnings("quantum computing future trends");
+
+print("");
+
+// Phase 4: Cross-specialty learning search
+print("🔬 Phase 4: Cross-Specialty Learning Analysis");
+print("Agents searching for knowledge outside their specialty...");
+print("");
+
+aiResearcher.reportLearnings("ethics fairness");
+ethicsExpert.reportLearnings("neural network architecture");
+futurist.reportLearnings("algorithmic auditing");
+
+print("");
+print("🎉 Learning demonstration complete!");
+print("📊 Each agent has built a personal knowledge base through vector memory.");
+print("⚡ All learning operations are fire-and-forget with event-driven results.");
+print("🔗 Knowledge sharing creates interconnected agent intelligence networks.");

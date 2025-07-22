@@ -1,0 +1,80 @@
+/**
+ * 🧠 COGNITIVE METHOD TEST
+ * Testing AiServiceBase constructor injection fix
+ * 
+ * CRITICAL TEST: Verify that cognitive methods work after constructor fix
+ * - this.Think() should work without runtime exceptions
+ * - this.Generate() should work without runtime exceptions
+ * - Each class instance should have proper service provider injection
+ */
+
+print("=== Cognitive Method Test - Issue #172 Fix ===");
+
+class CognitiveTestAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("Created agent: " + this.name);
+    }
+    
+    async function testThinking(prompt)
+    {
+        print(this.name + " is thinking about: " + prompt);
+        
+        try {
+            // CRITICAL: This should work after constructor injection fix
+            var thought = await this.Think(prompt);
+            print(this.name + " thought: " + thought);
+            return thought;
+        } catch (e) {
+            print("ERROR in Think(): " + e.toString());
+            return "ERROR: " + e.toString();
+        }
+    }
+    
+    async function testGeneration(prompt)
+    {
+        print(this.name + " is generating from: " + prompt);
+        
+        try {
+            // CRITICAL: This should work after constructor injection fix
+            var result = await this.Generate(prompt);
+            print(this.name + " generated: " + result);
+            return result;
+        } catch (e) {
+            print("ERROR in Generate(): " + e.toString());
+            return "ERROR: " + e.toString();
+        }
+    }
+    
+    function testBasic()
+    {
+        print(this.name + " basic method test - SUCCESS");
+        return "Basic method works";
+    }
+}
+
+print("Creating test agents...");
+
+// Test multiple instances to verify isolation
+var agent1 = new CognitiveTestAgent("Agent-Alpha");
+var agent2 = new CognitiveTestAgent("Agent-Beta");
+
+print("Testing basic methods...");
+agent1.testBasic();
+agent2.testBasic();
+
+print("Testing cognitive methods...");
+
+// Test cognitive methods - these should work after Issue #172 fix
+var result1 = await agent1.testThinking("What is the meaning of programming?");
+var result2 = await agent2.testGeneration("Create a simple hello world example");
+
+print("=== Test Results ===");
+print("Agent 1 Think Result: " + result1);
+print("Agent 2 Generate Result: " + result2);
+
+print("=== Cognitive Method Test Complete ===");

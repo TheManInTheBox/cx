@@ -1,0 +1,98 @@
+// CX Language - Simple Multi-Agent Dual Async Pattern Demo
+// Clear demonstration of dual async semantics with multiple agents
+// - Direct calls return null immediately (Fire-and-forget)
+// - Await calls wait for actual results (Traditional blocking)
+
+print("🎯 Multi-Agent Dual Async Pattern - Simple Demo");
+print("✨ Multiple agents using both async patterns");
+
+// =============================================================================
+// COGNITIVE AGENTS WITH DUAL ASYNC PATTERNS
+// =============================================================================
+
+class CognitiveAgent
+{
+    name: string;
+    signalCount: number;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.signalCount = 0;
+        print("🤖 Agent " + this.name + " initialized");
+    }
+    
+    // Pattern 1: Fire-and-forget learning (returns null immediately)
+    function fireAndForgetProcess(data)
+    {
+        print("📡 " + this.name + " fire-and-forget processing: " + data);
+        
+        // Direct call to Learn - returns null immediately
+        var learnResult = this.Learn("fire_forget_" + this.name + "_" + data);
+        
+        this.signalCount = this.signalCount + 1;
+        print("📚 " + this.name + " learn result: " + learnResult + " (null = fire-and-forget)");
+        
+        // Emit signal to other agents
+        emit agent.processed, this.name + "_processed_" + data;
+        
+        return "fire_forget_complete";
+    }
+    
+    // Pattern 2: Traditional blocking (waits for actual results)  
+    async function blockingProcess(data)
+    {
+        print("🧠 " + this.name + " blocking processing: " + data);
+        
+        // Await call to Learn - waits for actual result
+        var learnResult = await this.Learn("blocking_" + this.name + "_" + data);
+        
+        print("💡 " + this.name + " learn result: " + learnResult + " (blocking result)");
+        
+        return "blocking_complete";
+    }
+    
+    // Event handler for coordination signals
+    on agent.processed (payload)
+    {
+        print("🔗 " + this.name + " received coordination signal: " + payload);
+        
+        // Fire-and-forget response
+        this.fireAndForgetProcess("coordination_response");
+    }
+}
+
+// =============================================================================
+// MULTI-AGENT DEMONSTRATION
+// =============================================================================
+
+print("\n🚀 Starting Multi-Agent Dual Async Demo");
+
+// Create multiple cognitive agents
+print("\n📋 Phase 1: Creating Cognitive Agents");
+var agentAlpha = new CognitiveAgent("Alpha");
+var agentBeta = new CognitiveAgent("Beta");
+var agentGamma = new CognitiveAgent("Gamma");
+
+// Demonstrate Fire-and-Forget Pattern (Pattern 1)
+print("\n📡 Phase 2: Fire-and-Forget Pattern Demonstration");
+agentAlpha.fireAndForgetProcess("signal_1");
+agentBeta.fireAndForgetProcess("signal_2");
+agentGamma.fireAndForgetProcess("signal_3");
+
+// Demonstrate Traditional Blocking Pattern (Pattern 2)
+print("\n🧠 Phase 3: Traditional Blocking Pattern Demonstration");
+var result1 = agentAlpha.blockingProcess("analysis_1");
+var result2 = agentBeta.blockingProcess("analysis_2");
+
+// Show agent signal counts
+print("\n📊 Phase 4: Agent Status");
+print("🤖 Agent Alpha signals processed: " + agentAlpha.signalCount);
+print("🤖 Agent Beta signals processed: " + agentBeta.signalCount);
+print("🤖 Agent Gamma signals processed: " + agentGamma.signalCount);
+
+print("\n🎉 MULTI-AGENT DUAL ASYNC PATTERN COMPLETE!");
+print("🎯 Revolutionary Pattern Summary:");
+print("   📡 Direct calls (this.Learn): Return null immediately - Fire-and-forget");
+print("   🧠 Await calls (await this.Learn): Wait for actual results - Blocking");
+print("🚀 World's first dual async programming language operational!");

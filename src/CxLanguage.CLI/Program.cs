@@ -13,6 +13,8 @@ using CxLanguage.StandardLibrary.AI.VectorDatabase;
 using CxLanguage.StandardLibrary.Extensions;
 using CxLanguage.CLI.Extensions;
 using CxLanguage.Core.Ast;
+using CxLanguage.Core.Events;
+using CxLanguage.Runtime;
 using CxCoreAI = CxLanguage.Core.AI;
 
 namespace CxLanguage.CLI;
@@ -186,6 +188,10 @@ class Program
                     
                     // Track successful execution
                     telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
+                    
+                    // Wait for events to complete - give user control to exit when ready
+                    Console.WriteLine("\n🔑 Press any key to exit (waiting for background events to complete)...");
+                    Console.ReadKey(true);
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {
@@ -401,6 +407,13 @@ class Program
                     // Add CX Language telemetry service
                     services.AddSingleton<CxLanguage.Core.Telemetry.CxTelemetryService>();
 
+                    // Register CX Event Bus for agent communication with comprehensive logging
+                    services.AddSingleton<ICxEventBus>(provider => 
+                    {
+                        var logger = provider.GetRequiredService<ILogger<UnifiedEventBus>>();
+                        return UnifiedEventBusRegistry.Instance;
+                    });
+
                     // Always register Vector Database services - they can work without full Azure OpenAI config
                     try
                     {
@@ -447,6 +460,11 @@ class Program
                 {
                     services.AddLogging(builder => builder.AddConsole());
                     services.AddSingleton<CxCoreAI.IAiService>(provider => null!);
+                    services.AddSingleton<ICxEventBus>(provider => 
+                    {
+                        var logger = provider.GetRequiredService<ILogger<UnifiedEventBus>>();
+                        return UnifiedEventBusRegistry.Instance;
+                    });
                 })
                 .Build();
         }

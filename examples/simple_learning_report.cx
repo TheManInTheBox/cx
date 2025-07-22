@@ -1,0 +1,90 @@
+// Simple Learning Report Demo - Agents Reporting Their Vector Memory
+class SimpleAgent
+{
+    name: string;
+    specialty: string;
+    
+    constructor(agentName, agentSpecialty)
+    {
+        this.name = agentName;
+        this.specialty = agentSpecialty;
+        print("🤖 Agent Created: " + this.name + " (" + this.specialty + ")");
+    }
+    
+    // Search and report learned experiences
+    function searchMemory(query)
+    {
+        print("🔍 " + this.name + " searching: '" + query + "'");
+        
+        // Fire-and-forget search - results will come via events
+        this.Search(query);
+        
+        return "Memory search initiated";
+    }
+    
+    // Event handler for search results
+    on ai.search.complete (payload)
+    {
+        print("📋 " + this.name + " found " + payload.results.length + " memories:");
+        
+        var i = 0;
+        while (i < payload.results.length && i < 3)  // Show max 3 results
+        {
+            var result = payload.results[i];
+            print("   📖 Memory " + (i + 1) + ":");
+            print("      Content: " + result.content.substring(0, 60) + "...");
+            print("      Relevance: " + (result.score * 100).toFixed(1) + "%");
+            print("");
+            i = i + 1;
+        }
+    }
+    
+    // Learn something new (simplified)
+    function learnSimple(experience)
+    {
+        print("💡 " + this.name + " learning: " + experience.substring(0, 40) + "...");
+        
+        // Fire-and-forget learning - results via events
+        this.Learn(experience);
+        
+        return "Learning stored";
+    }
+}
+
+// Create intelligent agents
+var aiAgent = new SimpleAgent("Dr. Neural", "Machine Learning");
+var ethicsAgent = new SimpleAgent("Dr. Ethics", "AI Safety");
+var futureAgent = new SimpleAgent("Dr. Future", "Technology Trends");
+
+print("");
+print("🎯 === AGENT LEARNING REPORT DEMO ===");
+print("");
+
+// First, let agents learn some things
+print("📚 Phase 1: Learning Phase");
+aiAgent.learnSimple("Transformers revolutionized natural language processing through self-attention mechanisms");
+ethicsAgent.learnSimple("AI bias must be addressed through careful dataset curation and algorithmic auditing");
+futureAgent.learnSimple("Quantum computing will enable exponentially faster AI training by 2030");
+
+print("");
+print("⏱️ Waiting for learning to complete...");
+print("");
+
+// Now let agents report what they've learned
+print("🔍 Phase 2: Memory Reporting");
+aiAgent.searchMemory("transformer attention mechanisms");
+ethicsAgent.searchMemory("bias algorithmic auditing");
+futureAgent.searchMemory("quantum computing AI training");
+
+print("");
+
+// Cross-specialty searches
+print("🔬 Phase 3: Cross-Specialty Knowledge Discovery");
+aiAgent.searchMemory("bias ethics");
+ethicsAgent.searchMemory("transformer neural");
+futureAgent.searchMemory("attention mechanisms");
+
+print("");
+print("✨ Learning report demonstration complete!");
+print("🧠 Each agent can store and retrieve specialized knowledge");
+print("🎯 Vector memory enables semantic search across learned experiences");

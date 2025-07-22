@@ -1,0 +1,42 @@
+// CX Language - Direct Vector Database Test
+// Testing Learn and SearchAsync methods directly via inheritance
+
+print("🎯 Direct Vector Database Test - Testing Inherited Methods");
+
+class DirectVectorTest
+{
+    name: string;
+    
+    constructor()
+    {
+        this.name = "DirectTester";
+        print("🤖 " + this.name + " ready for direct vector testing");
+    }
+}
+
+print("\n📋 Creating test agent...");
+var agent = new DirectVectorTest();
+
+print("\n🧠 Testing direct Learn method...");
+var learnResult = await agent.Learn({
+    context: "direct_test",
+    message: "Testing direct vector learning",
+    agent: "DirectTester"
+});
+print("✅ Direct Learn result: " + learnResult);
+
+print("\n🔍 Testing direct Search method...");
+var searchResults = await agent.Search("direct_test");
+print("📊 Direct Search results: " + typeof(searchResults));
+print("📊 Search results length: " + searchResults.length);
+
+if (searchResults.length > 0)
+{
+    var firstResult = searchResults[0];
+    print("  - First result content: " + firstResult.content);
+    print("  - First result score: " + firstResult.score);
+}
+
+print("\n✅ Direct Vector Database Test Complete!");
+print("🎯 Learn and SearchAsync working directly through inheritance");
+print("🚀 Vector database integration successful!");

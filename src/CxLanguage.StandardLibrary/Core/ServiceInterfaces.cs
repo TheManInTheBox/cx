@@ -62,7 +62,7 @@ public interface IImageAnalysis
 
 /// <summary>
 /// Interface for classes that need vector database capabilities
-/// When implemented, provides access to this.SearchAsync() and this.LearnAsync() methods
+/// When implemented, provides access to this.SearchAsync() and this.Learn() methods
 /// </summary>
 public interface IVectorDatabase
 {

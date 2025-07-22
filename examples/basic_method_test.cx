@@ -1,0 +1,24 @@
+// Test without inherited method calls
+print("🔧 Basic Method Test");
+
+class BasicTest
+{
+    name: string;
+    
+    constructor(testName)
+    {
+        this.name = testName;
+        print("Created: " + this.name);
+    }
+    
+    function basicOperation()
+    {
+        print("🚀 Basic operation running...");
+        print("✅ Basic operation complete");
+        return "basic complete";
+    }
+}
+
+var tester = new BasicTest("Basic");
+var result = tester.basicOperation();
+print("Final: " + result);

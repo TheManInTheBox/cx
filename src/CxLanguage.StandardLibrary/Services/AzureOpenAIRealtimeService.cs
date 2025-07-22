@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Configuration;
 using System.IO;
-using CxLanguage.StandardLibrary.Events;
+using CxLanguage.Core.Events;
 
 namespace CxLanguage.StandardLibrary.Services
 {
