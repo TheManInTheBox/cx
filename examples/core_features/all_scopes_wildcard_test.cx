@@ -1,0 +1,210 @@
+// Comprehensive All-Scopes Wildcard Event Test
+// Tests wildcard patterns at global, class, and namespace isolation levels
+
+print("=== ALL SCOPES WILDCARD EVENT TEST ===");
+
+// GLOBAL SCOPE WILDCARD HANDLERS
+on user.any.input (payload)
+{
+    print("🌍 GLOBAL WILDCARD: user.any.input - " + payload.message);
+}
+
+on system.any.ready (payload) 
+{
+    print("🌍 GLOBAL WILDCARD: system.any.ready - " + payload.component);
+}
+
+on agent.any.thinking.any.complete (payload)
+{
+    print("🌍 GLOBAL WILDCARD: agent.any.thinking.any.complete - " + payload.thought);
+}
+
+on ai.any.response (payload)
+{
+    print("🌍 GLOBAL WILDCARD: ai.any.response - " + payload.response);
+}
+
+on voice.any.command (payload)
+{
+    print("🌍 GLOBAL WILDCARD: voice.any.command - " + payload.command);
+}
+
+// SPECIFIC GLOBAL HANDLERS for comparison
+on user.chat.message (payload)
+{
+    print("🎯 GLOBAL SPECIFIC: user.chat.message - " + payload.text);
+}
+
+on system.startup.complete (payload)
+{
+    print("🎯 GLOBAL SPECIFIC: system.startup.complete - " + payload.services);
+}
+
+// CLASS WITH WILDCARD EVENT HANDLERS
+class ChatAgent
+{
+    // Class-level wildcard handlers
+    on user.any.input (payload)
+    {
+        print("💬 CHAT AGENT WILDCARD: user.any.input - " + payload.message);
+    }
+    
+    on ai.any.response (payload)
+    {
+        print("💬 CHAT AGENT WILDCARD: ai.any.response - " + payload.response);
+    }
+    
+    on voice.any.command (payload)
+    {
+        print("💬 CHAT AGENT WILDCARD: voice.any.command - " + payload.command);
+        // Forward to specific chat handler
+        emit user.chat.message, { text: "Voice command: " + payload.command };
+    }
+    
+    // Specific class handlers
+    on user.chat.message (payload)
+    {
+        print("💬 CHAT AGENT SPECIFIC: user.chat.message - " + payload.text);
+    }
+    
+    on ai.chat.thinking (payload)
+    {
+        print("💬 CHAT AGENT SPECIFIC: ai.chat.thinking - " + payload.prompt);
+        emit agent.chat.thinking.complete, { thought: "Chat analysis: " + payload.prompt };
+    }
+}
+
+class VoiceAgent
+{
+    // Multi-level wildcard patterns in class
+    on user.any.input (payload)
+    {
+        print("🎤 VOICE AGENT WILDCARD: user.any.input - " + payload.message);
+    }
+    
+    on voice.any.command (payload)
+    {
+        print("🎤 VOICE AGENT WILDCARD: voice.any.command - " + payload.command);
+        emit voice.processing.started, { audio: payload.command };
+    }
+    
+    on system.any.audio (payload)
+    {
+        print("🎤 VOICE AGENT WILDCARD: system.any.audio - " + payload.event);
+    }
+    
+    // Complex nested wildcards
+    on agent.any.thinking.any.complete (payload)
+    {
+        print("🎤 VOICE AGENT COMPLEX WILDCARD: agent.any.thinking.any.complete - " + payload.thought);
+    }
+    
+    // Specific handlers
+    on voice.processing.started (payload)
+    {
+        print("🎤 VOICE AGENT SPECIFIC: voice.processing.started - " + payload.audio);
+        emit voice.command.recognized, { command: "Recognized: " + payload.audio };
+    }
+    
+    on voice.command.recognized (payload)
+    {
+        print("🎤 VOICE AGENT SPECIFIC: voice.command.recognized - " + payload.command);
+    }
+}
+
+class SystemMonitor  
+{
+    // Ultra-flexible wildcard patterns
+    on any.any.critical (payload)
+    {
+        print("📊 SYSTEM MONITOR ULTRA-WILDCARD: any.any.critical - " + payload.message);
+        emit system.alert.broadcast, { alert: "Critical: " + payload.message };
+    }
+    
+    on any.any.any.complete (payload)
+    {
+        print("📊 SYSTEM MONITOR ULTRA-WILDCARD: any.any.any.complete - " + payload.message);
+    }
+    
+    on system.any.ready (payload)
+    {
+        print("📊 SYSTEM MONITOR WILDCARD: system.any.ready - " + payload.component);
+        
+        // Emit multiple events to test cascading
+        emit system.audio.ready, { component: "Audio System" };
+        emit system.chat.ready, { component: "Chat System" };
+        emit system.network.ready, { component: "Network System" };
+    }
+    
+    // Specific handlers
+    on system.startup.complete (payload)
+    {
+        print("📊 SYSTEM MONITOR SPECIFIC: system.startup.complete - " + payload.services);
+    }
+    
+    on system.alert.broadcast (payload)
+    {
+        print("📊 SYSTEM MONITOR SPECIFIC: system.alert.broadcast - " + payload.alert);
+    }
+}
+
+// Create agent instances to activate class-level handlers
+print("\n🚀 Creating agents and registering all event handlers...");
+var chatAgent = new ChatAgent();
+var voiceAgent = new VoiceAgent();  
+var systemMonitor = new SystemMonitor();
+
+print("✅ All agents created - Global + Class handlers now active\n");
+
+print("=== SCOPE ISOLATION TEST MATRIX ===");
+print("Each test should show which handlers fire at each scope level\n");
+
+print("🧪 TEST 1: Basic User Input Events");
+print("Should trigger: Global + Class wildcards user.any.input");
+emit user.chat.message, { message: "Chat message test", text: "Hello from chat!" };
+emit user.voice.input, { message: "Voice input test" };
+
+print("\n🧪 TEST 2: AI Response Events"); 
+print("Should trigger: Global + Class wildcards ai.any.response");
+emit ai.text.response, { response: "Generated text content" };
+emit ai.voice.response, { response: "Generated audio content" };  
+emit ai.chat.response, { response: "Chat AI response" };
+
+print("\n🧪 TEST 3: System Events");
+print("Should trigger: Global + Class wildcards system.any.ready");
+emit system.startup.complete, { services: "All core services", component: "System Core" };
+emit system.audio.ready, { component: "Audio System" };
+emit system.network.ready, { component: "Network System" };
+
+print("\n🧪 TEST 4: Voice Command Events");
+print("Should trigger: Global + Class wildcards voice.any.command");
+emit voice.chat.command, { command: "Convert to text" };
+emit voice.system.command, { command: "System control" };
+emit voice.navigation.command, { command: "Navigate to settings" };
+
+print("\n🧪 TEST 5: Complex Multi-Level Wildcards");
+print("Should trigger: Complex agent.any.thinking.any.complete patterns");
+emit agent.chat.thinking.complete, { thought: "Chat analysis complete" };
+emit agent.voice.thinking.analysis.complete, { thought: "Voice analysis complete" };  
+emit agent.system.thinking.monitoring.complete, { thought: "System monitoring complete" };
+
+print("\n🧪 TEST 6: Ultra-Flexible Any Patterns");
+print("Should trigger: any.any.critical and any.any.any.complete wildcards");
+emit user.security.critical, { message: "Security breach detected" };
+emit system.performance.critical, { message: "High CPU usage" };
+emit agent.monitoring.critical, { message: "Agent overload" };
+
+print("\n🧪 TEST 7: Cascading Events");
+print("Events that trigger other events to test wildcard chaining");
+emit ai.chat.thinking, { prompt: "Process this message" };
+
+print("\n🧪 TEST 8: Cross-Namespace Communication");
+print("Testing wildcard patterns spanning different agent namespaces");
+emit voice.chat.command, { command: "Transcribe this audio" };
+
+print("\n=== ALL SCOPE TESTS COMPLETE ===");
+print("✅ Check above output for wildcard pattern matching at ALL scope levels");
+print("✅ Global wildcards should catch events from any source");
+print("✅ Class wildcards should only catch events targeting their scope"); 
+print("✅ Specific handlers should fire alongside wildcard handlers");
+print("📊 This demonstrates complete wildcard functionality across the entire event system!");

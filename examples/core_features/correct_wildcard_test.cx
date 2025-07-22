@@ -1,0 +1,26 @@
+// Test Correct Wildcard Pattern Matching
+
+print("=== Testing Correct Wildcard Patterns ===");
+
+// This should match user.*.input events
+on user.any.input (payload)
+{
+    print("🎯 WILDCARD user.any.input: " + payload.data);
+}
+
+// This should match user.chat.* events  
+on user.chat.any (payload)
+{
+    print("💬 WILDCARD user.chat.any: " + payload.data);
+}
+
+print("\n🧪 TEST 1: user.voice.input (should match user.any.input)");
+emit user.voice.input, { data: "Voice input test" };
+
+print("\n🧪 TEST 2: user.chat.message (should match user.chat.any)");
+emit user.chat.message, { data: "Chat message test" };
+
+print("\n🧪 TEST 3: user.chat.input (should match BOTH wildcards)");
+emit user.chat.input, { data: "Chat input test" };
+
+print("\n=== Check above for correct wildcard matching ===");

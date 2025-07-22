@@ -414,6 +414,12 @@ public class UnifiedEventBus : ICxEventBus
             return true;
         }
 
+        // Handle .any. wildcard patterns for ALL scopes (not just namespace scope)
+        if (pattern.Contains(".any."))
+        {
+            return IsNamespacePatternMatch(eventName, pattern);
+        }
+
         // Handle namespace-scoped patterns
         if (subscription.Scope == UnifiedEventScope.Namespace)
         {
