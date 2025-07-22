@@ -1,0 +1,22 @@
+// Test AI service statement with handlers
+class TestAgent
+{
+    name: string = "TestAgent";
+    
+    function testWithHandlers()
+    {
+        // AI service call with handlers
+        learn, {
+            content: "test data",
+            handlers: {
+                any.complete,
+                agent.task.done
+            }
+        };
+        
+        print("Test with handlers completed");
+    }
+}
+
+var agent = new TestAgent();
+agent.testWithHandlers();

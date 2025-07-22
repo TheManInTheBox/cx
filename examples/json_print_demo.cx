@@ -1,0 +1,55 @@
+// Demonstration of enhanced print function with JSON serialization for objects
+class Person 
+{
+    name: string = "Unknown";
+    age: number = 0;
+    address: string = "";
+    
+    constructor(personName: string, personAge: number, personAddress: string) {
+        this.name = personName;
+        this.age = personAge;
+        this.address = personAddress;
+    }
+}
+
+class DataContainer 
+{
+    title: string = "Sample Data";
+    created: string = "2025-07-22";
+    version: string = "1.0";
+}
+
+class Complex
+{
+  dataContainer: DataContainer = new DataContainer();
+
+  constructor(data: DataContainer)
+  {
+    this.dataContainer = data;
+  }
+}
+
+var complex = new Complex(new DataContainer());
+
+// Create test objects
+var person = new Person("Alice Smith", 30, "123 Main St");
+var data = new DataContainer();
+
+print("=== String Printing (no JSON) ===");
+print("Hello World");
+
+print("\n=== Object Printing (JSON serialization) ===");
+print("Person object:");
+print(person);
+
+print("\nData container object:");
+print(data);
+
+print("\nComplex object with nested structure:");
+print(complex);
+
+print("\n=== Mixed Type Printing ===");
+print("Number: ");
+print(42);
+print("Boolean: ");
+print(true);

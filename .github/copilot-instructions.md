@@ -9,7 +9,7 @@ This document provides development guidance and standards for the CX Language pl
 - **Version**: 1.0.0 (July 2025)
 
 ## TOP PRIORITY 100%
-Instrument everything, lots of debug traces. Use the cx language to orchestrate a team of agents to assist you in building the CX Language platform. The agents should be able to handle tasks such as code generation, testing, and documentation. You are the manager of the team and should provide clear instructions to the agents. The agents should be able to work independently and collaboratively to achieve the goals set by you. This is how you will build the CX Language platform.
+Instrument everything, lots of debug and runtime trace. Trace cx source code line to executing IL is a must. Use the cx language to orchestrate a team of agents to assist you in building the CX Language platform. The agents should be able to handle tasks such as code generation, testing, and documentation. You are the manager of the team and should provide clear instructions to the agents. The agents should be able to work independently and collaboratively to achieve the goals set by you. This is how you will build the CX Language platform.
 
 ## Development Standards
 - ✅ **ALWAYS** use the latest Cx Language features and syntax defined in cx.instructions.md
@@ -18,6 +18,9 @@ Instrument everything, lots of debug traces. Use the cx language to orchestrate 
 - ✅ **Complete CX Integration**: Seamless compiler and runtime operation with zero exceptions
 - ✅ **Event-Driven Architecture**: Fully operational unified event system with proper handler registration
 - ✅ **Interactive CLI**: Working background event processing with user-controlled termination
+- ✅ **Enhanced Handlers Pattern**: Complete implementation with custom payload support `handlers: [ analysis.complete { option: "value" } ]`
+- ✅ **Automatic Object Serialization**: CX objects display as JSON with recursive nesting for debugging
+- ✅ **Comma-less Syntax**: Modern clean syntax for AI services and emit statements
 - ✅ **Clean Examples**: Organized structure with production/core_features/demos/archive folders
 - ❌ **NOT Acceptable**: Simulations of any kind, mocks, partial implementations, placeholder code, POCs
 
@@ -29,6 +32,15 @@ src/CxLanguage.Compiler/      → IL generation with three-pass compilation
 src/CxLanguage.Runtime/       → UnifiedEventBus + CxRuntimeHelper with global event system
 src/CxLanguage.StandardLibrary/ → 9 AI services via Semantic Kernel 1.26.0
 examples/                     → All CX programs and demonstrations
+research/                     → Research papers and critical information on AI architecture and documentation on ground breaking achievements in Aura/Cx Language
+wiki/                         → Static documentation (timeless reference material only)
+.github/                      → GitHub workflows, issue templates, and Copilot instructions
+.github/copilot-instructions.md → Copilot instructions for code generation
+.github/instructions/cx.instructions.md → Detailed CX language syntax and guidelines
+.github/issue_templates/      → Issue templates for bug reports and feature requests
+.github/workflows/            → GitHub Actions workflows for CI/CD
+.github/issue_templates/bug_report.md → Template for bug reports
+.github/issue_templates/feature_request.md → Template for feature requests
 ```
 
 ### **File Organization**
@@ -65,6 +77,26 @@ gh auth switch --user ahebert-lt
 gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 ```
 
+## Latest Language Enhancements
+
+### **Enhanced Handlers Pattern (v1.0)**
+- **Custom Payload Support**: `handlers: [ analysis.complete { option: "detailed" }, task.finished { status: "done" } ]`
+- **Mixed Handler Arrays**: Combine handlers with and without custom payloads in same array
+- **Comma-less Syntax**: Clean, modern syntax for AI services and emit statements
+- **Payload Propagation**: Handler events receive both original payload AND custom handler data
+
+### **Automatic Object Serialization (v1.0)**
+- **CX Object Detection**: Automatically detects CX objects inheriting from AiServiceBase
+- **Recursive JSON Display**: Nested CX objects display with full structure and proper indentation
+- **Clean Field Filtering**: Internal fields (ServiceProvider, Logger) automatically hidden
+- **Primitive Type Handling**: Strings, numbers, booleans print directly without JSON formatting
+- **Debug-Ready Output**: Perfect for inspecting complex agent states and data structures
+
+### **Modern Syntax Standards**
+- **Comma-less Parameters**: `learn { data: "content", handlers: [...] }` instead of `learn, { data: "content" }`
+- **Enhanced Event Access**: `event.propertyName` for direct property access in handlers
+- **Dictionary Iteration**: Native `for (var item in event.payload)` with `.Key` and `.Value` access
+
 ## Azure Configuration
 
 ### **Azure OpenAI Setup**
@@ -86,6 +118,10 @@ gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 - **Event Handling**: If events aren't being received, check namespace scoping and ensure proper wildcard patterns
 - **Runtime Errors**: Verify service declarations and ensure proper implementation of event handlers
 - **Azure Integration**: Check appsettings.json configuration for correct Azure OpenAI endpoint and API key
+- **Compilation Issues**: Ensure correct syntax according to cx.instructions.md guidelines
+- **Performance**: For slow response times, verify Azure OpenAI service availability and network connectivity
+- **Debugging**: Use extensive logging and debug traces to identify issues in event processing or service interactions
+- **Object Inspection**: Use `print(objectName)` to automatically serialize CX objects to JSON for debugging
 - **Compilation Issues**: Ensure correct syntax according to cx.instructions.md guidelines
 - **Performance**: For slow response times, verify Azure OpenAI service availability and network connectivity
 - **Debugging**: Use extensive logging and debug traces to identify issues in event processing or service interactions

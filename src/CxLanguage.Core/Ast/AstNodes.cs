@@ -53,6 +53,8 @@ public interface IAstVisitor<T>
     T VisitEventName(EventNameNode node);
     T VisitOnStatement(OnStatementNode node);
     T VisitEmitStatement(EmitStatementNode node);
+    T VisitAiServiceStatement(AiServiceStatementNode node);
+    T VisitHandlerItem(HandlerItemNode node);
     
     // Class system visitor methods
     T VisitDecorator(DecoratorNode node);
@@ -678,4 +680,26 @@ public class EmitStatementNode : StatementNode
     public ExpressionNode? Payload { get; set; }
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitEmitStatement(this);
+}
+
+/// <summary>
+/// AI service statement (learn, payload; think, payload; etc.)
+/// </summary>
+public class AiServiceStatementNode : StatementNode
+{
+    public string ServiceName { get; set; } = string.Empty;
+    public ExpressionNode? Payload { get; set; }
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAiServiceStatement(this);
+}
+
+/// <summary>
+/// Individual handler item in handlers list (eventName or eventName { customPayload })
+/// </summary>
+public class HandlerItemNode : AstNode
+{
+    public EventNameNode EventName { get; set; } = null!;
+    public ObjectLiteralNode? CustomPayload { get; set; }
+
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitHandlerItem(this);
 }

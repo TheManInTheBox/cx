@@ -1,0 +1,82 @@
+// Core Features Test: Event Handlers Receive CxEvent Object
+// This example demonstrates issue #178 implementation where event handlers
+// receive a structured CxEvent object instead of raw payload data
+
+// Global event handler - now receives CxEvent object
+on user.input (event)
+{
+    print("Global handler received event:");
+    print("  Event name: " + event.name);
+    print("  Timestamp: " + event.timestamp);
+    print("  Payload: " + event.payload);
+
+    // event.payload is a dictionary
+    for (var entry in event.payload)
+    {
+        print("    " + entry.Key + ": " + entry.Value);
+    }
+}
+
+on system.status (event)
+{
+    print("System status event received:");
+    print("  Event: " + event.name);
+    print("  Data: " + event.payload);
+    print("  Time: " + event.timestamp);
+}
+
+class EventTestAgent
+{
+    name: string;
+    
+    constructor(agentName: string)
+    {
+        this.name = agentName;
+        print("Agent created: " + this.name);
+    }
+    
+    // Class-based event handler - also receives CxEvent object
+    on user.message (event)
+    {
+        print("Agent '" + this.name + "' received message event:");
+        print("  Event name: " + event.name);
+        print("  Payload: " + event.payload);
+        print("  Timestamp: " + event.timestamp);
+
+        // Cast payload to dictionary and iterate over its entries
+        var payloadDict = event.payload;
+        for (var entry in payloadDict)
+        {
+            print("    " + entry.Key + ": " + entry.Value);
+        }
+    }
+    
+    // Wildcard event handler
+    on user.any.action (event)
+    {
+        print("Agent '" + this.name + "' wildcard handler triggered:");
+        print("  Event: " + event.name);
+        print("  Data: " + event.payload);
+    }
+}
+
+// Create agent instance
+var testAgent = new EventTestAgent("TestBot");
+
+print("=== Testing Event Handlers with CxEvent Objects ===");
+
+// Emit test events
+print("Emitting 'user.input' event...");
+emit user.input, { message: "Hello from user input!" };
+
+print("Emitting 'system.status' event...");
+emit system.status, { status: "running", cpu: "45%" };
+
+print("Emitting 'user.message' event...");
+emit user.message, { text: "Direct message to agent", sender: "user123" };
+
+print("Emitting 'user.voice.action' event (should match wildcard)...");
+emit user.voice.action, { action: "speak", text: "Hello world" };
+
+print("All events emitted. Check output above for CxEvent object details.");
+print("Event handlers should show event.name, event.payload, and event.timestamp properties.");

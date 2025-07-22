@@ -485,32 +485,53 @@ public class AstBuilder : CxBaseVisitor<AstNode>
             var propListContext = context.objectPropertyList();
             foreach (var propContext in propListContext.objectProperty())
             {
-                var property = new ObjectPropertyNode();
-                SetLocation(property, propContext);
-                
-                // Get the key (identifier or string literal)
-                if (propContext.IDENTIFIER() != null)
-                {
-                    var identifier = propContext.IDENTIFIER().GetText();
-                    // Validate that keywords cannot be used as object property names
-                    ValidateIdentifierNotKeyword(identifier, propContext, "object property name");
-                    property.Key = identifier;
-                }
-                else if (propContext.STRING_LITERAL() != null)
-                {
-                    // Remove quotes from string literal - string literals can contain any text including keywords
-                    var stringLiteral = propContext.STRING_LITERAL().GetText();
-                    property.Key = stringLiteral.Substring(1, stringLiteral.Length - 2);
-                }
-                
-                // Get the value expression
-                property.Value = (ExpressionNode)Visit(propContext.expression());
-                
+                var property = (ObjectPropertyNode)Visit(propContext);
                 objectLiteral.Properties.Add(property);
             }
         }
         
         return objectLiteral;
+    }
+
+    public override AstNode VisitObjectProperty(CxParser.ObjectPropertyContext context)
+    {
+        var property = new ObjectPropertyNode();
+        SetLocation(property, context);
+        
+        // Get the key (identifier or string literal)
+        if (context.IDENTIFIER() != null)
+        {
+            var identifier = context.IDENTIFIER().GetText();
+            // Validate that keywords cannot be used as object property names
+            ValidateIdentifierNotKeyword(identifier, context, "object property name");
+            property.Key = identifier;
+        }
+        else if (context.STRING_LITERAL() != null)
+        {
+            // Remove quotes from string literal - string literals can contain any text including keywords
+            var stringLiteral = context.STRING_LITERAL().GetText();
+            property.Key = stringLiteral.Substring(1, stringLiteral.Length - 2);
+        }
+        
+        // Get the value (either expression or handlersList)
+        if (context.expression() != null)
+        {
+            // Property has an expression value
+            property.Value = (ExpressionNode)Visit(context.expression());
+        }
+        else if (context.handlersList() != null)
+        {
+            // Property has a handlersList value
+            // For now, treat handlers list as a special array literal
+            var handlersList = (ArrayLiteralNode)Visit(context.handlersList());
+            property.Value = handlersList;
+        }
+        else
+        {
+            throw new InvalidOperationException($"Object property must have either expression or handlersList at {GetLocationString(context)}");
+        }
+        
+        return property;
     }
 
     public override AstNode VisitArrayLiteral(ArrayLiteralContext context)
@@ -529,6 +550,62 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
         
         return arrayLiteral;
+    }
+
+    public override AstNode VisitHandlersList(HandlersListContext context)
+    {
+        // HandlersList is '[' handlerItem (',' handlerItem)* ']'
+        // We'll represent it as an ArrayLiteral of handler items
+        var arrayLiteral = new ArrayLiteralNode();
+        SetLocation(arrayLiteral, context);
+        
+        // Parse handler items - each can be eventName or eventName { customPayload }
+        foreach (var handlerItemContext in context.handlerItem())
+        {
+            var handlerItem = VisitHandlerItem(handlerItemContext) as HandlerItemNode;
+            if (handlerItem != null)
+            {
+                // For now, convert HandlerItem to a simple string literal for compatibility
+                // Later we can enhance this to use the full HandlerItemNode
+                var eventNameText = handlerItem.EventName.FullName;
+                var stringLiteral = new LiteralNode { 
+                    Type = LiteralType.String, 
+                    Value = eventNameText 
+                };
+                SetLocation(stringLiteral, handlerItemContext);
+                arrayLiteral.Elements.Add(stringLiteral);
+            }
+        }
+        
+        return arrayLiteral;
+    }
+
+    public override AstNode VisitHandlerItem(CxParser.HandlerItemContext context)
+    {
+        var handlerItem = new HandlerItemNode();
+        SetLocation(handlerItem, context);
+        
+        // Parse the event name
+        handlerItem.EventName = (EventNameNode)Visit(context.eventName());
+        
+        // Check if there's a custom payload (optional object literal)
+        var objectPropertyListContext = context.objectPropertyList();
+        if (objectPropertyListContext != null)
+        {
+            // Create an ObjectLiteralNode from the property list
+            var objectLiteral = new ObjectLiteralNode();
+            SetLocation(objectLiteral, objectPropertyListContext);
+            
+            foreach (var propertyContext in objectPropertyListContext.objectProperty())
+            {
+                var property = (ObjectPropertyNode)Visit(propertyContext);
+                objectLiteral.Properties.Add(property);
+            }
+            
+            handlerItem.CustomPayload = objectLiteral;
+        }
+        
+        return handlerItem;
     }
 
     public override AstNode VisitUnaryExpression(UnaryExpressionContext context)
@@ -933,6 +1010,23 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
 
         return emitStmt;
+    }
+
+    public override AstNode VisitAiServiceStatement(AiServiceStatementContext context)
+    {
+        var aiServiceStmt = new AiServiceStatementNode();
+        SetLocation(aiServiceStmt, context);
+
+        // Parse AI service name
+        aiServiceStmt.ServiceName = context.aiServiceName().GetText();
+
+        // Parse payload (expression, if present)
+        if (context.expression() != null)
+        {
+            aiServiceStmt.Payload = (ExpressionNode)Visit(context.expression());
+        }
+
+        return aiServiceStmt;
     }
 
     private AccessModifier ParseAccessModifier(AccessModifierContext context)

@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
-using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.AI.Realtime;
 using CxLanguage.Runtime;
 using System;
@@ -75,34 +74,34 @@ namespace CxLanguage.StandardLibrary.Extensions
                 
                 if (result.IsSuccess)
                 {
-                    await _eventBus.EmitAsync("realtime.session.created", new { sessionId = result.SessionId });
+                    _eventBus.Emit("realtime.session.created", new { sessionId = result.SessionId });
                 }
                 else
                 {
-                    await _eventBus.EmitAsync("realtime.session.error", new { error = result.ErrorMessage });
+                    _eventBus.Emit("realtime.session.error", new { error = result.ErrorMessage });
                 }
             });
 
             // Handle text message events
-            _eventBus.Subscribe("realtime.text.send", async (payload) =>
+            _eventBus.Subscribe("realtime.text.send", (cxEvent) =>
             {
-                if (payload is System.Text.Json.JsonElement json)
+                if (cxEvent.payload is System.Text.Json.JsonElement json)
                 {
                     if (json.TryGetProperty("text", out var textProperty))
                     {
                         var text = textProperty.GetString();
                         if (!string.IsNullOrEmpty(text))
                         {
-                            await _realtimeService.SendTextAsync(text);
+                            Task.Run(async () => await _realtimeService.SendTextAsync(text));
                         }
                     }
                 }
             });
 
             // Handle audio message events  
-            _eventBus.Subscribe("realtime.audio.send", async (payload) =>
+            _eventBus.Subscribe("realtime.audio.send", (cxEvent) =>
             {
-                if (payload is System.Text.Json.JsonElement json)
+                if (cxEvent.payload is System.Text.Json.JsonElement json)
                 {
                     if (json.TryGetProperty("audioData", out var audioProperty))
                     {
@@ -110,15 +109,15 @@ namespace CxLanguage.StandardLibrary.Extensions
                         if (!string.IsNullOrEmpty(audioBase64))
                         {
                             var audioData = Convert.FromBase64String(audioBase64);
-                            await _realtimeService.SendAudioAsync(audioData);
+                            Task.Run(async () => await _realtimeService.SendAudioAsync(audioData));
                         }
                     }
                 }
             });
             
-            _eventBus.Subscribe("realtime.audio.commit", async (payload) =>
+            _eventBus.Subscribe("realtime.audio.commit", (cxEvent) =>
             {
-                await _realtimeService.CommitAudioAsync();
+                Task.Run(async () => await _realtimeService.CommitAudioAsync());
             });
         }
     }

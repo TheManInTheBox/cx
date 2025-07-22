@@ -120,68 +120,97 @@ public class UnifiedEventBus : ICxEventBus
     #region ICxEventBus Implementation (Azure Integration)
 
     /// <summary>
+    /// Subscribe to events using CxEvent objects (ICxEventBus interface)
+    /// </summary>
+    public void Subscribe(string eventName, Action<CxEvent> handler)
+    {
+        Console.WriteLine($"[DEBUG] ICxEventBus.Subscribe: {eventName}");
+        
+        // Convert Action<CxEvent> to EventHandler for unified bus
+        EventHandler unifiedHandler = (payload) =>
+        {
+            // Convert raw payload data to a dictionary for CX consumption
+            var eventData = CxRuntimeHelper.ConvertToEventData(payload.Data);
+            var cxEvent = new CxEvent
+            {
+                name = payload.EventName,
+                payload = eventData,
+                timestamp = payload.Timestamp
+            };
+            
+            try
+            {
+                handler(cxEvent);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "ICxEventBus handler failed for event: {EventName}", eventName);
+            }
+            return Task.CompletedTask;
+        };
+        
+        // Register with unified event system
+        var subscriptionId = RegisterSubscription("ICxEventBus", "system", UnifiedEventScope.Global);
+        Subscribe(subscriptionId, eventName, unifiedHandler);
+    }
+
+    /// <summary>
+    /// Subscribe to events with instance scoping using CxEvent objects (ICxEventBus interface)
+    /// </summary>
+    public void Subscribe(string eventName, object instance, Action<CxEvent> handler)
+    {
+        Console.WriteLine($"[DEBUG] ICxEventBus.Subscribe (instance): {eventName}");
+        
+        // Convert Action<CxEvent> to EventHandler for unified bus
+        EventHandler unifiedHandler = (payload) =>
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] Instance handler payload.Data type: {payload.Data?.GetType().FullName ?? "null"}");
+                Console.WriteLine($"[DEBUG] Instance handler payload.Data value: {payload.Data ?? "null"}");
+                
+                // Convert raw payload data to a dictionary for CX consumption
+                var eventData = CxRuntimeHelper.ConvertToEventData(payload.Data);
+                var cxEvent = new CxEvent
+                {
+                    name = payload.EventName,
+                    payload = eventData,
+                    timestamp = payload.Timestamp
+                };
+                
+                Console.WriteLine($"[DEBUG] About to call instance handler with cxEvent: {cxEvent.name}");
+                handler(cxEvent);
+                Console.WriteLine($"[DEBUG] Instance handler completed successfully");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] ICxEventBus instance handler failed for event: {eventName}");
+                Console.WriteLine($"[ERROR] Exception: {ex.Message}");
+                if (ex.InnerException != null)
+                {
+                    Console.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                }
+                Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
+                _logger?.LogError(ex, "ICxEventBus instance handler failed for event: {EventName}", eventName);
+            }
+            return Task.CompletedTask;
+        };
+        
+        // Register with unified event system with instance scoping
+        var instanceName = $"{instance.GetType().Name}_{instance.GetHashCode()}";
+        var subscriptionId = RegisterSubscription(instanceName, "instance", UnifiedEventScope.Agent, instance: instance);
+        Subscribe(subscriptionId, eventName, unifiedHandler);
+    }
+
+    /// <summary>
     /// Emit an event to the CX event system (ICxEventBus interface)
     /// </summary>
-    public async Task EmitAsync(string eventName, object payload)
+    public void Emit(string eventName, object payload)
     {
-        _logger?.LogDebug("ICxEventBus.EmitAsync: {EventName}", eventName);
+        Console.WriteLine($"[DEBUG] ICxEventBus.Emit: {eventName}");
         
-        // Handle ICxEventBus-style handlers (for Azure services)
-        if (_icxHandlers.TryGetValue(eventName, out var icxHandlers))
-        {
-            var tasks = new List<Task>();
-            foreach (var handler in icxHandlers.ToArray())
-            {
-                try
-                {
-                    tasks.Add(handler(payload ?? new object()));
-                }
-                catch (Exception ex)
-                {
-                    _logger?.LogError(ex, "ICxEventBus handler failed for event: {EventName}", eventName);
-                }
-            }
-            
-            if (tasks.Count > 0)
-            {
-                await Task.WhenAll(tasks);
-            }
-        }
-
-        // Also emit through unified event system
-        await EmitUnifiedAsync(eventName, payload, "ICxEventBus", UnifiedEventScope.Global);
-        
-        Console.WriteLine($"🔥 CX EVENT EMITTED: {eventName} (ICx: {(_icxHandlers.ContainsKey(eventName) ? _icxHandlers[eventName].Count : 0)}, Unified: {GetHandlerCount(eventName)})");
-    }
-
-    /// <summary>
-    /// Subscribe to events from the CX event system (ICxEventBus interface)
-    /// </summary>
-    public void Subscribe(string eventName, Func<object, Task> handler)
-    {
-        _logger?.LogDebug("ICxEventBus.Subscribe: {EventName}", eventName);
-        
-        if (!_icxHandlers.ContainsKey(eventName))
-        {
-            _icxHandlers[eventName] = new List<Func<object, Task>>();
-        }
-        
-        _icxHandlers[eventName].Add(handler);
-        _logger?.LogDebug("ICxEventBus subscription added: {EventName} now has {Count} ICx handlers", 
-            eventName, _icxHandlers[eventName].Count);
-    }
-
-    /// <summary>
-    /// Unsubscribe from events (ICxEventBus interface)
-    /// </summary>
-    public void Unsubscribe(string eventName)
-    {
-        _logger?.LogDebug("ICxEventBus.Unsubscribe: {EventName}", eventName);
-        
-        if (_icxHandlers.TryRemove(eventName, out _))
-        {
-            _logger?.LogDebug("ICxEventBus handlers removed for: {EventName}", eventName);
-        }
+        // Emit through unified event system
+        Task.Run(async () => await EmitUnifiedAsync(eventName, payload, "ICxEventBus", UnifiedEventScope.Global));
     }
 
     #endregion
@@ -363,7 +392,7 @@ public class UnifiedEventBus : ICxEventBus
         {
             UnifiedEventScope.Global => true,
             
-            UnifiedEventScope.Agent => false, // Agent events handled separately via specific targeting
+            UnifiedEventScope.Agent => true, // Agent events should receive events
             
             UnifiedEventScope.Channel => targetChannel == null || subscription.Channels.Contains(targetChannel),
             
