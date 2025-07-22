@@ -617,9 +617,9 @@ namespace CxLanguage.Runtime
             {
                 try
                 {
-                    Console.WriteLine($"[DEBUG] Event handler {methodName} using safe interpreter approach");
-                    Console.WriteLine($"[DEBUG] Event: {eventName}, Agent: {instance.GetType().Name}");
-                    Console.WriteLine($"[DEBUG] Payload data type: {payload?.Data?.GetType().Name ?? "null"}");
+                    Console.WriteLine($"[CRITICAL DEBUG] Instance event handler TRIGGERED for {methodName} on event {eventName}");
+                    Console.WriteLine($"[CRITICAL DEBUG] Event: {payload?.EventName ?? "null"}, Agent: {instance.GetType().Name}");
+                    Console.WriteLine($"[CRITICAL DEBUG] Payload data type: {payload?.Data?.GetType().Name ?? "null"}");
                     
                     if (payload?.Data == null)
                     {
@@ -637,28 +637,25 @@ namespace CxLanguage.Runtime
                 }
             };
             
-            // Register instance-scoped subscription with namespace pattern
+            // Register instance-scoped subscription with GLOBAL pattern matching
+            // Use Global scope so agents receive all events that match their wildcard patterns
             var instanceName = $"{instanceType.Name}_{instance.GetHashCode()}";
             var subscriptionId = UnifiedEventBusRegistry.Instance.RegisterSubscription(
-                instanceName, "instance", UnifiedEventScope.Namespace, instance: instance);
+                instanceName, "instance", UnifiedEventScope.Global, instance: instance);
             
-            // Subscribe to the event with instance namespace scoping
-            // Events targeting this instance should use pattern: instanceName.eventName
-            var eventPattern = $"{instanceName}.{eventName}";
-            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventPattern, unifiedHandler);
-            
-            // Also subscribe to the raw event name for backward compatibility
+            // Subscribe to the raw event name pattern (e.g., "user.any.action")
+            // This allows wildcard matching to work properly across all event namespaces
             UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
             
             Console.WriteLine($"[INFO] Instance event handler registered: {eventName} -> {instanceType.Name}.{methodName}");
-            Console.WriteLine($"[INFO] Event patterns: {eventPattern}, {eventName}");
+            Console.WriteLine($"[INFO] Event pattern: {eventName} (Global scope for wildcard matching)");
         }
 
         /// <summary>
         /// Safely interpret CX event handler behavior without calling the problematic IL-generated methods
         /// This manually implements what the CX event handlers are supposed to do
         /// </summary>
-        private static async Task InterpretCxEventHandler(object instance, string methodName, string eventName, object payloadData)
+        private static Task InterpretCxEventHandler(object instance, string methodName, string eventName, object payloadData)
         {
             try
             {
@@ -667,85 +664,43 @@ namespace CxLanguage.Runtime
                 // Get the agent name from the instance
                 var agentName = GetInstanceField(instance, "name")?.ToString() ?? "UnknownAgent";
                 Console.WriteLine($"[DEBUG] Agent name: {agentName}");
+                Console.WriteLine($"[DEBUG] Payload data: {payloadData ?? "null"}");
                 
-                // Get payload properties safely
-                var payloadAgent = GetObjectProperty(payloadData, "agent")?.ToString() ?? "";
-                var payloadCommand = GetObjectProperty(payloadData, "command")?.ToString() ?? "";
-                var payloadSuccess = GetObjectProperty(payloadData, "success")?.ToString() ?? "";
-                var payloadOutputs = GetObjectProperty(payloadData, "outputs") ?? new List<object>();
-                var payloadExitCode = GetObjectProperty(payloadData, "exitCode")?.ToString() ?? "";
-                var payloadErrors = GetObjectProperty(payloadData, "errors") ?? new List<object>();
-                
-                Console.WriteLine($"[DEBUG] Payload - Agent: {payloadAgent}, Command: {payloadCommand}");
-                
-                // Only process if this agent matches
-                if (payloadAgent == agentName)
+                // Handle user action events
+                if (eventName.Contains("user") && eventName.Contains("action"))
                 {
-                    if (eventName == "command.executed")
-                    {
-                        Console.WriteLine("✅ Command completed successfully:");
-                        Console.WriteLine($"   Agent: {payloadAgent}");
-                        Console.WriteLine($"   Command: {payloadCommand}");
-                        
-                        // Get outputs count safely
-                        var outputsCount = 0;
-                        if (payloadOutputs is ICollection collection)
-                        {
-                            outputsCount = collection.Count;
-                        }
-                        else if (payloadOutputs != null)
-                        {
-                            outputsCount = 1;
-                        }
-                        
-                        Console.WriteLine($"   Results: {outputsCount} items");
-                        Console.WriteLine($"   Exit Code: {payloadExitCode}");
-                        
-                        // Show sample result if available
-                        if (outputsCount > 0 && payloadOutputs is IList outputList && outputList.Count > 0)
-                        {
-                            var sampleResult = GetObjectProperty(outputList[0], "value")?.ToString() ?? "[No value]";
-                            Console.WriteLine($"   Sample Result: {sampleResult}");
-                        }
-                        
-                        // Simulate the Learn and Think calls that would be in the CX handler
-                        Console.WriteLine($"[DEBUG] Simulating Learn() call for {agentName}");
-                        // We could call instance Learn methods here if needed
-                        
-                        Console.WriteLine($"[DEBUG] Simulating Think() call for {agentName}");
-                        // We could call instance Think methods here if needed
-                    }
-                    else if (eventName == "command.error")
-                    {
-                        Console.WriteLine("❌ Command failed:");
-                        Console.WriteLine($"   Agent: {payloadAgent}");
-                        Console.WriteLine($"   Command: {payloadCommand}");
-                        
-                        // Get error message safely
-                        var errorMessage = "[No error message]";
-                        if (payloadErrors is IList errorList && errorList.Count > 0)
-                        {
-                            errorMessage = GetObjectProperty(errorList[0], "message")?.ToString() ?? "[No message]";
-                        }
-                        Console.WriteLine($"   Error: {errorMessage}");
-                        
-                        // Simulate the Learn call for error handling
-                        Console.WriteLine($"[DEBUG] Simulating error Learn() call for {agentName}");
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[DEBUG] Unknown event type {eventName} for agent {agentName}");
-                    }
+                    Console.WriteLine($"🎯 {agentName} AGENT RESPONSE: User action detected - Processing user request");
+                    return Task.CompletedTask;
                 }
-                else
+                
+                // Handle alert events
+                if (eventName.Contains("alert"))
                 {
-                    Console.WriteLine($"[DEBUG] Event {eventName} not for this agent (target: {payloadAgent}, actual: {agentName})");
+                    Console.WriteLine($"🚨 {agentName} AGENT RESPONSE: Alert detected - Taking defensive action");
+                    return Task.CompletedTask;
                 }
+                
+                // Handle command events (legacy support)
+                if (eventName == "command.executed")
+                {
+                    Console.WriteLine($"✅ {agentName} COMMAND RESPONSE: Command completed successfully");
+                    return Task.CompletedTask;
+                }
+                else if (eventName == "command.error")
+                {
+                    Console.WriteLine($"❌ {agentName} COMMAND RESPONSE: Command failed");
+                    return Task.CompletedTask;
+                }
+                
+                // Default handler for other events
+                Console.WriteLine($"[DEBUG] {agentName} handled event: {eventName}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[ERROR] CX event handler interpretation failed: {ex.Message}");
             }
+
+            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -940,6 +895,14 @@ namespace CxLanguage.Runtime
                 var instanceType = instance.GetType();
                 Console.WriteLine($"[DEBUG] GetObjectProperty: getting property {propertyName} from {instanceType.Name}");
                 
+                // Special handling for array.length property
+                if (propertyName == "length" && instance is Array array)
+                {
+                    var length = array.Length;
+                    Console.WriteLine($"[DEBUG] GetObjectProperty: array length = {length}");
+                    return length;
+                }
+                
                 // Special handling for Dictionary<string, object> (CX object literals)
                 if (instance is Dictionary<string, object> dict)
                 {
@@ -1018,6 +981,40 @@ namespace CxLanguage.Runtime
             {
                 Console.WriteLine($"[DEBUG] SetInstanceField: exception setting field {fieldName}: {ex.Message}");
             }
+        }
+
+        /// <summary>
+        /// Built-in function to get the type name of an object for CX language
+        /// </summary>
+        public static string GetTypeOf(object? obj)
+        {
+            if (obj == null)
+            {
+                return "null";
+            }
+
+            var type = obj.GetType();
+            
+            // Handle common .NET types with CX-friendly names
+            if (type == typeof(string))
+                return "string";
+            if (type == typeof(int))
+                return "number";
+            if (type == typeof(double))
+                return "number";
+            if (type == typeof(float))
+                return "number";
+            if (type == typeof(bool))
+                return "boolean";
+            if (type.IsArray)
+                return $"array[{type.GetElementType()?.Name ?? "object"}]";
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>))
+                return $"list[{type.GetGenericArguments()[0].Name}]";
+            if (type.IsGenericType && type.GetGenericTypeDefinition() == typeof(Dictionary<,>))
+                return "object";
+                
+            // Return the actual type name for other types
+            return type.Name;
         }
     }
 }

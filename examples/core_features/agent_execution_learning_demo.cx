@@ -1,0 +1,463 @@
+// 🤖 AGENT EXECUTION & LEARNING DEMONSTRATION
+// Shows agents executing commands, learning from results, and revealing learned knowledge
+
+// Global event handlers to track system activity
+on agent.any.executed (payload) 
+{
+    print("🎯 GLOBAL: Agent " + payload.agent + " executed: " + payload.command);
+}
+
+on agent.any.learned (payload) 
+{
+    print("🧠 GLOBAL: Agent " + payload.agent + " learned from: " + payload.context);
+}
+
+on agent.any.revelation (payload) 
+{
+    print("💡 GLOBAL: Agent " + payload.agent + " reveals: " + payload.knowledge);
+}
+
+on memory.any.stored (payload) 
+{
+    print("💾 GLOBAL: Memory stored for " + payload.agent + " - " + payload.summary);
+}
+
+on search.any.results (payload) 
+{
+    print("🔍 GLOBAL: Search results for " + payload.agent + " - Found " + payload.resultCount + " memories");
+}
+
+// 🏗️ INFRASTRUCTURE AGENT - Executes system commands and learns
+class InfrastructureAgent 
+{
+    name: string;
+    domain: string;
+    
+    constructor(agentName, infraDomain) 
+    {
+        this.name = agentName;
+        this.domain = infraDomain;
+        print("🏗️ Infrastructure Agent " + agentName + " monitoring " + infraDomain);
+    }
+    
+    // Execute infrastructure commands
+    function executeSystemCheck() 
+    {
+        print("🔧 " + this.name + ": Executing system health check...");
+        
+        // Execute a system command
+        this.Execute("system-health-check --full --domain=" + this.domain);
+        
+        // Learn from the execution context
+        this.Learn({
+            action: "system-health-check",
+            domain: this.domain,
+            timestamp: "2025-07-22T14:30:00Z",
+            context: "routine_maintenance",
+            agent_role: "infrastructure_monitoring",
+            command_type: "health_check",
+            execution_reason: "proactive_system_monitoring"
+        });
+        
+        // Emit execution event
+        emit agent.infrastructure.executed, {
+            agent: this.name,
+            command: "system-health-check",
+            domain: this.domain,
+            status: "initiated"
+        };
+    }
+    
+    function executeDeployment(component) 
+    {
+        print("🚀 " + this.name + ": Deploying component: " + component);
+        
+        // Execute deployment command
+        this.Execute("deploy-component --name=" + component + " --domain=" + this.domain);
+        
+        // Learn from deployment experience
+        this.Learn({
+            action: "component_deployment",
+            component: component,
+            domain: this.domain,
+            complexity: "medium",
+            context: "production_deployment",
+            agent_role: "infrastructure_deployment",
+            success_factors: ["proper_staging", "health_checks", "rollback_plan"],
+            deployment_strategy: "blue_green"
+        });
+        
+        emit agent.infrastructure.executed, {
+            agent: this.name,
+            command: "deploy-component",
+            component: component,
+            status: "deployment_started"
+        };
+    }
+    
+    // Reveal learned knowledge
+    function revealLearnings() 
+    {
+        print("🔮 " + this.name + ": Revealing infrastructure knowledge...");
+        
+        // Search for infrastructure-related memories
+        this.Search("infrastructure deployment health monitoring");
+        
+        // Think about accumulated knowledge
+        this.Think("What patterns have I learned about infrastructure management and deployment strategies?");
+    }
+    
+    // Event handlers for learning and revelation
+    on agent.infrastructure.executed (payload) 
+    {
+        print("✅ " + this.name + ": Command execution completed - " + payload.command);
+        
+        // Learn from execution results
+        this.Learn({
+            execution_result: "completed",
+            command: payload.command,
+            learning_context: "post_execution_analysis",
+            agent: this.name,
+            success_pattern: "systematic_execution_approach"
+        });
+        
+        emit agent.infrastructure.learned, {
+            agent: this.name,
+            context: "command_execution",
+            command: payload.command
+        };
+    }
+}
+
+// 📊 MONITORING AGENT - Analyzes data and learns patterns
+class MonitoringAgent 
+{
+    name: string;
+    scope: string;
+    
+    constructor(agentName, monitorScope) 
+    {
+        this.name = agentName;
+        this.scope = monitorScope;
+        print("📊 Monitoring Agent " + agentName + " analyzing " + monitorScope);
+    }
+    
+    function executeDataAnalysis() 
+    {
+        print("📈 " + this.name + ": Executing comprehensive data analysis...");
+        
+        // Execute analysis command
+        this.Execute("analyze-metrics --scope=" + this.scope + " --depth=comprehensive");
+        
+        // Learn from analysis patterns
+        this.Learn({
+            action: "data_analysis",
+            scope: this.scope,
+            analysis_type: "comprehensive_metrics",
+            data_patterns: ["performance_trends", "anomaly_detection", "capacity_planning"],
+            context: "system_optimization",
+            agent_role: "performance_monitoring",
+            insights: ["cpu_usage_patterns", "memory_optimization_opportunities", "network_bottlenecks"]
+        });
+        
+        emit agent.monitoring.executed, {
+            agent: this.name,
+            command: "analyze-metrics",
+            scope: this.scope,
+            analysis_depth: "comprehensive"
+        };
+    }
+    
+    function executeAnomalyDetection() 
+    {
+        print("🔍 " + this.name + ": Running anomaly detection algorithms...");
+        
+        // Execute anomaly detection
+        this.Execute("detect-anomalies --scope=" + this.scope + " --sensitivity=high");
+        
+        // Learn anomaly patterns
+        this.Learn({
+            action: "anomaly_detection",
+            scope: this.scope,
+            detection_method: "ml_pattern_analysis",
+            context: "proactive_problem_identification",
+            agent_role: "anomaly_detection_specialist",
+            pattern_categories: ["performance_degradation", "resource_exhaustion", "security_indicators"],
+            detection_sensitivity: "high",
+            learning_focus: "pattern_recognition_improvement"
+        });
+        
+        emit agent.monitoring.executed, {
+            agent: this.name,
+            command: "detect-anomalies",
+            method: "ml_pattern_analysis"
+        };
+    }
+    
+    function revealAnalyticsKnowledge() 
+    {
+        print("🎯 " + this.name + ": Sharing analytics insights...");
+        
+        // Search for monitoring and analysis memories
+        this.Search("data analysis patterns anomaly detection performance");
+        
+        // Generate insights from learned patterns
+        this.Generate("Summarize the key patterns and insights I've learned from monitoring and analyzing system data");
+    }
+    
+    // Learn from monitoring events
+    on agent.monitoring.executed (payload) 
+    {
+        print("📊 " + this.name + ": Analysis completed - " + payload.command);
+        
+        // Learn from monitoring execution
+        this.Learn({
+            execution_result: "monitoring_completed",
+            command: payload.command,
+            learning_context: "monitoring_execution_analysis",
+            agent: this.name,
+            monitoring_effectiveness: "high",
+            data_quality: "excellent"
+        });
+        
+        emit agent.monitoring.learned, {
+            agent: this.name,
+            context: "monitoring_execution",
+            analysis_type: payload.command
+        };
+    }
+}
+
+// 🧠 COGNITIVE AGENT - Processes information and learns reasoning patterns
+class CognitiveAgent 
+{
+    name: string;
+    specialization: string;
+    
+    constructor(agentName, cognitiveSpec) 
+    {
+        this.name = agentName;
+        this.specialization = cognitiveSpec;
+        print("🧠 Cognitive Agent " + agentName + " specializing in " + cognitiveSpec);
+    }
+    
+    function executeProblemSolving(problem) 
+    {
+        print("🤔 " + this.name + ": Analyzing problem: " + problem);
+        
+        // Execute problem-solving process
+        this.Execute("solve-problem --description=\"" + problem + "\" --approach=systematic");
+        
+        // Learn problem-solving patterns
+        this.Learn({
+            action: "problem_solving",
+            problem: problem,
+            specialization: this.specialization,
+            approach: "systematic_analysis",
+            context: "cognitive_problem_resolution",
+            agent_role: "problem_solving_specialist",
+            reasoning_steps: ["problem_decomposition", "solution_brainstorming", "feasibility_analysis", "implementation_planning"],
+            cognitive_techniques: ["lateral_thinking", "root_cause_analysis", "pattern_matching"]
+        });
+        
+        emit agent.cognitive.executed, {
+            agent: this.name,
+            command: "solve-problem",
+            problem: problem,
+            approach: "systematic"
+        };
+    }
+    
+    function executeKnowledgeSynthesis() 
+    {
+        print("🔗 " + this.name + ": Synthesizing knowledge across domains...");
+        
+        // Execute knowledge synthesis
+        this.Execute("synthesize-knowledge --domains=all --method=cross_correlation");
+        
+        // Learn synthesis patterns
+        this.Learn({
+            action: "knowledge_synthesis",
+            method: "cross_domain_correlation",
+            specialization: this.specialization,
+            context: "cognitive_knowledge_integration",
+            agent_role: "knowledge_synthesizer",
+            synthesis_approaches: ["pattern_correlation", "concept_mapping", "analogical_reasoning"],
+            cognitive_benefits: ["deeper_understanding", "novel_insights", "improved_decision_making"]
+        });
+        
+        emit agent.cognitive.executed, {
+            agent: this.name,
+            command: "synthesize-knowledge",
+            method: "cross_correlation"
+        };
+    }
+    
+    function revealCognitiveInsights() 
+    {
+        print("💭 " + this.name + ": Revealing cognitive insights and reasoning patterns...");
+        
+        // Search for cognitive and reasoning memories
+        this.Search("problem solving reasoning patterns cognitive techniques");
+        
+        // Think about learned reasoning approaches
+        this.Think("What are the most effective reasoning patterns and problem-solving approaches I've discovered?");
+        
+        // Generate comprehensive cognitive summary
+        this.Generate("Create a detailed summary of the cognitive patterns, problem-solving techniques, and reasoning strategies I've learned");
+    }
+    
+    // Learn from cognitive execution
+    on agent.cognitive.executed (payload) 
+    {
+        print("🧠 " + this.name + ": Cognitive process completed - " + payload.command);
+        
+        // Learn from cognitive execution
+        this.Learn({
+            execution_result: "cognitive_process_completed",
+            command: payload.command,
+            learning_context: "cognitive_execution_analysis",
+            agent: this.name,
+            cognitive_effectiveness: "high",
+            reasoning_quality: "systematic",
+            insight_generation: "successful"
+        });
+        
+        emit agent.cognitive.learned, {
+            agent: this.name,
+            context: "cognitive_execution",
+            process_type: payload.command
+        };
+    }
+}
+
+// 🎯 MAIN EXECUTION - Agent Command Execution and Learning Demo
+print("🤖 AGENT EXECUTION & LEARNING DEMONSTRATION");
+print("============================================\n");
+
+print("🏗️ Creating intelligent agents with execution and learning capabilities...\n");
+
+// Create agents with different specializations
+var infraAgent = new InfrastructureAgent("InfraCore-Alpha", "cloud_infrastructure");
+var monitorAgent = new MonitoringAgent("WatchDog-Beta", "system_performance");
+var cognitiveAgent = new CognitiveAgent("ThinkTank-Gamma", "strategic_reasoning");
+
+print("\n⚡ Phase 1: Agent Command Execution\n");
+
+// Infrastructure agent executions
+infraAgent.executeSystemCheck();
+infraAgent.executeDeployment("user-authentication-service");
+
+print("");
+
+// Monitoring agent executions  
+monitorAgent.executeDataAnalysis();
+monitorAgent.executeAnomalyDetection();
+
+print("");
+
+// Cognitive agent executions
+cognitiveAgent.executeProblemSolving("Optimize multi-agent coordination efficiency");
+cognitiveAgent.executeKnowledgeSynthesis();
+
+print("\n🧠 Phase 2: Learning from Execution Results\n");
+print("⏰ Allowing time for agents to process and learn from executions...\n");
+
+// Emit some execution completion events to trigger learning
+emit agent.infrastructure.executed, {
+    agent: "InfraCore-Alpha",
+    command: "system-health-check",
+    status: "completed_successfully",
+    insights: ["all_services_operational", "optimal_resource_usage", "no_security_concerns"]
+};
+
+emit agent.monitoring.executed, {
+    agent: "WatchDog-Beta", 
+    command: "analyze-metrics",
+    status: "analysis_completed",
+    findings: ["performance_within_normal_ranges", "identified_optimization_opportunities"]
+};
+
+emit agent.cognitive.executed, {
+    agent: "ThinkTank-Gamma",
+    command: "solve-problem",
+    status: "solution_generated",
+    solution: "implement_hierarchical_event_coordination_with_priority_queuing"
+};
+
+print("\n💡 Phase 3: Agents Revealing Learned Knowledge\n");
+
+// Have agents reveal what they've learned
+infraAgent.revealLearnings();
+print("");
+
+monitorAgent.revealAnalyticsKnowledge();  
+print("");
+
+cognitiveAgent.revealCognitiveInsights();
+
+print("\n🔄 Phase 4: Cross-Agent Learning Exchange\n");
+
+// Generate cross-agent learning events
+emit learning.knowledge.share, {
+    source_agent: "InfraCore-Alpha",
+    knowledge_domain: "infrastructure_best_practices",
+    shared_insights: ["automated_health_monitoring", "proactive_maintenance_scheduling"],
+    learning_level: "expert"
+};
+
+emit learning.pattern.discovered, {
+    discovering_agent: "WatchDog-Beta",
+    pattern_type: "performance_optimization",
+    pattern_description: "cpu_usage_correlation_with_memory_allocation",
+    confidence: 0.94
+};
+
+emit learning.insight.generated, {
+    generating_agent: "ThinkTank-Gamma", 
+    insight_category: "multi_agent_coordination",
+    insight: "event_priority_queuing_improves_system_responsiveness_by_40_percent",
+    validation_status: "theoretical_model_confirmed"
+};
+
+print("\n📊 Phase 5: Learning Analytics and Memory Retrieval\n");
+
+// Have agents search their memories to show what they've learned
+print("🔍 Agents searching their personal vector memories...\n");
+
+// Each agent searches for different types of learned knowledge
+emit search.request, {
+    agent: "InfraCore-Alpha",
+    query: "deployment strategies and infrastructure patterns",
+    memory_scope: "infrastructure_domain"
+};
+
+emit search.request, {
+    agent: "WatchDog-Beta", 
+    query: "performance analysis and anomaly detection techniques",
+    memory_scope: "monitoring_domain"
+};
+
+emit search.request, {
+    agent: "ThinkTank-Gamma",
+    query: "problem solving approaches and reasoning patterns", 
+    memory_scope: "cognitive_domain"
+};
+
+print("\n🎉 EXECUTION & LEARNING DEMONSTRATION COMPLETE!\n");
+
+print("📋 DEMONSTRATION SUMMARY:");
+print("✅ Agents executed specialized commands in their domains");
+print("✅ Agents learned from execution results and stored memories");
+print("✅ Agents revealed accumulated knowledge through search and generation");
+print("✅ Cross-agent learning exchange demonstrated knowledge sharing");
+print("✅ Vector memory integration shown through personal agent memories");
+print("✅ Event-driven learning coordination across multiple agents");
+
+print("\n🔬 EXPECTED LEARNING EVIDENCE:");
+print("• Infrastructure Agent: Deployment patterns, health check procedures, system optimization");
+print("• Monitoring Agent: Performance analysis techniques, anomaly detection methods, data patterns");  
+print("• Cognitive Agent: Problem-solving approaches, reasoning strategies, synthesis techniques");
+print("• Cross-Agent: Shared insights, pattern correlation, collaborative learning");
+
+print("\n🎯 Next: Observe agent responses and memory search results via event system!");

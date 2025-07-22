@@ -489,13 +489,19 @@ public class UnifiedEventBus : ICxEventBus
     }
 
     /// <summary>
-    /// Basic wildcard matching
+    /// Basic wildcard matching - handles both * and .any. patterns
     /// </summary>
     private bool IsWildcardMatch(string eventName, string pattern)
     {
         if (pattern == "*")
         {
             return true;
+        }
+
+        // Handle CX .any. wildcard patterns
+        if (pattern.Contains(".any."))
+        {
+            return IsCxAnyPatternMatch(eventName, pattern);
         }
 
         if (pattern.EndsWith("*"))
@@ -511,6 +517,32 @@ public class UnifiedEventBus : ICxEventBus
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Match CX .any. wildcard patterns like user.any.action, any.any.alert
+    /// </summary>
+    private bool IsCxAnyPatternMatch(string eventName, string pattern)
+    {
+        var eventParts = eventName.Split('.');
+        var patternParts = pattern.Split('.');
+        
+        // Must have same number of parts to match
+        if (eventParts.Length != patternParts.Length)
+        {
+            return false;
+        }
+        
+        // Check each part - 'any' matches anything
+        for (int i = 0; i < patternParts.Length; i++)
+        {
+            if (patternParts[i] != "any" && patternParts[i] != eventParts[i])
+            {
+                return false;
+            }
+        }
+        
+        return true;
     }
 
     /// <summary>

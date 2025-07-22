@@ -1,0 +1,91 @@
+// Simple PowerShell Output for...in Loop Demo
+// Demonstrates clear iteration over PowerShell array results
+
+print("🔄 Simple PowerShell Array Iteration Demo\n");
+
+on command.executed (payload) 
+{
+    print("📋 Processing Command Results:");
+    print("   Command: " + payload.command);
+    print("   Success: " + payload.success);
+    
+    // Get output count
+    var outputCount = payload.outputs.length;
+    print("   Output Count: " + outputCount);
+    print("");
+    
+    if (outputCount > 0) 
+    {
+        print("🔍 Iterating through each output item with for...in:");
+        
+        // CX for...in loop - the key demonstration!
+        for (var item in payload.outputs) 
+        {
+            print("   → Item: " + item);
+            print("   → Type: " + typeof(item));
+            
+            // Show item processing
+            if (typeof(item) == "string") 
+            {
+                print("   → String Length: " + item.length);
+                
+                if (item.indexOf("Item") > -1) 
+                {
+                    print("   → ✅ Contains 'Item' text");
+                }
+            }
+            print("   ─────────");
+        }
+        
+        print("✅ for...in iteration complete!");
+    } 
+    else 
+    {
+        print("ℹ️ No output items to iterate");
+    }
+    
+    print("");
+}
+
+class SimpleIterator 
+{
+    name: string;
+    
+    constructor(agentName: string) 
+    {
+        this.name = agentName;
+        print("🤖 Simple Iterator " + agentName + " ready");
+    }
+    
+    function testSimpleArray() 
+    {
+        print("📦 Testing simple PowerShell array:");
+        
+        // Create a simple PowerShell array that will produce clear output
+        var command = "@('Item1', 'Item2', 'Item3', 'Item4', 'Item5') | ForEach-Object { Write-Output $_ }";
+        print("   Executing: " + command);
+        this.Execute(command);
+        
+        print("   ✅ Command dispatched - watch for for...in iteration results");
+    }
+    
+    function testStringArray() 
+    {
+        print("📝 Testing string output array:");
+        
+        // Simple string outputs
+        var command = "Write-Output 'First'; Write-Output 'Second'; Write-Output 'Third'";
+        print("   Executing: " + command);
+        this.Execute(command);
+        
+        print("   ✅ String array command dispatched");
+    }
+}
+
+// Create iterator and test
+var iterator = new SimpleIterator("ForInLoop-Agent");
+
+print("🎯 Test 1: Simple Array Iteration");
+iterator.testSimpleArray();
+
+print("\n🔑 Press any key to continue or watch the for...in loop in action...\n");

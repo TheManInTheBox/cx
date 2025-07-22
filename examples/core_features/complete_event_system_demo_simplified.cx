@@ -1,0 +1,224 @@
+// 🎯 COMPLETE CX EVENT SYSTEM DEMONSTRATION
+// This demo showcases the full power of CX Language's event-driven architecture
+
+// 🌍 GLOBAL EVENT HANDLERS - Available throughout the program
+on system.ready (payload) 
+{
+    print("🌟 GLOBAL: System is ready - " + payload.message);
+}
+
+on user.any.input (payload) 
+{
+    print("🌍 GLOBAL WILDCARD: Caught user input from any namespace - " + payload.source);
+}
+
+on command.executed (payload) 
+{
+    print("🔧 GLOBAL: Command executed - " + payload.command);
+    print("   Success: " + payload.success + ", Exit Code: " + payload.exitCode);
+    
+    if (payload.success) 
+    {
+        print("   ✅ Output count: " + payload.outputs.length);
+    } 
+    else 
+    {
+        print("   ❌ Error count: " + payload.errors.length);
+    }
+}
+
+on command.error (payload) 
+{
+    print("🚫 GLOBAL: Command failed - " + payload.command);
+    print("   Error: " + payload.errorMessage);
+}
+
+// 🤖 INTELLIGENT SYSTEM AGENT
+class SystemAgent 
+{
+    name: string;
+    department: string;
+    
+    constructor(agentName, dept) 
+    {
+        this.name = agentName;
+        this.department = dept;
+        print("🤖 " + agentName + " agent created in " + dept + " department");
+    }
+    
+    // 🎯 CLASS-LEVEL EVENT HANDLERS - Only for this agent instance
+    on command.executed (payload) 
+    {
+        print("🎯 " + this.name + ": My command completed - " + payload.command);
+        
+        // Demonstrate AI learning from command results
+        this.Learn({
+            event: "command_executed",
+            command: payload.command,
+            success: payload.success,
+            department: this.department
+        });
+        
+        // Trigger thinking about the results
+        if (payload.success) 
+        {
+            this.Think("Analyze the successful execution of: " + payload.command);
+        }
+    }
+    
+    on command.error (payload) 
+    {
+        print("❌ " + this.name + ": My command failed - " + payload.command);
+        print("   Error details: " + payload.errorMessage);
+        
+        // Learn from failures
+        this.Learn({
+            event: "command_error",
+            command: payload.command,
+            error: payload.errorMessage,
+            department: this.department
+        });
+    }
+    
+    on user.any.request (payload) 
+    {
+        print("👤 " + this.name + ": Received user request - " + payload.message);
+        
+        // AI-powered response to user requests
+        this.Chat("User requested: " + payload.message + ". I'm a " + this.department + " agent.");
+    }
+    
+    // 🔍 Agent Methods
+    function runDiagnostics() 
+    {
+        print("🔍 " + this.name + " starting comprehensive diagnostics...");
+        
+        // Execute multiple PowerShell commands
+        this.Execute("Get-ComputerInfo | Select-Object WindowsProductName, TotalPhysicalMemory");
+        this.Execute("Get-Process | Select-Object Name, WorkingSet | Sort-Object WorkingSet -Descending | Select-Object -First 3");
+        this.Execute("Test-Connection -ComputerName google.com -Count 1 -Quiet");
+        
+        print("💫 " + this.name + " diagnostics dispatched - monitoring for results...");
+    }
+    
+    function simulateError() 
+    {
+        print("💥 " + this.name + " simulating error for testing...");
+        
+        // This command will fail and trigger error events
+        this.Execute("Get-NonExistentCommand -BadParameter");
+    }
+}
+
+// 🌟 MONITORING AGENT WITH WILDCARDS
+class MonitoringAgent 
+{
+    name: string;
+    alertLevel: string;
+    
+    constructor(agentName, level) 
+    {
+        this.name = agentName;
+        this.alertLevel = level;
+        print("👁️ " + agentName + " monitoring agent initialized (Alert Level: " + level + ")");
+    }
+    
+    // 🌟 WILDCARD EVENT HANDLERS - Catch events across namespaces
+    on system.any.error (payload) 
+    {
+        print("⚠️ " + this.name + ": System error detected - " + payload.message);
+        
+        if (this.alertLevel == "high") 
+        {
+            emit any.any.critical, { 
+                message: "High-priority system error: " + payload.message,
+                monitor: this.name,
+                timestamp: "2025-07-22T10:30:00Z"
+            };
+        }
+    }
+    
+    on any.any.critical (payload) 
+    {
+        print("🚨 " + this.name + ": CRITICAL ALERT - " + payload.message);
+        print("   Escalating to emergency protocols...");
+    }
+    
+    function generateReport() 
+    {
+        print("📋 " + this.name + " generating monitoring report...");
+        
+        // AI-powered report generation
+        this.Generate("Create a system monitoring report based on recent events and performance data");
+    }
+}
+
+// 🚀 MAIN PROGRAM EXECUTION
+print("🎯 COMPLETE CX EVENT SYSTEM DEMONSTRATION");
+print("=========================================\n");
+
+// Emit initial system ready event
+emit system.ready, { 
+    message: "Event system demonstration starting",
+    version: "1.0.0",
+    timestamp: "2025-07-22T10:30:00Z"
+};
+
+print("🤖 Creating intelligent agents...\n");
+
+// Create multi-agent system
+var sysAgent = new SystemAgent("Alpha-7", "Infrastructure");
+var monitorAgent = new MonitoringAgent("WatchTower-1", "high");
+
+print("\n📡 Testing cross-agent communication...\n");
+
+// Test user input events
+emit user.chat.input, {
+    message: "Please run a system diagnostic",
+    source: "user_interface",
+    priority: "normal"
+};
+
+emit user.voice.request, {
+    message: "Check system security status",
+    source: "voice_interface",
+    confidence: 0.95
+};
+
+print("\n🔬 Running system diagnostics...\n");
+
+// Run diagnostics that will trigger events
+sysAgent.runDiagnostics();
+
+print("\n📊 Monitoring agent generating report...\n");
+
+// Generate monitoring report
+monitorAgent.generateReport();
+
+print("\n💥 Testing error handling...\n");
+
+// Simulate error for testing
+sysAgent.simulateError();
+
+// Simulate system error
+emit system.network.error, {
+    message: "Network connectivity issue detected",
+    severity: "medium",
+    component: "ethernet_adapter"
+};
+
+print("\n🎉 EVENT SYSTEM FEATURES DEMONSTRATED:");
+print("✅ Global event handlers");
+print("✅ Class-scoped event handlers");  
+print("✅ Wildcard pattern matching (user.any.*, system.any.*, any.any.*)");
+print("✅ Multi-agent coordination");
+print("✅ Cross-namespace communication");
+print("✅ AI integration (Think, Learn, Chat, Generate)");
+print("✅ PowerShell command execution with events");
+print("✅ Error handling and recovery");
+print("✅ Real-time event processing");
+print("✅ Anonymous type payload handling");
+print("✅ Robust interpreter-based event processing");
+
+print("\n🔬 Monitoring for background events...");
+print("Press any key to exit and see final event processing...");

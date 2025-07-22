@@ -1,0 +1,218 @@
+// 💾 POWERSHELL OUTPUT CAPTURE & ROUTING DEMONSTRATION  
+// Shows how PowerShell stdout/stderr is captured and routed through event payloads for agent learning
+
+print("🎬 PowerShell Output Capture & Learning Demo Starting...\n");
+
+// Global event handler to monitor all command executions
+on command.executed (payload) 
+{
+    print("🔍 GLOBAL MONITOR: Command execution detected");
+    print("   🤖 Agent: " + payload.agent);
+    print("   ⚡ Command: " + payload.command);
+    print("   ✅ Success: " + payload.success);
+    print("   🚪 Exit Code: " + payload.exitCode);
+    print("   📅 Time: " + payload.executionTime);
+    
+    // Display captured PowerShell stdout
+    if (payload.outputs && payload.outputs.length > 0) 
+    {
+        print("   📤 STDOUT Captured (" + payload.outputs.length + " items):");
+        var maxDisplay = 3;
+        if (payload.outputs.length > maxDisplay) 
+        {
+            print("     Showing first " + maxDisplay + " of " + payload.outputs.length + " stdout items");
+        }
+    }
+    
+    // Display captured PowerShell stderr
+    if (payload.errors && payload.errors.length > 0) 
+    {
+        print("   📥 STDERR Captured (" + payload.errors.length + " items):");
+        var maxDisplay = 3;
+        if (payload.errors.length > maxDisplay) 
+        {
+            print("     Showing first " + maxDisplay + " of " + payload.errors.length + " error items");
+        }
+    }
+    
+    print("   ---");
+}
+
+// Agent that executes various PowerShell commands and learns from outputs
+class PowerShellAgent 
+{
+    name: string;
+    executionCount: number;
+    
+    constructor(agentName) 
+    {
+        this.name = agentName;
+        this.executionCount = 0;
+        print("🤖 PowerShell Agent " + agentName + " initialized for output capture testing");
+    }
+    
+    // Execute command with successful output
+    function executeSuccessCommand() 
+    {
+        this.executionCount = this.executionCount + 1;
+        print("\n🟢 " + this.name + ": Executing command #" + this.executionCount + " (Success Expected)");
+        
+        // Command that will produce stdout
+        this.Execute("Get-Date | Select-Object -Property DateTime, DayOfWeek");
+        
+        print("   ⏳ Command dispatched - awaiting output capture...");
+    }
+    
+    // Execute command with error output  
+    function executeErrorCommand() 
+    {
+        this.executionCount = this.executionCount + 1;
+        print("\n🔴 " + this.name + ": Executing command #" + this.executionCount + " (Error Expected)");
+        
+        // Command that will produce stderr
+        this.Execute("Get-NonExistentCommand -InvalidParameter");
+        
+        print("   ⏳ Error command dispatched - awaiting stderr capture...");
+    }
+    
+    // Execute command with mixed output
+    function executeMixedCommand() 
+    {
+        this.executionCount = this.executionCount + 1;
+        print("\n🟡 " + this.name + ": Executing command #" + this.executionCount + " (Mixed Output Expected)");
+        
+        // Command with both stdout and potential warnings
+        this.Execute("Get-Process | Where-Object { $_.ProcessName -like 'notepad*' } | Select-Object -First 5");
+        
+        print("   ⏳ Mixed command dispatched - awaiting output capture...");
+    }
+    
+    // Event handler to process captured PowerShell output
+    on command.executed (payload) 
+    {
+        // Filter to only this agent's commands
+        if (payload.agent != this.name) return;
+        
+        print("\n🎯 " + this.name + ": Processing captured PowerShell output");
+        
+        // Analyze and learn from stdout
+        if (payload.outputs && payload.outputs.length > 0) 
+        {
+            print("   🧠 Learning from " + payload.outputs.length + " stdout items");
+            
+            // Learn from overall stdout pattern - fire-and-forget
+            this.Learn({
+                source: "powershell_stdout",
+                command: payload.command,
+                output_count: payload.outputs.length,
+                execution_time: payload.executionTime,
+                agent: this.name,
+                learning_context: "stdout_analysis"
+            });
+            
+            print("     📝 Learned from stdout pattern with " + payload.outputs.length + " items");
+        }
+        
+        // Analyze and learn from stderr
+        if (payload.errors && payload.errors.length > 0) 
+        {
+            print("   🚨 Learning from " + payload.errors.length + " stderr items");
+            
+            // Learn from overall stderr pattern - fire-and-forget
+            this.Learn({
+                source: "powershell_stderr",
+                command: payload.command,
+                error_count: payload.errors.length,
+                execution_time: payload.executionTime,
+                agent: this.name,
+                learning_context: "stderr_analysis"
+            });
+            
+            print("     🔍 Learned from error pattern with " + payload.errors.length + " items");
+        }
+        
+        // Generate insights from captured outputs - fire-and-forget
+        if (payload.success) 
+        {
+            this.Think("Analyze the PowerShell command output patterns and extract system insights from: " + payload.command);
+        } 
+        else 
+        {
+            this.Think("Analyze PowerShell error patterns and suggest remediation strategies for: " + payload.command);
+        }
+        
+        print("   ✅ Output processing and learning completed");
+    }
+    
+    // Reveal learned knowledge about PowerShell executions
+    function revealLearnings() 
+    {
+        print("\n🔮 " + this.name + ": Revealing learned knowledge from PowerShell executions");
+        
+        // Search for learned PowerShell knowledge - fire-and-forget
+        this.Search("powershell stdout stderr output learning execution commands");
+        
+        // Share insights about captured outputs
+        emit agent.revelation, {
+            agent: this.name,
+            knowledge: "Captured and analyzed PowerShell stdout/stderr from " + this.executionCount + " command executions",
+            learning_sources: ["powershell_stdout", "powershell_stderr"],
+            insight_areas: ["command_patterns", "error_analysis", "output_types", "execution_timing"]
+        };
+    }
+}
+
+// Create the demonstration agent
+var psAgent = new PowerShellAgent("OutputCapture-Agent");
+
+print("\n🚀 DEMONSTRATION SEQUENCE:\n");
+
+// Execute commands with different output patterns
+print("Phase 1: Successful command execution");
+psAgent.executeSuccessCommand();
+
+print("\n⏳ Brief pause for first command processing...");
+
+print("\nPhase 2: Error command execution"); 
+psAgent.executeErrorCommand();
+
+print("\n⏳ Brief pause for error processing...");
+
+print("\nPhase 3: Mixed output command execution");
+psAgent.executeMixedCommand();
+
+print("\n⏳ Brief pause for mixed command processing...");
+
+print("\nPhase 4: Knowledge revelation");
+psAgent.revealLearnings();
+
+print("\n📋 POWERSHELL OUTPUT CAPTURE CAPABILITIES:");
+print("✅ Complete stdout capture with value and type");
+print("✅ Complete stderr capture with message, category, and line numbers");
+print("✅ Success/failure status routing");
+print("✅ Command and agent identification");
+print("✅ Execution timestamp tracking");
+print("✅ Event-driven learning integration");
+print("✅ Fire-and-forget AI processing");
+print("✅ Agent-specific output filtering");
+print("✅ Comprehensive error analysis");
+print("✅ Mixed output handling");
+
+print("\n🎯 LEARNING INTEGRATION:");
+print("🧠 Agents learn from captured PowerShell outputs");
+print("🔍 Both stdout and stderr feed into agent memory");
+print("💡 AI thinking processes command results");
+print("📊 Output patterns analyzed for insights");
+print("🚨 Error patterns analyzed for remediation");
+print("🔄 Complete fire-and-forget learning cycle");
+
+print("\n📖 OUTPUT PAYLOAD STRUCTURE:");
+print("📤 payload.outputs[] - Array of stdout items with .value and .type");
+print("📥 payload.errors[] - Array of stderr items with .message, .category, .line");
+print("✅ payload.success - Boolean success/failure status");
+print("⚡ payload.command - Original executed command");
+print("🚪 payload.exitCode - Command exit code");
+print("🤖 payload.agent - Agent that executed the command");
+print("📅 payload.executionTime - Execution timestamp");
+
+print("\n🎬 Demo complete! PowerShell output is captured and routed through event payloads for agent learning. ✨");
