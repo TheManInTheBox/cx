@@ -1,0 +1,157 @@
+// Learning and Search Detection Test
+// This program will test and log actual Learn() and Search() calls
+// We can see exactly what gets stored and retrieved from vector database
+
+print("🧪 CX Learning & Search Detection Test\n");
+
+// Event listeners to capture learning and search activities
+on ai.learning.complete (payload) 
+{
+    print("✅ LEARNING SUCCESS DETECTED:");
+    print("   Agent: " + payload.agent);
+    print("   Document ID: " + payload.documentId);
+    print("   Status: " + payload.status);
+    print("   Content Length: " + payload.contentLength);
+    print("   Knowledge: " + payload.knowledge);
+    print("");
+}
+
+on ai.learning.failed (payload) 
+{
+    print("❌ LEARNING FAILED:");
+    print("   Agent: " + payload.agent);
+    print("   Reason: " + payload.reason);
+    print("");
+}
+
+on ai.search.complete (payload) 
+{
+    print("✅ SEARCH SUCCESS DETECTED:");
+    print("   Agent: " + payload.agent);
+    print("   Query: " + payload.query);
+    print("   Results Found: " + payload.resultsCount);
+    print("   Processing Time: " + payload.processingTimeMs + "ms");
+    if (payload.resultsCount > 0) 
+    {
+        print("   Top Result: " + payload.topResult);
+    }
+    print("");
+}
+
+on ai.search.failed (payload) 
+{
+    print("❌ SEARCH FAILED:");
+    print("   Agent: " + payload.agent);
+    print("   Reason: " + payload.reason);
+    print("   Query: " + payload.query);
+    print("");
+}
+
+on ai.search.error (payload) 
+{
+    print("💥 SEARCH ERROR:");
+    print("   Agent: " + payload.agent);
+    print("   Error: " + payload.error);
+    print("   Query: " + payload.query);
+    print("");
+}
+
+// Test agent that will learn and search
+class LearningTestAgent 
+{
+    name: string;
+    testCount: number;
+    
+    constructor(agentName: string) 
+    {
+        this.name = agentName;
+        this.testCount = 0;
+        print("🤖 Learning Test Agent " + agentName + " initialized");
+    }
+    
+    function runLearningTest() 
+    {
+        this.testCount = this.testCount + 1;
+        print("📚 Test " + this.testCount + ": Running learning test...");
+        
+        // Test 1: Learn a simple fact
+        print("   → Learning: CX Language Fact #" + this.testCount);
+        this.Learn({
+            topic: "CX Language Discovery Test " + this.testCount,
+            fact: "CX is an AI-first programming language with event-driven architecture",
+            features: ["Event system", "AI integration", "Vector database", "Agent coordination"],
+            timestamp: "2025-01-20",
+            test_number: this.testCount,
+            agent: this.name
+        });
+        
+        print("   → Learn() call completed (fire-and-forget)");
+        
+        // Test 2: Learn complex analysis
+        this.Learn({
+            topic: "Technical Analysis Test " + this.testCount,
+            analysis: "CX compiles to .NET IL with three-pass compilation process",
+            components: "Compiler, Runtime, StandardLibrary, Event Bus",
+            confidence: 95,
+            evidence: "Source code examination reveals IL generation patterns",
+            significance: "Major architectural understanding",
+            test_id: "tech_analysis_" + this.testCount,
+            agent: this.name
+        });
+        
+        print("   → Second Learn() call completed");
+        print("   ✅ Learning test " + this.testCount + " dispatched\n");
+    }
+    
+    function runSearchTest() 
+    {
+        print("🔍 Running search test...");
+        
+        // Test 1: Search for CX language info
+        print("   → Searching: CX language features");
+        this.Search("CX programming language AI event-driven architecture");
+        
+        print("   → Search() call completed (fire-and-forget)");
+        
+        // Test 2: Search for technical details
+        print("   → Searching: compilation and runtime");
+        this.Search("CX compiler .NET IL compilation runtime system");
+        
+        print("   → Second Search() call completed");
+        
+        // Test 3: Search for previous learning
+        print("   → Searching: previous test results");
+        this.Search("CX Language Discovery Test agent coordination");
+        
+        print("   → Third Search() call completed");
+        print("   ✅ Search test dispatched\n");
+    }
+    
+    function runFullTest() 
+    {
+        print("🎯 " + this.name + ": Starting full learning & search test");
+        
+        // First learn some things
+        this.runLearningTest();
+        
+        // Wait a moment, then search
+        print("⏳ Waiting for learning to complete before searching...");
+        
+        // Run search after a brief delay (learning is fire-and-forget)
+        this.runSearchTest();
+        
+        print("✅ Full test cycle completed - monitor events for results");
+    }
+}
+
+// Create test agent and run tests
+var testAgent = new LearningTestAgent("VectorDB-Tester");
+
+print("🚀 Starting Learning & Search Detection Test\n");
+print("📊 This will show exactly what gets learned and searched\n");
+
+// Run the test
+testAgent.runFullTest();
+
+print("⏰ Tests dispatched - watching for learning and search events...");
+print("🔑 Press any key to exit or watch the detection results...\n");

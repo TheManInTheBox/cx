@@ -7,6 +7,9 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Management.Automation;
+using System.Text.Json;
+using System.Collections.Generic;
+using System.Threading;
 
 namespace CxLanguage.StandardLibrary.Core;
 
@@ -337,8 +340,143 @@ public abstract class AiServiceBase
     /// </summary>
     public void Learn(object experience, object? options = null)
     {
-        _logger.LogInformation("RUNTIME: Learn() called with experience type: {Type}", experience?.GetType().Name ?? "null");
-        // Implementation details...
+        var className = GetType().Name;
+        _logger.LogInformation("🧠 RUNTIME: Learn() called from {ClassName}", className);
+        _logger.LogInformation("🧠 RUNTIME: Learn() - Experience type: {Type}", experience?.GetType().Name ?? "null");
+        _logger.LogInformation("🧠 RUNTIME: Learn() - Experience content: {Content}", experience?.ToString() ?? "null");
+        _logger.LogInformation("🧠 RUNTIME: Learn() - Options: {Options}", options?.ToString() ?? "null");
+        
+        // Fire-and-forget learning in background task with comprehensive instrumentation
+        Task.Run(async () =>
+        {
+            _logger.LogInformation("🧠 RUNTIME: Learn() - Background task started");
+            
+            try
+            {
+                // Get the VectorDatabaseService
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Attempting to get VectorDatabaseService from DI container");
+                var vectorService = _serviceProvider.GetService<VectorDatabaseService>();
+                
+                if (vectorService == null)
+                {
+                    _logger.LogWarning("🧠 RUNTIME: Learn() - VectorDatabaseService not found in DI container");
+                    _logger.LogWarning("🧠 RUNTIME: Learn() - Available services:");
+                    
+                    var allServices = _serviceProvider.GetServices<object>();
+                    foreach (var service in allServices.Take(10))
+                    {
+                        _logger.LogWarning("🧠 RUNTIME: Learn() - Service: {Type}", service.GetType().Name);
+                    }
+                    
+                    // Still emit learning event even if no service
+                    var learningEventBus = GetEventBus();
+                    if (learningEventBus != null)
+                    {
+                        await learningEventBus.EmitAsync("ai.learning.failed", new
+                        {
+                            agent = className,
+                            reason = "VectorDatabaseService not available",
+                            experience = experience?.ToString() ?? "null",
+                            timestamp = DateTime.UtcNow
+                        });
+                    }
+                    return;
+                }
+                
+                _logger.LogInformation("🧠 RUNTIME: Learn() - VectorDatabaseService found: {Type}", vectorService.GetType().Name);
+                
+                // Create document ID for the learning experience
+                var documentId = $"{className}_learning_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}"[..32];
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Generated document ID: {DocumentId}", documentId);
+                
+                // Convert experience to text for vector database
+                string textContent;
+                if (experience is string strExp)
+                {
+                    textContent = strExp;
+                }
+                else
+                {
+                    // Serialize object to JSON-like string
+                    textContent = System.Text.Json.JsonSerializer.Serialize(experience, new System.Text.Json.JsonSerializerOptions 
+                    { 
+                        WriteIndented = true 
+                    });
+                }
+                
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Text content length: {Length} characters", textContent.Length);
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Text content preview: {Preview}...", 
+                    textContent.Length > 100 ? textContent[..100] : textContent);
+                
+                // Create vector database options with metadata
+                var vectorOptions = new VectorDatabaseOptions
+                {
+                    Tags = new Dictionary<string, string>
+                    {
+                        { "agent", className },
+                        { "timestamp", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss") },
+                        { "learning_type", "cx_agent_learning" },
+                        { "content_type", experience?.GetType().Name ?? "unknown" }
+                    }
+                };
+                
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Calling vectorService.IngestTextAsync()");
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Vector options: {Options}", vectorOptions);
+                
+                var result = await vectorService.IngestTextAsync(textContent, documentId, vectorOptions);
+                
+                _logger.LogInformation("🧠 RUNTIME: Learn() - IngestTextAsync completed");
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Ingest result status: {Status}", result.Status);
+                _logger.LogInformation("🧠 RUNTIME: Learn() - Ingest result document ID: {DocumentId}", result.DocumentId);
+                
+                // Emit learning complete event
+                var learningCompleteEventBus = GetEventBus();
+                if (learningCompleteEventBus != null)
+                {
+                    _logger.LogInformation("🧠 RUNTIME: Learn() - Emitting ai.learning.complete event");
+                    await learningCompleteEventBus.EmitAsync("ai.learning.complete", new
+                    {
+                        agent = className,
+                        topic = "Learning Operation",
+                        knowledge = "Successfully stored experience in vector database",
+                        documentId = result.DocumentId,
+                        status = result.Status,
+                        contentLength = textContent.Length,
+                        timestamp = DateTime.UtcNow,
+                        vectorOptions
+                    });
+                    _logger.LogInformation("🧠 RUNTIME: Learn() - Successfully emitted ai.learning.complete event");
+                }
+                else
+                {
+                    _logger.LogWarning("🧠 RUNTIME: Learn() - EventBus not available for learning complete event");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "🧠 RUNTIME: Learn() - EXCEPTION during learning process");
+                _logger.LogError("🧠 RUNTIME: Learn() - Exception type: {Type}", ex.GetType().Name);
+                _logger.LogError("🧠 RUNTIME: Learn() - Exception message: {Message}", ex.Message);
+                _logger.LogError("🧠 RUNTIME: Learn() - Exception stack: {Stack}", ex.StackTrace);
+                
+                // Emit learning error event
+                var learningErrorEventBus = GetEventBus();
+                if (learningErrorEventBus != null)
+                {
+                    await learningErrorEventBus.EmitAsync("ai.learning.error", new
+                    {
+                        agent = className,
+                        error = ex.Message,
+                        experience = experience?.ToString() ?? "null",
+                        timestamp = DateTime.UtcNow
+                    });
+                }
+            }
+            
+            _logger.LogInformation("🧠 RUNTIME: Learn() - Background task completed");
+        });
+        
+        _logger.LogInformation("🧠 RUNTIME: Learn() method completed - learning task started in background");
     }
 
     /// <summary>
@@ -347,7 +485,126 @@ public abstract class AiServiceBase
     /// </summary>
     public void Search(string query, object? options = null)
     {
-        _logger.LogInformation("RUNTIME: Search() called with query: {Query}", query);
-        // Implementation details...
+        var className = GetType().Name;
+        _logger.LogInformation("🔍 RUNTIME: Search() called from {ClassName}", className);
+        _logger.LogInformation("🔍 RUNTIME: Search() - Query: {Query}", query);
+        _logger.LogInformation("🔍 RUNTIME: Search() - Options: {Options}", options?.ToString() ?? "null");
+        
+        // Fire-and-forget search in background task with comprehensive instrumentation
+        Task.Run(async () =>
+        {
+            _logger.LogInformation("🔍 RUNTIME: Search() - Background task started");
+            
+            try
+            {
+                // Get the VectorDatabaseService
+                _logger.LogInformation("🔍 RUNTIME: Search() - Attempting to get VectorDatabaseService from DI container");
+                var vectorService = _serviceProvider.GetService<VectorDatabaseService>();
+                
+                if (vectorService == null)
+                {
+                    _logger.LogWarning("🔍 RUNTIME: Search() - VectorDatabaseService not found in DI container");
+                    _logger.LogWarning("🔍 RUNTIME: Search() - Available services:");
+                    
+                    var allServices = _serviceProvider.GetServices<object>();
+                    foreach (var service in allServices.Take(10))
+                    {
+                        _logger.LogWarning("🔍 RUNTIME: Search() - Service: {Type}", service.GetType().Name);
+                    }
+                    
+                    // Still emit search event even if no service
+                    var searchEventBus = GetEventBus();
+                    if (searchEventBus != null)
+                    {
+                        await searchEventBus.EmitAsync("ai.search.failed", new
+                        {
+                            agent = className,
+                            reason = "VectorDatabaseService not available",
+                            query = query,
+                            timestamp = DateTime.UtcNow
+                        });
+                    }
+                    return;
+                }
+                
+                _logger.LogInformation("🔍 RUNTIME: Search() - VectorDatabaseService found: {Type}", vectorService.GetType().Name);
+                
+                // Create search options
+                var searchOptions = new VectorSearchOptions
+                {
+                    MaxResults = 10,
+                    MinRelevance = 0.3f
+                };
+                
+                _logger.LogInformation("🔍 RUNTIME: Search() - Calling vectorService.SearchAsync()");
+                _logger.LogInformation("🔍 RUNTIME: Search() - Search options: MaxResults={MaxResults}, MinRelevance={MinRelevance}", 
+                    searchOptions.MaxResults, searchOptions.MinRelevance);
+                
+                var searchResults = await vectorService.SearchAsync(query, searchOptions);
+                
+                _logger.LogInformation("🔍 RUNTIME: Search() - SearchAsync completed");
+                _logger.LogInformation("🔍 RUNTIME: Search() - Found {Count} results", searchResults.TotalResults);
+                _logger.LogInformation("🔍 RUNTIME: Search() - Processing time: {Time}ms", searchResults.ProcessingTimeMs);
+                
+                if (searchResults.Results.Any())
+                {
+                    _logger.LogInformation("🔍 RUNTIME: Search() - Top result preview: {Preview}...", 
+                        searchResults.Results.First().Content.Length > 100 
+                            ? searchResults.Results.First().Content[..100] 
+                            : searchResults.Results.First().Content);
+                }
+                
+                // Emit search complete event with detailed results
+                var searchCompleteEventBus = GetEventBus();
+                if (searchCompleteEventBus != null)
+                {
+                    _logger.LogInformation("🔍 RUNTIME: Search() - Emitting ai.search.complete event");
+                    await searchCompleteEventBus.EmitAsync("ai.search.complete", new
+                    {
+                        agent = className,
+                        query = query,
+                        resultsCount = searchResults.TotalResults,
+                        topResult = searchResults.Results.FirstOrDefault()?.Content ?? "No results",
+                        processingTimeMs = searchResults.ProcessingTimeMs,
+                        errorMessage = searchResults.ErrorMessage ?? "",
+                        timestamp = DateTime.UtcNow,
+                        allResults = searchResults.Results.Select(r => new { 
+                            content = r.Content[..Math.Min(r.Content.Length, 200)], 
+                            score = r.Score,
+                            documentId = r.DocumentId 
+                        }).ToList()
+                    });
+                    _logger.LogInformation("🔍 RUNTIME: Search() - Successfully emitted ai.search.complete event");
+                }
+                else
+                {
+                    _logger.LogWarning("🔍 RUNTIME: Search() - EventBus not available for search complete event");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "🔍 RUNTIME: Search() - EXCEPTION during search process");
+                _logger.LogError("🔍 RUNTIME: Search() - Exception type: {Type}", ex.GetType().Name);
+                _logger.LogError("🔍 RUNTIME: Search() - Exception message: {Message}", ex.Message);
+                _logger.LogError("🔍 RUNTIME: Search() - Exception stack: {Stack}", ex.StackTrace);
+                
+                // Emit search error event
+                var searchErrorEventBus = GetEventBus();
+                if (searchErrorEventBus != null)
+                {
+                    await searchErrorEventBus.EmitAsync("ai.search.error", new
+                    {
+                        agent = className,
+                        error = ex.Message,
+                        query = query,
+                        timestamp = DateTime.UtcNow
+                    });
+                }
+            }
+            
+            _logger.LogInformation("🔍 RUNTIME: Search() - Background task completed");
+        });
+        
+        _logger.LogInformation("🔍 RUNTIME: Search() method completed - search task started in background");
     }
 }
