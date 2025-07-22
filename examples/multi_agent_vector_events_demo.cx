@@ -1,0 +1,517 @@
+// CX Language - Multi-Agent Vector Learning with Event Coordination
+// Demonstrating multiple agents learning, searching, and communicating via events
+
+print("🎯 CX Multi-Agent Vector Learning & Event Demo");
+print("✨ Multiple agents with vector memory + event coordination");
+
+// =============================================================================
+// INTELLIGENT COORDINATOR AGENT - Event Hub with Vector Memory
+// =============================================================================
+
+class CoordinatorAgent
+{
+    name: string;
+    agentCount: number;
+    
+    constructor(coordinatorName)
+    {
+        this.name = coordinatorName;
+        this.agentCount = 0;
+        print("🎛️ " + this.name + " coordinator created - managing multi-agent learning");
+        
+        // Initialize coordination knowledge
+        this.initializeCoordinationKnowledge();
+    }
+    
+    async function initializeCoordinationKnowledge()
+    {
+        await this.Learn({
+            context: "coordination_startup",
+            role: "coordinator",
+            capabilities: "agent_management, event_routing, knowledge_synthesis",
+            agent: this.name,
+            timestamp: Date.now()
+        });
+        
+        print("📚 Coordinator knowledge initialized");
+    }
+    
+    // Event handler - Agent registration
+    on agent.register (payload)
+    {
+        this.agentCount = this.agentCount + 1;
+        print("✅ " + payload.agentName + " registered with coordinator (" + this.agentCount + " total)");
+        
+        // Learn about this agent registration
+        var registrationData = {
+            context: "agent_registration",
+            agentName: payload.agentName,
+            agentType: payload.agentType,
+            totalAgents: this.agentCount,
+            timestamp: Date.now(),
+            coordinator: this.name
+        };
+        
+        await this.Learn(registrationData);
+        
+        // Broadcast agent joined event
+        emit system.agent.joined, {
+            newAgent: payload.agentName,
+            totalAgents: this.agentCount,
+            coordinator: this.name
+        };
+    }
+    
+    // Event handler - Knowledge sharing requests
+    on knowledge.request (payload)
+    {
+        print("🧠 Knowledge request from " + payload.requester + " for: " + payload.topic);
+        
+        // Search vector memory for relevant knowledge
+        var knowledgeResults = await this.Search(payload.topic);
+        print("🔍 Found " + knowledgeResults.length + " knowledge patterns for: " + payload.topic);
+        
+        // Learn about this knowledge request
+        await this.Learn({
+            context: "knowledge_request",
+            requester: payload.requester,
+            topic: payload.topic,
+            resultsFound: knowledgeResults.length,
+            timestamp: Date.now(),
+            coordinator: this.name
+        });
+        
+        // Respond with knowledge
+        emit knowledge.response, {
+            topic: payload.topic,
+            results: knowledgeResults,
+            requester: payload.requester,
+            provider: this.name
+        };
+    }
+    
+    // Event handler - Learning notifications
+    on agent.learned (payload)
+    {
+        print("📝 " + payload.agent + " learned about: " + payload.context);
+        
+        // Store learning activity in coordinator memory
+        await this.Learn({
+            context: "learning_activity",
+            learningAgent: payload.agent,
+            learnedContext: payload.context,
+            timestamp: Date.now(),
+            coordinator: this.name
+        });
+        
+        // Broadcast learning to other agents
+        emit learning.broadcast, {
+            learner: payload.agent,
+            context: payload.context,
+            coordinator: this.name
+        };
+    }
+}
+
+// =============================================================================
+// SECURITY GOVERNANCE AGENT - Specialized Learning & Enforcement
+// =============================================================================
+
+class SecurityGovernanceAgent
+{
+    name: string;
+    alertLevel: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.alertLevel = "normal";
+        print("🛡️ " + this.name + " security agent created");
+        
+        // Register with coordinator
+        emit agent.register, {
+            agentName: this.name,
+            agentType: "security_governance"
+        };
+        
+        this.initializeSecurityKnowledge();
+    }
+    
+    async function initializeSecurityKnowledge()
+    {
+        // Learn initial security patterns
+        await this.Learn({
+            context: "security_initialization",
+            policies: "threat_detection, access_control, audit_logging",
+            alertLevel: this.alertLevel,
+            agent: this.name,
+            timestamp: Date.now()
+        });
+        
+        print("🔒 Security knowledge initialized for " + this.name);
+        
+        // Notify coordinator of learning
+        emit agent.learned, {
+            agent: this.name,
+            context: "security_initialization"
+        };
+    }
+    
+    // Event handler - System events requiring security evaluation
+    on system.event (payload)
+    {
+        print("🔍 " + this.name + " evaluating security for event: " + payload.eventType);
+        
+        // Search for relevant security patterns
+        var securityPatterns = await this.Search("security " + payload.eventType);
+        
+        // Learn from this security evaluation
+        var evaluationData = {
+            context: "security_evaluation",
+            eventType: payload.eventType,
+            patternsFound: securityPatterns.length,
+            alertLevel: this.alertLevel,
+            agent: this.name,
+            timestamp: Date.now()
+        };
+        
+        await this.Learn(evaluationData);
+        
+        // Emit security assessment
+        var riskLevel = "new_pattern";
+        if (securityPatterns.length > 0)
+        {
+            riskLevel = "known_pattern";
+        }
+        
+        emit security.assessment, {
+            eventType: payload.eventType,
+            riskLevel: riskLevel,
+            assessor: this.name,
+            patternsFound: securityPatterns.length
+        };
+        
+        // Notify coordinator of learning
+        emit agent.learned, {
+            agent: this.name,
+            context: "security_evaluation"
+        };
+    }
+    
+    // Event handler - Learning from other agents
+    on learning.broadcast (payload)
+    {
+        if (payload.learner != this.name)
+        {
+            print("📡 " + this.name + " received learning broadcast from " + payload.learner);
+            
+            // Learn from other agent's experience if security-related
+            if (payload.context.indexOf("security") >= 0 || payload.context.indexOf("threat") >= 0)
+            {
+                await this.Learn({
+                    context: "peer_learning",
+                    sourceAgent: payload.learner,
+                    learnedContext: payload.context,
+                    myRole: "security_governance",
+                    timestamp: Date.now(),
+                    agent: this.name
+                });
+                
+                print("🧠 " + this.name + " learned from " + payload.learner + "'s security experience");
+            }
+        }
+    }
+}
+
+// =============================================================================
+// CONTENT MODERATOR AGENT - Filtering & Quality Control
+// =============================================================================
+
+class ContentModeratorAgent
+{
+    name: string;
+    moderationLevel: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.moderationLevel = "moderate";
+        print("🔍 " + this.name + " content moderator created");
+        
+        // Register with coordinator
+        emit agent.register, {
+            agentName: this.name,
+            agentType: "content_moderation"
+        };
+        
+        this.initializeModerationKnowledge();
+    }
+    
+    async function initializeModerationKnowledge()
+    {
+        // Learn content moderation patterns
+        await this.Learn({
+            context: "moderation_initialization",
+            policies: "spam_detection, inappropriate_content, quality_control",
+            level: this.moderationLevel,
+            agent: this.name,
+            timestamp: Date.now()
+        });
+        
+        print("📋 Content moderation knowledge initialized for " + this.name);
+        
+        // Notify coordinator
+        emit agent.learned, {
+            agent: this.name,
+            context: "moderation_initialization"
+        };
+    }
+    
+    // Event handler - Content review requests
+    on content.review (payload)
+    {
+        print("📝 " + this.name + " reviewing content from: " + payload.source);
+        
+        // Search for similar content patterns
+        var contentPatterns = await this.Search("content " + payload.contentType);
+        
+        // Learn from this moderation action
+        var moderationData = {
+            context: "content_moderation",
+            source: payload.source,
+            contentType: payload.contentType,
+            patternsFound: contentPatterns.length,
+            level: this.moderationLevel,
+            agent: this.name,
+            timestamp: Date.now()
+        };
+        
+        await this.Learn(moderationData);
+        
+        // Emit moderation result
+        var status = "needs_review";
+        if (contentPatterns.length > 5)
+        {
+            status = "approved";
+        }
+        
+        emit content.moderated, {
+            source: payload.source,
+            contentType: payload.contentType,
+            status: status,
+            moderator: this.name,
+            confidence: contentPatterns.length
+        };
+        
+        // Notify coordinator
+        emit agent.learned, {
+            agent: this.name,
+            context: "content_moderation"
+        };
+    }
+    
+    // Event handler - Security assessments (collaborative governance)
+    on security.assessment (payload)
+    {
+        if (payload.riskLevel == "new_pattern")
+        {
+            print("⚠️ " + this.name + " investigating new security pattern from " + payload.assessor);
+            
+            // Request knowledge about this security event
+            emit knowledge.request, {
+                requester: this.name,
+                topic: "security " + payload.eventType
+            };
+        }
+    }
+}
+
+// =============================================================================
+// USER INTERACTION AGENT - Experience Learning & Response
+// =============================================================================
+
+class UserInteractionAgent
+{
+    name: string;
+    interactionCount: number;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.interactionCount = 0;
+        print("👤 " + this.name + " user interaction agent created");
+        
+        // Register with coordinator
+        emit agent.register, {
+            agentName: this.name,
+            agentType: "user_interaction"
+        };
+        
+        this.initializeInteractionKnowledge();
+    }
+    
+    async function initializeInteractionKnowledge()
+    {
+        // Learn user interaction patterns
+        await this.Learn({
+            context: "interaction_initialization", 
+            capabilities: "user_communication, experience_tracking, response_optimization",
+            interactionCount: this.interactionCount,
+            agent: this.name,
+            timestamp: Date.now()
+        });
+        
+        print("💬 User interaction knowledge initialized for " + this.name);
+        
+        // Notify coordinator
+        emit agent.learned, {
+            agent: this.name,
+            context: "interaction_initialization"
+        };
+    }
+    
+    // Event handler - User input processing
+    on user.input (payload)
+    {
+        this.interactionCount = this.interactionCount + 1;
+        print("👋 " + this.name + " processing user input (#" + this.interactionCount + "): " + payload.message);
+        
+        // Search for similar user interactions
+        var interactionPatterns = await this.Search("user_interaction " + payload.message);
+        
+        // Learn from this interaction
+        var interactionData = {
+            context: "user_interaction",
+            message: payload.message,
+            interactionNumber: this.interactionCount,
+            patternsFound: interactionPatterns.length,
+            agent: this.name,
+            timestamp: Date.now()
+        };
+        
+        await this.Learn(interactionData);
+        
+        // Emit system event for security evaluation
+        emit system.event, {
+            eventType: "user_input",
+            source: payload.message,
+            agent: this.name
+        };
+        
+        // Request content review
+        emit content.review, {
+            source: this.name,
+            contentType: "user_message",
+            content: payload.message
+        };
+        
+        // Notify coordinator
+        emit agent.learned, {
+            agent: this.name,
+            context: "user_interaction"
+        };
+    }
+    
+    // Event handler - Content moderation results
+    on content.moderated (payload)
+    {
+        if (payload.source == this.name)
+        {
+            print("📋 " + this.name + " received moderation result: " + payload.status);
+            
+            // Learn from moderation feedback
+            await this.Learn({
+                context: "moderation_feedback",
+                status: payload.status,
+                confidence: payload.confidence,
+                moderator: payload.moderator,
+                agent: this.name,
+                timestamp: Date.now()
+            });
+            
+            // Respond to user based on moderation
+            var responseMessage = "Message requires review";
+            if (payload.status == "approved")
+            {
+                responseMessage = "Message processed successfully";
+            }
+            
+            emit user.response, {
+                message: responseMessage,
+                confidence: payload.confidence,
+                responder: this.name
+            };
+        }
+    }
+    
+    // Event handler - Knowledge responses
+    on knowledge.response (payload)
+    {
+        if (payload.requester == this.name)
+        {
+            print("🧠 " + this.name + " received knowledge about: " + payload.topic);
+            print("  📊 Results: " + payload.results.length + " patterns found");
+            
+            // Learn from received knowledge
+            await this.Learn({
+                context: "knowledge_received",
+                topic: payload.topic,
+                resultsCount: payload.results.length,
+                provider: payload.provider,
+                agent: this.name,
+                timestamp: Date.now()
+            });
+        }
+    }
+}
+
+// =============================================================================
+// MULTI-AGENT COORDINATION DEMONSTRATION
+// =============================================================================
+
+print("\n🚀 Starting Multi-Agent Vector Learning & Event Coordination Demo");
+
+// Create coordinator
+print("\n📋 Phase 1: Creating Coordinator Agent");
+var coordinator = new CoordinatorAgent("MainCoordinator");
+
+// Create specialized agents
+print("\n🤖 Phase 2: Creating Specialized Agents");
+var securityAgent = new SecurityGovernanceAgent("SecurityGuard");
+var moderatorAgent = new ContentModeratorAgent("ContentModerator"); 
+var userAgent = new UserInteractionAgent("UserInterface");
+
+// Wait for initialization
+print("\n⏱️ Phase 3: Agent Initialization Complete");
+
+// Simulate user interactions and learning
+print("\n👤 Phase 4: Simulating User Interactions");
+emit user.input, { message: "Hello, I need help with security policies" };
+emit user.input, { message: "Can you review this content for me?" };
+emit user.input, { message: "What are the current moderation rules?" };
+
+// Knowledge sharing demonstration
+print("\n🧠 Phase 5: Knowledge Sharing Between Agents");
+emit knowledge.request, { requester: "UserInterface", topic: "security_policies" };
+emit knowledge.request, { requester: "ContentModerator", topic: "user_interaction" };
+emit knowledge.request, { requester: "SecurityGuard", topic: "moderation" };
+
+// Comprehensive learning search
+print("\n🔍 Phase 6: Comprehensive Vector Database Search");
+var allSecurity = await coordinator.Search("security");
+print("🛡️ Total security patterns across all agents: " + allSecurity.length);
+
+var allContent = await coordinator.Search("content");
+print("📝 Total content patterns across all agents: " + allContent.length);
+
+var allInteractions = await coordinator.Search("interaction");
+print("👥 Total interaction patterns across all agents: " + allInteractions.length);
+
+var allLearning = await coordinator.Search("learning");
+print("🧠 Total learning activities across all agents: " + allLearning.length);
+
+print("\n✅ MULTI-AGENT VECTOR LEARNING DEMO COMPLETE!");
+print("🎯 Multiple agents learning, searching, and coordinating via events");
+print("🧠 Vector memory enabling intelligent cross-agent knowledge sharing");
+print("📡 Event-driven architecture with persistent learning capabilities");
+print("🚀 Ready for Azure OpenAI Realtime API with multi-agent coordination!");

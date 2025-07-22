@@ -370,16 +370,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return indexAccess;
     }
 
-    public override AstNode VisitAwaitExpression(AwaitExpressionContext context)
-    {
-        var awaitExpr = new AwaitExpressionNode();
-        SetLocation(awaitExpr, context);
-        
-        awaitExpr.Expression = (ExpressionNode)Visit(context.expression());
-        
-        return awaitExpr;
-    }
-
     public override AstNode VisitAdditiveExpression(AdditiveExpressionContext context)
     {
         var binaryExpr = new BinaryExpressionNode();

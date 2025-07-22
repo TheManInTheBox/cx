@@ -1,4 +1,5 @@
 using CxLanguage.StandardLibrary.Core;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
 using System.Collections.Concurrent;
@@ -6,30 +7,167 @@ using System.Collections.Concurrent;
 namespace CxLanguage.StandardLibrary.AI.Realtime;
 
 /// <summary>
-/// Real-time AI service for CX standard library
-/// Provides low-latency, streaming AI capabilities for interactive applications
+/// Azure OpenAI Realtime service for CX standard library
+/// Provides voice-controlled cognitive programming with real-time AI processing
 /// </summary>
 public class RealtimeService : CxAiServiceBase
 {
+    private readonly AzureRealtimeApiClient _apiClient;
     private readonly ConcurrentDictionary<string, RealtimeSession> _activeSessions;
     private readonly Timer _heartbeatTimer;
     private readonly SemaphoreSlim _connectionSemaphore;
+    private readonly IConfiguration _configuration;
+    private readonly ILoggerFactory _loggerFactory;
 
-    public RealtimeService(Kernel kernel, ILogger<RealtimeService> logger) 
+    public RealtimeService(Kernel kernel, ILogger<RealtimeService> logger, IConfiguration configuration, ILoggerFactory loggerFactory) 
         : base(kernel, logger)
     {
+        _configuration = configuration;
+        _loggerFactory = loggerFactory;
+        _apiClient = new AzureRealtimeApiClient(configuration, _loggerFactory.CreateLogger<AzureRealtimeApiClient>());
         _activeSessions = new ConcurrentDictionary<string, RealtimeSession>();
-        _connectionSemaphore = new SemaphoreSlim(100, 100); // Max 100 concurrent sessions
+        _connectionSemaphore = new SemaphoreSlim(10, 10); // Max 10 concurrent sessions for realtime
         
         // Heartbeat timer to maintain session health
         _heartbeatTimer = new Timer(ProcessHeartbeat, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
+        
+        // Subscribe to API client events
+        _apiClient.MessageReceived += OnMessageReceived;
+        _apiClient.AudioReceived += OnAudioReceived;
+        _apiClient.ErrorReceived += OnErrorReceived;
+        _apiClient.Connected += OnConnected;
+        _apiClient.Disconnected += OnDisconnected;
     }
 
-    public override string ServiceName => "Realtime";
+    public override string ServiceName => "AzureRealtimeService";
     public override string Version => "1.0.0";
+    
+    /// <summary>
+    /// Connection status of the Azure OpenAI Realtime API
+    /// </summary>
+    public bool IsConnected => _apiClient.IsConnected;
 
     /// <summary>
-    /// Start a real-time AI conversation session
+    /// Connect to Azure OpenAI Realtime API
+    /// </summary>
+    public async Task<bool> ConnectAsync(CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation("Connecting to Azure OpenAI Realtime API...");
+        
+        var connected = await _apiClient.ConnectAsync(cancellationToken);
+        
+        if (connected)
+        {
+            // Configure default session settings
+            var config = new RealtimeSessionConfig
+            {
+                Modalities = new[] { "text", "audio" },
+                Instructions = "You are a helpful AI assistant for the CX programming language. Respond naturally and help with cognitive programming tasks.",
+                Voice = "alloy",
+                InputAudioFormat = "pcm16",
+                OutputAudioFormat = "pcm16",
+                Temperature = 0.8,
+                TurnDetection = new RealtimeTurnDetection
+                {
+                    Type = "server_vad",
+                    Threshold = 0.5,
+                    PrefixPaddingMs = 300,
+                    SilenceDurationMs = 500
+                }
+            };
+            
+            await _apiClient.ConfigureSessionAsync(config, cancellationToken);
+            _logger.LogInformation("Azure OpenAI Realtime API connected and configured successfully");
+        }
+        
+        return connected;
+    }
+
+    /// <summary>
+    /// Disconnect from Azure OpenAI Realtime API
+    /// </summary>
+    public async Task DisconnectAsync()
+    {
+        _logger.LogInformation("Disconnecting from Azure OpenAI Realtime API...");
+        await _apiClient.DisconnectAsync();
+    }
+
+    /// <summary>
+    /// Send text message to Azure OpenAI Realtime API
+    /// </summary>
+    public async Task<bool> SendTextAsync(string text, CancellationToken cancellationToken = default)
+    {
+        if (!IsConnected)
+        {
+            _logger.LogWarning("Cannot send text - not connected to Azure OpenAI Realtime API");
+            return false;
+        }
+
+        _logger.LogDebug("Sending text message: {Text}", text);
+        return await _apiClient.SendTextAsync(text, cancellationToken);
+    }
+
+    /// <summary>
+    /// Send audio data to Azure OpenAI Realtime API
+    /// </summary>
+    public async Task<bool> SendAudioAsync(byte[] audioData, CancellationToken cancellationToken = default)
+    {
+        if (!IsConnected)
+        {
+            _logger.LogWarning("Cannot send audio - not connected to Azure OpenAI Realtime API");
+            return false;
+        }
+
+        return await _apiClient.SendAudioAsync(audioData, cancellationToken);
+    }
+
+    /// <summary>
+    /// Commit audio buffer and trigger response generation
+    /// </summary>
+    public async Task<bool> CommitAudioAsync(CancellationToken cancellationToken = default)
+    {
+        if (!IsConnected)
+        {
+            _logger.LogWarning("Cannot commit audio - not connected to Azure OpenAI Realtime API");
+            return false;
+        }
+
+        return await _apiClient.CommitAudioAsync(cancellationToken);
+    }
+
+    // Event handlers for Azure OpenAI Realtime API events
+    private void OnMessageReceived(object? sender, RealtimeMessageEventArgs e)
+    {
+        _logger.LogDebug("Received message: {Content} (Complete: {IsComplete})", e.Content, e.IsComplete);
+        
+        // Here you can emit CX events or handle the message as needed
+        // For now, just log the received content
+    }
+
+    private void OnAudioReceived(object? sender, RealtimeAudioEventArgs e)
+    {
+        _logger.LogDebug("Received audio chunk: {Size} bytes (Complete: {IsComplete})", e.AudioData.Length, e.IsComplete);
+        
+        // Here you can handle audio playback or emit CX audio events
+    }
+
+    private void OnErrorReceived(object? sender, RealtimeErrorEventArgs e)
+    {
+        _logger.LogError("Azure OpenAI Realtime API error: {Error}", e.Error);
+    }
+
+    private void OnConnected(object? sender, EventArgs e)
+    {
+        _logger.LogInformation("Connected to Azure OpenAI Realtime API");
+    }
+
+    private void OnDisconnected(object? sender, EventArgs e)
+    {
+        _logger.LogInformation("Disconnected from Azure OpenAI Realtime API");
+    }
+
+    /// <summary>
+    /// Start a real-time AI conversation session with Azure OpenAI
     /// </summary>
     public async Task<RealtimeSessionResult> StartSessionAsync(RealtimeOptions? options = null)
     {
@@ -41,26 +179,40 @@ public class RealtimeService : CxAiServiceBase
             await _connectionSemaphore.WaitAsync();
 
             var sessionId = Guid.NewGuid().ToString();
-            _logger.LogInformation("Starting realtime session: {SessionId}", sessionId);
+            _logger.LogInformation("Starting Azure OpenAI realtime session: {SessionId}", sessionId);
 
-            var session = new RealtimeSession(sessionId, options ?? new RealtimeOptions(), _logger);
+            // Connect to Azure OpenAI Realtime API if not already connected
+            if (!IsConnected)
+            {
+                var connected = await ConnectAsync();
+                if (!connected)
+                {
+                    result.IsSuccess = false;
+                    result.ErrorMessage = "Failed to connect to Azure OpenAI Realtime API";
+                    result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
+                    return result;
+                }
+            }
+
+            // Create session entry
+            var session = new RealtimeSession(sessionId, options ?? new RealtimeOptions(), _loggerFactory.CreateLogger<RealtimeSession>());
             await session.InitializeAsync();
 
             _activeSessions[sessionId] = session;
 
             result.IsSuccess = true;
             result.SessionId = sessionId;
-            result.ConnectionUrl = $"wss://realtime.cx-ai.com/sessions/{sessionId}";
-            result.MaxLatency = options?.MaxLatency ?? TimeSpan.FromMilliseconds(100);
+            result.ConnectionUrl = "Azure OpenAI Realtime API";
+            result.MaxLatency = options?.MaxLatency ?? TimeSpan.FromMilliseconds(200);
             result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
 
-            _logger.LogInformation("Realtime session started successfully: {SessionId}", sessionId);
+            _logger.LogInformation("Azure OpenAI realtime session started successfully: {SessionId}", sessionId);
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error starting realtime session");
+            _logger.LogError(ex, "Error starting Azure OpenAI realtime session");
             result.IsSuccess = false;
             result.ErrorMessage = ex.Message;
             result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
@@ -339,6 +491,9 @@ public class RealtimeService : CxAiServiceBase
         if (disposing)
         {
             _heartbeatTimer?.Dispose();
+            
+            // Dispose Azure OpenAI client
+            _apiClient?.Dispose();
             
             foreach (var session in _activeSessions.Values)
             {

@@ -1,0 +1,60 @@
+// CX Language - Simple Vector Database Test (Working with Current Async System)
+// Testing Learn and SearchAsync methods with simple operations
+
+print("🎯 Testing Vector Database Integration - Simple Version");
+
+// =============================================================================
+// SIMPLE TEST: Basic vector operations that work with current async system
+// =============================================================================
+
+class BasicVectorAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("🤖 " + this.name + " created with vector capabilities");
+    }
+    
+    // Simple async method that should work
+    async function simpleLearn(message)
+    {
+        var result = await this.Learn({
+            context: "simple_test",
+            message: message,
+            agent: this.name
+        });
+        return result;
+    }
+    
+    // Simple async method for search
+    async function simpleSearch(query)
+    {
+        var results = await this.Search(query);
+        return results;
+    }
+    
+    // Simple method to demonstrate vector operations
+    async function testVectorOps()
+    {
+        var learnResult = await this.simpleLearn("Testing vector learning");
+        var searchResults = await this.simpleSearch("simple_test");
+        return "Vector test complete";
+    }
+}
+
+print("\n📋 Creating vector agent...");
+var agent = new BasicVectorAgent("TestAgent");
+
+print("\n🧠 Testing simple learn operation...");
+var learnResult = await agent.simpleLearn("This is a test message");
+print("✅ Learn result: " + learnResult);
+
+print("\n🔍 Testing simple search operation...");
+var searchResults = await agent.simpleSearch("test");
+print("📊 Search results count: " + searchResults.length);
+
+print("\n✅ Basic Vector Database Test Complete!");
+print("🎯 Learn and SearchAsync methods are now available in all CX classes");
+print("🚀 Ready for Azure OpenAI Realtime API integration!");

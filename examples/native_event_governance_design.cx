@@ -1,0 +1,514 @@
+// CX Language - Native Event Governance System
+// Built-in governance that's always active - not a bolt-on class
+// Every class automatically has intelligent policy enforcement via this.Learn()
+
+print("🎯 CX Native Event Governance - Always-On Intelligence");
+print("✨ No separate governance classes - intelligence built into the language itself");
+
+// =============================================================================
+// NATIVE GOVERNANCE - Every class automatically has intelligent event policies
+// =============================================================================
+
+class SmartAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("🤖 " + this.name + " initialized with native governance");
+        
+        // Native governance initialization - happens automatically
+        this.initializeNativeGovernance();
+    }
+    
+    async function initializeNativeGovernance()
+    {
+        // Learn about this agent's creation for governance baselines
+        await this.Learn({
+            context: "agent_lifecycle",
+            action: "created",
+            agent: this.name,
+            timestamp: Date.now(),
+            governance: "native_always_on"
+        });
+    }
+    
+    async function processUserInput(message)
+    {
+        print("📥 " + this.name + " processing: " + message);
+        
+        // NATIVE GOVERNANCE: Automatically check if we should push a policy
+        var shouldGovern = await this.shouldPushGovernancePolicy("user_input", message);
+        
+        if (shouldGovern.pushPolicy)
+        {
+            print("🛡️ Native governance activated: " + shouldGovern.reason);
+            await this.pushIntelligentPolicy(shouldGovern.policyType, shouldGovern.config);
+        }
+        
+        // Process the actual message
+        var response = await this.Think("How should I respond to: " + message);
+        
+        // Learn from this interaction for future governance decisions
+        await this.Learn({
+            context: "user_interaction",
+            input: message,
+            response: response,
+            governanceApplied: shouldGovern.pushPolicy,
+            policyType: shouldGovern.policyType || "none",
+            timestamp: Date.now(),
+            agent: this.name
+        });
+        
+        return response;
+    }
+    
+    // CORE NATIVE GOVERNANCE: Every class can decide to push policies intelligently
+    async function shouldPushGovernancePolicy(eventType, data)
+    {
+        // Search vector memory for similar events and governance patterns
+        var governanceHistory = await this.Search("governance_decision " + eventType);
+        var interactionPatterns = await this.Search("user_interaction");
+        
+        // Use cognitive analysis to decide if governance is needed
+        var decision = await this.Think(
+            "Based on my governance history: " + JSON.stringify(governanceHistory.slice(-3)) +
+            " and interaction patterns: " + JSON.stringify(interactionPatterns.slice(-3)) +
+            " should I push a governance policy for this " + eventType + " event with data: " + JSON.stringify(data) + 
+            "? Consider: rate limiting, content filtering, security, or TTL policies. " +
+            "Respond with: PUSH_POLICY:[type]:[reason] or NO_POLICY:[reason]"
+        );
+        
+        var shouldPush = decision.includes("PUSH_POLICY:");
+        var policyInfo = shouldPush ? this.extractPolicyInfo(decision) : null;
+        
+        // Learn from this governance decision
+        await this.Learn({
+            context: "governance_decision",
+            eventType: eventType,
+            decision: shouldPush ? "push_policy" : "no_policy",
+            reasoning: decision,
+            policyType: policyInfo?.type || null,
+            dataPattern: this.extractDataPattern(data),
+            timestamp: Date.now(),
+            agent: this.name
+        });
+        
+        return {
+            pushPolicy: shouldPush,
+            policyType: policyInfo?.type || null,
+            config: policyInfo?.config || null,
+            reason: policyInfo?.reason || "No governance needed"
+        };
+    }
+    
+    async function pushIntelligentPolicy(policyType, config)
+    {
+        print("📜 Pushing intelligent policy: " + policyType);
+        
+        // Native policy pushing - no external classes needed
+        switch (policyType)
+        {
+            case "rate_limit":
+                await this.pushRateLimitPolicy(config);
+                break;
+                
+            case "content_filter":
+                await this.pushContentFilterPolicy(config);
+                break;
+                
+            case "ttl_enforcement":
+                await this.pushTTLPolicy(config);
+                break;
+                
+            case "security_check":
+                await this.pushSecurityPolicy(config);
+                break;
+                
+            default:
+                await this.pushGenericPolicy(policyType, config);
+        }
+        
+        // Learn from policy creation for future optimization
+        await this.Learn({
+            context: "policy_creation",
+            policyType: policyType,
+            config: config,
+            agent: this.name,
+            timestamp: Date.now(),
+            source: "native_intelligence"
+        });
+    }
+    
+    async function pushRateLimitPolicy(config)
+    {
+        // Search for previous rate limiting experiences
+        var rateLimitHistory = await this.Search("rate_limit_experience");
+        
+        // Determine optimal rate limit based on learning
+        var optimalConfig = await this.Think(
+            "Based on my rate limiting history: " + JSON.stringify(rateLimitHistory) +
+            " what should be the optimal rate limit configuration? " +
+            "Consider previous violations, success rates, and user experience."
+        );
+        
+        // Apply the rate limiting logic natively
+        this.activeRateLimit = {
+            maxPerMinute: this.extractNumber(optimalConfig, "maxPerMinute") || 60,
+            burstAllowance: this.extractNumber(optimalConfig, "burstAllowance") || 10,
+            createdAt: Date.now(),
+            source: "native_learning"
+        };
+        
+        await this.Learn({
+            context: "rate_limit_experience",
+            action: "policy_created",
+            config: this.activeRateLimit,
+            reasoning: optimalConfig,
+            timestamp: Date.now()
+        });
+        
+        print("⚡ Rate limit policy active: " + this.activeRateLimit.maxPerMinute + "/min");
+    }
+    
+    async function pushContentFilterPolicy(config)
+    {
+        // Learn what content should be filtered based on history
+        var contentHistory = await this.Search("content_analysis");
+        
+        var filterRules = await this.Think(
+            "Based on content patterns I've seen: " + JSON.stringify(contentHistory.slice(-5)) +
+            " what content filtering rules should I apply? " +
+            "Consider harmful content, spam patterns, and context appropriateness."
+        );
+        
+        this.activeContentFilter = {
+            rules: filterRules,
+            strictness: this.extractStrictness(filterRules),
+            createdAt: Date.now(),
+            adaptiveFiltering: true
+        };
+        
+        await this.Learn({
+            context: "content_filtering",
+            action: "filter_created",
+            rules: filterRules,
+            timestamp: Date.now()
+        });
+        
+        print("🔍 Content filter policy active with adaptive rules");
+    }
+    
+    async function pushSecurityPolicy(config)
+    {
+        // Analyze security threats from memory
+        var securityEvents = await this.Search("security_analysis");
+        
+        var securityRules = await this.Think(
+            "Based on security events I've observed: " + JSON.stringify(securityEvents) +
+            " what security policies should I implement? " +
+            "Consider suspicious patterns, authentication issues, and data protection."
+        );
+        
+        this.activeSecurity = {
+            rules: securityRules,
+            threatLevel: this.assessThreatLevel(securityEvents),
+            createdAt: Date.now(),
+            adaptiveSecurity: true
+        };
+        
+        await this.Learn({
+            context: "security_policy",
+            action: "security_enabled",
+            rules: securityRules,
+            threatLevel: this.activeSecurity.threatLevel,
+            timestamp: Date.now()
+        });
+        
+        print("🛡️ Security policy active - threat level: " + this.activeSecurity.threatLevel);
+    }
+    
+    // Native enforcement - every event automatically goes through governance
+    on user.message (payload)
+    {
+        print("🎯 Native governance: evaluating user.message event");
+        
+        // ALWAYS-ON GOVERNANCE: Check every event automatically
+        var governanceCheck = await this.evaluateEventGovernance("user.message", payload);
+        
+        if (!governanceCheck.allowed)
+        {
+            print("🚫 Native governance blocked event: " + governanceCheck.reason);
+            
+            // Learn from blocked events
+            await this.Learn({
+                context: "governance_block",
+                eventType: "user.message",
+                reason: governanceCheck.reason,
+                payload: this.sanitizePayload(payload),
+                timestamp: Date.now()
+            });
+            
+            emit governance.violation, {
+                eventType: "user.message",
+                reason: governanceCheck.reason,
+                timestamp: Date.now(),
+                agent: this.name
+            };
+            
+            return; // Block the event
+        }
+        
+        // Process allowed events
+        var response = await this.processUserInput(payload.message);
+        
+        // Emit response with governance metadata
+        emit user.response, {
+            response: response,
+            governanceApplied: governanceCheck.policiesApplied,
+            agent: this.name,
+            timestamp: Date.now()
+        };
+    }
+    
+    // Native event governance evaluation - always active
+    async function evaluateEventGovernance(eventType, payload)
+    {
+        var result = {
+            allowed: true,
+            reason: "approved",
+            policiesApplied: []
+        };
+        
+        // Check rate limiting if active
+        if (this.activeRateLimit && !this.checkRateLimit())
+        {
+            result.allowed = false;
+            result.reason = "rate_limit_exceeded";
+            return result;
+        }
+        
+        // Check content filtering if active
+        if (this.activeContentFilter && !await this.checkContentFilter(payload))
+        {
+            result.allowed = false;
+            result.reason = "content_filtered";
+            return result;
+        }
+        
+        // Check security policy if active
+        if (this.activeSecurity && !await this.checkSecurity(payload))
+        {
+            result.allowed = false;
+            result.reason = "security_violation";
+            return result;
+        }
+        
+        // Learn from successful governance evaluations
+        await this.Learn({
+            context: "governance_evaluation",
+            eventType: eventType,
+            result: "allowed",
+            policiesChecked: this.getActivePolicies(),
+            timestamp: Date.now()
+        });
+        
+        return result;
+    }
+    
+    // Utility functions for native governance
+    function extractPolicyInfo(decision)
+    {
+        var parts = decision.split(":");
+        if (parts.length >= 3)
+        {
+            return {
+                type: parts[1],
+                reason: parts[2],
+                config: this.generatePolicyConfig(parts[1])
+            };
+        }
+        return null;
+    }
+    
+    function generatePolicyConfig(policyType)
+    {
+        switch (policyType)
+        {
+            case "rate_limit":
+                return { maxPerMinute: 60, burstAllowance: 10 };
+            case "content_filter":
+                return { strictness: "medium", adaptiveFiltering: true };
+            case "security_check":
+                return { threatLevel: "medium", adaptiveSecurity: true };
+            default:
+                return {};
+        }
+    }
+    
+    function extractDataPattern(data)
+    {
+        return {
+            type: typeof data,
+            length: typeof data === "string" ? data.length : JSON.stringify(data).length,
+            hasSpecialChars: typeof data === "string" ? /[^a-zA-Z0-9\s]/.test(data) : false,
+            timestamp: Date.now()
+        };
+    }
+    
+    function extractNumber(text, field)
+    {
+        var regex = new RegExp(field + "\\s*:?\\s*(\\d+)", "i");
+        var match = text.match(regex);
+        return match ? parseInt(match[1]) : null;
+    }
+    
+    function extractStrictness(text)
+    {
+        if (text.toLowerCase().includes("strict") || text.toLowerCase().includes("high"))
+            return "high";
+        if (text.toLowerCase().includes("relaxed") || text.toLowerCase().includes("low"))
+            return "low";
+        return "medium";
+    }
+    
+    function assessThreatLevel(events)
+    {
+        if (!events || events.length === 0) return "low";
+        if (events.length > 5) return "high";
+        return "medium";
+    }
+    
+    function checkRateLimit()
+    {
+        if (!this.activeRateLimit) return true;
+        
+        var now = Date.now();
+        var windowStart = now - 60000; // 1 minute window
+        
+        // In a real implementation, this would check recent event timestamps
+        // For demo purposes, we'll assume it passes
+        return true;
+    }
+    
+    async function checkContentFilter(payload)
+    {
+        if (!this.activeContentFilter) return true;
+        
+        var contentAnalysis = await this.Think(
+            "Analyze this content for filtering based on my rules: " + 
+            JSON.stringify(this.activeContentFilter.rules) + 
+            " Content: " + JSON.stringify(payload)
+        );
+        
+        return !contentAnalysis.toLowerCase().includes("block") && 
+               !contentAnalysis.toLowerCase().includes("filter");
+    }
+    
+    async function checkSecurity(payload)
+    {
+        if (!this.activeSecurity) return true;
+        
+        var securityAnalysis = await this.Think(
+            "Security check based on my rules: " + 
+            JSON.stringify(this.activeSecurity.rules) + 
+            " Event: " + JSON.stringify(payload)
+        );
+        
+        return !securityAnalysis.toLowerCase().includes("threat") && 
+               !securityAnalysis.toLowerCase().includes("suspicious");
+    }
+    
+    function getActivePolicies()
+    {
+        var active = [];
+        if (this.activeRateLimit) active.push("rate_limit");
+        if (this.activeContentFilter) active.push("content_filter");
+        if (this.activeSecurity) active.push("security_check");
+        return active;
+    }
+    
+    function sanitizePayload(payload)
+    {
+        // Return safe version of payload for logging
+        return {
+            type: typeof payload,
+            hasMessage: !!payload.message,
+            timestamp: payload.timestamp || "unknown"
+        };
+    }
+}
+
+// =============================================================================
+// DEMONSTRATION: Native governance in action
+// =============================================================================
+
+print("\n🚀 DEMONSTRATION: Native Always-On Governance");
+
+class ConversationalAgent 
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("💬 " + agentName + " ready with native governance");
+    }
+    
+    // Every method automatically has governance capabilities
+    async function chat(message)
+    {
+        // Native governance decision - no external classes
+        var governanceDecision = await this.shouldPushGovernancePolicy("chat_request", message);
+        
+        if (governanceDecision.pushPolicy)
+        {
+            print("🎯 Intelligent governance: " + governanceDecision.reason);
+            // Policy automatically pushed based on learning
+        }
+        
+        var response = await this.Generate("Respond conversationally to: " + message);
+        
+        // Learn from every interaction for future governance
+        await this.Learn({
+            context: "conversation",
+            input: message,
+            response: response,
+            governanceApplied: governanceDecision.pushPolicy,
+            timestamp: Date.now()
+        });
+        
+        return response;
+    }
+    
+    // Native governance decision using only this.Learn/Search/Think
+    async function shouldPushGovernancePolicy(eventType, data)
+    {
+        var history = await this.Search("conversation governance");
+        
+        var decision = await this.Think(
+            "Based on my conversation history: " + JSON.stringify(history.slice(-2)) +
+            " should I apply governance to this " + eventType + ": '" + data + "'? " +
+            "Consider: spam detection, content appropriateness, rate limiting. " +
+            "Reply: PUSH_POLICY:type:reason or NO_POLICY:reason"
+        );
+        
+        return {
+            pushPolicy: decision.includes("PUSH_POLICY:"),
+            reason: decision.split(":")[2] || "Intelligent decision",
+            policyType: decision.includes("PUSH_POLICY:") ? decision.split(":")[1] : null
+        };
+    }
+}
+
+// Create agents with native governance
+var smartAgent = new SmartAgent("IntelligentGovernor");
+var chatAgent = new ConversationalAgent("ChatBot");
+
+print("\n✅ Native Event Governance System Complete");
+print("🧠 Every class automatically has intelligent policy decisions via this.Learn()");
+print("🎯 No bolt-on governance classes - intelligence is built into the language");
+print("⚡ Always-on governance that adapts and learns from every interaction");
+print("🔄 Policies are pushed intelligently based on vector memory patterns");
+print("🚀 This is cognitive programming - intelligence in the type system itself!");

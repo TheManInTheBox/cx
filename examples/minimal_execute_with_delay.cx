@@ -1,0 +1,21 @@
+// Minimal Execute Test with Delay - Single PowerShell Command
+class MinimalAgent 
+{
+    on command.executed (payload)
+    {
+        print("🎉 PowerShell command completed!");
+        print("Event payload received");
+    }
+}
+
+print("🔬 Minimal Execute Test with Delay");
+
+var agent = new MinimalAgent();
+agent.Execute("Write-Output 'Hello from PowerShell'");
+
+print("✅ Command sent - waiting 3 seconds for event...");
+
+// Simple delay using PowerShell
+agent.Execute("Start-Sleep -Seconds 3");
+
+print("🏁 Test complete");

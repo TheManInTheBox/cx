@@ -115,7 +115,6 @@ expression
     | expression '.' IDENTIFIER                         # MemberAccess
     | expression '(' argumentList? ')'                  # FunctionCall
     | expression '[' expression ']'                     # IndexAccess
-    | 'await' expression                                # AwaitExpression
     | ('!' | '-' | '+') expression                      # UnaryExpression
     | expression ('*' | '/' | '%') expression           # MultiplicativeExpression
     | expression ('+' | '-') expression                 # AdditiveExpression

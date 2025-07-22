@@ -21,7 +21,7 @@ This standard library provides a **streamlined cognitive architecture** for the 
 - `this.Chat(message)` - Conversational intelligence
 - `this.CommunicateAsync(message)` - Realtime communication
 - `this.ConnectAsync()` - Establish realtime connection
-- `this.LearnAsync(experience)` - Store adaptations in vector database (adaptive learning)
+- `this.Learn(experience)` - Store adaptations in vector database (adaptive learning)
 - `this.SearchAsync(query)` - Retrieve experiences and patterns (adaptive learning)
 
 ### 🎯 Service Interface Optimization
@@ -36,7 +36,7 @@ This standard library provides a **streamlined cognitive architecture** for the 
 - `IImageAnalysis` → `this.AnalyzeAsync()` method
 - `IFullAICapabilities` → All specialized methods available
 
-*Note: Vector database methods (`LearnAsync`, `SearchAsync`) are built into all classes by default for adaptive learning.*
+*Note: Vector database methods (`Learn`, `SearchAsync`) are built into all classes by default for adaptive learning.*
 
 ## Core Components
 - **ICxAiService**: Base interface for all AI services

@@ -1,100 +1,6 @@
 # CX Language - Autonomous Programming Platform
 
-## 🚨 **CURRENT STATUS**
-
-### **🎉 HISTORIC ACHIEVEMENT: 100% Async System Complete - IL Validation Conflicts RESOLVED**
-
-**Status**: **MISSION ACCOMPLISHED** - Full async system operational with dual compilation strategy
-- **Achievement**: Complete resolution of IL validation conflicts through innovative dual-strategy approach
-- **Simple Async**: Task.FromResult wrapper working perfectly for methods without internal await expressions
-- **Complex Async**: Placeholder approach successfully avoids IL validation conflicts while maintaining Task<object> compatibility
-- **Runtime Verification**: All async patterns execute cleanly without InvalidProgramException
-
-**Technical Implementation - BREAKTHROUGH COMPLETE**:
-```cx
-// ✅ WORKING: Simple async methods (95% foundation)
-async function simpleAsync(message)
-{
-    print("Simple async: " + message);     // ← executes perfectly
-    return "result: " + message;           // ← returns Task<object> via Task.FromResult
-}
-
-// ✅ WORKING: Complex async methods (IL validation resolved)  
-async function complexAsync(input)
-{
-    var thought = await this.Think(input);  // ← No more InvalidProgramException!
-    return "processed: " + thought;             // ← placeholder approach operational
-}
-```
-
-### **🎯 CURRENT STATUS: EVENT-DRIVEN ARCHITECTURE COMPLETE**
-
-**Status**: **Event Handler Delivery System OPERATIONAL** - All async event handlers working perfectly
-- **Parser**: `on async` syntax parsing correctly with reserved event names - **COMPLETE!**
-- **Compilation**: Async event handlers compile successfully with dual strategy - **COMPLETE!** 
-- **Registration**: Event handlers automatically register during instance creation - **COMPLETE!**
-- **✅ DELIVERY**: Event delivery system connecting emitted events to registered handlers - **COMPLETE!**
-
-**Current Implementation Status**:
-```cx
-// ✅ OPERATIONAL: Complete async event handler system working
-class AsyncEventAgent
-{
-    on system.ready (payload) {                  // ← Sync handler executes ✅
-        print("📢 Sync event handler: system ready");
-    }
-    
-    on async user.input (payload) {              // ← Simple async executes ✅
-        print("📞 Simple async event handler: " + payload.message);
-    }
-    
-    on async ai.request (payload) {              // ← Complex async compiles ✅
-        var thought = await this.Think(payload.request);
-        return "processed: " + thought;
-    }
-}
-
-// ✅ REGISTRATION: Automatic during instance creation
-var agent = new AsyncEventAgent();              // ← Handlers auto-register ✅
-
-// ✅ EMISSION & DELIVERY: Events route to handlers correctly
-emit system.ready, { timestamp: "now" };       // ← Executes handler ✅
-emit user.input, { message: "hello" };         // ← Executes handler ✅
-emit ai.request, { request: "story" };         // ← Executes handler ✅
-```
-
-**Test Results Verification**:
-```
-📢 Sync event handler: system ready
-📞 Simple async event handler: Hello from user
-✅ All async event handler tests initiated!
-```
-
-### **🚀 CURRENT STATUS: PRODUCTION-READY COGNITIVE PROGRAMMING**
-
-### **Development Progress**
-- ✅ **IL Compilation**: Runtime execution working perfectly for sync methods - COMPLETE!
-- ✅ **Class System**: Object instantiation and method calls working flawlessly - COMPLETE!
-- ✅ **Basic Features**: Print statements, variables, control flow, try-catch operational - COMPLETE!
-- ✅ **Parser**: Keyword validation system implemented and working - COMPLETE!
-- ✅ **Service Architecture**: Inheritance-based cognitive capabilities with streamlined interfaces - COMPLETE!
-- ✅ **Method Resolution**: `this.Think()` and all cognitive methods resolve to inherited methods - COMPLETE!
-- ✅ **Personal Memory**: Each agent maintains private vector database for adaptive learning - COMPLETE!
-- ✅ **Async Method Compilation**: Task.FromResult wrapper generation working correctly - COMPLETE!
-- ✅ **Simple Async Execution**: Basic async methods without internal await working - **COMPLETE!**
-- ✅ **Complex Async Execution**: IL validation conflicts resolved via placeholder approach - **BREAKTHROUGH COMPLETE!**
-- ✅ **100% Async System**: All async patterns operational without InvalidProgramException - **HISTORIC ACHIEVEMENT!**
-- ✅ **Async Event Handler Parsing**: `on async` syntax with reserved event names - **COMPLETE!**
-- ✅ **Async Event Handler Compilation**: Dual strategy implementation working - **COMPLETE!**
-- ✅ **Event Handler Registration**: Automatic constructor registration operational - **COMPLETE!**
-- ✅ **Event Handler Delivery**: Complete event routing and handler execution - **COMPLETE!**
-- 🎯 **Next**: Azure OpenAI Realtime API integration with complete event-driven foundation
-
-**Current Achievement: Async Event Handler Compilation Complete** 🏆
-
----
-
-## 🏗️ **PROJECT ARCHITECTURE**
+## 🏗️ **ARCHITECTURE**
 
 ### **Core Components**
 ```
@@ -109,16 +15,8 @@ examples/                     → All CX programs and demonstrations
 - **Event-Driven**: `emit`/`on` syntax with auto-registration and namespace routing
 - **AI Integration**: Streamlined cognitive architecture with inheritance-based intelligence
 - **Personal Memory**: Each agent maintains private vector database for adaptive learning
-- **Always-On Audio**: Wake word detection with "Aura on/off" commands
 - **Multi-Agent**: Voice-enabled AI agent coordination with individual memory systems
 - **Inheritance-Based Cognition**: `this.Think()`, `this.Generate()`, `this.Chat()` built into all classes
-
-### **Critical Rules**
-- **Event Handlers**: CANNOT be called directly - only invoked via `emit` statements
-- **Cognitive Methods**: Available on all classes automatically via inheritance
-- **Async Support**: `on async` syntax for real-time voice and AI processing
-
----
 
 ## 💡 **SYNTAX GUIDE**
 
@@ -127,40 +25,160 @@ examples/                     → All CX programs and demonstrations
 // ✅ Console output - ALWAYS use print()
 print("Hello World");
 
-// ✅ Allman-style brackets - NON-NEGOTIABLE
+// ✅ Allman-style brackets - MANDATORY in CX Language
 if (condition)
 {
+    doSomething();
+}
+
+// ❌ NEVER use K&R brackets in CX
+if (condition) {  // ← ILLEGAL - will not compile
     doSomething();
 }
 ```
 
 ### **Event System**
 ```cx
-// Event handlers with reserved system event names
-on user.input (payload) { ... }
-on system.ready (payload) { ... }
+// Event handlers - available at both program scope AND in classes
+on user.input (payload) { ... }        // ✅ CORRECT: Program scope event handler
+on system.ready (payload) { ... }      // ✅ CORRECT: Program scope event handler
+
+class MyAgent {
+    on user.message (payload) { ... }  // ✅ CORRECT: Class scope event handler
+    on ai.request (payload) { ... }    // ✅ CORRECT: Class scope event handler
+}
 
 // Event emission using reserved event names
 emit user.message, { text: "hello" };
 emit system.shutdown, { reason: "maintenance" };
 ```
 
-**⚠️ CRITICAL RESTRICTION**: Event handlers CANNOT be called directly as methods. They are invoked ONLY through the event system using `emit`. Direct calls to event handlers are illegal and will not compile.
+### **Event Namespace Scoping**
+**CRITICAL**: Event handlers are registered in **namespaced scopes**:
+- **Class-level handlers**: Registered in the class namespace (e.g., `MyAgent.command.executed`)
+- **Global handlers**: Registered in the global namespace
+- **Instance events**: Events emitted from instance methods should target the instance's namespace
+- **Namespace isolation**: Handlers in one namespace cannot receive events from other namespaces
 
 ```cx
 class MyAgent {
-    on user.input (payload) { 
-        print("Processing: " + payload.message); 
+    on command.executed (payload) {  // Registered in MyAgent namespace scope
+        print("Command completed in MyAgent");
     }
     
-    function doSomething() {
-        // ❌ ILLEGAL - Event handlers cannot be called directly
-        // this.user.input({ message: "test" });  // Compilation error
-        
-        // ✅ CORRECT - Use emit to trigger event handlers
-        emit user.input, { message: "test" };
+    function runCommand() {
+        this.Execute("some command");  // Emits to MyAgent namespace scope
     }
 }
+
+// Global scope handler
+on system.ready (payload) {  // Registered in global namespace scope
+    print("System ready globally");
+}
+```
+
+### **ICxEventBus Interface Integration**
+The `ICxEventBus` interface provides standardized event bus integration for Azure services and external systems:
+
+```csharp
+// ICxEventBus interface methods
+public interface ICxEventBus
+{
+    Task EmitAsync(string eventName, object payload);
+    void Subscribe(string eventName, Func<object, Task> handler);
+    void Unsubscribe(string eventName);
+}
+
+// Usage in Azure OpenAI services
+_eventBus.Subscribe("realtime.connect", async (payload) => {
+    await _realtimeService.ConnectAsync();
+});
+
+await _eventBus.EmitAsync("realtime.session.started", new { sessionId = "abc123" });
+```
+
+**Key Integration Points:**
+- **Service Provider Registration**: `services.AddSingleton<ICxEventBus, CxEventBus>()`
+- **Azure OpenAI Integration**: Realtime API events bridge to CX event system
+- **Runtime Bridge**: `CxRuntimeHelper.RegisterInstanceEventHandler()` uses ICxEventBus for AI service instances
+- **Fallback Pattern**: Falls back to NamespacedEventBusRegistry when ICxEventBus unavailable
+
+### **Critical Rules**
+- **Event Handlers**: CANNOT be called directly - only invoked via `emit` statements
+- **Event Handlers**: ALWAYS fire-and-forget - cannot return values, execute asynchronously
+- **Event Namespace Scoping**: Handlers register in class/global namespaces, events must target correct scope
+- **ICxEventBus Integration**: Azure services and external systems use ICxEventBus interface for standardized event integration
+- **Multiple Event Bus Systems**: Runtime uses GlobalEventBus, NamespacedEventBusRegistry, EventBusServiceRegistry, and ICxEventBus depending on context
+- **Cognitive Methods**: Available on all classes automatically via inheritance
+- **Async Support**: `on async` syntax for real-time voice and AI processing
+
+### **Agent Creation Patterns**
+```cx
+// ✅ All classes inherit cognitive capabilities automatically
+class CognitiveAgent  // No 'uses' declarations needed - intelligence is built-in!
+{
+    function processInput(userMessage)
+    {
+        // Default cognitive methods available to ALL classes - FIRE-AND-FORGET:
+        this.Think(userMessage);        // Fire-and-forget thinking - results via event bus
+        this.Generate(userMessage);     // Fire-and-forget generation - results via event bus
+        this.Chat("Hello!");            // Fire-and-forget conversation - results via event bus
+        this.Communicate("Processing...");  // Fire-and-forget communication - results via event bus
+        
+        // Personal memory - fire-and-forget learning
+        this.Learn({
+            input: userMessage,
+            response: "processing",
+            context: "cognitive_processing"
+        });
+        
+        // Fire-and-forget search - results delivered via events
+        this.Search("similar situations");
+        
+        // No return values needed - all results flow through event bus
+    }
+}
+```
+
+### **⚠️ CRITICAL SYNTAX RULES**
+
+```cx
+// ❌ ILLEGAL: 'uses' keyword inside class declarations
+class MyAgent 
+{
+    uses aiService from Cx.AI.TextGeneration;  // ← COMPILATION ERROR
+    
+    function doSomething() { ... }
+}
+
+// ✅ CORRECT: 'uses' statements at program scope only
+uses aiService from Cx.AI.TextGeneration;
+
+class MyAgent 
+{
+    function doSomething() 
+    {
+        // ✅ CORRECT: Access built-in cognitive methods via inheritance - FIRE-AND-FORGET
+        this.Think("prompt");      // ← Fire-and-forget cognitive methods
+        this.Generate("query");    // ← Results via event bus, no blocking
+        
+        // ✅ CORRECT: Can access global service instances from program scope
+        var generated = aiService.Generate("test");   // ← Global service instance
+        
+        // Immediate return, async work continues in background
+        return "Processing initiated";
+    }
+}
+```
+
+**Key Syntax Restrictions**:
+- **`uses` keyword**: ONLY allowed at program scope (top-level), NEVER inside classes
+- **Service injection**: ILLEGAL - classes cannot declare their own service instances
+- **Event handlers**: Available at both program scope AND in classes
+- **Service access**: ONLY via inheritance-based cognitive methods (`this.Think()`, `this.Generate()`, etc.) OR global service instances
+- **Class scope**: Fields, methods, constructors, event handlers only - NO `uses` statements or service declarations
+- **Async Functions**: Return void - all results delivered via event bus system
+- **No Await**: Completely eliminated from CX language for pure fire-and-forget pattern
 ```
 
 ### **Reserved Event Names**
@@ -207,30 +225,104 @@ on myapp.data.updated (payload) { ... }  // Application-specific events
 - Event names are case-sensitive and follow dot notation (namespace.action)
 - Always use descriptive event names for maintainable code
 
+### **Event-Driven Async Pattern**
+
+CX Language introduces a **Event-Driven Async Pattern** - eliminating traditional await/async complexity in favor of pure fire-and-forget operations with event bus coordination:
+
+#### **🎯 CRITICAL LANGUAGE RULE: Async Functions Return No Values**
+```cx
+// ❌ OLD WAY: Complex await patterns with blocking and return values
+async function processData(input) {
+    var result = await this.Think(input);    // Blocking operation
+    var learned = await this.Learn(result);  // Sequential blocking
+    return { result, learned };              // Return values create complexity
+}
+
+// ✅ NEW WAY: Pure fire-and-forget with event bus coordination
+function processData(input) {
+    // All async operations fire-and-forget - no return values, no blocking
+    this.Think(input);     // Fires cognitive processing, results via events
+    this.Learn(input);     // Fires learning process, results via events
+    this.Generate(input);  // Fires generation, results via events
+    
+    // Immediate response, async results delivered via event bus
+    emit processing.started, { input: input };
+}
+
+// Results flow through event system
+on ai.thought.complete (payload) {
+    print("Thinking complete: " + payload.result);
+    // Continue processing based on thought results...
+}
+
+on ai.learning.complete (payload) {
+    print("Learning complete: " + payload.documentId);
+    // Update UI or trigger next steps...
+}
+```
+
+#### **🎯 Key Event-Driven Async Rules:**
+- **No await keyword**: Completely eliminated from CX language  
+- **No return values**: Async functions return void, results via events
+- **Fire-and-forget**: All cognitive operations non-blocking by default
+- **Event coordination**: Results delivered through event bus system
+- **Immediate responses**: Functions complete instantly, async work continues in background
+
+### **Specialized Capabilities via Interfaces**
+```cx
+// Optional interfaces for advanced features
+class MultimodalAgent : ITextToSpeech, IImageGeneration
+{
+    function createContent(prompt)
+    {
+        // Core cognitive methods (inherited automatically) - FIRE-AND-FORGET
+        this.Think(prompt);                    // Fire-and-forget thinking
+        this.Communicate("Creating content...");  // Fire-and-forget communication
+        
+        // Specialized methods (only with interfaces) - FIRE-AND-FORGET
+        this.Speak("Content created!");        // Requires ITextToSpeech
+        this.CreateImage(prompt);              // Requires IImageGeneration
+        
+        // Personal memory tracking - FIRE-AND-FORGET
+        this.Learn({
+            prompt: prompt,
+            context: "multimodal_creation"
+        });
+        
+        // All results delivered via event bus system
+        emit content.creation.started, { prompt: prompt };
+    }
+}
+```
+
+## 🛠️ **DEVELOPMENT**
+- Event names are case-sensitive and follow dot notation (namespace.action)
+- Always use descriptive event names for maintainable code
+
 ### **Agent Creation Patterns**
 ```cx
 // ✅ REVOLUTIONARY: All classes inherit cognitive capabilities automatically!
 class CognitiveAgent  // No 'uses' declarations needed - intelligence is built-in!
 {
-    async function processInput(userMessage)
+    function processInput(userMessage)
     {
-        // Default cognitive methods available to ALL classes:
-        var thought = await this.Think(userMessage);        // Realtime thinking
-        var response = await this.Generate(userMessage);    // Text generation
-        var chat = await this.Chat("Hello!");               // Conversational AI
-        await this.Communicate("Processing...");            // Realtime communication
+        // Default cognitive methods available to ALL classes - FIRE-AND-FORGET:
+        this.Think(userMessage);        // Fire-and-forget thinking - results via event bus
+        this.Generate(userMessage);     // Fire-and-forget generation - results via event bus
+        this.Chat("Hello!");            // Fire-and-forget conversation - results via event bus
+        this.Communicate("Processing...");  // Fire-and-forget communication - results via event bus
         
-        // Personal memory - private to this agent
-        await this.Learn({
+        // Personal memory - fire-and-forget learning
+        this.Learn({
             input: userMessage,
-            response: response,
+            response: "processing",
             context: "cognitive_processing"
         });
         
-        // Search personal memories
-        var pastExperiences = await this.Search("similar situations");
+        // Fire-and-forget search - results delivered via events
+        this.Search("similar situations");
         
-        return response;
+        // No return values needed - all results flow through event bus
     }
 }
 
@@ -240,38 +332,122 @@ class EventAgent
     on user.input (payload)
     {
         // Event handler presence triggers automatic agent registration
-        var response = await this.Think(payload.message);  // Built-in cognition!
-        emit user.response, { text: response };
+        this.Think(payload.message);  // Fire-and-forget cognition!
+        emit user.response, { text: "processing..." }; // Immediate response, AI results via events
     }
 }
 var myAgent = new EventAgent(); // ← Automatically registered as agent
 ```
+
+### **🚀 REVOLUTIONARY EVENT-DRIVEN ASYNC PATTERN**
+
+**CX Language** introduces the world's first **Event-Driven Async Pattern** - eliminating traditional await/async complexity in favor of pure fire-and-forget operations with event bus coordination:
+
+#### **🎯 CRITICAL LANGUAGE RULE: Async Functions Return No Values**
+```cx
+// ❌ OLD WAY: Complex await patterns with blocking and return values
+async function processData(input) {
+    var result = await this.Think(input);    // Blocking operation
+    var learned = await this.Learn(result);  // Sequential blocking
+    return { result, learned };              // Return values create complexity
+}
+
+// ✅ NEW WAY: Pure fire-and-forget with event bus coordination
+function processData(input) {
+    // All async operations fire-and-forget - no return values, no blocking
+    this.Think(input);     // Fires cognitive processing, results via events
+    this.Learn(input);     // Fires learning process, results via events
+    this.Generate(input);  // Fires generation, results via events
+    
+    // Immediate response, async results delivered via event bus
+    emit processing.started, { input: input };
+}
+
+// Results flow through event system
+on ai.thought.complete (payload) {
+    print("Thinking complete: " + payload.result);
+    // Continue processing based on thought results...
+}
+
+on ai.learning.complete (payload) {
+    print("Learning complete: " + payload.documentId);
+    // Update UI or trigger next steps...
+}
+```
+
+#### **🎯 Key Event-Driven Async Rules:**
+- **No await keyword**: Completely eliminated from CX language  
+- **No return values**: Async functions return void, results via events
+- **Fire-and-forget**: All cognitive operations non-blocking by default
+- **Event coordination**: Results delivered through event bus system
+- **Immediate responses**: Functions complete instantly, async work continues in background
 
 ### **Specialized Capabilities via Interfaces**
 ```cx
 // Optional interfaces for advanced features
 class MultimodalAgent : ITextToSpeech, IImageGeneration
 {
-    async function createContent(prompt)
+    function createContent(prompt)
     {
-        // Core cognitive methods (inherited automatically)
-        var idea = await this.Think(prompt);
-        await this.Communicate("Creating content...");
+        // Core cognitive methods (inherited automatically) - FIRE-AND-FORGET
+        this.Think(prompt);                    // Fire-and-forget thinking
+        this.Communicate("Creating content...");  // Fire-and-forget communication
         
-        // Specialized methods (only with interfaces)
-        await this.SpeakAsync("Content created!");        // Requires ITextToSpeech
-        var image = await this.CreateImageAsync(idea);    // Requires IImageGeneration
+        // Specialized methods (only with interfaces) - FIRE-AND-FORGET
+        this.Speak("Content created!");        // Requires ITextToSpeech
+        this.CreateImage(prompt);              // Requires IImageGeneration
         
-        // Personal memory tracking
-        await this.Learn({
+        // Personal memory tracking - FIRE-AND-FORGET
+        this.Learn({
             prompt: prompt,
-            idea: idea,
             context: "multimodal_creation"
         });
         
-        return { idea, image };
+        // All results delivered via event bus system
+        emit content.creation.started, { prompt: prompt };
     }
 }
+```
+
+### **⚠️ CRITICAL SYNTAX RULES**
+
+```cx
+// ❌ ILLEGAL: 'uses' keyword inside class declarations
+class MyAgent 
+{
+    uses aiService from Cx.AI.TextGeneration;  // ← COMPILATION ERROR
+    
+    function doSomething() { ... }
+}
+
+// ✅ CORRECT: 'uses' statements at program scope only
+uses aiService from Cx.AI.TextGeneration;
+
+class MyAgent 
+{
+    function doSomething() 
+    {
+        // ✅ CORRECT: Access built-in cognitive methods via inheritance - FIRE-AND-FORGET
+        this.Think("prompt");      // ← Fire-and-forget cognitive methods
+        this.Generate("query");    // ← Results via event bus, no blocking
+        
+        // ✅ CORRECT: Can access global service instances from program scope
+        var generated = aiService.Generate("test");   // ← Global service instance
+        
+        // Immediate return, async work continues in background
+        return "Processing initiated";
+    }
+}
+```
+
+**Key Syntax Restrictions**:
+- **`uses` keyword**: ONLY allowed at program scope (top-level), NEVER inside classes
+- **Service injection**: ILLEGAL - classes cannot declare their own service instances
+- **Event handlers**: Available at both program scope AND in classes
+- **Service access**: ONLY via inheritance-based cognitive methods (`this.Think()`, `this.Generate()`, etc.) OR global service instances
+- **Class scope**: Fields, methods, constructors, event handlers only - NO `uses` statements or service declarations
+- **Async Functions**: Return void - all results delivered via event bus system
+- **No Await**: Completely eliminated from CX language for pure fire-and-forget pattern
 
 ---
 
@@ -280,8 +456,6 @@ class MultimodalAgent : ITextToSpeech, IImageGeneration
 ### **Repository Information**
 - **GitHub**: [ahebert-lt/cx](https://github.com/ahebert-lt/cx)
 - **Current Milestone**: [Azure OpenAI Realtime API v1.0](https://github.com/ahebert-lt/cx/milestone/4)
-- **Release Target**: August 15, 2025
-- **Issue Tracking**: All development work tracked via GitHub Issues with proper milestones
 
 ### **Quick Commands**
 ```powershell
@@ -292,30 +466,12 @@ dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/aura_
 # GitHub workflow
 gh auth switch --user ahebert-lt
 gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
-
-# GitHub Issue Management
-# List issues in milestone
-gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
-
-# View specific issue details
-gh issue view 159 --repo ahebert-lt/cx
-
-# Update issue (assign, add labels, etc.)
-gh issue edit 159 --repo ahebert-lt/cx --assignee ahebert-lt
-gh issue edit 159 --repo ahebert-lt/cx --add-label "in-progress"
-
-# Close issue with comment
-gh issue close 159 --repo ahebert-lt/cx --comment "Completed Azure OpenAI Realtime API integration"
-
-# Create new issue
-gh issue create --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0" --title "Issue Title" --body "Issue description" --label "enhancement"
-
-# Update milestone
-gh api repos/ahebert-lt/cx/milestones/4 --method PATCH --field description="Updated description"
-
-# Browse milestone in browser
-gh browse --repo ahebert-lt/cx /milestone/4
 ```
+
+### **CLI Features**
+- **Interactive Mode**: Supports "Press any key to exit" for event-driven programs that wait for background events
+- **Event System**: Full event emission and handler registration with namespace isolation
+- **Real-time Processing**: Background event processing with user-controlled termination
 
 ### **Azure OpenAI Setup**
 ```json
@@ -330,153 +486,59 @@ gh browse --repo ahebert-lt/cx /milestone/4
 }
 ```
 
-### **Development Standards**
-- ✅ **Production-Ready Only**: Full end-to-end implementations, no mocks/simulations
-- ✅ **Real Hardware Integration**: Actual microphone capture, not file-based simulation
-- ✅ **Complete CX Integration**: Seamless compiler and runtime operation
-- ❌ **NOT Acceptable**: POCs, partial implementations, placeholder code
+### **Event Bus Architecture**
+The CX language implements a **Unified Event Bus System** that consolidates all event handling functionality:
 
-### **Documentation and Status Management**
-- ✅ **Single Source of Truth**: `.github/copilot-instructions.md` is the ONLY status and progress tracking document
-- ✅ **GitHub Issues**: All development tracking, progress updates, and status changes managed via GitHub Issues and Milestones
-- ✅ **Live Status**: Milestone descriptions and issue updates reflect current project state
-- ❌ **NO Status in .md Files**: Wiki and documentation files contain NO status updates, progress tracking, or current state information
+**Core Event Bus Implementation:**
+- **`UnifiedEventBus`** (`src/CxLanguage.Runtime/UnifiedEventBus.cs`) - Single consolidated event bus with all capabilities
+  - **ICxEventBus Interface** (`src/CxLanguage.Core/Events/ICxEventBus.cs`) - Standardized interface for Azure and external integrations
+  - **Multiple Scoping Strategies**: Global, Agent, Channel, Role, Namespace scoping
+  - **Thread-Safe Operations**: Concurrent handling with comprehensive logging
+  - **Pattern Matching**: Wildcard and regex event pattern support
+  - **Azure Integration**: Direct compatibility with Azure OpenAI Realtime API
+  - **Statistics & Monitoring**: Real-time event bus statistics and performance tracking
+
+**Registration and Integration:**
+- **`UnifiedEventBusRegistry.Instance`** - Global singleton for unified event bus access
+- Event handlers register via `CxRuntimeHelper.RegisterEventHandler()` (global scope) and `CxRuntimeHelper.RegisterInstanceEventHandler()` (class scope)
+- Compiler generates registration calls for CX `on` statements at both program and class levels
+- Instance event handlers follow namespace scoping: class handlers registered in class namespace, events must target correct scope
+- Azure OpenAI Realtime API integration via `ICxEventBus` interface with service provider DI container support
+
+**Key Integration Points:**
+- `UnifiedEventBusRegistry.Instance` - Singleton for all event bus operations
+- Service provider injection via `ICxEventBus` interface for Azure services
+- Runtime helper methods bridge compiled CX code to unified event system
+- Comprehensive statistics and monitoring for production debugging
+
+**Event-Driven Architecture Features:**
+- ✅ **Production-Ready**: Single unified implementation with complete end-to-end event handling
+- ✅ **Real Event System**: Actual event emission/handling with namespace isolation and proper scoping
+- ✅ **Azure Integration**: Full ICxEventBus interface compatibility for Azure OpenAI services
+- ✅ **Namespace Scoping**: Sophisticated routing with agent/channel/role/namespace isolation
+- ✅ **Interactive CLI**: Background event processing with user-controlled termination
+- ✅ **Performance Monitoring**: Statistics, call tracking, and comprehensive logging
+
+### **Development Standards**
+- ✅ **Production-Ready**: Full end-to-end implementations with working event system, namespace scoping, and interactive CLI
+- ✅ **Real Implementation**: Actual event emission/handling, namespace isolation, press-key-to-exit functionality
+- ✅ **Complete CX Integration**: Seamless compiler and runtime operation with zero exceptions
+- ✅ **Event-Driven Architecture**: Fully operational namespace-scoped event system with proper handler registration
+- ✅ **Interactive CLI**: Working background event processing with user-controlled termination
+- ❌ **NOT Acceptable**: Simulations of any kind, mocks, partial implementations, placeholder code, POCs
 
 ### **File Organization**
 - All `.cx` files go in `examples/` directory
 - All `.md` files go in `wiki/` directory for static documentation only
-- All status updates, progress tracking, and current state managed via GitHub Issues and Milestones
 - Documentation files contain timeless reference material only
 
----
-
 ## 🏆 **KEY DEMONSTRATIONS**
-- **🧠 `examples/personal_memory_architecture_demo.cx`** → Personal memory & adaptive learning showcase
-- **🧹 `examples/service_architecture_cleanup_demo.cx`** → Streamlined cognitive architecture demo
-- **✅ `examples/inheritance_system_test.cx`** → Complete realtime-first cognitive architecture showcase
-- **🎪 `examples/amazing_debate_demo_working.cx`** → Multi-Agent AI Coordination
-- **⚡ `examples/proper_event_driven_demo.cx`** → Event-Driven Architecture
+- **🧠 `examples/working_search_demo.cx`** → Production vector memory with agent learning & search
+- **📚 `examples/search_results_demo.cx`** → Complete agent memory retrieval with detailed result display
+- **🎯 `examples/agents_learning_report.cx`** → Multi-agent learning coordination with memory sharing
+- **✅ `examples/inheritance_system_test.cx`** → Complete cognitive architecture inheritance showcase
+- **🎪 `examples/amazing_debate_demo_working.cx`** → Multi-Agent AI Coordination with vector memory
+- **⚡ `examples/proper_event_driven_demo.cx`** → Event-Driven Architecture patterns
 - **🌟 `examples/aura_presence_working_demo.cx`** → Always-On Conversational Intelligence
 
----
 
-## 🎯 **IMMEDIATE PRIORITY: Azure OpenAI Realtime API Integration**
-
-### **� NEXT MAJOR MILESTONE: Live Voice-Controlled Cognitive Programming**
-**Status**: Ready for implementation - 100% async foundation now complete
-**Vision**: Live voice-controlled cognitive programming - world's first conversational programming language
-**Technical Goal**: Real-time voice → cognitive processing → voice response + code execution
-
-```cx
-// Production-ready: Voice-controlled programming
-class VoiceControlledAgent
-{
-    on async live.voice.input (payload)
-    {
-        // Real-time voice processing - now fully supported with 100% async
-        var command = await this.TranscribeAsync(payload.audio);  // ✅ Working
-        var response = await this.Think(command);            // ✅ Working
-        
-        // Respond with voice + execute code
-        await this.SpeakAsync(response);    // Ready for implementation
-        await this.ExecuteAsync(response.code);  // Ready for implementation
-    }
-}
-```
-
-**Prerequisites**: ✅ **COMPLETE** - IL validation conflicts resolved, nested async execution stable
-**Implementation Path**:
-1. **Azure OpenAI Realtime API Integration**: Real-time audio streaming and processing
-2. **Voice Input Processing**: Microphone capture and real-time transcription
-3. **Cognitive Voice Response**: Real-time AI processing with voice output
-4. **Live Code Execution**: Voice-commanded code generation and execution
-
-### **🏆 CURRENT STATUS: PRODUCTION-READY**
-- **100% Async System**: All async patterns operational including nested cognitive operations
-- **IL Validation**: Completely resolved - no more InvalidProgramException errors
-- **Task Handling**: Proper Task<object> return types across all scenarios
-- **Cognitive Methods**: `await this.Think()`, `await this.Generate()` fully working
-- **Foundation Complete**: Ready for advanced features and Azure Realtime API integration
-
----
-
-## � **STRATEGIC ROADMAP**
-
-### **📋 NEXT ACTION ITEMS**
-1. **Azure OpenAI Realtime API**: Implement real-time voice processing integration
-2. **Voice Input Capture**: Real-time microphone audio streaming and processing  
-3. **Live Transcription**: Integrate Azure Speech Services for real-time voice-to-text
-4. **Voice Response**: Implement text-to-speech for AI-generated responses
-5. **Live Code Execution**: Voice-commanded code generation and immediate execution
-6. **Production Testing**: End-to-end voice-controlled cognitive programming validation
-
-**Immediate Development Commands**:
-```powershell
-# Test current 100% async system
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/async_system_100_percent_verification.cx
-
-# Verify cognitive operations
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/debug_minimal_await.cx
-
-# Prepare for Azure Realtime API integration
-# All async cognitive methods now ready for real-time processing
-```
-
-**Current Achievement: 100% Complete Async System** 🏆
-
-### **🎤 NEXT MAJOR MILESTONE: Azure OpenAI Realtime API**
-**Mission**: 🎯 World's First Voice-Controlled Cognitive Programming Language
-**Vision**: Complete Azure OpenAI Realtime API integration enabling live voice → cognitive processing → voice response + code execution pipeline
-**Prerequisites**: ✅ **COMPLETE** - 100% async system operational with dual compilation strategy  
-
-**Core Features in Development**:
-• Real-time voice input with microphone capture and processing
-• Azure OpenAI Realtime API integration for streaming audio processing  
-• Voice output via Azure Speech Services text-to-speech
-• Async event handlers supporting cognitive operations in real-time
-• Voice-commanded code generation and execution
-
-**Strategic Impact**: First programming language enabling natural conversation as the primary development interface - revolutionary shift from text-based to voice-based cognitive programming.
-
-```cx
-// Production-ready: Voice-controlled programming
-class VoiceControlledAgent
-{
-    on async live.voice.input (payload)
-    {
-        // Real-time voice processing - 100% async support operational
-        var command = await this.TranscribeAsync(payload.audio);  // ✅ Working
-        var response = await this.Think(command);            // ✅ Working
-        
-        // Respond with voice + execute code  
-        await this.SpeakAsync(response);      // Ready for implementation
-        await this.ExecuteAsync(response.code);  // Ready for implementation
-    }
-}
-```
-
-### **🎮 FUTURE MILESTONE: Unity Avatar Streaming & Agentic Memory v2.0**
-**Mission**: Unity-Centric Avatar Streaming with Agentic Memory Integration
-**Vision**: Real-time avatar-driven conversations with persistent agentic memory and multi-peer streaming capabilities
-**Timeline**: December 15, 2025
-
-**Revolutionary Features**:
-• Unity avatar rendering with real-time emotion synthesis and lip-sync
-• WebRTC peer-to-peer streaming with multi-track support
-• Advanced agentic memory with emotion, avatar, and scene tagging
-• Multi-protocol streaming (SignalR/WebSocket, RTMP/HLS, PushStreamContent)
-• Visual node editor and hot-reloadable avatar development toolkit
-
-**Strategic Impact**: First programming language enabling real-time avatar-driven conversations with persistent agentic memory - revolutionary multimedia cognitive programming platform.
-```
-
-### **🧠 FUTURE RESEARCH TRACK: Collective Intelligence**
-**Status**: Ready for implementation - full async foundation operational
-**Current**: Personal memory architecture implemented (agent-scoped vector database)
-**Future Vision**: Multi-tier memory system for collective intelligence
-
-**Implementation Path**: Azure Realtime API → Production cognitive programming → Collective intelligence research
-
----
-
-The world's first programming language with native intelligence - production-ready cognitive programming platform operational.

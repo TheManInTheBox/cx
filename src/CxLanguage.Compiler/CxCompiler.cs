@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Runtime.CompilerServices;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using CxLanguage.Core;
 using CxLanguage.Core.Ast;
 using CxLanguage.Core.Symbols;
@@ -2235,9 +2236,6 @@ public class CxCompiler : IAstVisitor<object>
     {
         switch (node)
         {
-            case AwaitExpressionNode _:
-                return true;
-            
             case BlockStatementNode block:
                 return block.Statements.Any(CheckForAwaitExpressions);
             
@@ -2419,23 +2417,100 @@ public class CxCompiler : IAstVisitor<object>
                     
                     // Look for the method in the base class
                     var methodInfo = baseClass.GetMethod(serviceMemberAccess.Property);
+                    
+                    // CX PRAGMATIC ASYNC: Prefer sync methods for immediate results
+                    if (methodInfo == null)
+                    {
+                        // If no sync version exists, try with Async suffix
+                        var asyncMethodName = serviceMemberAccess.Property + "Async";
+                        methodInfo = baseClass.GetMethod(asyncMethodName);
+                        if (methodInfo != null)
+                        {
+                            Console.WriteLine($"[DEBUG] No sync version found, using async: {serviceMemberAccess.Property} -> {asyncMethodName}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] Using synchronous method: {serviceMemberAccess.Property}");
+                    }
+                    
                     if (methodInfo != null)
                     {
                         Console.WriteLine($"[DEBUG] Found inherited method: {methodInfo.Name} in {baseClass.Name}");
                         
-                        // Load 'this' instance
-                        _currentIl!.Emit(OpCodes.Ldarg_0);
+                        // CX PRAGMATIC ASYNC MODEL:
+                        // - Methods ending in "Async" (Learn, CommunicateAsync): Fire-and-forget, don't extract results
+                        // - Regular methods (Think, Generate, Chat): Fire-and-forget via event bus, no blocking
                         
-                        // Compile arguments
-                        foreach (var arg in node.Arguments)
+                        // Check if this is an explicit async method call (user called XxxAsync directly)
+                        bool isExplicitAsyncCall = serviceMemberAccess.Property.EndsWith("Async");
+                        bool isAsyncMethod = IsAsyncMethod(methodInfo);
+                        
+                        Console.WriteLine($"[DEBUG] Processing {methodInfo.Name} as fire-and-forget via event bus - no blocking");
+                        
+                        // Get method parameters for proper argument handling
+                        var parameters = methodInfo.GetParameters();
+                        Console.WriteLine($"[DEBUG] IL-EMIT: Method {methodInfo.Name} has {parameters.Length} parameters, caller provided {node.Arguments.Count} arguments");
+                        
+                        // Load 'this' instance first
+                        _currentIl!.Emit(OpCodes.Ldarg_0);
+                        Console.WriteLine($"[DEBUG] IL-EMIT: Loaded 'this' instance for inherited method call");
+                        
+                        // Compile arguments in order, handling optional parameters
+                        for (int i = 0; i < parameters.Length; i++)
                         {
-                            arg.Accept(this);
+                            if (i < node.Arguments.Count)
+                            {
+                                // User provided argument
+                                Console.WriteLine($"[DEBUG] IL-EMIT: Loading user argument {i} for parameter '{parameters[i].Name}'");
+                                node.Arguments[i].Accept(this);
+                            }
+                            else if (parameters[i].IsOptional)
+                            {
+                                // Optional parameter not provided - use default value
+                                Console.WriteLine($"[DEBUG] IL-EMIT: Loading default value for optional parameter '{parameters[i].Name}'");
+                                if (parameters[i].DefaultValue == null || parameters[i].DefaultValue == DBNull.Value)
+                                {
+                                    _currentIl.Emit(OpCodes.Ldnull);
+                                }
+                                else
+                                {
+                                    // Handle other default values as needed
+                                    _currentIl.Emit(OpCodes.Ldnull); // For now, just use null
+                                }
+                            }
+                            else
+                            {
+                                // Required parameter not provided - error
+                                Console.WriteLine($"[DEBUG] ERROR: Required parameter '{parameters[i].Name}' not provided");
+                                _currentIl.Emit(OpCodes.Ldnull); // Emergency fallback
+                            }
                         }
                         
-                        // Call the inherited method
-                        _currentIl.EmitCall(OpCodes.Callvirt, methodInfo, null);
+                        Console.WriteLine($"[DEBUG] IL-EMIT: About to call inherited method {methodInfo.Name}");
+                        Console.WriteLine($"[DEBUG] IL-EMIT: Method signature - Return: {methodInfo.ReturnType.Name}, Parameters: {parameters.Length}");
                         
-                        Console.WriteLine($"[DEBUG] Successfully emitted call to inherited method {methodInfo.Name}");
+                        // Call the inherited method with proper stack management
+                        _currentIl.EmitCall(OpCodes.Callvirt, methodInfo, null);
+                        Console.WriteLine($"[DEBUG] IL-EMIT: Successfully called inherited method {methodInfo.Name}");
+                        
+                        // Handle return values based on method signature
+                        if (methodInfo.ReturnType == typeof(void))
+                        {
+                            // Void methods - no return value to handle, just put null on stack for expression result
+                            Console.WriteLine($"[DEBUG] Fire-and-forget void call to {methodInfo.Name} - no return value to handle");
+                            _currentIl.Emit(OpCodes.Ldnull);  // Put null on stack as "result"
+                        }
+                        else
+                        {
+                            // Methods that return Task or other types - discard and return null
+                            // Results will be handled through the event bus system
+                            Console.WriteLine($"[DEBUG] Fire-and-forget call to {methodInfo.Name} - result will be handled via events");
+                            _currentIl.Emit(OpCodes.Pop);  // Remove the return value from stack
+                            _currentIl.Emit(OpCodes.Ldnull);  // Put null on stack as "result"
+                        }
+                        
+                        Console.WriteLine($"[DEBUG] Successfully emitted synchronous call to {methodInfo.Name}");
                         return new object();
                     }
                     else
@@ -2598,42 +2673,51 @@ public class CxCompiler : IAstVisitor<object>
                     return new object();
                 }
                 
-                // Fallback: Check if this identifier represents an instance of a user-defined class
-                // For now, we'll try to find the method dynamically at runtime
+                // Fallback: Try to call the method dynamically at runtime
+                // The object instance is already on the stack
                 
-                // Load method arguments
-                foreach (var arg in node.Arguments)
-                {
-                    arg.Accept(this);
-                }
+                // Load the method name as string
+                _currentIl!.Emit(OpCodes.Ldstr, methodName);
                 
-                // For unrecognized methods, clean up and return placeholder
-                // Create an array for the arguments
-                _currentIl!.Emit(OpCodes.Ldc_I4, node.Arguments.Count);
+                // Create array for arguments
+                _currentIl.Emit(OpCodes.Ldc_I4, node.Arguments.Count);
                 _currentIl.Emit(OpCodes.Newarr, typeof(object));
                 
-                // Store each argument in the array (in reverse order because stack)
-                for (int i = node.Arguments.Count - 1; i >= 0; i--)
+                // Store arguments in array
+                for (int i = 0; i < node.Arguments.Count; i++)
                 {
                     _currentIl.Emit(OpCodes.Dup); // Duplicate array reference
                     _currentIl.Emit(OpCodes.Ldc_I4, i); // Load index
-                    _currentIl.Emit(OpCodes.Ldarg, node.Arguments.Count - i); // Load argument from stack
+                    node.Arguments[i].Accept(this); // Load argument value
                     _currentIl.Emit(OpCodes.Stelem_Ref); // Store in array
                 }
                 
-                // Clean up stack and return null for unrecognized methods
-                _currentIl.Emit(OpCodes.Pop); // Remove arguments array
-                _currentIl.Emit(OpCodes.Pop); // Remove object instance
+                // Call CxRuntimeHelper.CallInstanceMethod(object, methodName, args)
+                var callInstanceMethodFallback = typeof(CxRuntimeHelper).GetMethod("CallInstanceMethod", 
+                    new[] { typeof(object), typeof(string), typeof(object[]) });
                 
-                // Emit debug message
-                _currentIl.Emit(OpCodes.Ldstr, $"[Method '{methodName}' not found on class instance]");
+                if (callInstanceMethodFallback != null)
+                {
+                    Console.WriteLine($"[DEBUG] Using runtime method call for fallback: {methodName}");
+                    _currentIl.EmitCall(OpCodes.Call, callInstanceMethodFallback, null);
+                }
+                else
+                {
+                    // Fallback: clean up stack and return null
+                    _currentIl.Emit(OpCodes.Pop); // Remove args array
+                    _currentIl.Emit(OpCodes.Pop); // Remove method name
+                    _currentIl.Emit(OpCodes.Pop); // Remove object instance
                 
-                // Call Console.WriteLine for debugging
-                var writeLineMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
-                _currentIl.EmitCall(OpCodes.Call, writeLineMethod!, null);
-                
-                // Return null
-                _currentIl.Emit(OpCodes.Ldnull);
+                    // Emit debug message
+                    _currentIl.Emit(OpCodes.Ldstr, $"[Method '{methodName}' not found on class instance]");
+                    
+                    // Call Console.WriteLine for debugging
+                    var writeLineMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
+                    _currentIl.EmitCall(OpCodes.Call, writeLineMethod!, null);
+                    
+                    // Return null
+                    _currentIl.Emit(OpCodes.Ldnull);
+                }
             }
             else
             {
@@ -2897,10 +2981,37 @@ public class CxCompiler : IAstVisitor<object>
             }
         }
 
-        // Default fallback: Treat as dictionary access
+        // Handle complex expressions like payload.outputs[0].value
+        // This is the case where Object is not a simple identifier (e.g., IndexAccessNode, other MemberAccessNode, etc.)
+        Console.WriteLine($"[DEBUG] Complex member access detected - Object type: {node.Object.GetType().Name}");
+        
+        // For complex expressions, we use runtime property access
+        // First evaluate the object expression (whatever it is - IndexAccess, MemberAccess, etc.)
+        node.Object.Accept(this);
+        
+        // Now we have the object on the stack, use runtime property access
+        Console.WriteLine($"[IL-EMIT] Emitting Ldstr '{node.Property}' for property name parameter");
+        _currentIl!.Emit(OpCodes.Ldstr, node.Property);
+        
+        // Call runtime helper to get property value using reflection
+        var getComplexObjectPropertyMethod = typeof(CxRuntimeHelper).GetMethod("GetObjectProperty", 
+            BindingFlags.Public | BindingFlags.Static);
+        if (getComplexObjectPropertyMethod != null)
+        {
+            Console.WriteLine($"[IL-EMIT] Found GetObjectProperty method for complex access: {getComplexObjectPropertyMethod}");
+            Console.WriteLine($"[IL-EMIT] Stack before Call: [object, propertyName]");
+            Console.WriteLine($"[IL-EMIT] Emitting Call to GetObjectProperty");
+            _currentIl.Emit(OpCodes.Call, getComplexObjectPropertyMethod);
+            Console.WriteLine($"[IL-EMIT] Stack after Call: [property_value] (returns object)");
+            
+            Console.WriteLine($"[DEBUG] Using runtime property access for complex expression with property: {node.Property}");
+            return new object();
+        }
+
+        // Final fallback: Treat as dictionary access (for backward compatibility)
         Console.WriteLine($"[DEBUG] Using dictionary access fallback for member access");
         
-        // Compile the object expression (should be a Dictionary<string, object>)
+        // The object expression has already been evaluated above, so we need to reload it
         node.Object.Accept(this);
         
         // Load the member name as string
@@ -3757,70 +3868,6 @@ public class CxCompiler : IAstVisitor<object>
         }
     }
     
-    public object VisitAwaitExpression(AwaitExpressionNode node)
-    {
-        if (_isFirstPass)
-        {
-            return new object();
-        }
-        
-        Console.WriteLine($"[DEBUG] Processing await expression - checking context: _isCompilingAsyncMethod = {_isCompilingAsyncMethod}");
-        
-        if (_isCompilingAsyncMethod)
-        {
-            // Inside async method: Store task in local variable and use .Result synchronously
-            // This is a simplified approach until we implement proper async state machines
-            Console.WriteLine("[DEBUG] Await inside async method - using synchronous .Result access with local storage");
-            
-            // Generate the async call (puts Task<object> on stack)
-            node.Expression.Accept(this);
-            
-            // Store the task in a local variable
-            var taskLocal = _currentIl!.DeclareLocal(typeof(Task<object>));
-            _currentIl.Emit(OpCodes.Stloc, taskLocal);
-            
-            // Load the task back and call .Result
-            _currentIl.Emit(OpCodes.Ldloc, taskLocal);
-            var taskType = typeof(Task<object>);
-            var resultProperty = taskType.GetProperty("Result");
-            if (resultProperty?.GetGetMethod() is MethodInfo resultGetMethod)
-            {
-                _currentIl.EmitCall(OpCodes.Callvirt, resultGetMethod, null);
-                Console.WriteLine("[DEBUG] Generated local variable .Result access for async method context");
-            }
-            else
-            {
-                // Fallback
-                _currentIl.Emit(OpCodes.Pop);
-                _currentIl.Emit(OpCodes.Ldnull);
-                Console.WriteLine("[ERROR] Could not find Result property for async method context");
-            }
-        }
-        else
-        {
-            // Outside async method: Direct .Result access
-            Console.WriteLine("[DEBUG] Await in synchronous context - using direct .Result access");
-            
-            node.Expression.Accept(this);
-            
-            var taskType = typeof(Task<object>);
-            var resultProperty = taskType.GetProperty("Result");
-            if (resultProperty?.GetGetMethod() is MethodInfo resultGetMethod)
-            {
-                _currentIl!.EmitCall(OpCodes.Callvirt, resultGetMethod, null);
-                Console.WriteLine("[DEBUG] Generated direct .Result property access");
-            }
-            else
-            {
-                _currentIl!.Emit(OpCodes.Pop);
-                _currentIl.Emit(OpCodes.Ldnull);
-                Console.WriteLine("[ERROR] Could not find Result property");
-            }
-        }
-        
-        return new object();
-    }
-    
     public object VisitClassDeclaration(ClassDeclarationNode node)
     {
         if (_isFirstPass)
@@ -4075,11 +4122,77 @@ public class CxCompiler : IAstVisitor<object>
             _currentParameterMapping[constructor.Parameters[i].Name] = i + 1; // +1 because 'this' is at index 0
         }
         
-        // Call base constructor (object's constructor)
+        // Call base constructor based on class inheritance
         Console.WriteLine($"[DEBUG] Calling base constructor for class {className}");
         _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
-        var objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
-        _currentIl.Emit(OpCodes.Call, objectConstructor!);
+        
+        // Check if this class inherits from AiServiceBase (requires IServiceProvider and ILogger)
+        if (_classBaseTypes.TryGetValue(className, out var baseClassType) && 
+            baseClassType.Name == "AiServiceBase")
+        {
+            Console.WriteLine($"[DEBUG] Class {className} inherits from AiServiceBase - injecting IServiceProvider and ILogger");
+            
+            // Load IServiceProvider from static field
+            _currentIl.Emit(OpCodes.Ldsfld, _serviceProviderField);
+            
+            // Create ILogger<ServiceBase> using IServiceProvider
+            // Load IServiceProvider again for GetRequiredService call
+            _currentIl.Emit(OpCodes.Ldsfld, _serviceProviderField);
+            
+            // Call serviceProvider.GetRequiredService<ILogger<ServiceBase>>()
+            var loggerType = typeof(ILogger<>).MakeGenericType(baseClassType.BaseType ?? typeof(object));
+            var getServiceMethod = typeof(Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions)
+                .GetMethod("GetRequiredService", new[] { typeof(IServiceProvider) })!
+                .MakeGenericMethod(loggerType);
+                
+            _currentIl.Emit(OpCodes.Call, getServiceMethod);
+            
+            // Find and call AiServiceBase constructor
+            var aiServiceBaseConstructor = baseClassType.GetConstructor(
+                BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                null,
+                new[] { 
+                    typeof(IServiceProvider), 
+                    typeof(ILogger<>).MakeGenericType(baseClassType.BaseType ?? typeof(object))
+                },
+                null);
+                
+            if (aiServiceBaseConstructor == null)
+            {
+                // Try with different Logger generic parameter
+                aiServiceBaseConstructor = baseClassType.GetConstructor(
+                    BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance,
+                    null,
+                    new[] { 
+                        typeof(IServiceProvider), 
+                        typeof(ILogger<>).MakeGenericType(typeof(object))
+                    },
+                    null);
+            }
+            
+            if (aiServiceBaseConstructor != null)
+            {
+                _currentIl.Emit(OpCodes.Call, aiServiceBaseConstructor);
+                Console.WriteLine($"[DEBUG] AiServiceBase constructor called successfully with DI");
+            }
+            else
+            {
+                Console.WriteLine($"[ERROR] AiServiceBase constructor not found! Falling back to object constructor");
+                // Pop the arguments we pushed and call object constructor instead
+                _currentIl.Emit(OpCodes.Pop); // Pop logger
+                _currentIl.Emit(OpCodes.Pop); // Pop service provider
+                var objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
+                _currentIl.Emit(OpCodes.Call, objectConstructor!);
+            }
+        }
+        else
+        {
+            // Regular class - call object constructor
+            var objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
+            _currentIl.Emit(OpCodes.Call, objectConstructor!);
+            Console.WriteLine($"[DEBUG] Object base constructor called for class {className}");
+        }
+        
         Console.WriteLine($"[DEBUG] Base constructor called successfully");
         
         // Initialize service fields from uses statements  
@@ -4175,31 +4288,83 @@ public class CxCompiler : IAstVisitor<object>
             
             if (containsAwaitExpressions)
             {
-                Console.WriteLine($"[DEBUG] Complex async method {method.Name} - skipping body compilation, returning default Task");
+                Console.WriteLine($"[DEBUG] Complex async method {method.Name} - implementing 'Null Until Complete' pattern");
                 
-                // For complex async methods with await expressions, instead of trying to compile
-                // the body (which causes IL validation issues), just return a completed task with 
-                // a default value. This avoids all IL validation conflicts.
-                _isCompilingAsyncMethod = false; 
+                // CX LANGUAGE DESIGN PATTERN: "Null Until Complete"
+                // All await expressions return null immediately, tasks run in background
+                // This eliminates InvalidProgramException and enables fire-and-forget async
+                _isCompilingAsyncMethod = true;
                 
-                // Create a simple return statement with default value
-                _currentIl.Emit(OpCodes.Ldstr, $"async_{method.Name}_placeholder"); // Default return value
-                
-                // Wrap in Task.FromResult<object>
-                var fromResultMethod = typeof(Task).GetMethod("FromResult", BindingFlags.Public | BindingFlags.Static);
-                if (fromResultMethod != null)
+                try
                 {
-                    var genericFromResult = fromResultMethod.MakeGenericMethod(typeof(object));
-                    _currentIl.Emit(OpCodes.Call, genericFromResult);
-                    Console.WriteLine($"[DEBUG] Complex async method returning placeholder Task.FromResult");
+                    // Execute method body synchronously with "null until complete" semantics
+                    // All await expressions will return null immediately
+                    
+                    var resultLocal = _currentIl.DeclareLocal(typeof(object));
+                    var hasReturnedResult = false;
+                    
+                    // Execute the method body with "null until complete" pattern
+                    if (method.Body != null)
+                    {
+                        foreach (var statement in method.Body.Statements)
+                        {
+                            if (statement is ReturnStatementNode returnStmt)
+                            {
+                                // Handle return statement with null-until-complete semantics
+                                if (returnStmt.Value != null)
+                                {
+                                    returnStmt.Value.Accept(this);
+                                    _currentIl.Emit(OpCodes.Stloc, resultLocal);
+                                    hasReturnedResult = true;
+                                }
+                                break; // Exit after return statement
+                            }
+                            else
+                            {
+                                statement.Accept(this);
+                            }
+                        }
+                    }
+                    
+                    // If no explicit return was found, use a default completion message
+                    if (!hasReturnedResult)
+                    {
+                        _currentIl.Emit(OpCodes.Ldstr, $"async_{method.Name}_completed");
+                        _currentIl.Emit(OpCodes.Stloc, resultLocal);
+                    }
+                    
+                    // Load the result and wrap in Task.FromResult<object>
+                    _currentIl.Emit(OpCodes.Ldloc, resultLocal);
+                    
+                    var fromResultMethod = typeof(Task).GetMethod("FromResult", BindingFlags.Public | BindingFlags.Static);
+                    if (fromResultMethod != null)
+                    {
+                        var genericFromResult = fromResultMethod.MakeGenericMethod(typeof(object));
+                        _currentIl.Emit(OpCodes.Call, genericFromResult);
+                        Console.WriteLine($"[DEBUG] Complex async method {method.Name} compiled successfully with async body");
+                    }
+                    else
+                    {
+                        Console.WriteLine("[ERROR] Could not find Task.FromResult method");
+                        _currentIl.Emit(OpCodes.Ldnull);
+                    }
+                    
+                    _currentIl.Emit(OpCodes.Ret);
                 }
-                else
+                catch (Exception ex)
                 {
-                    Console.WriteLine("[ERROR] Could not find Task.FromResult method");
-                    _currentIl.Emit(OpCodes.Ldnull);
+                    Console.WriteLine($"[ERROR] Failed to compile complex async method {method.Name}: {ex.Message}");
+                    
+                    // Fallback to simple placeholder if compilation fails
+                    _currentIl.Emit(OpCodes.Ldstr, $"async_{method.Name}_fallback");
+                    var fromResultMethod = typeof(Task).GetMethod("FromResult", BindingFlags.Public | BindingFlags.Static);
+                    if (fromResultMethod != null)
+                    {
+                        var genericFromResult = fromResultMethod.MakeGenericMethod(typeof(object));
+                        _currentIl.Emit(OpCodes.Call, genericFromResult);
+                    }
+                    _currentIl.Emit(OpCodes.Ret);
                 }
-                
-                _currentIl.Emit(OpCodes.Ret);
             }
             else
             {
@@ -4506,8 +4671,13 @@ public class CxCompiler : IAstVisitor<object>
     {
         switch (node)
         {
-            case AwaitExpressionNode:
-                return true;
+            case BlockStatementNode blockStmt:
+                foreach (var stmt in blockStmt.Statements)
+                {
+                    if (ContainsAwaitExpression(stmt))
+                        return true;
+                }
+                return false;
                 
             case ExpressionStatementNode exprStmt:
                 return ContainsAwaitExpression(exprStmt.Expression);

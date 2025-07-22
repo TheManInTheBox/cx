@@ -30,6 +30,8 @@
     <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
     <PackageReference Include="Microsoft.KernelMemory.DataFormats.AzureAIDocIntel" Version="0.98.250508.3" />
     <PackageReference Include="Microsoft.KernelMemory.WebClient" Version="0.98.250508.3" />
+    <!-- PowerShell for command execution -->
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
   </ItemGroup>
 
 </Project>

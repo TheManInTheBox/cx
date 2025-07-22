@@ -1,0 +1,28 @@
+// Simple test of void method calls in await-free CX
+print("🧪 Simple Void Method Test");
+
+class VoidTest
+{
+    name: string;
+    
+    constructor(testName)
+    {
+        this.name = testName;
+        print("Created: " + this.name);
+    }
+    
+    function simpleTest()
+    {
+        print("🚀 Testing simple operations...");
+        
+        // Test the Learn method (void)
+        this.Learn("simple test data");
+        print("✅ Learn called successfully");
+        
+        return "test complete";
+    }
+}
+
+var tester = new VoidTest("SimpleTest");
+var result = tester.simpleTest();
+print("Final result: " + result);

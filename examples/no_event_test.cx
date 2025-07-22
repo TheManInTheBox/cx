@@ -1,0 +1,33 @@
+// No Event Handler Test - Just Execute method without event handlers
+class NoEventAgent 
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("🧪 Created no-event agent: " + this.name);
+    }
+    
+    function runTest()
+    {
+        print("🚀 Running Execute test (no event handlers)...");
+        this.Execute("Write-Output 'Hello'");
+        print("✅ Execute called - no event handlers to receive results");
+    }
+}
+
+print("🔬 No Event Handler Test");
+print("=======================");
+
+try
+{
+    var agent = new NoEventAgent("NoEvents");
+    agent.runTest();
+    
+    print("✅ Test complete!");
+}
+catch (error)
+{
+    print("❌ Error: " + error.message);
+}

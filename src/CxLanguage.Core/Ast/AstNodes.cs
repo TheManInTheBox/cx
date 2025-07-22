@@ -49,9 +49,6 @@ public interface IAstVisitor<T>
     // Object creation visitor method
     T VisitNewExpression(NewExpressionNode node);
     
-    // Async/await visitor methods
-    T VisitAwaitExpression(AwaitExpressionNode node);
-    
     // Event-driven architecture visitor methods
     T VisitEventName(EventNameNode node);
     T VisitOnStatement(OnStatementNode node);
@@ -533,13 +530,6 @@ public class NewExpressionNode : ExpressionNode
 /// <summary>
 /// Await expression for async operations
 /// </summary>
-public class AwaitExpressionNode : ExpressionNode
-{
-    public ExpressionNode Expression { get; set; } = new LiteralNode();
-
-    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitAwaitExpression(this);
-}
-
 // Access modifier enumeration
 public enum AccessModifier
 {

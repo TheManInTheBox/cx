@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using CxLanguage.StandardLibrary.Events;
+using CxLanguage.Core.Events;
 using CxLanguage.Azure.Services;
 using System;
 using System.Threading.Tasks;

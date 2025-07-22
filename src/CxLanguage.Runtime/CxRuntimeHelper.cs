@@ -63,13 +63,57 @@ namespace CxLanguage.Runtime
                     return null;
                 }
 
-                // For simplicity, use the first method that matches the argument count
+                // Find the best matching method based on parameter count
                 var method = methods.FirstOrDefault(m => m.GetParameters().Length == arguments.Length);
                 if (method == null)
                 {
-                    // Try the first method regardless of parameter count
-                    method = methods[0];
-                    Console.WriteLine($"[DEBUG] CallInstanceMethod: using first method {method.Name} with {method.GetParameters().Length} parameters");
+                    // Try to find a method where we can fill in default values for optional parameters
+                    method = methods.FirstOrDefault(m => 
+                    {
+                        var parameters = m.GetParameters();
+                        // We can use this method if we have at least the required parameters
+                        // and the remaining parameters have default values
+                        if (parameters.Length >= arguments.Length)
+                        {
+                            // Check if all parameters beyond our argument count have default values
+                            for (int i = arguments.Length; i < parameters.Length; i++)
+                            {
+                                if (!parameters[i].HasDefaultValue)
+                                    return false;
+                            }
+                            return true;
+                        }
+                        return false;
+                    });
+                    
+                    if (method != null)
+                    {
+                        Console.WriteLine($"[DEBUG] CallInstanceMethod: using method {method.Name} with {method.GetParameters().Length} parameters (padding optional params)");
+                        
+                        // Pad arguments with default values for optional parameters
+                        var parameters = method.GetParameters();
+                        var paddedArguments = new object[parameters.Length];
+                        
+                        // Copy provided arguments
+                        for (int i = 0; i < arguments.Length; i++)
+                        {
+                            paddedArguments[i] = arguments[i];
+                        }
+                        
+                        // Fill in default values for remaining parameters
+                        for (int i = arguments.Length; i < parameters.Length; i++)
+                        {
+                            paddedArguments[i] = parameters[i].DefaultValue ?? Type.Missing;
+                        }
+                        
+                        arguments = paddedArguments;
+                    }
+                    else
+                    {
+                        // Fallback: try the first method regardless of parameter count (original behavior)
+                        method = methods[0];
+                        Console.WriteLine($"[DEBUG] CallInstanceMethod: using first method {method.Name} with {method.GetParameters().Length} parameters (fallback)");
+                    }
                 }
 
                 Console.WriteLine($"[DEBUG] CallInstanceMethod: invoking {method.Name} on {instanceType.Name}");
@@ -325,22 +369,41 @@ namespace CxLanguage.Runtime
         /// </summary>
         
         /// <summary>
-        /// Emit an event to the namespaced event bus
+        /// Emit an event to the unified event bus
         /// </summary>
         public static void EmitEvent(string eventName, object? data = null, string source = "CxScript")
         {
             Console.WriteLine($"[DEBUG] Emitting event: {eventName} from {source}");
-            NamespacedEventBusRegistry.Instance.Emit(eventName, data, source);
+            UnifiedEventBusRegistry.Instance.Emit(eventName, data, source);
         }
 
         /// <summary>
-        /// Register an event handler with the global event bus
-        /// This is called by compiled 'on' statements
+        /// Register an event handler with the unified event bus
+        /// This is called by compiled 'on' statements at program scope (global handlers)
         /// </summary>
         public static void RegisterEventHandler(string eventName, CxEventHandler handler)
         {
-            Console.WriteLine($"[DEBUG] Registering event handler for: {eventName}");
-            GlobalEventBus.Instance.Subscribe(eventName, handler);
+            Console.WriteLine($"[DEBUG] Registering global event handler for: {eventName}");
+            
+            // Register as global scope subscription
+            var subscriptionId = UnifiedEventBusRegistry.Instance.RegisterSubscription(
+                "Global", "system", UnifiedEventScope.Global);
+            
+            // Convert CxEventHandler to EventHandler
+            EventHandler unifiedHandler = async (payload) =>
+            {
+                // Convert EventPayload back to CxEventPayload for compatibility
+                var cxPayload = new CxEventPayload
+                {
+                    EventName = payload.EventName,
+                    Data = payload.Data,
+                    Timestamp = payload.Timestamp,
+                    Source = payload.Source
+                };
+                await handler(cxPayload);
+            };
+            
+            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
         }
 
         /// <summary>
@@ -541,13 +604,13 @@ namespace CxLanguage.Runtime
                 return;
             }
             
-            // Create a wrapper that calls the instance method
-            CxEventHandler handler = async (payload) =>
+            // Create event handler that calls the instance method
+            EventHandler unifiedHandler = async (payload) =>
             {
                 try
                 {
                     // Call the instance method with the payload data (not the whole payload object)
-                    // The CX event handlers expect the raw data, not the CxEventPayload wrapper
+                    // The CX event handlers expect the raw data, not the EventPayload wrapper
                     var result = method.Invoke(instance, new[] { payload.Data });
                     
                     // If the method returns a Task, await it
@@ -563,14 +626,21 @@ namespace CxLanguage.Runtime
                 }
             };
             
-            // Register with the NamespacedEventBusService instead of GlobalEventBus
-            // First register a temporary agent if needed
-            var agentName = $"{instanceType.Name}_{instance.GetHashCode()}";
-            var agentId = NamespacedEventBusRegistry.Instance.RegisterAgent(agentName);
+            // Register instance-scoped subscription with namespace pattern
+            var instanceName = $"{instanceType.Name}_{instance.GetHashCode()}";
+            var subscriptionId = UnifiedEventBusRegistry.Instance.RegisterSubscription(
+                instanceName, "instance", UnifiedEventScope.Namespace, instance: instance);
             
-            // Subscribe to the event pattern
-            NamespacedEventBusRegistry.Instance.Subscribe(agentId, eventName, handler);
+            // Subscribe to the event with instance namespace scoping
+            // Events targeting this instance should use pattern: instanceName.eventName
+            var eventPattern = $"{instanceName}.{eventName}";
+            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventPattern, unifiedHandler);
+            
+            // Also subscribe to the raw event name for backward compatibility
+            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
+            
             Console.WriteLine($"[INFO] Instance event handler registered: {eventName} -> {instanceType.Name}.{methodName}");
+            Console.WriteLine($"[INFO] Event patterns: {eventPattern}, {eventName}");
         }
 
         /// <summary>

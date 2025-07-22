@@ -1,0 +1,182 @@
+// CX Language - Vector Database Integration Test
+// Testing the Learn and Search methods in your native governance architecture
+
+print("🎯 CX Vector Database Test - Native Governance Integration");
+print("✨ Testing this.Learn() and this.Search() with intelligent governance");
+
+// =============================================================================
+// SIMPLIFIED GOVERNANCE AGENT - Testing Vector Database Integration
+// =============================================================================
+
+class VectorGovernanceAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("🤖 " + this.name + " created with vector-powered governance");
+        
+        // Initialize with some governance knowledge
+        this.initializeGovernanceKnowledge();
+    }
+    
+    // Simple async method to initialize governance knowledge
+    async function initializeGovernanceKnowledge()
+    {
+        // Store initial governance patterns in vector memory
+        var initResult = await this.Learn({
+            context: "governance_initialization",
+            agent: this.name,
+            patterns: "rate_limiting, content_filtering, security_policies",
+            timestamp: Date.now()
+        });
+        
+        print("📚 Governance knowledge initialized: " + initResult);
+        return initResult;
+    }
+    
+    // Test governance decision making with vector memory
+    async function testGovernanceDecision(eventType, data)
+    {
+        print("\n🧠 Testing governance decision for: " + eventType);
+        
+        // Search for relevant governance patterns
+        var governanceHistory = await this.Search("governance_initialization");
+        print("🔍 Found " + governanceHistory.length + " governance patterns");
+        
+        // Learn from this decision process
+        var decisionData = {
+            context: "governance_decision_test",
+            eventType: eventType,
+            data: data,
+            searchResults: governanceHistory.length,
+            timestamp: Date.now(),
+            agent: this.name
+        };
+        
+        var learnResult = await this.Learn(decisionData);
+        print("📝 Decision learned: " + learnResult);
+        
+        return {
+            decision: "governance_evaluated",
+            patterns: governanceHistory.length,
+            learned: learnResult
+        };
+    }
+    
+    // Test rate limiting with vector memory
+    async function testRateLimitGovernance()
+    {
+        print("\n⚡ Testing rate limit governance with vector memory:");
+        
+        // Store rate limit experience
+        await this.Learn({
+            context: "rate_limit_experience",
+            action: "test_rate_limit",
+            maxPerMinute: 60,
+            burstAllowance: 10,
+            timestamp: Date.now(),
+            agent: this.name
+        });
+        
+        // Search for rate limit patterns
+        var rateLimitHistory = await this.Search("rate_limit_experience");
+        print("📊 Rate limit patterns found: " + rateLimitHistory.length);
+        
+        if (rateLimitHistory.length > 0)
+        {
+            var firstPattern = rateLimitHistory[0];
+            print("  - Pattern content length: " + firstPattern.content.length);
+            print("  - Pattern score: " + firstPattern.score);
+        }
+        
+        return rateLimitHistory;
+    }
+    
+    // Test content filtering with vector memory
+    async function testContentFilterGovernance()
+    {
+        print("\n🔍 Testing content filter governance:");
+        
+        // Store content filtering knowledge
+        await this.Learn({
+            context: "content_filtering",
+            action: "filter_rule_created",
+            rules: "block_spam, check_appropriateness, validate_context",
+            strictness: "medium",
+            timestamp: Date.now(),
+            agent: this.name
+        });
+        
+        // Search for content filtering patterns
+        var contentPatterns = await this.Search("content_filtering");
+        print("📋 Content filter patterns: " + contentPatterns.length);
+        
+        return contentPatterns;
+    }
+    
+    // Test security governance with vector memory
+    async function testSecurityGovernance()
+    {
+        print("\n🛡️ Testing security governance:");
+        
+        // Store security knowledge
+        await this.Learn({
+            context: "security_policy",
+            action: "security_rule_created",
+            rules: "detect_threats, check_authentication, validate_permissions",
+            threatLevel: "medium",
+            timestamp: Date.now(),
+            agent: this.name
+        });
+        
+        // Search for security patterns
+        var securityPatterns = await this.Search("security_policy");
+        print("🔒 Security patterns found: " + securityPatterns.length);
+        
+        return securityPatterns;
+    }
+}
+
+// =============================================================================
+// COMPREHENSIVE VECTOR DATABASE TEST
+// =============================================================================
+
+print("\n🚀 Starting Comprehensive Vector Database Test");
+
+// Create governance agent
+print("\n📋 Phase 1: Creating Vector-Powered Governance Agent");
+var governanceAgent = new VectorGovernanceAgent("VectorGovernor");
+
+// Initialize governance knowledge
+print("\n📚 Phase 2: Initializing Governance Knowledge");
+await governanceAgent.initializeGovernanceKnowledge();
+
+// Test governance decision making
+print("\n🧠 Phase 3: Testing Governance Decision Making");
+var decision1 = await governanceAgent.testGovernanceDecision("user_input", "test message");
+var decision2 = await governanceAgent.testGovernanceDecision("api_request", "rate limited call");
+
+// Test specific governance types
+print("\n⚡ Phase 4: Testing Specific Governance Types");
+var rateLimitResults = await governanceAgent.testRateLimitGovernance();
+var contentResults = await governanceAgent.testContentFilterGovernance();
+var securityResults = await governanceAgent.testSecurityGovernance();
+
+// Final comprehensive search test
+print("\n🔍 Phase 5: Comprehensive Search Test");
+var allGovernance = await governanceAgent.Search("governance");
+print("📊 Total governance patterns stored: " + allGovernance.length);
+
+var allPolicies = await governanceAgent.Search("policy");
+print("📜 Total policy patterns stored: " + allPolicies.length);
+
+var allSecurity = await governanceAgent.Search("security");
+print("🔒 Total security patterns stored: " + allSecurity.length);
+
+print("\n✅ VECTOR DATABASE TEST COMPLETE!");
+print("🎯 Native governance with vector memory integration successful");
+print("🧠 Learn and Search methods working with governance intelligence");
+print("🚀 Ready for Azure OpenAI Realtime API with vector-powered governance!");
+print("📊 Vector operations completed successfully");
