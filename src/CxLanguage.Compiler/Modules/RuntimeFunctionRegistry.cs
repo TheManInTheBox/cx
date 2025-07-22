@@ -290,6 +290,26 @@ public static class RuntimeFunctionRegistry
                 Console.WriteLine($"❌ REGISTRY: Built-in function not found: {functionName}");
             }
         }
+
+        // Register utility functions with CX-friendly names
+        var utilityFunctions = new Dictionary<string, string>
+        {
+            { "typeof", "GetTypeOf" }  // CX name -> C# method name
+        };
+
+        foreach (var (cxName, csharpMethodName) in utilityFunctions)
+        {
+            var method = methods.FirstOrDefault(m => m.Name == csharpMethodName);
+            if (method != null)
+            {
+                RegisterBuiltInFunction(cxName, method);
+                Console.WriteLine($"✅ REGISTRY: Built-in function registered: {cxName} -> {csharpMethodName}");
+            }
+            else
+            {
+                Console.WriteLine($"❌ REGISTRY: Built-in function not found: {cxName} -> {csharpMethodName}");
+            }
+        }
     }
 
     /// <summary>

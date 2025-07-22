@@ -151,18 +151,28 @@ public abstract class AiServiceBase
                 
                 // Convert results to CX-compatible objects
                 _logger.LogInformation("RUNTIME: Execute() - Converting results to CX objects");
-                var outputResults = results.Select(result => new
+                var outputList = new List<object>();
+                foreach (var result in results)
                 {
-                    value = result?.BaseObject?.ToString() ?? result?.ToString() ?? "",
-                    type = result?.BaseObject?.GetType().Name ?? "Unknown"
-                }).ToArray<object>();
+                    outputList.Add(new
+                    {
+                        value = result?.BaseObject?.ToString() ?? result?.ToString() ?? "",
+                        type = result?.BaseObject?.GetType().Name ?? "Unknown"
+                    });
+                }
+                var outputResults = outputList.ToArray();
                 
-                var errorResults = errors.Select(error => new
+                var errorList = new List<object>();
+                foreach (var error in errors)
                 {
-                    message = error.ToString(),
-                    category = error.CategoryInfo?.Category.ToString() ?? "Unknown",
-                    line = error.InvocationInfo?.ScriptLineNumber ?? 0
-                }).ToArray<object>();
+                    errorList.Add(new
+                    {
+                        message = error.ToString(),
+                        category = error.CategoryInfo?.Category.ToString() ?? "Unknown",
+                        line = error.InvocationInfo?.ScriptLineNumber ?? 0
+                    });
+                }
+                var errorResults = errorList.ToArray();
                 
                 _logger.LogInformation("RUNTIME: Execute() - Result conversion complete");
                 _logger.LogInformation("RUNTIME: Execute() - Output results: {Count} items", outputResults.Length);

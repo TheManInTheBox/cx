@@ -1,0 +1,28 @@
+// Minimal test for agent event handler triggering
+print("🧪 MINIMAL AGENT EVENT TEST");
+
+class TestAgent
+{
+    name: string;
+    
+    constructor()
+    {
+        this.name = "TestAgent";
+    }
+    
+    // Agent should respond to user actions
+    on user.any.action (payload)
+    {
+        print("🎯 AGENT RESPONSE: User action detected!");
+    }
+}
+
+var agent = new TestAgent();
+print("✅ Agent created and registered");
+
+// Emit event that should trigger agent
+print("📡 Emitting user.emergency.action...");
+emit user.emergency.action, { action: "test" };
+
+print("✅ Event emitted - agent should have responded above");
+print("🔬 Test complete");

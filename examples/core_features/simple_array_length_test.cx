@@ -1,0 +1,71 @@
+// 🧪 SIMPLE ARRAY LENGTH TEST
+// Test basic array.length access without complex boolean conditions
+
+print("🧪 Simple Array Length Test Starting...\n");
+
+// Global event handler to test array access
+on command.executed (payload) 
+{
+    print("📊 Testing array access:");
+    print("   Agent: " + payload.agent);
+    print("   Command: " + payload.command);
+    
+    // Test basic array access without complex boolean conditions
+    var outputs = payload.outputs;
+    print("   Outputs type: " + typeof(outputs));
+    
+    // Test array length access directly
+    var outputLength = outputs.length;
+    print("   Output length: " + outputLength);
+    
+    // Test simple condition
+    if (outputLength > 0) 
+    {
+        print("   ✅ Found " + outputLength + " output items");
+    }
+    else 
+    {
+        print("   ℹ️ No output items found");
+    }
+    
+    // Test errors array
+    var errors = payload.errors;
+    var errorLength = errors.length;
+    print("   Error length: " + errorLength);
+    
+    if (errorLength > 0) 
+    {
+        print("   ❌ Found " + errorLength + " error items");
+    }
+    else 
+    {
+        print("   ✅ No errors found");
+    }
+    
+    print("   ---");
+}
+
+// Simple agent for testing
+class SimpleAgent 
+{
+    name: string;
+    
+    constructor(agentName) 
+    {
+        this.name = agentName;
+        print("🤖 Simple Agent " + agentName + " created for array testing");
+    }
+    
+    function testCommand() 
+    {
+        print("🔬 Testing PowerShell command execution");
+        this.Execute("Get-Date");
+        print("   Command dispatched for testing...");
+    }
+}
+
+// Create and test
+var testAgent = new SimpleAgent("ArrayTest-Agent");
+testAgent.testCommand();
+
+print("\n🧪 Array access test initiated. Waiting for results...");

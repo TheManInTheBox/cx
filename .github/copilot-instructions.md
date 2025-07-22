@@ -6,17 +6,19 @@
 ```
 src/CxLanguage.CLI/           → Command-line interface + Azure OpenAI config
 src/CxLanguage.Parser/        → ANTLR4 parser (grammar/Cx.g4 = source of truth)
-src/CxLanguage.Compiler/      → IL generation with two-pass compilation
+src/CxLanguage.Compiler/      → IL generation with three-pass compilation
+src/CxLanguage.Runtime/       → UnifiedEventBus + CxRuntimeHelper with global event system
 src/CxLanguage.StandardLibrary/ → 9 AI services via Semantic Kernel 1.26.0
 examples/                     → All CX programs and demonstrations
 ```
 
 ### **Key Features**
-- **Event-Driven**: `emit`/`on` syntax with auto-registration and namespace routing
+- **Event-Driven**: `emit`/`on` syntax with auto-registration and wildcard pattern matching (.any.)
 - **AI Integration**: Streamlined cognitive architecture with inheritance-based intelligence
 - **Personal Memory**: Each agent maintains private vector database for adaptive learning
 - **Multi-Agent**: Voice-enabled AI agent coordination with individual memory systems
 - **Inheritance-Based Cognition**: `this.Think()`, `this.Generate()`, `this.Chat()` built into all classes
+- **Unified Event System**: Production-ready UnifiedEventBus with Global scope and pattern matching
 
 ## 💡 **SYNTAX GUIDE**
 
@@ -43,7 +45,8 @@ if (condition) {  // ← ILLEGAL - will not compile
 on user.input (payload) { ... }        // ✅ CORRECT: Program scope event handler
 on system.ready (payload) { ... }      // ✅ CORRECT: Program scope event handler
 
-class MyAgent {
+class MyAgent 
+{
     on user.message (payload) { ... }  // ✅ CORRECT: Class scope event handler
     on ai.request (payload) { ... }    // ✅ CORRECT: Class scope event handler
 }
@@ -66,58 +69,68 @@ on any.any.critical (payload) { ... }              // Ultra-flexible wildcard - 
 on any.any.any.complete (payload) { ... }          // Maximum flexibility - catches all completion events
 
 // Class-level wildcards work alongside global wildcards
-class ChatAgent {
-    on user.any.input (payload) {                  // Class-scoped wildcard handler
+class ChatAgent 
+{
+    on user.any.input (payload) 
+    {                  // Class-scoped wildcard handler
         print("Chat agent received: " + payload.message);
     }
     
-    on voice.any.command (payload) {               // Multi-scope wildcard support
+    on voice.any.command (payload) 
+    {               // Multi-scope wildcard support
         emit user.chat.message, { text: "Voice: " + payload.command };
     }
 }
 ```
 
 ### **Event Namespace Scoping**
-**CRITICAL**: Event handlers are registered in **namespaced scopes** with full wildcard support:
-- **Class-level handlers**: Registered in the class namespace (e.g., `MyAgent.command.executed`)
-- **Global handlers**: Registered in the global namespace
-- **Instance events**: Events emitted from instance methods should target the instance's namespace
-- **Namespace isolation**: Handlers in one namespace cannot receive events from other namespaces
-- **Wildcard patterns**: Work at ALL scopes - global, class, and namespace isolation ✅
+**CRITICAL**: Event handlers are registered with **Global scope** and support full wildcard pattern matching:
+- **Class-level handlers**: Registered in Global scope for maximum flexibility and event reception
+- **Global handlers**: Registered in the global namespace  
+- **Wildcard patterns**: Work at ALL scopes with .any. syntax providing cross-namespace communication ✅
 - **Cross-scope wildcards**: `any.any.*` patterns provide maximum flexibility ✅
 - **Multi-level wildcards**: `agent.any.thinking.any.complete` for complex pattern matching ✅
+- **Production Ready**: Complete wildcard system with three-pass compilation and async processing ✅
 
 ```cx
-class MyAgent {
-    on command.executed (payload) {  // Registered in MyAgent namespace scope
+class MyAgent 
+{
+    on command.executed (payload) 
+    {  // Registered in MyAgent namespace scope
         print("Command completed in MyAgent");
     }
     
     // Advanced wildcard handlers in class scope
-    on user.any.input (payload) {   // Class-scoped wildcard - catches all user inputs
+    on user.any.input (payload) 
+    {   // Class-scoped wildcard - catches all user inputs
         print("MyAgent received user input: " + payload.message);
     }
     
-    on ai.any.response (payload) {  // Class-scoped AI wildcard
+    on ai.any.response (payload) 
+    {  // Class-scoped AI wildcard
         print("MyAgent processing AI response: " + payload.response);
     }
     
-    function runCommand() {
-        this.Execute("some command");  // Emits to MyAgent namespace scope
+    function runCommand() 
+    {
+        this.Execute("some command");  // Emits to Global scope
     }
 }
 
 // Global scope wildcard handlers
-on system.any.ready (payload) {  // Registered in global namespace scope
+on system.any.ready (payload) 
+{  // Registered in global namespace scope
     print("System ready globally: " + payload.component);
 }
 
-on agent.any.thinking.any.complete (payload) {  // Complex global wildcard
+on agent.any.thinking.any.complete (payload) 
+{  // Complex global wildcard
     print("Agent thinking complete: " + payload.thought);
 }
 
 // Ultra-flexible wildcards for maximum event coverage
-on any.any.critical (payload) {     // Catches ALL critical events system-wide
+on any.any.critical (payload) 
+{     // Catches ALL critical events system-wide
     print("CRITICAL EVENT: " + payload.message);
 }
 ```
@@ -151,9 +164,9 @@ await _eventBus.EmitAsync("realtime.session.started", new { sessionId = "abc123"
 ### **Critical Rules**
 - **Event Handlers**: CANNOT be called directly - only invoked via `emit` statements
 - **Event Handlers**: ALWAYS fire-and-forget - cannot return values, execute asynchronously
-- **Event Namespace Scoping**: Handlers register in class/global namespaces, events must target correct scope
+- **Event Namespace Scoping**: Handlers register in Global scope for maximum event reception and wildcard pattern matching
 - **ICxEventBus Integration**: Azure services and external systems use ICxEventBus interface for standardized event integration
-- **Multiple Event Bus Systems**: Runtime uses GlobalEventBus, NamespacedEventBusRegistry, EventBusServiceRegistry, and ICxEventBus depending on context
+- **Unified Event System**: Runtime uses UnifiedEventBus with Global scope strategy for production-ready event coordination
 - **Cognitive Methods**: Available on all classes automatically via inheritance
 - **Async Support**: `on async` syntax for real-time voice and AI processing
 - **Wildcard Pattern Matching**: `.any.` patterns work at ALL scopes (global, class, namespace) ✅
@@ -288,14 +301,16 @@ CX Language introduces a **Event-Driven Async Pattern** - eliminating traditiona
 #### **🎯 CRITICAL LANGUAGE RULE: Async Functions Return No Values**
 ```cx
 // ❌ OLD WAY: Complex await patterns with blocking and return values
-async function processData(input) {
+async function processData(input) 
+{
     var result = await this.Think(input);    // Blocking operation
     var learned = await this.Learn(result);  // Sequential blocking
     return { result, learned };              // Return values create complexity
 }
 
 // ✅ NEW WAY: Pure fire-and-forget with event bus coordination
-function processData(input) {
+function processData(input) 
+{
     // All async operations fire-and-forget - no return values, no blocking
     this.Think(input);     // Fires cognitive processing, results via events
     this.Learn(input);     // Fires learning process, results via events
@@ -306,12 +321,14 @@ function processData(input) {
 }
 
 // Results flow through event system
-on ai.thought.complete (payload) {
+on ai.thought.complete (payload) 
+{
     print("Thinking complete: " + payload.result);
     // Continue processing based on thought results...
 }
 
-on ai.learning.complete (payload) {
+on ai.learning.complete (payload) 
+{
     print("Learning complete: " + payload.documentId);
     // Update UI or trigger next steps...
 }
@@ -402,14 +419,16 @@ var myAgent = new EventAgent(); // ← Automatically registered as agent
 #### **🎯 CRITICAL LANGUAGE RULE: Async Functions Return No Values**
 ```cx
 // ❌ OLD WAY: Complex await patterns with blocking and return values
-async function processData(input) {
+async function processData(input) 
+{
     var result = await this.Think(input);    // Blocking operation
     var learned = await this.Learn(result);  // Sequential blocking
     return { result, learned };              // Return values create complexity
 }
 
 // ✅ NEW WAY: Pure fire-and-forget with event bus coordination
-function processData(input) {
+function processData(input) 
+{
     // All async operations fire-and-forget - no return values, no blocking
     this.Think(input);     // Fires cognitive processing, results via events
     this.Learn(input);     // Fires learning process, results via events
@@ -420,12 +439,14 @@ function processData(input) {
 }
 
 // Results flow through event system
-on ai.thought.complete (payload) {
+on ai.thought.complete (payload) 
+{
     print("Thinking complete: " + payload.result);
     // Continue processing based on thought results...
 }
 
-on ai.learning.complete (payload) {
+on ai.learning.complete (payload) 
+{
     print("Learning complete: " + payload.documentId);
     // Update UI or trigger next steps...
 }
@@ -517,7 +538,7 @@ class MyAgent
 ```powershell
 # Build and test
 dotnet build CxLanguage.sln
-dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/aura_presence_working_demo.cx
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/core_features/event_bus_namespace_demo.cx
 
 # GitHub workflow
 gh auth switch --user ahebert-lt
@@ -526,7 +547,7 @@ gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 
 ### **CLI Features**
 - **Interactive Mode**: Supports "Press any key to exit" for event-driven programs that wait for background events
-- **Event System**: Full event emission and handler registration with namespace isolation
+- **Event System**: Full event emission and handler registration with Global scope and wildcard matching
 - **Real-time Processing**: Background event processing with user-controlled termination
 
 ### **Azure OpenAI Setup**
@@ -591,6 +612,8 @@ The CX language implements a **Unified Event Bus System** that consolidates all 
 - **🔥 `examples/core_features/all_scopes_wildcard_test.cx`** → Comprehensive wildcard event system across ALL scopes ✅
 - **🎯 `examples/core_features/pattern_matching_test.cx`** → Wildcard pattern matching verification ✅
 - **🌍 `examples/core_features/namespace_wildcard_demo.cx`** → Complex multi-agent wildcard communication ✅
+- **🚀 `examples/core_features/event_bus_namespace_demo.cx`** → **CONCLUSIVE EVIDENCE**: Multiple agents responding to same events ✅
+- **🤖 `examples/core_features/agent_execution_learning_demo.cx`** → Agents executing commands, learning, and revealing knowledge
 
 ### **Examples Organization**
 - **`examples/production/`** - Production-ready applications demonstrating complete functionality
