@@ -1,0 +1,356 @@
+// ✅ CX Language - Advanced Execute Method Demonstration
+// Showcases current this.Execute capabilities and optimization opportunities
+
+print("🚀 ADVANCED EXECUTE METHOD DEMONSTRATION");
+
+// Advanced system analysis agent with comprehensive command execution
+class AdvancedSystemAgent 
+{
+    name: string;
+    instanceId: string;
+    commandCount: number;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.instanceId = "agent-" + Math.random();
+        this.commandCount = 0;
+        print("🤖 Advanced agent created: " + this.name + " (ID: " + this.instanceId + ")");
+    }
+    
+    function performSystemAnalysis()
+    {
+        print("🔍 " + this.name + " starting comprehensive system analysis...");
+        
+        // Current implementation: Individual command execution
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-ComputerInfo | Select-Object WindowsProductName, TotalPhysicalMemory, CsProcessors, WindowsVersion");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-Process | Where-Object {$_.WorkingSet -gt 100MB} | Select-Object Name, WorkingSet, CPU, Id | Sort-Object WorkingSet -Descending | Select-Object -First 10");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-Service | Where-Object Status -eq 'Running' | Select-Object Name, Status, StartType | Sort-Object Name");
+        
+        print("💻 System analysis initiated - " + this.commandCount + " commands dispatched");
+    }
+    
+    function performNetworkAnalysis()
+    {
+        print("🌐 " + this.name + " performing network diagnostics...");
+        
+        // Network connectivity tests
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Test-Connection -ComputerName google.com -Count 2 -Quiet");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Speed, LinkSpeed");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-NetTCPConnection | Where-Object State -eq 'Established' | Select-Object LocalAddress, LocalPort, RemoteAddress, RemotePort | Select-Object -First 20");
+        
+        print("🔗 Network analysis initiated - " + this.commandCount + " total commands");
+    }
+    
+    function performSecurityAudit()
+    {
+        print("🛡️ " + this.name + " conducting security audit...");
+        
+        // Security-focused commands
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-MpComputerStatus | Select-Object AntivirusEnabled, RealTimeProtectionEnabled, IoavProtectionEnabled, NISEnabled");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-NetFirewallProfile | Select-Object Name, Enabled, DefaultInboundAction, DefaultOutboundAction");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-LocalUser | Select-Object Name, Enabled, LastLogon, PasswordRequired | Sort-Object Name");
+        
+        print("🔒 Security audit initiated - " + this.commandCount + " total commands");
+    }
+    
+    function performStorageAnalysis()
+    {
+        print("💾 " + this.name + " analyzing storage systems...");
+        
+        // Storage and disk analysis
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-WmiObject -Class Win32_LogicalDisk | Select-Object DeviceID, FileSystem, Size, FreeSpace");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-Volume | Select-Object DriveLetter, FileSystem, FileSystemLabel, Size, SizeRemaining, HealthStatus | Sort-Object DriveLetter");
+        
+        this.commandCount = this.commandCount + 1;
+        this.Execute("Get-PhysicalDisk | Select-Object DeviceId, MediaType, Size, HealthStatus, OperationalStatus | Sort-Object DeviceId");
+        
+        print("🗄️ Storage analysis initiated - " + this.commandCount + " total commands");
+    }
+    
+    // Comprehensive event handler with detailed result processing
+    on command.executed (payload)
+    {
+        if (payload.agent != this.name) return; // Filter to this agent's commands only
+        
+        print("✅ Command completed successfully:");
+        print("   Agent: " + payload.agent);
+        print("   Command: " + payload.command.substring(0, 60) + "...");
+        print("   Success: " + payload.success);
+        print("   Results: " + payload.outputs.length + " items");
+        print("   Execution Time: " + payload.executionTime);
+        print("   Exit Code: " + payload.exitCode);
+        
+        // Process different types of results
+        if (payload.command.indexOf("Get-ComputerInfo") >= 0)
+        {
+            print("💻 System Information Retrieved:");
+            var i = 0;
+            while (i < payload.outputs.length)
+            {
+                print("   " + payload.outputs[i].value);
+                i = i + 1;
+            }
+            
+            // Learn from computer info
+            this.Learn({
+                type: "system_info",
+                data: payload.outputs,
+                agent: this.name,
+                timestamp: payload.executionTime,
+                context: "comprehensive_system_analysis"
+            });
+        }
+        else if (payload.command.indexOf("Get-Process") >= 0)
+        {
+            print("⚡ High Memory Processes:");
+            var i = 0;
+            while (i < payload.outputs.length && i < 5)
+            {
+                print("   " + payload.outputs[i].value);
+                i = i + 1;
+            }
+            
+            // Learn from process info
+            this.Learn({
+                type: "process_analysis",
+                data: payload.outputs,
+                agent: this.name,
+                timestamp: payload.executionTime,
+                context: "performance_monitoring"
+            });
+        }
+        else if (payload.command.indexOf("Get-Service") >= 0)
+        {
+            print("🔧 Running Services: " + payload.outputs.length + " services active");
+            
+            // Learn service status
+            this.Learn({
+                type: "service_status",
+                data: payload.outputs,
+                agent: this.name,
+                timestamp: payload.executionTime,
+                context: "system_services_analysis"
+            });
+        }
+        else if (payload.command.indexOf("Test-Connection") >= 0)
+        {
+            print("🌐 Network Connectivity: Connected");
+            
+            // Learn network status
+            this.Learn({
+                type: "network_connectivity",
+                data: payload.outputs,
+                agent: this.name,
+                timestamp: payload.executionTime,
+                context: "network_diagnostics"
+            });
+        }
+        else if (payload.command.indexOf("Get-NetAdapter") >= 0)
+        {
+            print("🔌 Network Adapters: " + payload.outputs.length + " adapters found");
+            
+            // Learn adapter info
+            this.Learn({
+                type: "network_adapters",
+                data: payload.outputs,
+                agent: this.name,
+                timestamp: payload.executionTime,
+                context: "network_hardware_analysis"
+            });
+        }
+        else if (payload.command.indexOf("Get-MpComputerStatus") >= 0)
+        {
+            print("🛡️ Security Status retrieved");
+            
+            // Learn security posture
+            this.Learn({
+                type: "security_status",
+                data: payload.outputs,
+                agent: this.name,
+                timestamp: payload.executionTime,
+                context: "security_audit"
+            });
+        }
+        else if (payload.command.indexOf("Get-WmiObject") >= 0 && payload.command.indexOf("Win32_LogicalDisk") >= 0)
+        {
+            print("💾 Disk Usage Information:");
+            var i = 0;
+            while (i < payload.outputs.length)
+            {
+                print("   " + payload.outputs[i].value);
+                i = i + 1;
+            }
+            
+            // Learn storage status
+            this.Learn({
+                type: "storage_analysis",
+                data: payload.outputs,
+                agent: this.name,
+                timestamp: payload.executionTime,
+                context: "storage_capacity_monitoring"
+            });
+        }
+        
+        // Think about the results and generate insights
+        this.Think("Analyze the command results for insights");
+    }
+    
+    // Error handling for failed commands
+    on command.error (payload)
+    {
+        if (payload.agent != this.name) return; // Filter to this agent's commands only
+        
+        print("❌ Command execution failed:");
+        print("   Agent: " + payload.agent);
+        print("   Command: " + payload.command);
+        print("   Error Count: " + payload.errors.length);
+        print("   Exit Code: " + payload.exitCode);
+        
+        var i = 0;
+        while (i < payload.errors.length)
+        {
+            print("   Error " + (i + 1) + ": " + payload.errors[i].message);
+            print("   Category: " + payload.errors[i].category);
+            print("   Line: " + payload.errors[i].line);
+            i = i + 1;
+        }
+        
+        // Learn from errors
+        this.Learn({
+            type: "command_error",
+            data: payload,
+            agent: this.name,
+            timestamp: payload.executionTime,
+            context: "error_analysis_and_recovery"
+        });
+        
+        // Think about the error and potential solutions
+        this.Think("Command failed with error. Suggest alternative approaches.");
+    }
+}
+
+// Demonstration of optimization opportunities
+class OptimizedSystemAgent
+{
+    name: string;
+    batchSize: number;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.batchSize = 0;
+        print("⚡ Optimized agent created: " + this.name);
+    }
+    
+    // Example of potential batch execution optimization
+    function performBatchAnalysis()
+    {
+        print("🔄 " + this.name + " demonstrating batch execution concept...");
+        
+        // Current: Multiple individual commands
+        // Future optimization: Single batch execution
+        var commands = [
+            "Get-ComputerInfo | Select-Object WindowsProductName, TotalPhysicalMemory",
+            "Get-Process | Select-Object Name, WorkingSet | Sort-Object WorkingSet -Descending | Select-Object -First 5",
+            "Get-Service | Where-Object Status -eq 'Running' | Select-Object Name, Status | Sort-Object Name | Select-Object -First 10"
+        ];
+        
+        print("📦 Batch would contain " + commands.length + " commands");
+        print("🎯 Current implementation: executing individually...");
+        
+        // Execute individually (current approach)
+        var i = 0;
+        while (i < commands.length)
+        {
+            this.Execute(commands[i]);
+            i = i + 1;
+        }
+        
+        this.batchSize = commands.length;
+        print("✅ Individual command execution initiated for " + this.batchSize + " commands");
+    }
+    
+    on command.executed (payload)
+    {
+        if (payload.agent != this.name) return;
+        
+        print("⚡ Batch command result received:");
+        print("   Results: " + payload.outputs.length + " items");
+        var efficient = "No";
+        if (payload.outputs.length > 0) 
+        {
+            efficient = "Yes";
+        }
+        print("   Execution efficient: " + efficient);
+        
+        // Potential optimization tracking
+        this.Learn({
+            type: "batch_execution_result",
+            data: payload.outputs,
+            agent: this.name,
+            optimization_opportunity: "batch_processing",
+            timestamp: payload.executionTime,
+            context: "performance_optimization_analysis"
+        });
+    }
+}
+
+// Create and demonstrate agents
+var advancedAgent = new AdvancedSystemAgent("SystemAnalyzer-Pro");
+var optimizedAgent = new OptimizedSystemAgent("BatchProcessor-Alpha");
+
+print("\n🎬 DEMONSTRATION STARTING...\n");
+
+// Comprehensive system analysis
+advancedAgent.performSystemAnalysis();
+advancedAgent.performNetworkAnalysis();
+advancedAgent.performSecurityAudit();
+advancedAgent.performStorageAnalysis();
+
+print("\n🔬 OPTIMIZATION DEMONSTRATION...\n");
+
+// Batch processing demonstration
+optimizedAgent.performBatchAnalysis();
+
+print("\n📊 PERFORMANCE COMPARISON:");
+print("Advanced Agent: Individual command execution (current approach)");
+print("Optimized Agent: Demonstrates batch potential (future optimization)");
+
+print("\n💡 OPTIMIZATION OPPORTUNITIES DEMONSTRATED:");
+print("1. ✅ Current: Fire-and-forget individual command execution");
+print("2. 🚀 Future: Batch command execution for related operations");
+print("3. 📈 Future: Command result caching for repeated queries");
+print("4. 🛡️ Future: Security validation and sandboxing");
+print("5. 🔄 Future: Retry logic with circuit breaker pattern");
+print("6. 📦 Future: Payload compression for large result sets");
+
+print("\n🎯 CURRENT CAPABILITIES:");
+print("✅ Fire-and-forget execution with Task.Run");
+print("✅ Comprehensive error handling and logging");
+print("✅ Event-driven result delivery");
+print("✅ 30-second timeout protection");
+print("✅ CX object conversion for results");
+print("✅ Agent-based learning from execution results");
+print("✅ PowerShell command execution with full capabilities");
+
+print("\n🚀 READY FOR OPTIMIZATION IMPLEMENTATION!");
+print("See docs/SERVICE_ARCHITECTURE_OPTIMIZATION.md for detailed roadmap");
