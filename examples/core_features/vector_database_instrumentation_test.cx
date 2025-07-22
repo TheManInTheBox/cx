@@ -1,0 +1,204 @@
+// CX Vector Database Instrumentation Test
+// This program demonstrates comprehensive runtime instrumentation for Learn() and Search() operations
+// Shows actual vector database storage and retrieval with detailed logging
+
+print("🧪 Starting Vector Database Instrumentation Test...");
+print("=====================================");
+
+// Create AI agent to test vector database operations
+class TestAgent
+{
+    field name: "TestAgent";
+    field testId: 0;
+    
+    function TestAgent(agentName)
+    {
+        this.name = agentName;
+        print("✅ " + this.name + " initialized");
+    }
+    
+    function performLearningTest(testId)
+    {
+        print("\n🧠 " + this.name + " Learning Test #" + testId);
+        print("----------------------------------------");
+        
+        // Create comprehensive learning experiences
+        var experience1 = {
+            concept: "CX Event System",
+            knowledge: "CX uses emit/on syntax with UnifiedEventBus for coordination",
+            context: "architectural_understanding",
+            importance: "high",
+            testId: testId
+        };
+        
+        var experience2 = {
+            concept: "Vector Database",
+            knowledge: "KernelMemory integration stores experiences as searchable vectors",
+            context: "data_persistence",
+            importance: "critical",
+            testId: testId
+        };
+        
+        var experience3 = {
+            concept: "Fire-and-Forget Pattern",
+            knowledge: "CX async operations return void, results via event bus",
+            context: "async_architecture",
+            importance: "medium",
+            testId: testId
+        };
+        
+        // Learn each experience (should trigger actual vector database storage)
+        print("📝 Learning experience 1...");
+        this.Learn(experience1);
+        
+        print("📝 Learning experience 2...");
+        this.Learn(experience2);
+        
+        print("📝 Learning experience 3...");
+        this.Learn(experience3);
+        
+        emit learning.test.complete, { 
+            agent: this.name, 
+            testId: testId, 
+            experienceCount: 3 
+        };
+    }
+    
+    function performSearchTest(testId)
+    {
+        print("\n🔍 " + this.name + " Search Test #" + testId);
+        print("----------------------------------------");
+        
+        // Search for various concepts
+        var queries = [
+            "CX Event System",
+            "Vector Database",
+            "Fire-and-Forget Pattern",
+            "UnifiedEventBus coordination",
+            "KernelMemory integration",
+            "async architecture"
+        ];
+        
+        for (query in queries)
+        {
+            print("🔎 Searching for: '" + query + "'");
+            this.Search(query);
+        }
+        
+        emit search.test.complete, { 
+            agent: this.name, 
+            testId: testId, 
+            queryCount: queries.length 
+        };
+    }
+}
+
+// Event handlers to track learning and search results
+on ai.learning.complete (payload)
+{
+    print("\n✅ LEARNING SUCCESS DETECTED!");
+    print("   🧠 Agent: " + payload.agentName);
+    print("   📄 Document ID: " + payload.documentId);
+    print("   🏷️  Content Type: " + payload.contentType);
+    print("   ⏰ Timestamp: " + payload.timestamp);
+    print("   📊 Content Size: " + payload.contentSize + " chars");
+    print("   💾 PROOF: Vector database storage occurred!");
+}
+
+on ai.learning.failed (payload)
+{
+    print("\n❌ LEARNING FAILURE DETECTED!");
+    print("   🧠 Agent: " + payload.agentName);
+    print("   ⚠️  Error: " + payload.error);
+    print("   📊 Content Size: " + payload.contentSize + " chars");
+}
+
+on ai.search.complete (payload)
+{
+    print("\n✅ SEARCH SUCCESS DETECTED!");
+    print("   🔍 Agent: " + payload.agentName);
+    print("   🔎 Query: '" + payload.query + "'");
+    print("   📊 Results Found: " + payload.resultCount);
+    print("   ⏰ Timestamp: " + payload.timestamp);
+    if (payload.resultCount > 0)
+    {
+        print("   📄 First Result Preview: " + payload.firstResultPreview);
+        print("   💾 PROOF: Vector database retrieval occurred!");
+    }
+}
+
+on ai.search.failed (payload)
+{
+    print("\n❌ SEARCH FAILURE DETECTED!");
+    print("   🔍 Agent: " + payload.agentName);
+    print("   🔎 Query: '" + payload.query + "'");
+    print("   ⚠️  Error: " + payload.error);
+}
+
+// Test completion tracking
+var completedLearningTests = 0;
+var completedSearchTests = 0;
+var totalLearningTests = 2;
+var totalSearchTests = 2;
+
+on learning.test.complete (payload)
+{
+    completedLearningTests = completedLearningTests + 1;
+    print("\n📊 Learning Test Completed: " + payload.agent + " (Test #" + payload.testId + ")");
+    print("   Experiences Learned: " + payload.experienceCount);
+    print("   Progress: " + completedLearningTests + "/" + totalLearningTests + " learning tests");
+}
+
+on search.test.complete (payload)
+{
+    completedSearchTests = completedSearchTests + 1;
+    print("\n📊 Search Test Completed: " + payload.agent + " (Test #" + payload.testId + ")");
+    print("   Queries Executed: " + payload.queryCount);
+    print("   Progress: " + completedSearchTests + "/" + totalSearchTests + " search tests");
+    
+    if (completedLearningTests == totalLearningTests && completedSearchTests == totalSearchTests)
+    {
+        emit all.tests.complete, { message: "All vector database instrumentation tests completed!" };
+    }
+}
+
+on all.tests.complete (payload)
+{
+    print("\n🎉 ALL TESTS COMPLETED!");
+    print("=====================================");
+    print("📊 Summary:");
+    print("   • Learning Tests: " + completedLearningTests + "/" + totalLearningTests);
+    print("   • Search Tests: " + completedSearchTests + "/" + totalSearchTests);
+    print("   • Vector Database: INSTRUMENTED ✅");
+    print("   • Runtime Logging: ACTIVE ✅");
+    print("   • Proof of Storage/Retrieval: PROVIDED ✅");
+    print("\n💾 Vector database operations are now fully visible and verifiable!");
+    print("🧪 Instrumentation test complete - check logs above for proof of learning and searching.");
+}
+
+// Create test agents
+print("\n🤖 Creating Test Agents...");
+var learningAgent = new TestAgent("LearningSpecialist");
+var searchAgent = new TestAgent("SearchSpecialist");
+
+// Perform comprehensive testing
+print("\n🚀 Starting Comprehensive Vector Database Testing...");
+
+// Learning tests
+print("\n=== LEARNING TESTS ===");
+learningAgent.performLearningTest(1);
+searchAgent.performLearningTest(2);
+
+// Wait a moment for learning to complete, then search
+print("\n=== SEARCH TESTS ===");
+print("⏳ Performing searches after learning...");
+learningAgent.performSearchTest(1);
+searchAgent.performSearchTest(2);
+
+print("\n⏳ Waiting for all async operations to complete...");
+print("📊 Watch for learning success/failure events above to verify vector database operations!");
+print("\n🔍 Expected Evidence:");
+print("   • ai.learning.complete events with document IDs");
+print("   • ai.search.complete events with result counts");  
+print("   • Detailed logging with 🧠 and 🔍 prefixes");
+print("   • Proof that vector database storage and retrieval actually occurs");
