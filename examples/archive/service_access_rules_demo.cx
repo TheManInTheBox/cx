@@ -1,0 +1,86 @@
+// CX Language - Service Access Rules Demo
+// Shows the difference between global vs class-based service access
+
+print("🔍 CX Service Access Rules Demonstration");
+print("=======================================");
+
+// 🌍 GLOBAL/PROCEDURAL SCOPE - uses keyword allowed
+uses textGen from Cx.AI.TextGeneration;
+uses tts from Cx.AI.TextToSpeech;
+
+// Global function can use services directly
+async function globalAIFunction(input)
+{
+    print("🌍 Global scope function executing...");
+    
+    // ✅ VALID: Direct service access in global scope
+    var response = await textGen.GenerateAsync("Process: " + input);
+    await tts.SpeakAsync("Global response: " + response);
+    
+    return response;
+}
+
+// 🏗️ CLASS SCOPE - uses keyword ILLEGAL, must use inheritance
+class ValidAgent
+{
+    // ❌ ILLEGAL: Cannot use 'uses' inside classes!
+    // uses textGen from Cx.AI.TextGeneration;  // ← Would cause compiler error
+    
+    // ✅ VALID: Current working syntax (until inheritance is complete)
+    async function processWithCurrentSyntax(input)
+    {
+        print("🏗️ Class method with current syntax...");
+        
+        // Current working approach - services injected by compiler
+        var response = await this.textGen.GenerateAsync("Class process: " + input);
+        await this.tts.SpeakAsync("Class response: " + response);
+        
+        return response;
+    }
+}
+
+// 🎯 FUTURE: Inheritance-based service access
+class FutureAgent : AiServiceBase, ITextGeneration, ITextToSpeech
+{
+    async function processWithFutureSyntax(input)
+    {
+        print("🎯 Future class method with inheritance...");
+        
+        // Future syntax - services accessible via self.MethodName()
+        var response = await self.GenerateAsync("Future process: " + input);
+        await self.SpeakAsync("Future response: " + response);
+        
+        return response;
+    }
+}
+
+try
+{
+    print("\n📋 Testing Service Access Patterns:");
+    print("-----------------------------------");
+    
+    // Test 1: Global function
+    print("🧪 Test 1: Global function with uses keyword");
+    var globalResult = await globalAIFunction("Hello from global scope");
+    print("✅ Global test passed: " + globalResult);
+    
+    // Test 2: Current class syntax
+    print("\n🧪 Test 2: Class method with current syntax");
+    var agent = new ValidAgent();
+    var classResult = await agent.processWithCurrentSyntax("Hello from class scope");
+    print("✅ Class test passed: " + classResult);
+    
+    // Test 3: Future inheritance syntax (when ready)
+    print("\n🧪 Test 3: Future inheritance syntax");
+    print("⏳ Future syntax not yet implemented in compiler");
+    
+    print("\n🎉 SERVICE ACCESS RULES DEMONSTRATION COMPLETE!");
+    print("📝 Key Points:");
+    print("   • Global scope: Use 'uses' keyword");
+    print("   • Class scope: Use inheritance (NO uses keyword)");
+    print("   • Future: self.MethodName() for inherited services");
+}
+catch (error)
+{
+    print("❌ Demo failed: " + error.message);
+}

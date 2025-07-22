@@ -1,0 +1,32 @@
+print("🚀 CX Pragmatic Sync-First Model");
+
+class SimpleCognitive
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("🤖 Agent " + this.name + " created");
+    }
+    
+    function processThought(input)
+    {
+        print("🧠 Processing: " + input);
+        
+        // Use sync version - need result immediately  
+        var thought = this.Think(input);
+        
+        print("💭 Thought result: " + thought);
+        
+        // Fire-and-forget learning - use async version
+        this.LearnAsync(input + " -> " + thought);
+        print("📚 Learning queued in background");
+        
+        return thought;
+    }
+}
+
+var agent = new SimpleCognitive("SyncFirst");
+var result = agent.processThought("Hello world");
+print("✅ Final result: " + result);

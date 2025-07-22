@@ -1,0 +1,251 @@
+// Agent Command Execution Demo - CX Language
+// Demonstrates the new this.Execute method for PowerShell command execution
+
+class SystemAgent 
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("🤖 Created system agent: " + this.name);
+    }
+    
+    function getSystemInfo()
+    {
+        print("🔍 " + this.name + " gathering system information...");
+        
+        // Fire-and-forget command execution - results will come via events
+        this.Execute("Get-ComputerInfo | Select-Object WindowsProductName, TotalPhysicalMemory, CsProcessors");
+        this.Execute("Get-Process | Where-Object {$_.WorkingSet -gt 100MB} | Select-Object Name, WorkingSet -First 5");
+        
+        print("💻 System info commands initiated - results will arrive via events");
+    }
+    
+    function manageFiles(directory)
+    {
+        print("📁 " + this.name + " managing files in: " + directory);
+        
+        // Fire-and-forget file operations - results will come via events
+        this.Execute("Get-ChildItem '" + directory + "' | Select-Object Name, Length, LastWriteTime -First 10");
+        this.Execute("(Get-ChildItem '" + directory + "' -Recurse | Measure-Object -Property Length -Sum).Sum");
+        
+        print("📂 File management commands initiated - results will arrive via events");
+    }
+    
+    function networkDiagnostics()
+    {
+        print("🌐 " + this.name + " running network diagnostics...");
+        
+        // Fire-and-forget network operations - results will come via events
+        this.Execute("Test-Connection -ComputerName google.com -Count 2");
+        this.Execute("Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, Speed");
+        
+        print("� Network diagnostic commands initiated - results will arrive via events");
+    }
+    
+    function createReport()
+    {
+        print("📋 " + this.name + " creating system report...");
+        
+        // Search for previous system analyses
+        var previousAnalyses = this.Search("system_analysis");
+        print("🔍 Found " + previousAnalyses.length + " previous system analyses");
+        
+        // Generate comprehensive report using AI
+        var reportPrompt = "Create a system analysis report based on the collected data";
+        var aiReport = this.Think(reportPrompt);
+        print("🧠 AI Generated Report: " + aiReport);
+        
+        // Store the complete report
+        this.Learn({
+            report: aiReport,
+            previous_analyses: previousAnalyses,
+            report_type: "comprehensive_system_report",
+            timestamp: Date.now()
+        });
+        
+        return aiReport;
+    }
+    
+    // Event handlers for command execution results
+    on command.executed (payload)
+    {
+        if (payload.command.includes("Get-ComputerInfo"))
+        {
+            print("💻 Computer Info: " + JSON.stringify(payload.outputs));
+            
+            // Learn computer info
+            this.Learn({
+                computer_info: payload,
+                context: "system_analysis",
+                timestamp: Date.now()
+            });
+        }
+        else if (payload.command.includes("Get-Process"))
+        {
+            print("⚡ Top Memory Processes: " + JSON.stringify(payload.outputs));
+            
+            // Learn process info
+            this.Learn({
+                process_info: payload,
+                context: "system_analysis", 
+                timestamp: Date.now()
+            });
+        }
+        else if (payload.command.includes("Get-ChildItem") && payload.command.includes("Select-Object"))
+        {
+            print("� Directory Contents: " + JSON.stringify(payload.outputs));
+            
+            // Learn directory contents
+            this.Learn({
+                directory_contents: payload,
+                action: "file_management",
+                timestamp: Date.now()
+            });
+        }
+        else if (payload.command.includes("Measure-Object"))
+        {
+            print("📊 Directory Size: " + JSON.stringify(payload.outputs));
+            
+            // Learn directory size
+            this.Learn({
+                directory_size: payload,
+                action: "file_management",
+                timestamp: Date.now()
+            });
+        }
+        else if (payload.command.includes("Test-Connection"))
+        {
+            print("🏓 Ping Test: " + JSON.stringify(payload.outputs));
+            
+            // Learn network connectivity
+            this.Learn({
+                ping_results: payload,
+                diagnostic_type: "network_analysis",
+                timestamp: Date.now()
+            });
+        }
+        else if (payload.command.includes("Get-NetAdapter"))
+        {
+            print("🔌 Network Adapters: " + JSON.stringify(payload.outputs));
+            
+            // Learn network adapters
+            this.Learn({
+                adapters: payload,
+                diagnostic_type: "network_analysis",
+                timestamp: Date.now()
+            });
+        }
+    }
+}
+
+class SecurityAgent
+{
+    name: string;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        print("🔒 Created security agent: " + this.name);
+    }
+    
+    function securityAudit()
+    {
+        print("🛡️ " + this.name + " performing security audit...");
+        
+        // Fire-and-forget security commands - results will come via events
+        this.Execute("Get-MpComputerStatus | Select-Object AntivirusEnabled, RealTimeProtectionEnabled, IoavProtectionEnabled");
+        this.Execute("Get-Service | Where-Object Status -eq 'Running' | Where-Object Name -like '*security*' | Select-Object Name, Status");
+        this.Execute("Get-NetFirewallProfile | Select-Object Name, Enabled");
+        
+        print("🔧 Security audit commands initiated - results will arrive via events");
+    }
+    
+    // Event handlers for security command execution results
+    on command.executed (payload)
+    {
+        if (payload.command.includes("Get-MpComputerStatus"))
+        {
+            print("�️ Windows Defender Status: " + JSON.stringify(payload.outputs));
+            
+            // Learn defender status
+            this.Learn({
+                defender: payload,
+                audit_type: "defender_status",
+                timestamp: Date.now()
+            });
+        }
+        else if (payload.command.includes("Get-Service") && payload.command.includes("security"))
+        {
+            print("🔧 Security Services: " + JSON.stringify(payload.outputs));
+            
+            // Learn service status
+            this.Learn({
+                services: payload,
+                audit_type: "security_services",
+                timestamp: Date.now()
+            });
+        }
+        else if (payload.command.includes("Get-NetFirewallProfile"))
+        {
+            print("🔥 Firewall Status: " + JSON.stringify(payload.outputs));
+            
+            // Learn firewall status
+            this.Learn({
+                firewall: payload,
+                audit_type: "firewall_status",
+                timestamp: Date.now()
+            });
+        }
+    }
+}
+
+print("🚀 Agent Command Execution Demo - CX Language");
+print("=============================================");
+print("");
+print("This demo showcases the new this.Execute() method");
+print("allowing agents to execute PowerShell commands.");
+print("");
+
+try
+{
+    // Create system monitoring agents
+    var systemAgent = new SystemAgent("SystemMonitor");
+    var securityAgent = new SecurityAgent("SecurityAuditor");
+    
+    print("🔬 Starting system analysis...");
+    print("");
+    
+    // System information gathering
+    systemAgent.getSystemInfo();
+    
+    print("");
+    print("📁 Analyzing file system...");
+    systemAgent.manageFiles("C:\\Windows\\System32");
+    
+    print("");
+    print("🌐 Running network diagnostics...");
+    systemAgent.networkDiagnostics();
+    
+    print("");
+    print("🔒 Performing security audit...");
+    securityAgent.securityAudit();
+    
+    print("");
+    print("📊 Generating comprehensive report...");
+    systemAgent.createReport();
+    
+    print("");
+    print("✅ Analysis Complete!");
+    print("System agents have successfully executed PowerShell commands");
+    print("and learned from the results for future operations.");
+}
+catch (error)
+{
+    print("❌ Error during agent execution: " + error.message);
+}
+
+print("");
+print("🎉 Agent Command Execution Demo Complete");
+print("Agents can now interact with the system using PowerShell!");

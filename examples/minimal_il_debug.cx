@@ -1,2 +1,0 @@
-// Minimal test case to debug IL compilation issue
-print("Hello World");
