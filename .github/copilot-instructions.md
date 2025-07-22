@@ -52,19 +52,40 @@ class MyAgent {
 emit user.message, { text: "hello" };
 emit system.shutdown, { reason: "maintenance" };
 
-// Wildcard event patterns for cross-namespace communication
+// Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
 on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
 on user.any.response (payload) { ... }             // Matches user.chat.response, user.voice.response, etc.
 on system.any.ready (payload) { ... }              // Matches system.audio.ready, system.network.ready, etc.
 on agent.any.thinking.any.complete (payload) { ... } // Complex wildcard pattern matching
+
+// Advanced wildcard patterns - ALL SCOPES SUPPORTED ✅
+on user.any.input (payload) { ... }                // Global wildcard - catches user.chat.input, user.voice.input, etc.
+on ai.any.response (payload) { ... }               // AI service wildcard - catches all AI responses
+on voice.any.command (payload) { ... }             // Voice command wildcard - universal command handler
+on any.any.critical (payload) { ... }              // Ultra-flexible wildcard - catches any critical events
+on any.any.any.complete (payload) { ... }          // Maximum flexibility - catches all completion events
+
+// Class-level wildcards work alongside global wildcards
+class ChatAgent {
+    on user.any.input (payload) {                  // Class-scoped wildcard handler
+        print("Chat agent received: " + payload.message);
+    }
+    
+    on voice.any.command (payload) {               // Multi-scope wildcard support
+        emit user.chat.message, { text: "Voice: " + payload.command };
+    }
+}
 ```
 
 ### **Event Namespace Scoping**
-**CRITICAL**: Event handlers are registered in **namespaced scopes**:
+**CRITICAL**: Event handlers are registered in **namespaced scopes** with full wildcard support:
 - **Class-level handlers**: Registered in the class namespace (e.g., `MyAgent.command.executed`)
 - **Global handlers**: Registered in the global namespace
 - **Instance events**: Events emitted from instance methods should target the instance's namespace
 - **Namespace isolation**: Handlers in one namespace cannot receive events from other namespaces
+- **Wildcard patterns**: Work at ALL scopes - global, class, and namespace isolation ✅
+- **Cross-scope wildcards**: `any.any.*` patterns provide maximum flexibility ✅
+- **Multi-level wildcards**: `agent.any.thinking.any.complete` for complex pattern matching ✅
 
 ```cx
 class MyAgent {
@@ -72,14 +93,32 @@ class MyAgent {
         print("Command completed in MyAgent");
     }
     
+    // Advanced wildcard handlers in class scope
+    on user.any.input (payload) {   // Class-scoped wildcard - catches all user inputs
+        print("MyAgent received user input: " + payload.message);
+    }
+    
+    on ai.any.response (payload) {  // Class-scoped AI wildcard
+        print("MyAgent processing AI response: " + payload.response);
+    }
+    
     function runCommand() {
         this.Execute("some command");  // Emits to MyAgent namespace scope
     }
 }
 
-// Global scope handler
-on system.ready (payload) {  // Registered in global namespace scope
-    print("System ready globally");
+// Global scope wildcard handlers
+on system.any.ready (payload) {  // Registered in global namespace scope
+    print("System ready globally: " + payload.component);
+}
+
+on agent.any.thinking.any.complete (payload) {  // Complex global wildcard
+    print("Agent thinking complete: " + payload.thought);
+}
+
+// Ultra-flexible wildcards for maximum event coverage
+on any.any.critical (payload) {     // Catches ALL critical events system-wide
+    print("CRITICAL EVENT: " + payload.message);
 }
 ```
 
@@ -117,6 +156,11 @@ await _eventBus.EmitAsync("realtime.session.started", new { sessionId = "abc123"
 - **Multiple Event Bus Systems**: Runtime uses GlobalEventBus, NamespacedEventBusRegistry, EventBusServiceRegistry, and ICxEventBus depending on context
 - **Cognitive Methods**: Available on all classes automatically via inheritance
 - **Async Support**: `on async` syntax for real-time voice and AI processing
+- **Wildcard Pattern Matching**: `.any.` patterns work at ALL scopes (global, class, namespace) ✅
+- **Cross-Scope Wildcards**: Events can span multiple namespaces with flexible patterns ✅
+- **Ultra-Flexible Patterns**: `any.any.*` wildcards provide maximum event coverage ✅
+- **Multi-Level Wildcards**: Complex patterns like `agent.any.thinking.any.complete` fully supported ✅
+- **Production Ready**: Complete wildcard system with three-pass compilation and async processing ✅
 
 ### **Agent Creation Patterns**
 ```cx
@@ -544,6 +588,9 @@ The CX language implements a **Unified Event Bus System** that consolidates all 
 - **🎪 `examples/production/amazing_debate_demo_working.cx`** → Multi-Agent AI Coordination with vector memory
 - **⚡ `examples/core_features/unified_eventbus_test.cx`** → Unified Event Bus system verification
 - **🌟 `examples/production/aura_presence_working_demo.cx`** → Always-On Conversational Intelligence with Animal personality
+- **🔥 `examples/core_features/all_scopes_wildcard_test.cx`** → Comprehensive wildcard event system across ALL scopes ✅
+- **🎯 `examples/core_features/pattern_matching_test.cx`** → Wildcard pattern matching verification ✅
+- **🌍 `examples/core_features/namespace_wildcard_demo.cx`** → Complex multi-agent wildcard communication ✅
 
 ### **Examples Organization**
 - **`examples/production/`** - Production-ready applications demonstrating complete functionality
