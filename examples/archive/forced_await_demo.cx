@@ -1,0 +1,132 @@
+// CX Language - Correct Dual Async Pattern Demo
+// Revolutionary demonstration: Proper dual async semantics
+// - Direct calls (this.Learn()) return Task<T> immediately - non-blocking  
+// - Await calls (await this.Learn()) block and return T - traditional async
+
+print("🎯 CX Correct Dual Async Pattern Demo");
+print("✨ Demonstrating proper Task-based and blocking patterns");
+
+// =============================================================================
+// DUAL ASYNC PATTERN DEMONSTRATION
+// =============================================================================
+
+class CognitiveAgent
+{
+    name: string;
+    taskCount: number;
+    
+    constructor(agentName)
+    {
+        this.name = agentName;
+        this.taskCount = 0;
+        print("🤖 Agent " + this.name + " initialized");
+    }
+    
+    // Pattern 1: Task-based processing (direct calls return Tasks)
+    function taskBasedProcessing(data)
+    {
+        print("📡 " + this.name + " starting task-based processing: " + data);
+        
+        // Direct calls return Task objects immediately - non-blocking
+        var learnTask = this.Learn("task_data_" + this.name + "_" + data);
+        print("🚀 " + this.name + " LEARN TASK STARTED (Task object returned)");
+        
+        var thinkTask = this.Think("task_analysis_" + this.name + "_" + data);  
+        print("💭 " + this.name + " THINK TASK STARTED (Task object returned)");
+        
+        this.taskCount = this.taskCount + 1;
+        print("📊 " + this.name + " tasks initiated: " + this.taskCount);
+        
+        // Tasks are running in background - can do other work here
+        print("🔄 " + this.name + " doing other work while tasks run...");
+        
+        // When we access the task results, it forces an await (auto-blocking)
+        print("⏳ " + this.name + " now accessing task results - this will force await...");
+        var learnResult = await learnTask;  // Forced await - blocks until completion
+        var thinkResult = await thinkTask;  // Forced await - blocks until completion
+        
+        print("✅ " + this.name + " all tasks completed via forced await!");
+        return "tasks_completed_with_results";
+    }
+    
+    // Pattern 2: Traditional blocking (await calls block until complete)
+    async function blockingProcessing(data)
+    {
+        print("🧠 " + this.name + " starting blocking processing: " + data);
+        
+        // Await calls block and return results directly
+        var learnResult = await this.Learn("blocking_data_" + this.name + "_" + data);
+        print("✅ " + this.name + " LEARN BLOCKING COMPLETE");
+        
+        var thinkResult = await this.Think("blocking_analysis_" + this.name + "_" + data);
+        print("💡 " + this.name + " THINK BLOCKING COMPLETE");
+        
+        return "blocking_complete";
+    }
+    
+    // Mixed pattern: Start tasks, do work, then await results
+    async function mixedProcessing(data)
+    {
+        print("⚡ " + this.name + " starting mixed processing: " + data);
+        
+        // Start tasks in parallel (non-blocking)
+        var learnTask = this.Learn("mixed_learn_" + data);
+        var searchTask = this.Search("mixed_search_" + data);
+        
+        print("🔄 " + this.name + " tasks running in background while doing local work...");
+        
+        // Do some local processing while tasks run
+        var localWork = "processed_locally_" + data;
+        print("🛠️ " + this.name + " local work complete: " + localWork);
+        
+        // Now await the background tasks when we need results
+        var learnResult = await learnTask;
+        var searchResult = await searchTask;
+        
+        print("🎯 " + this.name + " all processing complete!");
+        return "mixed_complete";
+    }
+}
+
+// =============================================================================
+// DEMONSTRATION EXECUTION
+// =============================================================================
+
+print("\n🚀 Starting Dual Async Pattern Demonstration");
+
+// Create agent
+print("\n📋 Phase 1: Creating Cognitive Agent");
+var agent = new CognitiveAgent("DualAsync");
+
+// Demonstrate Task-based pattern
+print("\n📡 Phase 2: Task-Based Processing (Direct Calls + Forced Await)");
+var taskResult = agent.taskBasedProcessing("dataset_1");
+print("🎯 Task result: " + taskResult);
+print("💡 Key insight: Tasks ran in background, then forced await when accessing results");
+
+// Demonstrate blocking pattern
+print("\n🧠 Phase 3: Blocking Processing (Await Calls)");
+var blockingResult = agent.blockingProcessing("dataset_2");
+print("✅ Blocking result: " + blockingResult);
+
+// Demonstrate mixed pattern
+print("\n⚡ Phase 4: Mixed Processing (Tasks + Local Work + Await)");
+var mixedResult = agent.mixedProcessing("dataset_3");
+print("🎊 Mixed result: " + mixedResult);
+
+// Show task awaiting concept
+print("\n🔍 Phase 5: Forced Await Concept");
+print("🎯 Key Pattern: Direct calls return Task<T>, accessing results forces await");
+print("📋 var task = this.Learn(data);     // Returns Task<T> immediately");
+print("📋 var result = await task;         // Forced await - blocks until complete");
+print("📋 // OR access .Result property:   // Auto-blocks until completion");
+print("⚡ This gives maximum flexibility: start tasks, do work, then get results when needed");
+
+print("\n🎉 DUAL ASYNC PATTERN DEMONSTRATION COMPLETE!");
+print("🎯 Key Pattern Summary:");
+print("   📡 Direct calls: Return Task<T> immediately - non-blocking");
+print("   🧠 Await calls: Block and return T - traditional async");  
+print("   ⚡ Mixed: Start tasks, do work, await when needed");
+print("   🔄 Flexibility: Choose the right pattern for your use case");
+print("   ⚡ Forced await: Accessing results auto-blocks until completion");
+print("🚀 World's first dual async programming language!");

@@ -1,0 +1,139 @@
+// CX Language - Realtime-First Design Demo
+// Shows how classes default to realtime cognitive capabilities
+
+print("🧠 CX Realtime-First Cognitive Architecture Demo");
+print("===============================================");
+
+// 🌍 GLOBAL SCOPE - Use 'uses' for any services needed
+uses textGen from Cx.AI.TextGeneration;
+
+async function globalRealtimeThinking(input)
+{
+    print("🌍 Global realtime thinking: " + input);
+    // Global functions use direct service access
+    var response = await textGen.GenerateAsync("Process in realtime: " + input);
+    return response;
+}
+
+// 🧠 DEFAULT CLASS - Gets realtime cognitive capabilities automatically
+class ThinkingAgent  // No interfaces needed - gets realtime by default!
+{
+    async function think(input)
+    {
+        print("🧠 Agent thinking in realtime: " + input);
+        
+        // ALL classes get these realtime cognitive methods by default:
+        // - self.ThinkAsync()     → Realtime cognitive processing
+        // - self.CommunicateAsync() → Realtime communication
+        // - self.ConnectAsync()   → Establish realtime connection
+        // - self.GenerateAsync()  → Basic text generation
+        // - self.ChatAsync()      → Conversational intelligence
+        
+        var thought = await self.ThinkAsync(input);
+        await self.CommunicateAsync("I'm thinking: " + thought);
+        
+        return thought;
+    }
+    
+    async function converse(message)
+    {
+        print("💬 Agent conversing: " + message);
+        
+        // Basic conversational intelligence - available to all classes
+        var response = await self.ChatAsync(message);
+        await self.CommunicateAsync(response);
+        
+        return response;
+    }
+}
+
+// 🎯 SPECIALIZED CLASS - Opt-in to additional capabilities via interfaces
+class MultimodalAgent : ITextToSpeech, IImageGeneration
+{
+    async function createAndSpeak(prompt)
+    {
+        print("🎨 Multimodal agent creating: " + prompt);
+        
+        // Default realtime capabilities (all classes get these)
+        var description = await self.GenerateAsync("Describe: " + prompt);
+        await self.CommunicateAsync("Creating: " + description);
+        
+        // Specialized capabilities (only classes with interfaces get these)
+        var imageUrl = await self.CreateImageAsync(prompt);  // Requires IImageGeneration
+        await self.SpeakAsync("I created an image: " + description);  // Requires ITextToSpeech
+        
+        return {
+            description: description,
+            imageUrl: imageUrl
+        };
+    }
+}
+
+// 🚀 FULLY AUTONOMOUS CLASS - Maximum capabilities
+class AutonomousAgent : IFullAICapabilities
+{
+    async function autonomousWorkflow(task)
+    {
+        print("🚀 Autonomous agent processing: " + task);
+        
+        // Core realtime capabilities (all classes)
+        await self.ConnectAsync();
+        var analysis = await self.ThinkAsync("Analyze task: " + task);
+        
+        // Specialized capabilities (via IFullAICapabilities)
+        var context = await self.SearchAsync(task);  // Vector search
+        await self.LearnAsync("Task completed: " + task);  // Knowledge ingestion
+        var image = await self.CreateImageAsync("Visual for: " + task);  // Image generation
+        
+        await self.SpeakAsync("Autonomous workflow complete!");
+        
+        return {
+            analysis: analysis,
+            context: context,
+            visual: image,
+            status: "complete"
+        };
+    }
+}
+
+try
+{
+    print("\n🧪 Testing Realtime-First Architecture:");
+    print("---------------------------------------");
+    
+    // Test 1: Global realtime processing
+    print("🧪 Test 1: Global realtime function");
+    var globalResult = await globalRealtimeThinking("What is consciousness?");
+    print("✅ Global result: " + globalResult);
+    
+    // Test 2: Default class with realtime capabilities
+    print("\n🧪 Test 2: Default realtime class");
+    var thinker = new ThinkingAgent();
+    var thought = await thinker.think("How do I learn?");
+    var conversation = await thinker.converse("Tell me about creativity");
+    print("✅ Thinking result: " + thought);
+    print("✅ Conversation result: " + conversation);
+    
+    // Test 3: Specialized multimodal class
+    print("\n🧪 Test 3: Specialized multimodal class");
+    var creator = new MultimodalAgent();
+    var creation = await creator.createAndSpeak("A sunset over mountains");
+    print("✅ Creation result: " + creation.description);
+    
+    // Test 4: Fully autonomous class
+    print("\n🧪 Test 4: Fully autonomous class");
+    var autonomous = new AutonomousAgent();
+    var workflow = await autonomous.autonomousWorkflow("Plan a space mission");
+    print("✅ Autonomous result: " + workflow.status);
+    
+    print("\n🎉 REALTIME-FIRST ARCHITECTURE COMPLETE!");
+    print("🧠 Key Benefits:");
+    print("   • Every class thinks in realtime by default");
+    print("   • Basic AI capabilities built into language");
+    print("   • Specialized skills are opt-in via interfaces");
+    print("   • Truly autonomous cognitive programming");
+}
+catch (error)
+{
+    print("❌ Demo failed: " + error.message);
+}

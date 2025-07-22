@@ -185,46 +185,65 @@ public class CxCompiler : IAstVisitor<object>
             _currentIl = runMethod.GetILGenerator();
             _currentLocals.Clear();
 
-            // **PASS 1: Collect function declarations**
-            Console.WriteLine("[DEBUG] Starting Pass 1: Collecting function declarations");
+            // **PASS 1: Collect function and class declarations, and event handlers**
+            Console.WriteLine("[DEBUG] Starting Pass 1: Collecting declarations");
             _isFirstPass = true;
             _pendingFunctions.Clear();
+            _eventRegistrations.Clear();
+            _eventHandlerMethodNames.Clear();
             ast.Accept(this);
-            Console.WriteLine($"[DEBUG] Pass 1 complete. Found {_pendingFunctions.Count} functions: {string.Join(", ", _pendingFunctions.Select(f => f.Name))}");
-            
+            Console.WriteLine($"[DEBUG] Pass 1 complete. Found {_pendingFunctions.Count} functions and {_eventRegistrations.Count} event handlers.");
+
             // Finish constructor after all imports are processed
             if (_constructorIl != null)
             {
                 _constructorIl.Emit(OpCodes.Ret);
             }
-            
-            // **PASS 2: Compile function bodies and all other statements**
-            Console.WriteLine("[DEBUG] Starting Pass 2: Compiling function bodies and main program");
+
+            // **PASS 2: Compile function and event handler bodies**
+            Console.WriteLine("[DEBUG] Starting Pass 2: Compiling function and event handler bodies");
             _isFirstPass = false;
-            
-            // First, compile all pending function bodies
+
+            // Compile all pending function bodies
             foreach (var functionNode in _pendingFunctions)
             {
                 Console.WriteLine($"[DEBUG] Compiling function body: {functionNode.Name}");
                 CompileFunctionBody(functionNode);
             }
-            
-            // Then compile the main program (excluding function declarations which are skipped in second pass)
-            Console.WriteLine("[DEBUG] Compiling main program statements");
+
+            // Compile all event handler bodies (they were collected in Pass 1)
+            // This requires iterating through the AST again in "Pass 2" mode
+            foreach (var statement in ast.Statements)
+            {
+                if (statement is OnStatementNode or ClassDeclarationNode)
+                {
+                    statement.Accept(this);
+                }
+            }
+
+            // **PASS 3: Compile the main program body**
+            Console.WriteLine("[DEBUG] Starting Pass 3: Compiling main program statements");
             
             // Add runtime debug output at the start of the Run method
             var printMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
             _currentIl.Emit(OpCodes.Ldstr, "[DEBUG] RUNTIME: Run method started executing");
             _currentIl.Emit(OpCodes.Call, printMethod!);
-            
-            ast.Accept(this);
+
+            // Generate event handler registration code at the beginning of the Run method
+            GenerateEventHandlerRegistrations();
+
+            // Compile the main program statements, skipping declarations
+            foreach (var statement in ast.Statements)
+            {
+                if (statement is not FunctionDeclarationNode and not OnStatementNode and not ClassDeclarationNode)
+                {
+                    statement.Accept(this);
+                }
+            }
             
             // Add runtime debug output at the end of the Run method (before the return)
             _currentIl.Emit(OpCodes.Ldstr, "[DEBUG] RUNTIME: Run method completed successfully");
             _currentIl.Emit(OpCodes.Call, printMethod!);
-            
-            // Generate event handler registration code
-            GenerateEventHandlerRegistrations();
             
             // Return null by default
             Console.WriteLine("[DEBUG] Adding final return to main method");
@@ -3649,13 +3668,18 @@ public class CxCompiler : IAstVisitor<object>
     {
         if (_isFirstPass)
         {
+            // Pass 1: Just collect the event handler for later registration
+            var methodName = $"EventHandler_{node.EventName.FullName.Replace(".", "_")}_{_eventHandlerCounter++}";
+            _eventHandlerMethodNames[node] = methodName;
+            _eventRegistrations.Add((node.EventName.FullName, methodName));
+            Console.WriteLine($"[DEBUG] Pass 1: Collected event handler {node.EventName.FullName} -> {methodName}");
             return new object();
         }
 
         Console.WriteLine($"[DEBUG] Compiling 'on' event handler statement - Event: {node.EventName.FullName}");
         
-        // Generate a unique method name for this event handler
-        var handlerMethodName = $"EventHandler_{node.EventName.FullName.Replace(".", "_")}_{_ifCounter++}";
+        // Get the method name that was assigned in Pass 1
+        var handlerMethodName = _eventHandlerMethodNames[node];
         
         // Create the event handler method
         var handlerMethod = _programTypeBuilder.DefineMethod(
@@ -3708,9 +3732,8 @@ public class CxCompiler : IAstVisitor<object>
         
         // Track this event handler for runtime registration
         _eventHandlers[node.EventName.FullName] = handlerMethod;
-        _eventRegistrations.Add((node.EventName.FullName, handlerMethodName));
         
-        Console.WriteLine($"[INFO] Event handler registered for runtime hookup: {node.EventName.FullName} -> {handlerMethodName}");
+        Console.WriteLine($"[INFO] Event handler method compiled: {node.EventName.FullName} -> {handlerMethodName}");
         
         return new object();
     }

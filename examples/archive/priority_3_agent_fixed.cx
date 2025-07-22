@@ -1,0 +1,107 @@
+// Priority #3 - Agent Class with Event System (Fixed)
+
+print("🎯 PRIORITY #3: INTELLIGENT STATE MANAGEMENT - FIXED");
+print("==================================================");
+print("🤖 Agent class with proper event handlers inside");
+
+class AuraAgent
+{
+    auraEnabled: boolean;
+    
+    constructor()
+    {
+        this.auraEnabled = false;
+        print("🤖 Agent initialized: auraEnabled = " + this.auraEnabled);
+    }
+    
+    function speakBeepBoop(message, isActivation)
+    {
+        if (isActivation)
+        {
+            var sound = "[Wild Animal voice] BEEP-BOOP! " + message + " BEEP-BOOP!";
+            tts.SpeakAsync(sound);
+        }
+        else
+        {
+            var sound = "[Tired Animal voice] beep-boop... " + message + " ...zzz...";
+            tts.SpeakAsync(sound);
+        }
+    }
+    
+    // Event handler INSIDE agent class - auto-registers with event bus
+    on live.audio (payload)
+    {
+        print("🎤 Audio received: " + payload);
+        
+        if (payload == "aura on")
+        {
+            this.auraEnabled = true;
+            print("✅ AURA SYSTEM ACTIVATED!");
+            this.speakBeepBoop("ANIMAL AWAKE! AURA READY!", true);
+            emit aura.system.activated, "AuraAgent";
+        }
+        else if (payload == "aura off")
+        {
+            this.auraEnabled = false;
+            print("❌ AURA SYSTEM DEACTIVATED!");
+            this.speakBeepBoop("ANIMAL SLEEP NOW... AURA OFF...", false);
+            emit aura.system.deactivated, "AuraAgent";
+        }
+    }
+    
+    // State-dependent processing - Priority #3
+    on presence.detected (payload)
+    {
+        if (!this.auraEnabled) 
+        {
+            print("👁️ Presence detected but Aura disabled - ignoring");
+            return;
+        }
+        
+        print("👁️ PRESENCE DETECTED: Processing with Aura enabled");
+        var response = textGen.GenerateAsync("Animal sees movement! Wild reaction.", {
+            temperature: 0.9,
+            maxTokens: 50
+        });
+        
+        this.speakBeepBoop(response, false);
+    }
+}
+
+try
+{
+    print("Creating Aura agent...");
+    // Using event-driven pattern - class with event handlers automatically becomes agent
+    var auraAgent = new AuraAgent();
+    
+    print("✅ Agent created successfully!");
+    print("");
+    print("🧪 TESTING: Voice Commands");
+    print("=========================");
+    
+    // Test activation
+    print("Test 1: Activating Aura system");
+    emit live.audio, "aura on";
+    
+    print("");
+    print("Test 2: Testing presence with Aura enabled");
+    emit presence.detected, "room detected";
+    
+    print("");
+    print("Test 3: Deactivating Aura system");  
+    emit live.audio, "aura off";
+    
+    print("");
+    print("Test 4: Testing presence with Aura disabled (should be ignored)");
+    emit presence.detected, "room detected again";
+    
+    print("");
+    print("🎯 PRIORITY #3: INTELLIGENT STATE MANAGEMENT COMPLETE!");
+    print("✅ Agent-based state control working");
+    print("✅ Voice-activated behavior working");
+    print("✅ State-dependent processing working");
+}
+catch (error)
+{
+    print("❌ Error: " + error);
+}

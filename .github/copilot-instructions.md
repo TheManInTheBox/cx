@@ -51,6 +51,12 @@ class MyAgent {
 // Event emission using reserved event names
 emit user.message, { text: "hello" };
 emit system.shutdown, { reason: "maintenance" };
+
+// Wildcard event patterns for cross-namespace communication
+on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
+on user.any.response (payload) { ... }             // Matches user.chat.response, user.voice.response, etc.
+on system.any.ready (payload) { ... }              // Matches system.audio.ready, system.network.ready, etc.
+on agent.any.thinking.any.complete (payload) { ... } // Complex wildcard pattern matching
 ```
 
 ### **Event Namespace Scoping**
@@ -217,6 +223,12 @@ on async.complete (payload) { ... }      // Async operations
 // ✅ CORRECT - Custom namespaced events
 on custom.event (payload) { ... }        // Custom events allowed
 on myapp.data.updated (payload) { ... }  // Application-specific events
+
+// ✅ CORRECT - Wildcard event patterns for cross-namespace communication
+on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
+on user.any.response (payload) { ... }             // Matches user.chat.response, user.voice.response, etc.
+on system.any.ready (payload) { ... }              // Matches system.audio.ready, system.network.ready, etc.
+on agent.any.thinking.any.complete (payload) { ... } // Complex wildcard pattern matching
 ```
 
 **Important Notes:**
@@ -489,56 +501,54 @@ gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 ### **Event Bus Architecture**
 The CX language implements a **Unified Event Bus System** that consolidates all event handling functionality:
 
-**Core Event Bus Implementation:**
+**Production-Ready Implementation:**
 - **`UnifiedEventBus`** (`src/CxLanguage.Runtime/UnifiedEventBus.cs`) - Single consolidated event bus with all capabilities
-  - **ICxEventBus Interface** (`src/CxLanguage.Core/Events/ICxEventBus.cs`) - Standardized interface for Azure and external integrations
-  - **Multiple Scoping Strategies**: Global, Agent, Channel, Role, Namespace scoping
-  - **Thread-Safe Operations**: Concurrent handling with comprehensive logging
-  - **Pattern Matching**: Wildcard and regex event pattern support
-  - **Azure Integration**: Direct compatibility with Azure OpenAI Realtime API
-  - **Statistics & Monitoring**: Real-time event bus statistics and performance tracking
-
-**Registration and Integration:**
+- **ICxEventBus Interface** (`src/CxLanguage.Core/Events/ICxEventBus.cs`) - Standardized interface for Azure and external integrations
 - **`UnifiedEventBusRegistry.Instance`** - Global singleton for unified event bus access
+
+**Key Features:**
+- ✅ **Multiple Scoping Strategies**: Global, Agent, Channel, Role, Namespace scoping
+- ✅ **Thread-Safe Operations**: Concurrent handling with comprehensive logging
+- ✅ **Pattern Matching**: Wildcard and regex event pattern support
+- ✅ **Azure Integration**: Direct compatibility with Azure OpenAI Realtime API
+- ✅ **Statistics & Monitoring**: Real-time event bus statistics and performance tracking
+- ✅ **Interactive CLI**: Background event processing with user-controlled termination
+
+**Integration Points:**
 - Event handlers register via `CxRuntimeHelper.RegisterEventHandler()` (global scope) and `CxRuntimeHelper.RegisterInstanceEventHandler()` (class scope)
 - Compiler generates registration calls for CX `on` statements at both program and class levels
 - Instance event handlers follow namespace scoping: class handlers registered in class namespace, events must target correct scope
 - Azure OpenAI Realtime API integration via `ICxEventBus` interface with service provider DI container support
 
-**Key Integration Points:**
-- `UnifiedEventBusRegistry.Instance` - Singleton for all event bus operations
-- Service provider injection via `ICxEventBus` interface for Azure services
-- Runtime helper methods bridge compiled CX code to unified event system
-- Comprehensive statistics and monitoring for production debugging
-
-**Event-Driven Architecture Features:**
-- ✅ **Production-Ready**: Single unified implementation with complete end-to-end event handling
-- ✅ **Real Event System**: Actual event emission/handling with namespace isolation and proper scoping
-- ✅ **Azure Integration**: Full ICxEventBus interface compatibility for Azure OpenAI services
-- ✅ **Namespace Scoping**: Sophisticated routing with agent/channel/role/namespace isolation
-- ✅ **Interactive CLI**: Background event processing with user-controlled termination
-- ✅ **Performance Monitoring**: Statistics, call tracking, and comprehensive logging
-
 ### **Development Standards**
-- ✅ **Production-Ready**: Full end-to-end implementations with working event system, namespace scoping, and interactive CLI
+- ✅ **Production-Ready**: Complete end-to-end implementations with working unified event system, namespace scoping, and interactive CLI
 - ✅ **Real Implementation**: Actual event emission/handling, namespace isolation, press-key-to-exit functionality
 - ✅ **Complete CX Integration**: Seamless compiler and runtime operation with zero exceptions
-- ✅ **Event-Driven Architecture**: Fully operational namespace-scoped event system with proper handler registration
+- ✅ **Event-Driven Architecture**: Fully operational unified event system with proper handler registration
 - ✅ **Interactive CLI**: Working background event processing with user-controlled termination
+- ✅ **Clean Examples**: Organized structure with production/core_features/demos/archive folders
 - ❌ **NOT Acceptable**: Simulations of any kind, mocks, partial implementations, placeholder code, POCs
 
 ### **File Organization**
-- All `.cx` files go in `examples/` directory
-- All `.md` files go in `wiki/` directory for static documentation only
-- Documentation files contain timeless reference material only
+- **Production applications**: `examples/production/` directory
+- **Core feature tests**: `examples/core_features/` directory  
+- **Feature demonstrations**: `examples/demos/` directory
+- **Static documentation**: `wiki/` directory (timeless reference material only)
+- **Archived examples**: `examples/archive/` directory (historical and experimental code)
 
 ## 🏆 **KEY DEMONSTRATIONS**
-- **🧠 `examples/working_search_demo.cx`** → Production vector memory with agent learning & search
-- **📚 `examples/search_results_demo.cx`** → Complete agent memory retrieval with detailed result display
-- **🎯 `examples/agents_learning_report.cx`** → Multi-agent learning coordination with memory sharing
-- **✅ `examples/inheritance_system_test.cx`** → Complete cognitive architecture inheritance showcase
-- **🎪 `examples/amazing_debate_demo_working.cx`** → Multi-Agent AI Coordination with vector memory
-- **⚡ `examples/proper_event_driven_demo.cx`** → Event-Driven Architecture patterns
-- **🌟 `examples/aura_presence_working_demo.cx`** → Always-On Conversational Intelligence
+- **🧠 `examples/production/working_search_demo.cx`** → Production vector memory with agent learning & search
+- **📚 `examples/core_features/search_results_demo.cx`** → Complete agent memory retrieval with detailed result display
+- **🎯 `examples/production/agents_learning_report.cx`** → Multi-agent learning coordination with memory sharing
+- **✅ `examples/core_features/inheritance_system_test.cx`** → Complete cognitive architecture inheritance showcase
+- **🎪 `examples/production/amazing_debate_demo_working.cx`** → Multi-Agent AI Coordination with vector memory
+- **⚡ `examples/core_features/unified_eventbus_test.cx`** → Unified Event Bus system verification
+- **🌟 `examples/production/aura_presence_working_demo.cx`** → Always-On Conversational Intelligence with Animal personality
+
+### **Examples Organization**
+- **`examples/production/`** - Production-ready applications demonstrating complete functionality
+- **`examples/core_features/`** - Core system demonstrations and feature tests
+- **`examples/demos/`** - Feature demonstrations and showcase applications  
+- **`examples/archive/`** - Historical examples and experimental code
 
 

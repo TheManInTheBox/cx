@@ -1,9 +1,0 @@
-// Test direct service call in main program like comprehensive demo
-
-print("🧪 Direct Main Program Service Call Test");
-print("=======================================");
-
-var response = textGen.GenerateAsync("Hello world!");
-print("Response received: " + response);
-
-print("Test complete.");

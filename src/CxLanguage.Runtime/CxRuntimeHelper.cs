@@ -835,6 +835,23 @@ namespace CxLanguage.Runtime
                 var instanceType = instance.GetType();
                 Console.WriteLine($"[DEBUG] GetObjectProperty: getting property {propertyName} from {instanceType.Name}");
                 
+                // Special handling for Dictionary<string, object> (CX object literals)
+                if (instance is Dictionary<string, object> dict)
+                {
+                    if (dict.ContainsKey(propertyName))
+                    {
+                        var value = dict[propertyName];
+                        Console.WriteLine($"[DEBUG] GetObjectProperty: dictionary key {propertyName} = {value ?? "null"}");
+                        return value;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] GetObjectProperty: dictionary key {propertyName} not found");
+                        return $"[Key {propertyName} not found]";
+                    }
+                }
+                
+                // Regular property access for other objects
                 var property = instanceType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
                 if (property != null)
                 {
