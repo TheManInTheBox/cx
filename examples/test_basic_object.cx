@@ -1,0 +1,19 @@
+// Test basic object literal parsing
+class TestAgent
+{
+    name: string = "TestAgent";
+    
+    function testBasicObject()
+    {
+        // Basic object literal without handlers
+        learn, {
+            content: "test data",
+            type: "learning"
+        };
+        
+        print("Test basic object completed");
+    }
+}
+
+var agent = new TestAgent();
+agent.testBasicObject();

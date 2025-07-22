@@ -1,0 +1,79 @@
+// Comprehensive test of all fixed features:
+// 1. Field initialization with default values
+// 2. Dictionary iteration in event handlers  
+// 3. Event parameter property access
+// 4. For-in loops with KeyValuePair support
+
+class FixedTestAgent
+{
+    agentName: string = "FixedAgent";
+    status: string = "active";
+    processedCount: number = 0;
+    
+    constructor(customName: string)
+    {
+        this.agentName = customName;
+        print("Agent created: " + this.agentName);
+    }
+    
+    on test.event (event)
+    {
+        print("=== Testing Fixed Features ===");
+        
+        // Test 1: Field access with default values
+        print("Agent: " + this.agentName);
+        print("Status: " + this.status);
+        print("Count: " + this.processedCount);
+        
+        // Test 2: Event parameter property access
+        print("Event name: " + event.name);
+        print("Event timestamp: " + event.timestamp);
+        
+        // Test 3: Dictionary iteration over event payload
+        print("--- Event Payload ---");
+        for (var item in event.payload)
+        {
+            print("Key: " + item.Key + " | Value: " + item.Value + " | Type: " + typeof(item.Value));
+        }
+        
+        // Test 4: Nested dictionary access
+        if (typeof(event.nested) == "object")
+        {
+            print("--- Nested Data ---");
+            for (var nested in event.nested)
+            {
+                print("Nested " + nested.Key + ": " + nested.Value);
+            }
+        }
+        
+        emit test.complete, { 
+            agent: this.agentName, 
+            processed: this.processedCount + 1,
+            handlers: { any.complete, agent.task.done, search.for.work }
+        };
+    }
+    
+    on test.complete (event)
+    {
+        print("Test completed by agent: " + event.agent);
+        print("Items processed: " + event.processed);
+    }
+}
+
+// Test with default constructor (should use field defaults)
+var defaultAgent = new FixedTestAgent("DefaultTester");
+
+// Test with parameterized constructor
+var customAgent = new FixedTestAgent("CustomTester");
+
+// Emit comprehensive test event
+emit test.event, {
+    message: "Testing all fixes",
+    priority: "high",
+    count: 42,
+    nested: {
+        subdata: "works",
+        subcount: 123
+    },
+    testbool: true
+};

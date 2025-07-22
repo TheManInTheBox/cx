@@ -1,0 +1,34 @@
+// Test simple handler names without dots
+class TestAgent
+{
+    function test()
+    {
+        learn, {
+            data: "test data",
+            handlers: [ complete, done, finished ]
+        };
+    }
+}
+
+on complete (event)
+{
+    print("Complete handler: " + event.data);
+}
+
+on done (event)
+{
+    print("Done handler: " + event.data);
+}
+
+on finished (event)
+{
+    print("Finished handler: " + event.data);
+}
+
+on ai.learn.request (event)
+{
+    print("AI handler: " + event.data);
+}
+
+var agent = new TestAgent();
+agent.test();

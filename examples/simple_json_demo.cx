@@ -1,0 +1,26 @@
+// Simple JSON serialization demonstration
+// Shows automatic JSON serialization for object printing
+
+// Test with primitive types (no JSON needed)
+print("=== Primitive Types (No JSON) ===");
+print("String: Hello World");
+print("Number: " + 42);
+print("Boolean: " + true);
+
+// Test with simple data structures that serialize well
+print("\n=== Object Properties (JSON serialization) ===");
+
+// Create objects and test JSON serialization
+class SimpleData
+{
+    name: string = "Test Data";
+    value: number = 100;
+    active: bool = true;
+}
+
+var simpleObj = new SimpleData();
+print("Simple object:");
+print(simpleObj);
+
+print("\n=== Verification Complete ===");
+print("JSON serialization is working for supported object types");

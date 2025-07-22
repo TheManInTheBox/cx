@@ -1,0 +1,44 @@
+// Test AI service statement with handlers using bracket syntax
+class TestAgent
+{
+    name: string = "TestAgent";
+    
+    function testWithBracketHandlers()
+    {
+        // AI service call with handlers using brackets
+        learn, {
+            content: "test data",
+            handlers: [
+                any.complete,
+                agent.task.done,
+                search.for.work
+            ]
+        };
+        
+        print("Test with bracket handlers completed");
+    }
+}
+
+// Event handlers to catch the emitted events
+on any.complete (payload)
+{
+    print("Handler 1: any.complete received with content: " + payload.content);
+}
+
+on agent.task.done (payload)
+{
+    print("Handler 2: agent.task.done received with content: " + payload.content);
+}
+
+on search.for.work (payload)
+{
+    print("Handler 3: search.for.work received with content: " + payload.content);
+}
+
+on ai.learn.request (payload)
+{
+    print("Main AI handler: ai.learn.request received with content: " + payload.content);
+}
+
+var agent = new TestAgent();
+agent.testWithBracketHandlers();

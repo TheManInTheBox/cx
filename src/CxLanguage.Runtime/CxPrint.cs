@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 
 namespace CxLanguage.Runtime
@@ -42,8 +43,54 @@ namespace CxLanguage.Runtime
                 return;
             }
 
-            // Default behavior for other types
-            Console.WriteLine(value);
+            // Handle primitive types (string, numbers, bool) - print as-is
+            if (IsPrimitiveType(value))
+            {
+                Console.WriteLine(value);
+                return;
+            }
+
+            // For complex objects, try CX-specific serialization first, then standard JSON
+            try
+            {
+                // Check if this is a CX object (inherits from AiServiceBase)
+                if (IsCxObject(value))
+                {
+                    PrintCxObject(value);
+                    return;
+                }
+                
+                // For other complex objects, serialize to JSON for better debugging
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull
+                };
+                
+                var json = JsonSerializer.Serialize(value, jsonOptions);
+                Console.WriteLine(json);
+            }
+            catch (Exception ex)
+            {
+                // Fallback to ToString() if JSON serialization fails
+                Console.WriteLine($"[Object: {value.GetType().Name}] {value} (JSON serialization failed: {ex.Message})");
+            }
+        }
+
+        /// <summary>
+        /// Check if a type should be printed as-is without JSON serialization
+        /// </summary>
+        private static bool IsPrimitiveType(object value)
+        {
+            var type = value.GetType();
+            return type.IsPrimitive || 
+                   type == typeof(string) || 
+                   type == typeof(decimal) || 
+                   type == typeof(DateTime) || 
+                   type == typeof(TimeSpan) ||
+                   type == typeof(Guid) ||
+                   type.IsEnum;
         }
 
         /// <summary>
@@ -196,6 +243,196 @@ namespace CxLanguage.Runtime
             }
             
             Console.WriteLine("]");
+        }
+        
+        /// <summary>
+        /// Check if an object is a CX object (inherits from AiServiceBase)
+        /// </summary>
+        private static bool IsCxObject(object value)
+        {
+            if (value == null) return false;
+            
+            var type = value.GetType();
+            
+            // Check if it inherits from AiServiceBase (the base class for all CX objects)
+            while (type != null)
+            {
+                if (type.Name == "AiServiceBase")
+                {
+                    return true;
+                }
+                type = type.BaseType;
+            }
+            
+            return false;
+        }
+        
+        /// <summary>
+        /// Print a CX object by extracting all its fields using reflection
+        /// </summary>
+        private static void PrintCxObject(object cxObject)
+        {
+            var objectType = cxObject.GetType();
+            var fields = objectType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            Console.WriteLine("{");
+            
+            bool hasFields = false;
+            foreach (var field in fields)
+            {
+                // Skip internal fields like ServiceProvider, Logger, etc.
+                if (field.Name.StartsWith("_") || 
+                    field.Name == "ServiceProvider" || 
+                    field.Name == "Logger" ||
+                    field.Name.Contains("BackingField"))
+                {
+                    continue;
+                }
+                
+                try
+                {
+                    var fieldValue = field.GetValue(cxObject);
+                    Console.Write($"  \"{field.Name}\": ");
+                    
+                    if (fieldValue == null)
+                    {
+                        Console.WriteLine("null,");
+                    }
+                    else if (fieldValue is string str)
+                    {
+                        Console.WriteLine($"\"{str}\",");
+                    }
+                    else if (IsPrimitiveType(fieldValue))
+                    {
+                        Console.WriteLine($"{fieldValue},");
+                    }
+                    else if (fieldValue is Dictionary<string, object> dict)
+                    {
+                        Console.WriteLine();
+                        PrintNestedDictionary(dict, "    ");
+                        Console.WriteLine(",");
+                    }
+                    else
+                    {
+                        // For nested objects, check if it's another CX object first
+                        if (IsCxObject(fieldValue))
+                        {
+                            Console.WriteLine();
+                            PrintNestedCxObject(fieldValue, "    ");
+                            Console.WriteLine(",");
+                        }
+                        else
+                        {
+                            // For other nested objects, try to serialize them
+                            try
+                            {
+                                var json = JsonSerializer.Serialize(fieldValue, new JsonSerializerOptions { WriteIndented = false });
+                                Console.WriteLine($"{json},");
+                            }
+                            catch
+                            {
+                                Console.WriteLine($"\"[Object: {fieldValue.GetType().Name}]\",");
+                            }
+                        }
+                    }
+                    
+                    hasFields = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"\"[Error accessing field: {ex.Message}]\",");
+                    hasFields = true;
+                }
+            }
+            
+            if (!hasFields)
+            {
+                Console.WriteLine("  \"[No accessible fields]\"");
+            }
+            
+            Console.WriteLine("}");
+        }
+        
+        /// <summary>
+        /// Print a nested CX object with indentation
+        /// </summary>
+        private static void PrintNestedCxObject(object cxObject, string indent)
+        {
+            var objectType = cxObject.GetType();
+            var fields = objectType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance);
+            
+            Console.WriteLine($"{indent}{{");
+            
+            bool hasFields = false;
+            foreach (var field in fields)
+            {
+                // Skip internal fields like ServiceProvider, Logger, etc.
+                if (field.Name.StartsWith("_") || 
+                    field.Name == "ServiceProvider" || 
+                    field.Name == "Logger" ||
+                    field.Name.Contains("BackingField"))
+                {
+                    continue;
+                }
+                
+                try
+                {
+                    var fieldValue = field.GetValue(cxObject);
+                    Console.Write($"{indent}  \"{field.Name}\": ");
+                    
+                    if (fieldValue == null)
+                    {
+                        Console.WriteLine("null,");
+                    }
+                    else if (fieldValue is string str)
+                    {
+                        Console.WriteLine($"\"{str}\",");
+                    }
+                    else if (IsPrimitiveType(fieldValue))
+                    {
+                        Console.WriteLine($"{fieldValue},");
+                    }
+                    else if (fieldValue is Dictionary<string, object> dict)
+                    {
+                        Console.WriteLine();
+                        PrintNestedDictionary(dict, indent + "    ");
+                        Console.WriteLine(",");
+                    }
+                    else if (IsCxObject(fieldValue))
+                    {
+                        Console.WriteLine();
+                        PrintNestedCxObject(fieldValue, indent + "    ");
+                        Console.WriteLine(",");
+                    }
+                    else
+                    {
+                        // For other nested objects, try to serialize them
+                        try
+                        {
+                            var json = JsonSerializer.Serialize(fieldValue, new JsonSerializerOptions { WriteIndented = false });
+                            Console.WriteLine($"{json},");
+                        }
+                        catch
+                        {
+                            Console.WriteLine($"\"[Object: {fieldValue.GetType().Name}]\",");
+                        }
+                    }
+                    
+                    hasFields = true;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"\"[Error accessing field: {ex.Message}]\",");
+                    hasFields = true;
+                }
+            }
+            
+            if (!hasFields)
+            {
+                Console.WriteLine($"{indent}  \"[No accessible fields]\"");
+            }
+            
+            Console.WriteLine($"{indent}}}");
         }
     }
 }

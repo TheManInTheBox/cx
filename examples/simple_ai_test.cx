@@ -1,0 +1,18 @@
+// Simple test for AI service statements
+class SimpleAgent
+{
+    name: string = "SimpleAgent";
+    
+    function test()
+    {
+        // Basic AI service call without handlers
+        learn, {
+            content: "test data"
+        };
+        
+        print("Test completed");
+    }
+}
+
+var agent = new SimpleAgent();
+agent.test();

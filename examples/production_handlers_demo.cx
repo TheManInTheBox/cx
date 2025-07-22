@@ -1,0 +1,71 @@
+// Create a production-ready example showing the handlers feature working completely
+class AnalysisAgent
+{
+    name: string = "AnalysisAgent";
+    
+    function analyzeData(inputData: string)
+    {
+        print("Starting analysis of: " + inputData);
+        
+        // Use handlers to notify multiple systems about the analysis
+        learn {
+            data: inputData,
+            category: "analysis",
+            priority: "high",
+            handlers: [
+                analysis.complete { option: "value" },
+                task.finished { option: "differentValue" },
+                notify.users
+            ]
+        };
+        
+        emit user.query {
+          domain: "technology", 
+          query: "How do I optimize my code?",
+          handlers: [
+                analysis.complete { option: "value" },
+                task.finished { option: "differentValue" },
+                notify.users
+            ]
+        };
+
+        print("Analysis initiated with handlers");
+    }
+}
+
+// Handler for analysis completion
+on analysis.complete (event)
+{
+    print("=== ANALYSIS COMPLETE ===");
+    print("Analysis finished for data: " + event.data);
+    print("Category: " + event.category);
+    print("Priority: " + event.priority);
+}
+
+// Handler for task completion tracking
+on task.finished (event)
+{
+    print("=== TASK TRACKING ===");
+    print("Task completed: " + event.data);
+    print("Marking as done in task system");
+}
+
+// Handler for user notifications
+on notify.users (event)
+{
+    print("=== USER NOTIFICATION ===");
+    print("Notifying users about: " + event.data);
+    print("Priority level: " + event.priority);
+}
+
+// Handler for the main AI learning request
+on ai.learn.request (event)
+{
+    print("=== AI LEARNING ===");
+    print("AI system learning from: " + event.data);
+    print("Category: " + event.category);
+}
+
+// Create and run the analysis
+var agent = new AnalysisAgent();
+agent.analyzeData("Customer feedback dataset");

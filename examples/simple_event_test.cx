@@ -1,0 +1,14 @@
+// Simple test to verify event parameter property access works
+class EventTestAgent
+{
+    name: string = "TestAgent";
+    
+    on user.input (event)
+    {
+        print("Agent " + this.name + " received: " + event.message);
+        print("Event type: " + event.type);
+    }
+}
+
+var agent = new EventTestAgent();
+emit user.input, { message: "Hello World", type: "greeting" };

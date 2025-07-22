@@ -380,6 +380,7 @@ namespace CxLanguage.Runtime
         /// <summary>
         /// Register an event handler with the unified event bus
         /// This is called by compiled 'on' statements at program scope (global handlers)
+        /// Updated to use CxEvent object as parameter
         /// </summary>
         public static void RegisterEventHandler(string eventName, CxEventHandler handler)
         {
@@ -389,21 +390,32 @@ namespace CxLanguage.Runtime
             var subscriptionId = UnifiedEventBusRegistry.Instance.RegisterSubscription(
                 "Global", "system", UnifiedEventScope.Global);
             
-            // Convert CxEventHandler to EventHandler
-            EventHandler unifiedHandler = async (payload) =>
+            // Create Action<CxEvent> to invoke the compiled static handler directly
+            Action<CxEvent> action = (cxEvent) =>
             {
-                // Convert EventPayload back to CxEventPayload for compatibility
-                var cxPayload = new CxEventPayload
+                try
                 {
-                    EventName = payload.EventName,
-                    Data = payload.Data,
-                    Timestamp = payload.Timestamp,
-                    Source = payload.Source
-                };
-                await handler(cxPayload);
+                    // Call the compiled handler, passing the structured CxEvent with proper payload
+                    var task = handler(new CxEventPayload
+                    {
+                        EventName = cxEvent.name,
+                        Data = cxEvent,  // This passes the CxEvent itself, which has the payload
+                        Timestamp = cxEvent.timestamp,
+                        Source = "Global"
+                    });
+                    task.ConfigureAwait(false);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Global handler execution failed: {ex.Message}");
+                }
             };
             
-            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
+            // Subscribe using ICxEventBus to pass structured CxEvent to the handler
+            if (UnifiedEventBusRegistry.Instance is ICxEventBus bus)
+            {
+                bus.Subscribe(eventName, action);
+            }
         }
 
         /// <summary>
@@ -590,21 +602,34 @@ namespace CxLanguage.Runtime
         /// Register an instance event handler for a specific object
         /// This is called when class instances with event handlers are created
         /// </summary>
-        public static void RegisterInstanceEventHandler(object instance, string eventName, string methodName)
+    public static void RegisterInstanceEventHandler(object instance, string eventName, string methodName)
+    {
+        Console.WriteLine($"[DEBUG] RegisterInstanceEventHandler called: {eventName} -> {instance?.GetType().Name ?? "null"}.{methodName}");
+        
+        if (instance == null)
         {
-            Console.WriteLine($"[DEBUG] Registering instance event handler: {eventName} -> {instance.GetType().Name}.{methodName}");
-            
-            // Get the method from the instance type
-            var instanceType = instance.GetType();
-            var method = instanceType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
-            
-            if (method == null)
+            Console.WriteLine($"[ERROR] Instance is null for event handler registration");
+            return;
+        }
+        
+        // Get the method from the instance type
+        var instanceType = instance.GetType();
+        Console.WriteLine($"[DEBUG] Looking for method {methodName} in type {instanceType.FullName}");
+        
+        var method = instanceType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
+        
+        if (method == null)
+        {
+            Console.WriteLine($"[ERROR] Event handler method {methodName} not found in {instanceType.Name}");
+            // Try to list all available methods for debugging
+            var allMethods = instanceType.GetMethods(BindingFlags.Public | BindingFlags.Instance);
+            Console.WriteLine($"[DEBUG] Available methods in {instanceType.Name}:");
+            foreach (var m in allMethods.Take(10))
             {
-                Console.WriteLine($"[ERROR] Event handler method {methodName} not found in {instanceType.Name}");
-                return;
+                Console.WriteLine($"[DEBUG]   - {m.Name}({string.Join(", ", m.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"))})");
             }
-            
-            // Validate method signature for safety
+            return;
+        }            // Validate method signature for safety
             var parameters = method.GetParameters();
             if (parameters.Length != 1)
             {
@@ -612,50 +637,60 @@ namespace CxLanguage.Runtime
                 return;
             }
             
-            // SAFEST APPROACH: Create a completely safe event handler that interprets CX event behavior
-            EventHandler unifiedHandler = async (payload) =>
+            // Create an Action<CxEvent> to invoke the compiled instance method
+            Action<CxEvent> cxHandler = (cxEvent) =>
             {
+                Console.WriteLine($"[DEBUG] ACTION ENTRY: Handler {methodName} called with CxEvent: {cxEvent?.name ?? "null"}");
                 try
                 {
-                    Console.WriteLine($"[CRITICAL DEBUG] Instance event handler TRIGGERED for {methodName} on event {eventName}");
-                    Console.WriteLine($"[CRITICAL DEBUG] Event: {payload?.EventName ?? "null"}, Agent: {instance.GetType().Name}");
-                    Console.WriteLine($"[CRITICAL DEBUG] Payload data type: {payload?.Data?.GetType().Name ?? "null"}");
+                    Console.WriteLine($"[DEBUG] Invoking instance method {methodName} with CxEvent: {cxEvent?.name ?? "null"}");
+                    Console.WriteLine($"[DEBUG] Method parameter type: {parameters[0].ParameterType.FullName}");
+                    Console.WriteLine($"[DEBUG] CxEvent type: {cxEvent?.GetType().FullName ?? "null"}");
+                    Console.WriteLine($"[DEBUG] Instance type: {instance.GetType().FullName}");
+                    Console.WriteLine($"[DEBUG] Method info: {method.DeclaringType?.FullName}.{method.Name}");
+                    Console.WriteLine($"[DEBUG] Method is static: {method.IsStatic}");
+                    Console.WriteLine($"[DEBUG] Parameter count: {parameters.Length}");
                     
-                    if (payload?.Data == null)
+                    // Check if the parameter type is compatible
+                    if (!parameters[0].ParameterType.IsAssignableFrom(typeof(CxEvent)))
                     {
-                        Console.WriteLine($"[WARNING] Event handler {methodName} received null payload data");
+                        Console.WriteLine($"[ERROR] Parameter type mismatch: expected {parameters[0].ParameterType.FullName}, got {typeof(CxEvent).FullName}");
                         return;
                     }
-
-                    // Instead of calling the problematic IL-generated method, let's manually interpret
-                    // what the CX event handler is supposed to do based on the CX source code
-                    await InterpretCxEventHandler(instance, methodName, eventName, payload.Data);
+                    
+                    method.Invoke(instance, new object[] { cxEvent! });
+                    Console.WriteLine($"[DEBUG] Instance method {methodName} invoked successfully");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"[ERROR] Event handler {methodName} interpreter failed: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Instance handler {methodName} execution failed: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Exception type: {ex.GetType().FullName}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                        Console.WriteLine($"[ERROR] Inner exception type: {ex.InnerException.GetType().FullName}");
+                        if (ex.InnerException.StackTrace != null)
+                        {
+                            Console.WriteLine($"[ERROR] Inner stack trace: {ex.InnerException.StackTrace}");
+                        }
+                    }
                 }
             };
             
-            // Register instance-scoped subscription with GLOBAL pattern matching
-            // Use Global scope so agents receive all events that match their wildcard patterns
-            var instanceName = $"{instanceType.Name}_{instance.GetHashCode()}";
-            var subscriptionId = UnifiedEventBusRegistry.Instance.RegisterSubscription(
-                instanceName, "instance", UnifiedEventScope.Global, instance: instance);
-            
-            // Subscribe to the raw event name pattern (e.g., "user.any.action")
-            // This allows wildcard matching to work properly across all event namespaces
-            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
-            
-            Console.WriteLine($"[INFO] Instance event handler registered: {eventName} -> {instanceType.Name}.{methodName}");
-            Console.WriteLine($"[INFO] Event pattern: {eventName} (Global scope for wildcard matching)");
+            // Subscribe using ICxEventBus to pass structured CxEvent to the handler
+            if (UnifiedEventBusRegistry.Instance is ICxEventBus bus)
+            {
+                bus.Subscribe(eventName, instance, cxHandler);
+                Console.WriteLine($"[INFO] Instance event handler registered: {eventName} -> {instanceType.Name}.{methodName}");
+            }
         }
 
         /// <summary>
         /// Safely interpret CX event handler behavior without calling the problematic IL-generated methods
         /// This manually implements what the CX event handlers are supposed to do
+        /// Updated to accept CxEvent object instead of raw payload data
         /// </summary>
-        private static Task InterpretCxEventHandler(object instance, string methodName, string eventName, object payloadData)
+        private static Task InterpretCxEventHandler(object instance, string methodName, string eventName, CxEvent cxEvent)
         {
             try
             {
@@ -664,12 +699,14 @@ namespace CxLanguage.Runtime
                 // Get the agent name from the instance
                 var agentName = GetInstanceField(instance, "name")?.ToString() ?? "UnknownAgent";
                 Console.WriteLine($"[DEBUG] Agent name: {agentName}");
-                Console.WriteLine($"[DEBUG] Payload data: {payloadData ?? "null"}");
+                Console.WriteLine($"[DEBUG] Event object: name={cxEvent.name}, timestamp={cxEvent.timestamp}");
+                Console.WriteLine($"[DEBUG] Payload data: {cxEvent.payload ?? "null"}");
                 
                 // Handle user action events
                 if (eventName.Contains("user") && eventName.Contains("action"))
                 {
                     Console.WriteLine($"🎯 {agentName} AGENT RESPONSE: User action detected - Processing user request");
+                    Console.WriteLine($"📅 Event timestamp: {cxEvent.timestamp}");
                     return Task.CompletedTask;
                 }
                 
@@ -677,6 +714,7 @@ namespace CxLanguage.Runtime
                 if (eventName.Contains("alert"))
                 {
                     Console.WriteLine($"🚨 {agentName} AGENT RESPONSE: Alert detected - Taking defensive action");
+                    Console.WriteLine($"📅 Event timestamp: {cxEvent.timestamp}");
                     return Task.CompletedTask;
                 }
                 
@@ -684,16 +722,18 @@ namespace CxLanguage.Runtime
                 if (eventName == "command.executed")
                 {
                     Console.WriteLine($"✅ {agentName} COMMAND RESPONSE: Command completed successfully");
+                    Console.WriteLine($"📅 Event timestamp: {cxEvent.timestamp}");
                     return Task.CompletedTask;
                 }
                 else if (eventName == "command.error")
                 {
                     Console.WriteLine($"❌ {agentName} COMMAND RESPONSE: Command failed");
+                    Console.WriteLine($"📅 Event timestamp: {cxEvent.timestamp}");
                     return Task.CompletedTask;
                 }
                 
                 // Default handler for other events
-                Console.WriteLine($"[DEBUG] {agentName} handled event: {eventName}");
+                Console.WriteLine($"[DEBUG] {agentName} handled event: {eventName} at {cxEvent.timestamp}");
             }
             catch (Exception ex)
             {
@@ -705,6 +745,7 @@ namespace CxLanguage.Runtime
 
         /// <summary>
         /// Convert Func<object, Task> to CxEventHandler for event registration
+        /// Updated to pass CxEvent object to handlers instead of raw payload
         /// </summary>
         public static CxEventHandler ConvertToEventHandler(Func<object, Task> handler)
         {
@@ -712,11 +753,35 @@ namespace CxLanguage.Runtime
             {
                 try
                 {
-                    await handler(payload.Data ?? new object());
+                    Console.WriteLine($"[DEBUG] ConvertToEventHandler: payload.EventName = {payload.EventName}");
+                    Console.WriteLine($"[DEBUG] ConvertToEventHandler: payload.Data type = {payload.Data?.GetType().FullName ?? "null"}");
+                    Console.WriteLine($"[DEBUG] ConvertToEventHandler: handler type = {handler.GetType().FullName}");
+                    Console.WriteLine($"[DEBUG] ConvertToEventHandler: handler target = {handler.Target?.GetType().FullName ?? "null"}");
+                    
+                    // Create CxEvent object from the payload
+                    // Convert raw data object to dictionary for structured payload
+                    var eventData = ConvertToEventData(payload.Data);
+                    var cxEvent = new CxEvent
+                    {
+                        name = payload.EventName,
+                        payload = eventData,
+                        timestamp = payload.Timestamp
+                    };
+                    
+                    Console.WriteLine($"[DEBUG] ConvertToEventHandler: About to call handler with cxEvent: {cxEvent.name}");
+                    // Pass the CxEvent object to the compiled handler
+                    await handler(cxEvent);
+                    Console.WriteLine($"[DEBUG] ConvertToEventHandler: Handler completed successfully");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"[ERROR] Event handler execution failed: {ex.Message}");
+                    if (ex.InnerException != null)
+                    {
+                        Console.WriteLine($"[ERROR] Inner exception: {ex.InnerException.Message}");
+                        Console.WriteLine($"[ERROR] Inner exception type: {ex.InnerException.GetType().FullName}");
+                    }
+                    Console.WriteLine($"[ERROR] Stack trace: {ex.StackTrace}");
                     throw;
                 }
             };
@@ -727,21 +792,37 @@ namespace CxLanguage.Runtime
         /// </summary>
         public static Dictionary<string, object?> ConvertToEventData(object? data)
         {
+            Console.WriteLine($"[DEBUG] ConvertToEventData: input data type = {data?.GetType().FullName ?? "null"}");
+            Console.WriteLine($"[DEBUG] ConvertToEventData: input data value = {data}");
+            
             if (data == null)
+            {
+                Console.WriteLine("[DEBUG] ConvertToEventData: data is null, returning empty dictionary");
                 return new Dictionary<string, object?>();
+            }
 
             if (data is Dictionary<string, object?> dict)
+            {
+                Console.WriteLine($"[DEBUG] ConvertToEventData: data is already Dictionary with {dict.Count} entries");
+                foreach (var kvp in dict)
+                {
+                    Console.WriteLine($"[DEBUG] ConvertToEventData: dictionary key '{kvp.Key}' = {kvp.Value}");
+                }
                 return dict;
+            }
 
             // Convert object properties to dictionary using reflection
+            Console.WriteLine("[DEBUG] ConvertToEventData: converting object properties to dictionary using reflection");
             var result = new Dictionary<string, object?>();
             var properties = data.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
             
+            Console.WriteLine($"[DEBUG] ConvertToEventData: found {properties.Length} properties");
             foreach (var prop in properties)
             {
                 try
                 {
                     var value = prop.GetValue(data);
+                    Console.WriteLine($"[DEBUG] ConvertToEventData: property '{prop.Name}' = {value}");
                     result[prop.Name] = value;
                 }
                 catch (Exception ex)
@@ -751,6 +832,7 @@ namespace CxLanguage.Runtime
                 }
             }
 
+            Console.WriteLine($"[DEBUG] ConvertToEventData: returning dictionary with {result.Count} entries");
             return result;
         }
 
@@ -919,6 +1001,29 @@ namespace CxLanguage.Runtime
                     }
                 }
                 
+                // Special handling for KeyValuePair<string, object> (for dictionary iteration)
+                if (instanceType.IsGenericType && instanceType.GetGenericTypeDefinition() == typeof(KeyValuePair<,>))
+                {
+                    var genericArgs = instanceType.GetGenericArguments();
+                    if (genericArgs.Length == 2 && genericArgs[0] == typeof(string) && genericArgs[1] == typeof(object))
+                    {
+                        if (propertyName == "Key")
+                        {
+                            var keyProperty = instanceType.GetProperty("Key");
+                            var keyValue = keyProperty?.GetValue(instance);
+                            Console.WriteLine($"[DEBUG] GetObjectProperty: KeyValuePair Key = {keyValue ?? "null"}");
+                            return keyValue;
+                        }
+                        else if (propertyName == "Value")
+                        {
+                            var valueProperty = instanceType.GetProperty("Value");
+                            var valueValue = valueProperty?.GetValue(instance);
+                            Console.WriteLine($"[DEBUG] GetObjectProperty: KeyValuePair Value = {valueValue ?? "null"}");
+                            return valueValue;
+                        }
+                    }
+                }
+                
                 // Regular property access for other objects
                 var property = instanceType.GetProperty(propertyName, BindingFlags.Public | BindingFlags.Instance);
                 if (property != null)
@@ -936,11 +1041,59 @@ namespace CxLanguage.Runtime
                         return $"[Property {propertyName} has no getter]";
                     }
                 }
-                else
+                
+                // Special handling for CxEvent - check payload dictionary for missing properties
+                if (instanceType.Name == "CxEvent")
                 {
-                    Console.WriteLine($"[DEBUG] GetObjectProperty: property {propertyName} not found on {instanceType.Name}");
-                    return $"[Property {propertyName} not found]";
+                    Console.WriteLine($"[DEBUG] GetObjectProperty: CxEvent detected, checking payload for {propertyName}");
+                    var payloadProperty = instanceType.GetProperty("payload");
+                    if (payloadProperty != null)
+                    {
+                        var payload = payloadProperty.GetValue(instance);
+                        Console.WriteLine($"[DEBUG] GetObjectProperty: CxEvent payload type = {payload?.GetType().Name ?? "null"}");
+                        if (payload is Dictionary<string, object> payloadDict)
+                        {
+                            Console.WriteLine($"[DEBUG] GetObjectProperty: payload is Dictionary with {payloadDict.Count} entries");
+                            foreach (var kvp in payloadDict)
+                            {
+                                Console.WriteLine($"[DEBUG] GetObjectProperty: payload key '{kvp.Key}' = {kvp.Value}");
+                            }
+                            
+                            // First check if the property exists directly in the payload
+                            if (payloadDict.ContainsKey(propertyName))
+                            {
+                                var value = payloadDict[propertyName];
+                                Console.WriteLine($"[DEBUG] GetObjectProperty: CxEvent payload property {propertyName} = {value ?? "null"}");
+                                return value;
+                            }
+                            
+                            // If not found, check if there's a nested 'payload' property that contains the original data
+                            if (payloadDict.ContainsKey("payload") && payloadDict["payload"] is Dictionary<string, object> nestedPayload)
+                            {
+                                Console.WriteLine($"[DEBUG] GetObjectProperty: checking nested payload for {propertyName}");
+                                if (nestedPayload.ContainsKey(propertyName))
+                                {
+                                    var value = nestedPayload[propertyName];
+                                    Console.WriteLine($"[DEBUG] GetObjectProperty: found {propertyName} in nested payload = {value ?? "null"}");
+                                    return value;
+                                }
+                            }
+                            
+                            Console.WriteLine($"[DEBUG] GetObjectProperty: property {propertyName} not found in CxEvent payload or nested payload");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[DEBUG] GetObjectProperty: CxEvent payload is not a Dictionary<string, object>");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] GetObjectProperty: CxEvent has no payload property");
+                    }
                 }
+                
+                Console.WriteLine($"[DEBUG] GetObjectProperty: property {propertyName} not found on {instanceType.Name}");
+                return $"[Property {propertyName} not found]";
             }
             catch (Exception ex)
             {

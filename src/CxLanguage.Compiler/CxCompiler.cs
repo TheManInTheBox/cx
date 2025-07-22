@@ -314,6 +314,7 @@ public class CxCompiler : IAstVisitor<object>
             _currentIl.Emit(OpCodes.Call, convertMethod);
 
             // Call CxRuntimeHelper.RegisterEventHandler(string eventName, CxEventHandler handler)
+            // The handler will now receive CxEvent objects instead of raw payloads
             var registerMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("RegisterEventHandler");
             if (registerMethod == null)
             {
@@ -1520,8 +1521,30 @@ public class CxCompiler : IAstVisitor<object>
         return new object();
     }
 
+    private string GetFullMemberAccessName(MemberAccessNode memberAccess)
+    {
+        // Recursively build the full member access chain (e.g., "analysis.complete")
+        if (memberAccess.Object is IdentifierNode identifier)
+        {
+            return identifier.Name + "." + memberAccess.Property;
+        }
+        else if (memberAccess.Object is MemberAccessNode nestedAccess)
+        {
+            return GetFullMemberAccessName(nestedAccess) + "." + memberAccess.Property;
+        }
+        else
+        {
+            // Fallback - just return the property name
+            return memberAccess.Property;
+        }
+    }
+
     public object VisitObjectLiteral(ObjectLiteralNode node)
     {
+        // Check if this object literal contains the special 'handlers' property
+        var handlersProperty = node.Properties.FirstOrDefault(p => p.Key == "handlers");
+        var regularProperties = node.Properties.Where(p => p.Key != "handlers").ToList();
+        
         // Create a new Dictionary<string, object> for the object literal
         var dictionaryType = typeof(Dictionary<string, object>);
         var dictionaryConstructor = dictionaryType.GetConstructor(Type.EmptyTypes);
@@ -1530,8 +1553,8 @@ public class CxCompiler : IAstVisitor<object>
         // Create new Dictionary<string, object>()
         _currentIl!.Emit(OpCodes.Newobj, dictionaryConstructor!);
         
-        // Add each property to the dictionary
-        foreach (var property in node.Properties)
+        // Add each regular property to the dictionary (excluding 'handlers')
+        foreach (var property in regularProperties)
         {
             // Duplicate dictionary reference
             _currentIl.Emit(OpCodes.Dup);
@@ -1544,6 +1567,96 @@ public class CxCompiler : IAstVisitor<object>
             
             // Call dictionary.Add(key, value)
             _currentIl.Emit(OpCodes.Callvirt, addMethod!);
+        }
+        
+        // If there's a handlers property, process it for multi-scope event emission
+        if (handlersProperty != null)
+        {
+            Console.WriteLine("[DEBUG] Found handlers property in object literal - processing multi-scope events");
+            
+            // Store the main dictionary temporarily
+            var tempDictLocal = _currentIl.DeclareLocal(typeof(Dictionary<string, object>));
+            _currentIl.Emit(OpCodes.Dup); // Duplicate the dictionary
+            _currentIl.Emit(OpCodes.Stloc, tempDictLocal); // Store copy in local variable
+            
+            // Process handlers - support both object literal {} and array literal [] syntax
+            if (handlersProperty.Value is ObjectLiteralNode handlersObject)
+            {
+                Console.WriteLine($"[DEBUG] Processing {handlersObject.Properties.Count} handler events from object literal");
+                
+                foreach (var handlerProperty in handlersObject.Properties)
+                {
+                    var eventName = handlerProperty.Key;
+                    Console.WriteLine($"[DEBUG] Emitting additional event: {eventName}");
+                    
+                    // Emit each handler event with the same data
+                    // Load event name
+                    _currentIl.Emit(OpCodes.Ldstr, eventName);
+                    
+                    // Load the stored dictionary as payload
+                    _currentIl.Emit(OpCodes.Ldloc, tempDictLocal);
+                    
+                    // Load source identifier
+                    _currentIl.Emit(OpCodes.Ldstr, _currentClassName ?? "MainScript");
+                    
+                    // Call CxRuntimeHelper.EmitEvent(string eventName, object data, string source)
+                    var emitMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("EmitEvent", 
+                        new[] { typeof(string), typeof(object), typeof(string) });
+                    _currentIl.Emit(OpCodes.Call, emitMethod!);
+                }
+            }
+            else if (handlersProperty.Value is ArrayLiteralNode handlersArray)
+            {
+                Console.WriteLine($"[DEBUG] Processing {handlersArray.Elements.Count} handler events from array literal");
+                
+                foreach (var element in handlersArray.Elements)
+                {
+                    Console.WriteLine($"[DEBUG] Handler element type: {element.GetType().Name}");
+                    
+                    string eventName = "";
+                    
+                    // Handle different types of event name representations
+                    if (element is LiteralNode literal && literal.Type == LiteralType.String)
+                    {
+                        // String literal from handlersList rule
+                        eventName = literal.Value?.ToString() ?? "";
+                    }
+                    else if (element is IdentifierNode identifier)
+                    {
+                        // Simple identifier (e.g., "complete", "done")
+                        eventName = identifier.Name;
+                    }
+                    else if (element is MemberAccessNode memberAccess)
+                    {
+                        // Dotted event name (e.g., "analysis.complete")
+                        eventName = GetFullMemberAccessName(memberAccess);
+                    }
+                    
+                    if (!string.IsNullOrEmpty(eventName))
+                    {
+                        Console.WriteLine($"[DEBUG] Emitting additional event: {eventName}");
+                        
+                        // Emit each handler event with the same data
+                        // Load event name
+                        _currentIl.Emit(OpCodes.Ldstr, eventName);
+                        
+                        // Load the stored dictionary as payload
+                        _currentIl.Emit(OpCodes.Ldloc, tempDictLocal);
+                        
+                        // Load source identifier
+                        _currentIl.Emit(OpCodes.Ldstr, _currentClassName ?? "MainScript");
+                        
+                        // Call CxRuntimeHelper.EmitEvent(string eventName, object data, string source)
+                        var emitMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("EmitEvent", 
+                            new[] { typeof(string), typeof(object), typeof(string) });
+                        _currentIl.Emit(OpCodes.Call, emitMethod!);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"[DEBUG] Unable to extract event name from element type: {element.GetType().Name}");
+                    }
+                }
+            }
         }
         
         // Dictionary is now on top of stack
@@ -1755,11 +1868,71 @@ public class CxCompiler : IAstVisitor<object>
 
         Console.WriteLine($"[DEBUG] Processing for-in loop with variable: {node.Variable}");
         
-        // Get the iterable expression (should be an array)
+        // Get the iterable expression 
         node.Iterable.Accept(this);
         
+        // Check if the object is a Dictionary<string, object> at runtime
+        var objectLocal = _currentIl!.DeclareLocal(typeof(object));
+        _currentIl.Emit(OpCodes.Stloc, objectLocal);
+        
+        // Check if it's a dictionary
+        _currentIl.Emit(OpCodes.Ldloc, objectLocal);
+        _currentIl.Emit(OpCodes.Isinst, typeof(Dictionary<string, object>));
+        
+        var notDictionary = _currentIl.DefineLabel();
+        var endLoop = _currentIl.DefineLabel();
+        
+        _currentIl.Emit(OpCodes.Brfalse, notDictionary);
+        
+        // Dictionary iteration path
+        _currentIl.Emit(OpCodes.Ldloc, objectLocal);
+        _currentIl.Emit(OpCodes.Castclass, typeof(Dictionary<string, object>));
+        
+        // Get the dictionary's enumerator
+        var getDictEnumeratorMethod = typeof(Dictionary<string, object>).GetMethod("GetEnumerator");
+        _currentIl.Emit(OpCodes.Callvirt, getDictEnumeratorMethod!);
+        
+        var enumeratorLocal = _currentIl.DeclareLocal(typeof(Dictionary<string, object>.Enumerator));
+        _currentIl.Emit(OpCodes.Stloc, enumeratorLocal);
+        
+        // Create a local variable for the loop variable (KeyValuePair)
+        var loopVarLocal = _currentIl.DeclareLocal(typeof(object));
+        _currentLocals[node.Variable] = loopVarLocal;
+        
+        var dictLoopStart = _currentIl.DefineLabel();
+        var dictLoopEnd = _currentIl.DefineLabel();
+        
+        // Dictionary loop: while (enumerator.MoveNext())
+        _currentIl.MarkLabel(dictLoopStart);
+        
+        _currentIl.Emit(OpCodes.Ldloca, enumeratorLocal);
+        var moveNextMethod = typeof(Dictionary<string, object>.Enumerator).GetMethod("MoveNext");
+        _currentIl.Emit(OpCodes.Call, moveNextMethod!);
+        _currentIl.Emit(OpCodes.Brfalse, dictLoopEnd);
+        
+        // Get current KeyValuePair and store in loop variable
+        _currentIl.Emit(OpCodes.Ldloca, enumeratorLocal);
+        var getCurrentMethod = typeof(Dictionary<string, object>.Enumerator).GetProperty("Current")!.GetMethod;
+        _currentIl.Emit(OpCodes.Call, getCurrentMethod!);
+        _currentIl.Emit(OpCodes.Box, typeof(KeyValuePair<string, object>));
+        _currentIl.Emit(OpCodes.Stloc, loopVarLocal);
+        
+        // Execute loop body
+        node.Body.Accept(this);
+        
+        // Jump back to loop start
+        _currentIl.Emit(OpCodes.Br, dictLoopStart);
+        
+        // End of dictionary loop
+        _currentIl.MarkLabel(dictLoopEnd);
+        _currentIl.Emit(OpCodes.Br, endLoop);
+        
+        // Array iteration path (existing code)
+        _currentIl.MarkLabel(notDictionary);
+        
         // Cast to array (object[])
-        _currentIl!.Emit(OpCodes.Castclass, typeof(object[]));
+        _currentIl.Emit(OpCodes.Ldloc, objectLocal);
+        _currentIl.Emit(OpCodes.Castclass, typeof(object[]));
         
         // Store the array in a temporary local variable
         var arrayLocal = _currentIl.DeclareLocal(typeof(object[]));
@@ -1770,13 +1943,16 @@ public class CxCompiler : IAstVisitor<object>
         _currentIl.Emit(OpCodes.Ldc_I4_0);  // index = 0
         _currentIl.Emit(OpCodes.Stloc, indexLocal);
         
-        // Create a local variable for the loop variable
-        var loopVarLocal = _currentIl.DeclareLocal(typeof(object));
-        _currentLocals[node.Variable] = loopVarLocal;
+        // Create a local variable for the loop variable (reuse if not already created)
+        if (!_currentLocals.ContainsKey(node.Variable))
+        {
+            var arrayLoopVarLocal = _currentIl.DeclareLocal(typeof(object));
+            _currentLocals[node.Variable] = arrayLoopVarLocal;
+        }
         
         // Define labels for loop control
         var loopStart = _currentIl.DefineLabel();
-        var loopEnd = _currentIl.DefineLabel();
+        var loopEndArray = _currentIl.DefineLabel();
         
         // Start of loop: check if index < array.Length
         _currentIl.MarkLabel(loopStart);
@@ -1790,7 +1966,7 @@ public class CxCompiler : IAstVisitor<object>
         _currentIl.Emit(OpCodes.Conv_I4);
         
         // Compare: if index >= length, exit loop
-        _currentIl.Emit(OpCodes.Bge, loopEnd);
+        _currentIl.Emit(OpCodes.Bge, loopEndArray);
         
         // Load current array element: array[index]
         _currentIl.Emit(OpCodes.Ldloc, arrayLocal);
@@ -1798,7 +1974,7 @@ public class CxCompiler : IAstVisitor<object>
         _currentIl.Emit(OpCodes.Ldelem_Ref);
         
         // Store in loop variable
-        _currentIl.Emit(OpCodes.Stloc, loopVarLocal);
+        _currentIl.Emit(OpCodes.Stloc, _currentLocals[node.Variable]);
         
         // Execute loop body
         node.Body.Accept(this);
@@ -1812,8 +1988,11 @@ public class CxCompiler : IAstVisitor<object>
         // Jump back to loop start
         _currentIl.Emit(OpCodes.Br, loopStart);
         
-        // End of loop
-        _currentIl.MarkLabel(loopEnd);
+        // End of array loop
+        _currentIl.MarkLabel(loopEndArray);
+        
+        // End of all loops
+        _currentIl.MarkLabel(endLoop);
         
         Console.WriteLine($"[DEBUG] For-in loop compilation complete");
         return new object();
@@ -2914,6 +3093,42 @@ public class CxCompiler : IAstVisitor<object>
                 return new object();
             }
             
+            // Check if this is a local variable (like event parameters) - use runtime property access
+            if (_currentLocals.ContainsKey(objectVar.Name))
+            {
+                Console.WriteLine($"[DEBUG] Local variable property access: {objectVar.Name}.{node.Property}");
+                
+                // Load the local variable (object)
+                node.Object.Accept(this);
+                
+                // Load property name as string  
+                Console.WriteLine($"[IL-EMIT] Emitting Ldstr '{node.Property}' for property name parameter");
+                _currentIl!.Emit(OpCodes.Ldstr, node.Property);
+                
+                // Call runtime helper to get property value using reflection
+                var getObjectPropertyMethod = typeof(CxRuntimeHelper).GetMethod("GetObjectProperty", 
+                    BindingFlags.Public | BindingFlags.Static);
+                if (getObjectPropertyMethod != null)
+                {
+                    Console.WriteLine($"[IL-EMIT] Found GetObjectProperty method: {getObjectPropertyMethod}");
+                    Console.WriteLine($"[IL-EMIT] Stack before Call: [object, propertyName]");
+                    Console.WriteLine($"[IL-EMIT] Emitting Call to GetObjectProperty");
+                    _currentIl.Emit(OpCodes.Call, getObjectPropertyMethod);
+                    Console.WriteLine($"[IL-EMIT] Stack after Call: [property_value] (returns object)");
+                    
+                    Console.WriteLine($"[DEBUG] Using runtime property access for local variable: {objectVar.Name}.{node.Property}");
+                    return new object();
+                }
+                else
+                {
+                    Console.WriteLine($"[DEBUG] GetObjectProperty not found, falling back to error message");
+                    _currentIl.Emit(OpCodes.Pop); // Remove object
+                    _currentIl.Emit(OpCodes.Pop); // Remove property name
+                    _currentIl.Emit(OpCodes.Ldstr, $"[Error: Runtime property access not available for {objectVar.Name}.{node.Property}]");
+                    return new object();
+                }
+            }
+            
             // Try to find this field in any class
             foreach (var kvp in _classFields)
             {
@@ -3681,12 +3896,12 @@ public class CxCompiler : IAstVisitor<object>
         // Get the method name that was assigned in Pass 1
         var handlerMethodName = _eventHandlerMethodNames[node];
         
-        // Create the event handler method
+        // Create the event handler method - now accepts CxEvent directly
         var handlerMethod = _programTypeBuilder.DefineMethod(
             handlerMethodName,
             MethodAttributes.Private | MethodAttributes.Static,
             typeof(Task),
-            new[] { typeof(object) });
+            new[] { typeof(CxEvent) }); // Handler now accepts CxEvent
             
         var handlerIl = handlerMethod.GetILGenerator();
         
@@ -3702,13 +3917,13 @@ public class CxCompiler : IAstVisitor<object>
         
         try
         {
-            // Create local variable for payload parameter
-            var payloadLocal = handlerIl.DeclareLocal(typeof(object));
-            _currentLocals[node.PayloadIdentifier] = payloadLocal;
-            
-            // Store the payload parameter
+            // Load the CxEvent parameter into local variable
+            var cxEventLocal = handlerIl.DeclareLocal(typeof(CxEvent));
+            _currentLocals[node.PayloadIdentifier] = cxEventLocal;
             handlerIl.Emit(OpCodes.Ldarg_0);
-            handlerIl.Emit(OpCodes.Stloc, payloadLocal);
+            handlerIl.Emit(OpCodes.Stloc, cxEventLocal);
+            
+            Console.WriteLine($"[DEBUG] Event handler {handlerMethodName} expects CxEvent object as parameter '{node.PayloadIdentifier}'");
             
             // Generate code for the handler body statements
             foreach (var statement in node.Body.Statements)
@@ -3787,6 +4002,83 @@ public class CxCompiler : IAstVisitor<object>
         _currentIl.Emit(OpCodes.Call, emitMethod);
         
         Console.WriteLine($"[DEBUG] Event emission code generated for: {node.EventName.FullName}");
+        return new object();
+    }
+
+    public object VisitAiServiceStatement(AiServiceStatementNode node)
+    {
+        if (_isFirstPass)
+        {
+            return new object();
+        }
+
+        Console.WriteLine($"[DEBUG] Compiling AI service statement - Service: {node.ServiceName}");
+        
+        // Extract payload and check for special 'handlers' property
+        List<string>? handlerEvents = null;
+        
+        if (node.Payload is ObjectLiteralNode objectLiteral)
+        {
+            // Check for handlers property and extract it
+            var handlersProperty = objectLiteral.Properties.FirstOrDefault(p => p.Key == "handlers");
+            if (handlersProperty != null)
+            {
+                Console.WriteLine("[DEBUG] Found handlers property in AI service call");
+                
+                if (handlersProperty.Value is ObjectLiteralNode handlersObject)
+                {
+                    handlerEvents = handlersObject.Properties.Select(p => p.Key).ToList();
+                    Console.WriteLine($"[DEBUG] Extracted {handlerEvents.Count} handler events: {string.Join(", ", handlerEvents)}");
+                }
+            }
+        }
+        
+        // For now, convert AI service calls to event emissions
+        // This allows the handlers pattern to work immediately
+        // In the future, this could call actual AI service methods
+        
+        var eventName = $"ai.{node.ServiceName}.request";
+        Console.WriteLine($"[DEBUG] Converting AI service call to event: {eventName}");
+        
+        // Load the event name as string parameter
+        _currentIl!.Emit(OpCodes.Ldstr, eventName);
+        
+        // Generate code for the payload (if present)
+        if (node.Payload != null)
+        {
+            // Evaluate the payload expression (this will handle the handlers extraction automatically)
+            node.Payload.Accept(this);
+        }
+        else
+        {
+            // No payload - load null
+            _currentIl.Emit(OpCodes.Ldnull);
+        }
+        
+        // Load source identifier
+        _currentIl.Emit(OpCodes.Ldstr, _currentClassName ?? "MainScript");
+        
+        // Call CxRuntimeHelper.EmitEvent(string eventName, object data, string source)
+        var emitMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("EmitEvent", 
+            new[] { typeof(string), typeof(object), typeof(string) });
+        _currentIl.Emit(OpCodes.Call, emitMethod!);
+        
+        Console.WriteLine($"[DEBUG] AI service statement compiled as event emission: {eventName}");
+        return new object();
+    }
+
+    public object VisitHandlerItem(HandlerItemNode node)
+    {
+        if (_isFirstPass)
+        {
+            return new object();
+        }
+
+        Console.WriteLine($"[DEBUG] Compiling handler item - Event: {node.EventName.FullName}");
+        
+        // For now, handler items are processed in the context of handlers lists
+        // This method is mainly for completeness of the visitor pattern
+        
         return new object();
     }
 
@@ -3973,9 +4265,44 @@ public class CxCompiler : IAstVisitor<object>
             // Process constructors
             if (node.Constructors.Count > 0)
             {
-                // Use explicitly declared constructors
+                // Use explicitly declared constructors and add field initialization
                 foreach (var constructor in node.Constructors)
                 {
+                    // Add field initialization statements for fields with default values
+                    Console.WriteLine($"[DEBUG] Adding field initializations to constructor for class {node.Name}");
+                    var originalStatements = new List<StatementNode>(constructor.Body.Statements);
+                    constructor.Body.Statements.Clear();
+                    
+                    foreach (var field in node.Fields)
+                    {
+                        if (field.Initializer != null)
+                        {
+                            Console.WriteLine($"[DEBUG] Adding initialization for field {field.Name} with default value");
+                            
+                            // Create this.fieldName = defaultValue assignment
+                            var assignment = new AssignmentExpressionNode
+                            {
+                                Left = new MemberAccessNode
+                                {
+                                    Object = new IdentifierNode { Name = "this" },
+                                    Property = field.Name
+                                },
+                                Right = field.Initializer
+                            };
+                            
+                            // Wrap in an expression statement
+                            var assignmentStatement = new ExpressionStatementNode
+                            {
+                                Expression = assignment
+                            };
+                            
+                            constructor.Body.Statements.Add(assignmentStatement);
+                        }
+                    }
+                    
+                    // Add the original constructor body after field initialization
+                    constructor.Body.Statements.AddRange(originalStatements);
+                    
                     var paramTypes = new Type[constructor.Parameters.Count];
                     for (int i = 0; i < constructor.Parameters.Count; i++)
                     {
@@ -4011,6 +4338,35 @@ public class CxCompiler : IAstVisitor<object>
                     Body = new BlockStatementNode { Statements = new List<StatementNode>() }
                 };
                 
+                // Add field initialization statements for fields with default values
+                Console.WriteLine($"[DEBUG] Adding field initializations to default constructor for class {node.Name}");
+                foreach (var field in node.Fields)
+                {
+                    if (field.Initializer != null)
+                    {
+                        Console.WriteLine($"[DEBUG] Adding initialization for field {field.Name} with default value");
+                        
+                        // Create this.fieldName = defaultValue assignment
+                        var assignment = new AssignmentExpressionNode
+                        {
+                            Left = new MemberAccessNode
+                            {
+                                Object = new IdentifierNode { Name = "this" },
+                                Property = field.Name
+                            },
+                            Right = field.Initializer
+                        };
+                        
+                        // Wrap in an expression statement
+                        var assignmentStatement = new ExpressionStatementNode
+                        {
+                            Expression = assignment
+                        };
+                        
+                        defaultConstructor.Body.Statements.Add(assignmentStatement);
+                    }
+                }
+                
                 // Add it to the class node's constructors list
                 node.Constructors.Add(defaultConstructor);
             }
@@ -4033,7 +4389,7 @@ public class CxCompiler : IAstVisitor<object>
                     handlerMethodName,
                     MethodAttributes.Public | MethodAttributes.Virtual,
                     typeof(Task),  // Event handlers return Task for async support
-                    new Type[] { typeof(object) });  // Single payload parameter
+                    new Type[] { typeof(CxEvent) });  // CxEvent parameter
                     
                 // Store handler method info for later use
                 _classMethods[node.Name + "." + handlerMethodName] = methodBuilder;
@@ -4496,10 +4852,17 @@ public class CxCompiler : IAstVisitor<object>
         _currentLocals = new Dictionary<string, LocalBuilder>();
         _currentMethod = methodBuilder;
         _currentClassName = className;
-        _currentParameterMapping = new Dictionary<string, int>
-        {
-            [eventHandler.PayloadIdentifier] = 1
-        };
+        
+        // Create local variable for the CxEvent parameter and map it
+        var cxEventLocal = methodIl.DeclareLocal(typeof(CxEvent));
+        _currentLocals[eventHandler.PayloadIdentifier] = cxEventLocal;
+        
+        // Load the CxEvent parameter into the local variable
+        methodIl.Emit(OpCodes.Ldarg_1); // arg 0 is 'this', arg 1 is CxEvent parameter
+        methodIl.Emit(OpCodes.Stloc, cxEventLocal);
+        
+        // Set up parameter mapping (not used for CxEvent since it's handled as local)
+        _currentParameterMapping = new Dictionary<string, int>();
 
         if (eventHandler.IsAsync)
         {

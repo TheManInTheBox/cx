@@ -20,6 +20,7 @@ statement
     | throwStatement
     | onStatement
     | emitStatement
+    | aiServiceStatement
     ;
 
 // Import statement for CX modules
@@ -99,10 +100,14 @@ tryStatement: 'try' blockStatement ('catch' '(' IDENTIFIER ')' blockStatement)?;
 throwStatement: 'throw' expression ';';
 
 // Event-driven statements
-eventNamePart: IDENTIFIER | 'any' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'async' | 'sync';
+eventNamePart: IDENTIFIER | 'any' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'async' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'for' | 'work';
 eventName: eventNamePart ('.' eventNamePart)*;
 onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
-emitStatement: 'emit' eventName (',' expression)? ';';
+emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
+
+// AI service statements (learn, think, generate, etc.) - now supports both comma and no-comma syntax
+aiServiceName: 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'image' | 'analyze' | 'transcribe' | 'audio';
+aiServiceStatement: aiServiceName ((',' expression) | expression) ';';
 
 // Blocks
 blockStatement: '{' statement* '}';
@@ -126,7 +131,10 @@ expression
     ;
 
 objectPropertyList: objectProperty (',' objectProperty)*;
-objectProperty: (IDENTIFIER | STRING_LITERAL) ':' expression;
+objectProperty: (IDENTIFIER | STRING_LITERAL) ':' (expression | handlersList);
+
+handlersList: '[' handlerItem (',' handlerItem)* ']';
+handlerItem: eventName ('{' objectPropertyList? '}')?;
 
 argumentList: expression (',' expression)*;
 
@@ -170,6 +178,20 @@ TRUE: 'true';
 FALSE: 'false';
 ON: 'on';
 EMIT: 'emit';
+
+// AI service keywords
+LEARN: 'learn';
+THINK: 'think';
+GENERATE: 'generate';
+CHAT: 'chat';
+COMMUNICATE: 'communicate';
+SEARCH: 'search';
+EXECUTE: 'execute';
+SPEAK: 'speak';
+IMAGE: 'image';
+ANALYZE: 'analyze';
+TRANSCRIBE: 'transcribe';
+AUDIO: 'audio';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';

@@ -13,7 +13,6 @@ using CxLanguage.StandardLibrary.AI.VectorDatabase;
 using CxLanguage.StandardLibrary.Extensions;
 using CxLanguage.CLI.Extensions;
 using CxLanguage.Core.Ast;
-using CxLanguage.Core.Events;
 using CxLanguage.Runtime;
 using CxCoreAI = CxLanguage.Core.AI;
 
@@ -411,7 +410,7 @@ class Program
                     services.AddSingleton<ICxEventBus>(provider => 
                     {
                         var logger = provider.GetRequiredService<ILogger<UnifiedEventBus>>();
-                        return UnifiedEventBusRegistry.Instance;
+                        return UnifiedEventBusRegistry.Instance as ICxEventBus;
                     });
 
                     // Always register Vector Database services - they can work without full Azure OpenAI config
@@ -463,7 +462,7 @@ class Program
                     services.AddSingleton<ICxEventBus>(provider => 
                     {
                         var logger = provider.GetRequiredService<ILogger<UnifiedEventBus>>();
-                        return UnifiedEventBusRegistry.Instance;
+                        return UnifiedEventBusRegistry.Instance as ICxEventBus;
                     });
                 })
                 .Build();
