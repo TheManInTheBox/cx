@@ -30,6 +30,7 @@ CX Language is an event-driven programming language designed for AI agent orches
 - **Fire-and-Forget AI Operations**: Non-blocking cognitive methods with event-based results
 - **Serializable Object Parameters**: Pass complex data structures to services using object literals
 - **Comma-less Syntax**: Modern clean syntax for AI services and emit statements
+- **Biological Neural Authenticity**: Revolutionary synaptic plasticity with LTP (5-15ms), LTD (10-25ms), STDP causality rules
 
 ## Core Language Rules
 The following rules are mandatory for all CX Language code:
@@ -1539,4 +1540,5 @@ emit demo.start;
 - **Deployment Required**: Include `deployment: "gpt-4o-mini-realtime-preview"` for voice
 - **Real-Time Processing**: Responses stream in real-time, handle incrementally
 - **Speech Speed Control**: Use `speechSpeed` parameter to control voice timing (0.9 = 10% slower, 1.0 = normal, 1.2 = 20% faster)
+- **Production Proven**: All patterns tested and verified in working applications
 
