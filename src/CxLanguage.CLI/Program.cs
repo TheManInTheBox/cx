@@ -67,9 +67,14 @@ class Program
 
     static async Task RunScript(FileInfo file)
     {
+        // Initialize debug tracing system
+        CxDebugTracing.Initialize();
+        CxDebugTracing.TraceInfo("CLI", "Starting CX Language script execution", new { FileName = file.Name, FullPath = file.FullName });
+        
         if (!file.Exists)
         {
             Console.Error.WriteLine($"Error: File '{file.FullName}' not found.");
+            CxDebugTracing.TraceError("CLI", "Script file not found", new { FileName = file.FullName });
             return;
         }
 

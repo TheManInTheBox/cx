@@ -4,12 +4,15 @@
 print("=== 🎉 AZURE REALTIME API INTEGRATION SUCCESS TEST 🎉 ===");
 
 // Create final working agent demonstrating complete integration
-class AzureRealtimeIntegrationAgent
+object AzureRealtimeIntegrationAgent
 {
-    name: string = "FinalSuccessAgent";
-    status: string = "ready";
+    realize(self: object)
+    {
+        learn self;
+        emit agent.ready { name: self.name, status: "ready" };
+    }
     
-    function testCompleteIntegration()
+    on integration.test.start (event)
     {
         print("🚀 Testing complete Azure Realtime API integration...");
         print("✅ Event system: WORKING");
@@ -18,7 +21,7 @@ class AzureRealtimeIntegrationAgent
         print("✅ WebSocket connection: ATTEMPTING");
         
         // Test the complete pipeline
-        emit realtime.connect { test: "final_integration", ready: true };
+        emit realtime.connect { test: "final_integration", "ready": "true" };
         
         print("💫 Integration test initiated - Azure service should respond");
     }
@@ -29,7 +32,6 @@ class AzureRealtimeIntegrationAgent
         print("✅ Complete integration successful!");
         print(event);
         
-        this.status = "connected";
         emit integration.success { 
             status: "connected", 
             service: "azure_realtime_api",
@@ -55,12 +57,20 @@ class AzureRealtimeIntegrationAgent
         print("⚠️ Azure deployment configuration issue detected:");
         print(event);
         
-        if (event.error && event.error.indexOf("404") >= 0)
-        {
-            print("📋 DEPLOYMENT ISSUE: gpt-4o-realtime-preview deployment not found");
-            print("💡 SOLUTION: Create deployment with correct name in Azure portal");
-            print("✅ BUT: Event system integration is WORKING PERFECTLY!");
-        }
+        // Use cognitive boolean logic instead of if statement
+        is {
+            context: "Check if error is a deployment issue",
+            evaluate: "Error contains 404 status code",
+            data: { error: event.error },
+            handlers: [ deployment.issue.detected ]
+        };
+    }
+    
+    on deployment.issue.detected (event)
+    {
+        print("📋 DEPLOYMENT ISSUE: gpt-4o-realtime-preview deployment not found");
+        print("💡 SOLUTION: Create deployment with correct name in Azure portal");
+        print("✅ BUT: Event system integration is WORKING PERFECTLY!");
     }
     
     on realtime.text.response (event)
@@ -79,11 +89,11 @@ class AzureRealtimeIntegrationAgent
     }
 }
 
-// Create and test the final integration
-var integrationAgent = new AzureRealtimeIntegrationAgent();
+// Create and test the final integration using pure event-driven architecture
+var integrationAgent = new AzureRealtimeIntegrationAgent({ name: "FinalSuccessAgent" });
 
 print("\n🔬 FINAL INTEGRATION TEST");
-integrationAgent.testCompleteIntegration();
+emit integration.test.start;
 
 print("\n📊 INTEGRATION STATUS:");
 print("✅ Azure Realtime Event Handler: ACTIVATED");

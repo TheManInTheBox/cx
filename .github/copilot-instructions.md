@@ -11,6 +11,7 @@ This document provides development guidance and standards for the CX Language pl
 ## TOP PRIORITY 100%
 - ABSOLUTLY NO SIMULATIONS!!!! WORKING CODE ONLY!!!!
 - PRINTED OUTPUT DOES NOT CONFIRM FUNCTIONALITY, ONLY DEBUG OUTPUT DOES
+- TOP CONCERN: Consider the implications of every architectural and implementation decision on production reliability, scalability, and maintainability.
 - Always check for existing scaffolding before starting a new feature.
 - Instrument everything, lots of debug and runtime trace. Trace cx source code line to executing IL is a must. 
 - Use the cx language to orchestrate a team of agents to assist you in building the Cx Language platform. 
@@ -50,6 +51,14 @@ wiki/                         → Static documentation (timeless reference mater
 .github/issue_templates/bug_report.md → Template for bug reports
 .github/issue_templates/feature_request.md → Template for feature requests
 ```
+
+### **Revolutionary Language Design**
+- **Pure Event-Driven Architecture**: Classes contain ONLY `realize()` constructors and event handlers
+- **No Member Fields**: All state management through AI services and event payloads
+- **No `this` Keyword**: Complete elimination of instance references for pure stateless programming
+- **Cognitive Constructors**: `realize(self: object)` with `learn self;` for AI-driven initialization
+- **Event-Only Communication**: All behavior flows through the unified event system
+- **Aura Cognitive Framework**: A decentralized eventing model where each agent possesses a local `EventHub` (a personal nervous system) for internal processing, all orchestrated by a global `EventBus` that manages inter-agent communication.
 
 ### **File Organization**
 - **Production applications**: `examples/production/` directory

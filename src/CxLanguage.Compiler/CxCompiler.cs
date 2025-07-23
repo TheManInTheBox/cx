@@ -4309,16 +4309,16 @@ public class CxCompiler : IAstVisitor<object>
                 _classMethods[node.Name + "." + method.Name] = methodBuilder;
             }
             
-            // Process constructors
-            if (node.Constructors.Count > 0)
+            // Process realize declarations (cognitive constructors)
+            if (node.RealizeDeclarations.Count > 0)
             {
-                // Use explicitly declared constructors and add field initialization
-                foreach (var constructor in node.Constructors)
+                // Use explicitly declared realize functions and add field initialization
+                foreach (var realizeDecl in node.RealizeDeclarations)
                 {
                     // Add field initialization statements for fields with default values
-                    Console.WriteLine($"[DEBUG] Adding field initializations to constructor for class {node.Name}");
-                    var originalStatements = new List<StatementNode>(constructor.Body.Statements);
-                    constructor.Body.Statements.Clear();
+                    CxDebugTracing.TraceDebug("Compiler", $"Adding field initializations to realize declaration for class {node.Name}");
+                    var originalStatements = new List<StatementNode>(realizeDecl.Body.Statements);
+                    realizeDecl.Body.Statements.Clear();
                     
                     foreach (var field in node.Fields)
                     {
@@ -4343,15 +4343,15 @@ public class CxCompiler : IAstVisitor<object>
                                 Expression = assignment
                             };
                             
-                            constructor.Body.Statements.Add(assignmentStatement);
+                            realizeDecl.Body.Statements.Add(assignmentStatement);
                         }
                     }
                     
-                    // Add the original constructor body after field initialization
-                    constructor.Body.Statements.AddRange(originalStatements);
+                    // Add the original realize body after field initialization
+                    realizeDecl.Body.Statements.AddRange(originalStatements);
                     
-                    var paramTypes = new Type[constructor.Parameters.Count];
-                    for (int i = 0; i < constructor.Parameters.Count; i++)
+                    var paramTypes = new Type[realizeDecl.Parameters.Count];
+                    for (int i = 0; i < realizeDecl.Parameters.Count; i++)
                     {
                         paramTypes[i] = typeof(object);
                     }
@@ -4361,14 +4361,15 @@ public class CxCompiler : IAstVisitor<object>
                         CallingConventions.Standard,
                         paramTypes);
                         
-                    // Store constructor info for later use
+                    // Store constructor info for later use (realize declarations become constructors in IL)
                     _classConstructors[node.Name] = constructorBuilder;
+                    CxDebugTracing.TraceCxToIL($"realize({string.Join(", ", realizeDecl.Parameters.Select(p => p.Name))})", $"DefineConstructor({paramTypes.Length} params)", new { ClassName = node.Name, ParameterCount = paramTypes.Length });
                 }
             }
             else
             {
-                // Create a default parameterless constructor when none are declared
-                Console.WriteLine($"[DEBUG] Creating default constructor for class {node.Name}");
+                // Create a default parameterless constructor when no realize declarations are provided
+                CxDebugTracing.TraceDebug("Compiler", $"Creating default constructor for class {node.Name} (no realize declarations)");
                 
                 var defaultConstructorBuilder = typeBuilder.DefineConstructor(
                     MethodAttributes.Public,
@@ -4378,20 +4379,20 @@ public class CxCompiler : IAstVisitor<object>
                 // Store constructor info for later use
                 _classConstructors[node.Name] = defaultConstructorBuilder;
                 
-                // Also create a default constructor node for Pass 2 processing
-                var defaultConstructor = new ConstructorDeclarationNode 
+                // Also create a default realize declaration node for Pass 2 processing
+                var defaultRealizeDecl = new RealizeDeclarationNode 
                 { 
                     Parameters = new List<ParameterNode>(),
                     Body = new BlockStatementNode { Statements = new List<StatementNode>() }
                 };
                 
                 // Add field initialization statements for fields with default values
-                Console.WriteLine($"[DEBUG] Adding field initializations to default constructor for class {node.Name}");
+                CxDebugTracing.TraceDebug("Compiler", $"Adding field initializations to default realize declaration for class {node.Name}");
                 foreach (var field in node.Fields)
                 {
                     if (field.Initializer != null)
                     {
-                        Console.WriteLine($"[DEBUG] Adding initialization for field {field.Name} with default value");
+                        CxDebugTracing.TraceDebug("Compiler", $"Adding initialization for field {field.Name} with default value");
                         
                         // Create this.fieldName = defaultValue assignment
                         var assignment = new AssignmentExpressionNode
@@ -4410,12 +4411,12 @@ public class CxCompiler : IAstVisitor<object>
                             Expression = assignment
                         };
                         
-                        defaultConstructor.Body.Statements.Add(assignmentStatement);
+                        defaultRealizeDecl.Body.Statements.Add(assignmentStatement);
                     }
                 }
                 
-                // Add it to the class node's constructors list
-                node.Constructors.Add(defaultConstructor);
+                // Add it to the class node's realize declarations list
+                node.RealizeDeclarations.Add(defaultRealizeDecl);
             }
             
             // Process event handlers to define them as methods
@@ -4460,10 +4461,10 @@ public class CxCompiler : IAstVisitor<object>
                 throw new CompilationException($"Class {node.Name} was not defined in Pass 1");
             }
             
-            // Implement constructors
-            foreach (var constructor in node.Constructors)
+            // Implement realize declarations (cognitive constructors)
+            foreach (var realizeDecl in node.RealizeDeclarations)
             {
-                ImplementConstructor(node.Name, constructor, typeBuilder, node.EventHandlers, node.UsesStatements);
+                ImplementRealizeDeclaration(node.Name, realizeDecl, typeBuilder, node.EventHandlers, node.UsesStatements);
             }
             
             // Implement methods
@@ -4516,11 +4517,11 @@ public class CxCompiler : IAstVisitor<object>
     }
     
     /// <summary>
-    /// Implements a constructor body for a class in Pass 2
+    /// Implements a realize declaration (cognitive constructor) body for a class in Pass 2
     /// </summary>
-    private void ImplementConstructor(string className, ConstructorDeclarationNode constructor, TypeBuilder typeBuilder, List<OnStatementNode> eventHandlers, List<UsesStatementNode> usesStatements)
+    private void ImplementRealizeDeclaration(string className, RealizeDeclarationNode realizeDecl, TypeBuilder typeBuilder, List<OnStatementNode> eventHandlers, List<UsesStatementNode> usesStatements)
     {
-        Console.WriteLine($"[DEBUG] Implementing constructor for class {className} with {constructor.Parameters.Count} parameters");
+        CxDebugTracing.TraceDebug("Compiler", $"Implementing realize declaration for class {className} with {realizeDecl.Parameters.Count} parameters");
         
         if (!_classConstructors.TryGetValue(className, out var constructorBuilder))
         {
@@ -4536,27 +4537,27 @@ public class CxCompiler : IAstVisitor<object>
         var previousParameterMapping = _currentParameterMapping;
         var previousClassName = _currentClassName;
         
-        // Set up new context for constructor
+        // Set up new context for realize declaration (constructor)
         _currentIl = constructorIl;
         _currentLocals = new Dictionary<string, LocalBuilder>();
         _currentClassName = className;
         
         // Set up parameter mapping (parameter 0 is 'this', parameters start at index 1)
         _currentParameterMapping = new Dictionary<string, int>();
-        for (int i = 0; i < constructor.Parameters.Count; i++)
+        for (int i = 0; i < realizeDecl.Parameters.Count; i++)
         {
-            _currentParameterMapping[constructor.Parameters[i].Name] = i + 1; // +1 because 'this' is at index 0
+            _currentParameterMapping[realizeDecl.Parameters[i].Name] = i + 1; // +1 because 'this' is at index 0
         }
         
         // Call base constructor based on class inheritance
-        Console.WriteLine($"[DEBUG] Calling base constructor for class {className}");
+        CxDebugTracing.TraceCxToIL("realize() base call", "Call base constructor", new { ClassName = className });
         _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
         
         // Check if this class inherits from AiServiceBase (requires IServiceProvider and ILogger)
         if (_classBaseTypes.TryGetValue(className, out var baseClassType) && 
             baseClassType.Name == "AiServiceBase")
         {
-            Console.WriteLine($"[DEBUG] Class {className} inherits from AiServiceBase - injecting IServiceProvider and ILogger");
+            CxDebugTracing.TraceDebug("Compiler", $"Class {className} inherits from AiServiceBase - injecting IServiceProvider and ILogger");
             
             // Load IServiceProvider from static field
             _currentIl.Emit(OpCodes.Ldsfld, _serviceProviderField);
@@ -4628,22 +4629,22 @@ public class CxCompiler : IAstVisitor<object>
             InitializeInstanceServiceField(className, usesStmt.Alias, usesStmt.ServicePath);
         }
         
-        // NOTE: Removed automatic field initialization to null - let constructor body handle field assignments
-        // This fixes the bug where constructor assignments were being overwritten by null initialization
+        // NOTE: Removed automatic field initialization to null - let realize declaration body handle field assignments
+        // This fixes the bug where realize assignments were being overwritten by null initialization
         
-        // Compile the constructor body
-        Console.WriteLine($"[DEBUG] Compiling constructor body for class {className}");
-        constructor.Body.Accept(this);
-        Console.WriteLine($"[DEBUG] Constructor body compilation complete for class {className}");
+        // Compile the realize declaration body
+        CxDebugTracing.TraceDebug("Compiler", $"Compiling realize declaration body for class {className}");
+        realizeDecl.Body.Accept(this);
+        CxDebugTracing.TraceDebug("Compiler", $"Realize declaration body compilation complete for class {className}");
         
         // Register event handlers for this class instance
-        Console.WriteLine($"[DEBUG] Registering {eventHandlers.Count} event handlers for class {className}");
+        CxDebugTracing.TraceDebug("Compiler", $"Registering {eventHandlers.Count} event handlers for class {className}");
         foreach (var eventHandler in eventHandlers)
         {
             var eventName = eventHandler.EventName.FullName;
             var handlerMethodName = _eventHandlerMethodNames[eventHandler];
             
-            Console.WriteLine($"[DEBUG] Registering instance event handler: {eventName} -> {className}.{handlerMethodName}");
+            CxDebugTracing.TraceEvent(eventName, $"Registering instance handler", new { ClassName = className, HandlerMethod = handlerMethodName });
             
             // Call CxRuntimeHelper.RegisterInstanceEventHandler(this, eventName, methodName)
             _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this' instance
@@ -5019,7 +5020,7 @@ public class CxCompiler : IAstVisitor<object>
     }
     public object VisitFieldDeclaration(FieldDeclarationNode node) => new object();
     public object VisitMethodDeclaration(MethodDeclarationNode node) => new object();
-    public object VisitConstructorDeclaration(ConstructorDeclarationNode node) => new object();
+    public object VisitRealizeDeclaration(RealizeDeclarationNode node) => new object();
     public object VisitInterfaceDeclaration(InterfaceDeclarationNode node) => new object();
     public object VisitInterfaceMethodSignature(InterfaceMethodSignatureNode node) => new object();
     public object VisitInterfacePropertySignature(InterfacePropertySignatureNode node) => new object();
