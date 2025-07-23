@@ -1029,7 +1029,9 @@ adapt {
         adapt.logged { level: "info" }
     ]
 };
-```
+
+// Class introspection
+learn { this }
 
 // Enhanced handlers with custom payloads
 learn {
