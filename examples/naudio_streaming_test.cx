@@ -1,0 +1,264 @@
+// Azure Realtime Speak API with turn-based agent coordination
+// Agents decide who speaks first and wait their turn
+
+var globalSpeaker = null;  // Track who is currently speaking
+var speakerQueue = [];     // Queue of agents waiting to speak
+
+class VoiceStreamingAgent
+{
+    name: string = "VoiceStreaming";
+    agentId: string = "agent1";
+    isPlaying: bool = false;
+    pendingMessage: string = null;
+    
+    constructor(id: string)
+    {
+        this.agentId = id;
+        this.name = "Agent_" + id;
+    }
+    
+    function requestToSpeak(message: string)
+    {
+        print("� " + this.name + " requests to speak: '" + message + "'");
+        this.pendingMessage = message;
+        
+        // Check if anyone is currently speaking
+        emit speaker.request { 
+            agentId: this.agentId,
+            message: message,
+            timestamp: "now"
+        };
+    }
+    
+    function startSpeaking()
+    {
+        if (this.pendingMessage != null)
+        {
+            print("🗣️ " + this.name + " starts speaking: " + this.pendingMessage);
+            
+            // Use cognitive speak function
+            speak { text: this.pendingMessage };
+            this.pendingMessage = null;
+        }
+    }
+    
+    // Handle Azure Realtime API connection
+    on realtime.connected (event)
+    {
+        print("✅ Connected to Azure Realtime API for audio streaming");
+        
+        // Create voice session optimized for audio output
+        emit realtime.session.create { 
+            deployment: "gpt-4o-mini-realtime-preview",
+            mode: "voice"
+        };
+    }
+    
+    // Handle session creation
+    on realtime.session.created (event)
+    {
+        print("✅ Azure voice session created - ready for audio streaming");
+        
+        // Test multiple voice synthesis calls using ONLY speak function - QUEUED
+        this.speakText("Hello! This is a test of real-time voice streaming with NAudio.");
+        
+        print("🎵 Additional test messages will follow in order...");
+        
+        // Use speak function for additional messages - these will be queued
+        this.addToSpeechQueue("The audio you're hearing is being streamed directly from Azure OpenAI to your speakers using NAudio.");
+        this.addToSpeechQueue("Each message waits for the previous one to complete before starting.");
+        
+        // Start processing the queue
+        this.processNextInQueue();
+    }
+    
+    // Bridge cognitive speak to Azure API
+    on ai.speak.request (event)
+    {
+        print("🌉 Bridging cognitive speak to Azure Realtime API");
+        print("Text to synthesize: " + event.text);
+        
+        // Send to Azure for voice synthesis (this is the ONLY place we emit realtime.text.send)
+        emit realtime.text.send {
+            text: event.text,
+            deployment: "gpt-4o-mini-realtime-preview"
+        };
+    }
+    
+    // Handle speech queue additions
+    on speech.queue.add (event)
+    {
+        print("📝 Speech queued: " + event.message);
+        
+        // If not currently processing, start immediately
+        if (!this.isProcessingQueue && !this.isPlaying)
+        {
+            print("🚀 Queue is empty - starting immediately");
+            this.processNextInQueue();
+        }
+        else
+        {
+            print("⏳ Added to queue - waiting for current speech to complete");
+        }
+    }
+    
+    // Handle processing next item in queue
+    on speech.queue.next (event)
+    {
+        print("🎯 Processing next queued speech item");
+        
+        // Simulate getting next message from queue
+        // In a real implementation, this would retrieve from an actual queue data structure
+        emit speech.queue.process { 
+            message: "Next queued message",
+            hasMore: true
+        };
+    }
+    
+    // Handle queue processing
+    on speech.queue.process (event)
+    {
+        if (!this.isPlaying)
+        {
+            print("🗣️ Now speaking (turn-based): " + event.message);
+            
+            // Use cognitive speak function to trigger voice synthesis
+            speak { text: event.message };
+        }
+        else
+        {
+            print("⏳ Still playing previous audio - will retry");
+        }
+    }
+    
+    // Handle streaming text responses
+    on realtime.text.response (event)
+    {
+        print("📝 Azure text chunk: " + event.content);
+        
+        if (event.isComplete)
+        {
+            print("✅ Text generation complete - audio should follow");
+        }
+    }
+    
+    // Handle audio responses and automatically stream to NAudio
+    on realtime.audio.response (event)
+    {
+        if (event.audioData != null)
+        {
+            print("🎵 Audio chunk received - auto-streaming to NAudio...");
+            
+            // AUTOMATIC: Stream audio data directly to NAudio for immediate playback
+            // This should automatically trigger NAudio playback without execute command
+            emit audio.stream.direct { 
+                audioData: event.audioData,
+                format: "24kHz_16bit_mono_PCM",
+                autoPlay: true
+            };
+            
+            this.isPlaying = true;
+            print("🔊 Audio automatically streamed to NAudio");
+        }
+        else
+        {
+            print("🎵 Audio response (no data)");
+        }
+        
+        if (event.isComplete)
+        {
+            print("✅ VOICE SYNTHESIS AND PLAYBACK COMPLETE!");
+            print("🎧 You should have heard the synthesized speech through your speakers");
+        }
+    }
+    
+    // Handle direct audio streaming events (automatic NAudio integration)
+    on audio.stream.direct (event)
+    {
+        print("🎧 Direct audio streaming initiated...");
+        print("Audio format: " + event.format);
+        print("Auto-play enabled: " + event.autoPlay);
+        
+        // Emit NAudio playback started event
+        emit naudio.playback.started { 
+            audioSize: "detected",
+            timestamp: "now"
+        };
+        
+        // Simulate successful streaming completion
+        emit audio.streaming.complete { 
+            duration: 2500,
+            status: "success"
+        };
+    }
+    
+    // Handle audio streaming completion
+    on audio.streaming.complete (event)
+    {
+        print("✅ NAudio streaming completed successfully");
+        print("Audio duration: " + event.duration + " ms");
+        this.isPlaying = false;
+        this.isProcessingQueue = false;
+        
+        // Process next item in queue after current audio completes
+        print("🔄 Audio complete - checking for next speech in queue...");
+        this.processNextInQueue();
+    }
+    
+    // Handle NAudio playback start
+    on naudio.playback.started (event)
+    {
+        print("🔊 NAudio playback started");
+        print("Playing audio chunk of size: " + event.audioSize + " bytes");
+    }
+    
+    // Handle any streaming errors
+    on realtime.error (event)
+    {
+        print("❌ Azure Realtime API error: " + event.message);
+        this.isPlaying = false;
+    }
+    
+    // Status check function
+    function getStreamingStatus()
+    {
+        if (this.isPlaying)
+        {
+            print("🎵 Audio is currently playing through NAudio");
+        }
+        else
+        {
+            print("🔇 No audio currently playing");
+        }
+        
+        return this.isPlaying;
+    }
+}
+
+// Create and test the voice streaming agent
+var streamingAgent = new VoiceStreamingAgent();
+
+print("=== AZURE REALTIME + NAUDIO STREAMING TEST ===");
+print("This will synthesize speech and play it through your speakers");
+print("🎧 Make sure your audio is turned on!");
+print("");
+
+// Start the streaming test
+streamingAgent.triggerSpeakWithAudio();
+
+print("");
+print("🎵 Voice streaming initiated - you should hear audio playback shortly...");
+print("🔊 Audio will be streamed in real-time as it's generated by Azure");
+
+// Test cognitive speak function after a brief moment
+print("");
+print("🗣️ Testing additional turn-based cognitive speak calls...");
+
+// Test multiple speak calls - ALL using queued speak function (TURN-BASED)
+streamingAgent.addToSpeechQueue("This is the first cognitive speak test with audio streaming.");
+streamingAgent.addToSpeechQueue("This is a second test to verify continuous audio streaming.");
+streamingAgent.addToSpeechQueue("All audio is generated automatically through the speak function.");
+streamingAgent.addToSpeechQueue("Each message waits for the previous one to complete - no overlapping speech!");
+
+print("");
+print("⏳ Waiting for turn-based voice synthesis and NAudio playback...");

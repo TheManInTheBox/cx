@@ -466,4 +466,94 @@ public class AiFunctions
             return $"[AI Adapt] {content} - Error: {ex.Message}";
         }
     }
+
+    /// <summary>
+    /// Implements the 'speak' AI function using Azure Realtime API
+    /// Converts text to speech and emits realtime events
+    /// </summary>
+    public System.Threading.Tasks.Task<object> SpeakAsync(string text, object? options = null)
+    {
+        _logger.LogInformation("Executing speak function with text: {Text}", text);
+        
+        try
+        {
+            // For the base implementation, return a placeholder
+            // The adapter will override this with the real implementation
+            var result = new 
+            { 
+                success = true, 
+                text = text,
+                message = "Voice synthesis function called (base implementation)"
+            };
+            return System.Threading.Tasks.Task.FromResult<object>(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in speak function");
+            var errorResult = new { error = ex.Message, text = text };
+            return System.Threading.Tasks.Task.FromResult<object>(errorResult);
+        }
+    }
+
+    /// <summary>
+    /// Implements the 'listen' AI function using Azure Realtime API
+    /// Sets up voice input listening and emits realtime events
+    /// </summary>
+    public System.Threading.Tasks.Task<object> ListenAsync(string prompt = "Listening for voice input...", object? options = null)
+    {
+        _logger.LogInformation("Executing listen function with prompt: {Prompt}", prompt);
+        
+        try
+        {
+            // For the base implementation, return a placeholder
+            // The adapter will override this with the real implementation
+            var result = new 
+            { 
+                success = true, 
+                prompt = prompt,
+                message = "Voice listening function called (base implementation)"
+            };
+            return System.Threading.Tasks.Task.FromResult<object>(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in listen function");
+            var errorResult = new { error = ex.Message, prompt = prompt };
+            return System.Threading.Tasks.Task.FromResult<object>(errorResult);
+        }
+    }
+
+    /// <summary>
+    /// Synchronous wrapper for speak function
+    /// </summary>
+    public object Speak(string text, object? options = null)
+    {
+        _logger.LogInformation("Executing synchronous Speak function with text: {Text}", text);
+        try
+        {
+            return SpeakAsync(text, options).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in synchronous Speak wrapper");
+            return $"[AI Speak] {text} - Error: {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Synchronous wrapper for listen function
+    /// </summary>
+    public object Listen(string prompt = "Listening for voice input...", object? options = null)
+    {
+        _logger.LogInformation("Executing synchronous Listen function with prompt: {Prompt}", prompt);
+        try
+        {
+            return ListenAsync(prompt, options).GetAwaiter().GetResult();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in synchronous Listen wrapper");
+            return $"[AI Listen] {prompt} - Error: {ex.Message}";
+        }
+    }
 }

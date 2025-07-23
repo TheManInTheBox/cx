@@ -1,0 +1,117 @@
+// Testing speak API with actual Azure Realtime API integration
+// This will trigger the real voice synthesis through Azure
+
+class VoiceAPIAgent
+{
+    name: string = "VoiceAPI";
+    
+    function triggerSpeakAPI()
+    {
+        print("🔊 Triggering Azure Realtime Speak API...");
+        
+        // First establish Azure Realtime connection
+        emit realtime.connect { demo: "speak_api_test" };
+    }
+    
+    function testCognitiveSpeakCall()
+    {
+        print("🧠 Testing cognitive speak function...");
+        
+        // This will emit ai.speak.request event
+        speak { text: "Hello, this is a test of the Azure Realtime speak API" };
+    }
+    
+    // Handle Azure Realtime API connection
+    on realtime.connected (event)
+    {
+        print("✅ Connected to Azure Realtime API");
+        
+        // Create voice session for speech synthesis
+        emit realtime.session.create { 
+            deployment: "gpt-4o-mini-realtime-preview",
+            mode: "voice"
+        };
+    }
+    
+    // Handle session creation
+    on realtime.session.created (event)
+    {
+        print("✅ Azure voice session created");
+        
+        // Now test both cognitive speak call and direct API call
+        this.testCognitiveSpeakCall();
+        
+        print("🔊 Also testing direct Azure Realtime text send...");
+        // Direct Azure Realtime API call
+        emit realtime.text.send { 
+            text: "This is a direct call to Azure Realtime API",
+            deployment: "gpt-4o-mini-realtime-preview"
+        };
+    }
+    
+    // Handle cognitive speak requests (bridge to Azure API)
+    on ai.speak.request (event)
+    {
+        print("🌉 Bridging cognitive speak to Azure Realtime API");
+        print("Text to speak: " + event.text);
+        
+        // Bridge cognitive speak to Azure Realtime API
+        emit realtime.text.send {
+            text: event.text,
+            deployment: "gpt-4o-mini-realtime-preview"
+        };
+    }
+    
+    // Handle Azure text responses
+    on realtime.text.response (event)
+    {
+        print("📝 Azure text response: " + event.content);
+        print("Response complete: " + event.isComplete);
+        
+        if (event.isComplete)
+        {
+            print("✅ Text response generation complete");
+        }
+    }
+    
+    // Handle Azure audio responses (actual voice synthesis)
+    on realtime.audio.response (event)
+    {
+        if (event.audioData != null)
+        {
+            var audioBytes = event.audioData;
+            print("🎵 VOICE SYNTHESIS COMPLETE! Audio data received:");
+            print("Audio data available: true");
+        }
+        else
+        {
+            print("🎵 Audio response received (no data)");
+        }
+        
+        print("Audio complete: " + event.isComplete);
+        
+        if (event.isComplete)
+        {
+            print("✅ Voice synthesis fully complete!");
+        }
+    }
+    
+    // Handle any connection issues
+    on realtime.error (event)
+    {
+        print("❌ Azure Realtime API error: " + event.message);
+    }
+}
+
+// Create and test the voice API agent
+var voiceAgent = new VoiceAPIAgent();
+
+print("=== AZURE REALTIME SPEAK API TEST ===");
+print("This will trigger actual voice synthesis through Azure OpenAI");
+print("");
+
+// Start the API test
+voiceAgent.triggerSpeakAPI();
+
+print("");
+print("🔊 Speak API test initiated - waiting for Azure responses...");

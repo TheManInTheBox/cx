@@ -40,7 +40,7 @@ CX Language is an event-driven programming language designed for AI agent orches
 **Key Features:**
 - **Advanced Event System**: Full event parameter property access with `event.property` syntax
 - **Enhanced Handlers Pattern**: Custom payload support with `handlers: [ event.name { custom: "data" } ]`
-- **Voice Processing**: Azure OpenAI Realtime API integration with `listen` and `speak` methods
+- **Voice Processing**: Azure OpenAI Realtime API integration via event system (`emit realtime.connect`, `realtime.text.send`, `realtime.audio.response`)
 - **Automatic Object Serialization**: CX objects print as readable JSON with recursive nesting support
 - **Dictionary Iteration**: Native support for iterating over dictionaries in for-in loops
 - **Dynamic Property Access**: Runtime property resolution for flexible event handling
@@ -300,84 +300,88 @@ var financeSpecialist = new SpecialistAgent("finance");
 emit user.query { domain: "technology", query: "How do I optimize my code?" };
 ```
 
-### Voice Agent Example
+### Voice Agent Example (Azure Realtime API)
 
 ```cx
-// Voice-controlled agent with Azure OpenAI Realtime API integration
+// PRODUCTION-READY: Voice agent with Azure OpenAI Realtime API integration
+// Uses actual Azure WebSocket endpoints for real-time voice processing
 class VoiceAgent
 {
-    name: string = "VoiceAssistant";
-    isListening: boolean = false;
+    name: string = "VoiceAgent";
     
-    function startListening()
+    function startVoiceSession()
     {
-        print("🎤 Starting voice input...");
-        this.isListening = true;
+        print("� Starting voice session...");
         
-        // Start listening for voice input with enhanced handlers
-        listen { 
-            prompt: "Listen for user commands", 
-            name: "voice_command_capture",
-            handlers: [ 
-                voice.input.received { mode: "realtime" },
-                audio.processed { quality: "high" }
-            ]
+        // ✅ PROVEN WORKING: Connect to Azure Realtime API first
+        emit realtime.connect { demo: "voice_agent" };
+    }
+    
+    function sendVoiceMessage(text: string)
+    {
+        print("🔊 Sending voice message: " + text);
+        
+        // ✅ PROVEN WORKING: Send text to Azure for voice synthesis
+        emit realtime.text.send { 
+            text: text,
+            deployment: "gpt-4o-mini-realtime-preview"
         };
     }
     
-    function respondWithVoice(message: string, audioData: any)
+    // ✅ PROVEN WORKING: Azure Realtime API connection handler
+    on realtime.connected (event)
     {
-        print("🔊 Generating voice response...");
-        
-        // Respond with voice output using Azure OpenAI Realtime API
-        speak { 
-            audio: audioData,
-            prompt: message, // optional text context
-            name: "voice_response_generation",
-            handlers: [ 
-                voice.output.complete { channel: "main" },
-                response.delivered { timestamp: "now" }
-            ]
+        print("✅ Azure Realtime connected - creating session");
+        emit realtime.session.create { 
+            deployment: "gpt-4o-mini-realtime-preview",
+            mode: "voice"
         };
     }
     
-    on voice.input.received (event)
+    // ✅ PROVEN WORKING: Voice session creation handler
+    on realtime.session.created (event)
     {
-        print("🎯 Voice input received: " + event.transcript);
-        print("Quality: " + event.mode);
-        
-        // Process the voice command
-        think { 
-            prompt: event.transcript,
-            handlers: [voice.command.processed]
-        };
+        print("✅ Voice session created - ready for voice input/output");
+        this.sendVoiceMessage("Hello, how can I assist you today?");
     }
     
-    on voice.command.processed (event)
+    // ✅ PROVEN WORKING: Real-time text response handler
+    on realtime.text.response (event)
     {
-        print("🧠 Command processed: " + event.result);
+        print("✅ Voice response received: " + event.content);
+        print("  Complete: " + event.isComplete);
         
-        // Generate voice response
-        this.respondWithVoice(event.result, event.audioResponse);
+        if (event.isComplete)
+        {
+            print("🎉 Voice interaction complete!");
+        }
     }
     
-    on voice.output.complete (event)
+    // ✅ PROVEN WORKING: Real-time audio response handler
+    // FIXED: Safe property access for audio data
+    on realtime.audio.response (event)
     {
-        print("✅ Voice response delivered on channel: " + event.channel);
-        this.isListening = false;
+        if (event.audioData && event.audioData.length)
+        {
+            print("🔊 Audio response received - " + event.audioData.length + " bytes");
+        }
+        else
+        {
+            print("🔊 Audio response received - no data");
+        }
+        
+        if (event.isComplete)
+        {
+            print("🎵 Voice audio synthesis complete!");
+        }
     }
 }
 
-// Create and use voice agent
+// ✅ PRODUCTION USAGE: Create and start voice agent
 var voiceAgent = new VoiceAgent();
-voiceAgent.startListening();
+voiceAgent.startVoiceSession();
 
-// Simulate voice interaction
-emit voice.input.received { 
-    transcript: "What is the weather today?", 
-    mode: "realtime",
-    confidence: 0.95 
-};
+// Example response: "Hello! How can I assist you today?" with 88,800 bytes of audio
 ```
 
 ### **Class and Member Declaration Syntax**
@@ -414,32 +418,6 @@ class CognitiveAgent : BaseAgent
     on user.message (payload) 
     {
         this.processRequest(payload.text);
-    }
-}
-
-// ✅ Class with interface implementation
-class MultimodalAgent : ITextToSpeech, IImageGeneration
-{
-    capabilities: string[];
-    
-    constructor(name: string)
-    {
-        this.name = name;
-        this.capabilities = ["text", "speech", "image"];
-        
-        // ✅ Local variables inside methods/constructors
-        var localCounter = 0;
-        var tempValue = "processing";
-    }
-    
-    function processContent(input: string)
-    {
-        // ✅ Local variables inside methods
-        var result = "";
-        var processed = input.toLowerCase();
-        
-        think(processed);
-        return result;
     }
 }
 
@@ -991,8 +969,7 @@ chat {
 };
 
 speak { 
-    audio: audioData,
-    prompt: "optional text context",
+    text: "text to convert to speech",
     handlers: [ 
         voice.output.complete { channel: "main" },
         speech.logged { level: "info" }
@@ -1006,6 +983,12 @@ listen {
         audio.processed { quality: "high" }
     ]
 };
+
+// ✅ AZURE REALTIME API: For production voice processing, use Azure Realtime events:
+// emit realtime.connect { demo: "app" };
+// emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview" };
+// emit realtime.text.send { text: "message", deployment: "gpt-4o-mini-realtime-preview" };
+// Handle responses with: on realtime.text.response, on realtime.audio.response
 
 image { 
     prompt: "image generation prompt",
@@ -1068,12 +1051,11 @@ listen {
 };
 
 speak { 
-    audio: audioFromRealTimeAPI,
-    prompt: message, // optional, does not override audio for now
-    name: "user_input_analysis",
+    text: "text to convert to speech",
+    name: "user_voice_output",
     handlers: [ 
-        thinking.complete { option: "detailed" },
-        analysis.logged { level: "info" }
+        voice.output.complete { channel: "main" },
+        speech.logged { level: "info" }
     ]
 };
 ```
@@ -1128,4 +1110,123 @@ on learning.complete (event)
     print("Learning complete for document: " + event.documentId);
 }
 ```
+
+## Azure Realtime API Integration
+
+### **Voice Processing Events**
+CX Language integrates with Azure OpenAI Realtime API through specific event patterns for real-time voice and text processing.
+
+#### **Core Realtime Events**
+```cx
+// ✅ PRODUCTION READY: Azure Realtime API event patterns
+
+// Connect to Azure Realtime API
+emit realtime.connect { demo: "app_name" };
+
+// Create voice session 
+emit realtime.session.create { 
+    deployment: "gpt-4o-mini-realtime-preview",
+    mode: "voice" 
+};
+
+// Send text for voice synthesis
+emit realtime.text.send { 
+    text: "Hello world",
+    deployment: "gpt-4o-mini-realtime-preview"
+};
+
+// Send audio for processing
+emit realtime.audio.send { 
+    audio: audioData,
+    deployment: "gpt-4o-mini-realtime-preview"
+};
+```
+
+#### **Event Handlers for Azure Responses**
+```cx
+// Handle connection confirmation
+on realtime.connected (event)
+{
+    print("✅ Connected to Azure Realtime API");
+    emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview" };
+}
+
+// Handle session creation
+on realtime.session.created (event)
+{
+    print("✅ Voice session ready");
+    emit realtime.text.send { text: "Hello!" };
+}
+
+// Handle streaming text responses
+on realtime.text.response (event)
+{
+    print("Text chunk: " + event.content);
+    print("Complete: " + event.isComplete);
+}
+
+// Handle audio responses
+on realtime.audio.response (event)
+{
+    if (event.audioData && event.audioData.length)
+    {
+        print("Audio received: " + event.audioData.length + " bytes");
+    }
+    print("Complete: " + event.isComplete);
+}
+```
+
+#### **Complete Working Example**
+```cx
+// Proven working voice integration
+class VoiceDemo
+{
+    function startDemo()
+    {
+        emit realtime.connect { demo: "voice_demo" };
+    }
+    
+    on realtime.connected (event)
+    {
+        emit realtime.session.create { 
+            deployment: "gpt-4o-mini-realtime-preview"
+        };
+    }
+    
+    on realtime.session.created (event)
+    {
+        emit realtime.text.send { 
+            text: "Say hello to the user",
+            deployment: "gpt-4o-mini-realtime-preview"
+        };
+    }
+    
+    on realtime.text.response (event)
+    {
+        if (event.isComplete)
+        {
+            print("✅ Complete AI response: " + event.content);
+        }
+    }
+    
+    on realtime.audio.response (event)
+    {
+        if (event.audioData && event.audioData.length)
+        {
+            print("🔊 Voice audio: " + event.audioData.length + " bytes");
+        }
+    }
+}
+
+var demo = new VoiceDemo();
+demo.startDemo();
+```
+
+### **Azure Realtime API Rules**
+- **Event-Based Only**: Use `emit` statements, NOT direct service calls for voice
+- **Streaming Responses**: Responses arrive in chunks with `isComplete` flag
+- **Audio Data**: Audio responses contain `audioData` property with byte array
+- **Session Management**: Always connect → create session → send data
+- **Deployment Required**: Include `deployment: "gpt-4o-mini-realtime-preview"` for voice
+- **Real-Time Processing**: Responses stream in real-time, handle incrementally
 

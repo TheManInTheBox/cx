@@ -100,13 +100,13 @@ tryStatement: 'try' blockStatement ('catch' '(' IDENTIFIER ')' blockStatement)?;
 throwStatement: 'throw' expression ';';
 
 // Event-driven statements
-eventNamePart: IDENTIFIER | 'any' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'async' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'for' | 'work';
+eventNamePart: IDENTIFIER | 'any' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'async' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await' | 'completed' | 'for' | 'work';
 eventName: eventNamePart ('.' eventNamePart)*;
 onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
 
 // AI service statements (learn, think, generate, etc.) - now supports both comma and no-comma syntax
-aiServiceName: 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'image' | 'analyze' | 'transcribe' | 'audio';
+aiServiceName: 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await';
 aiServiceStatement: aiServiceName ((',' expression) | expression) ';';
 
 // Blocks
@@ -188,6 +188,7 @@ COMMUNICATE: 'communicate';
 SEARCH: 'search';
 EXECUTE: 'execute';
 SPEAK: 'speak';
+LISTEN: 'listen';
 IMAGE: 'image';
 ANALYZE: 'analyze';
 TRANSCRIBE: 'transcribe';
