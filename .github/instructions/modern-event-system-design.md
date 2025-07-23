@@ -24,8 +24,11 @@ object AuraFramework
     {
         learn self;
         emit aura.framework.ready { 
-            mode: "cognitive",
-            capabilities: ["EventHub", "NeuroHub", "Enhanced Handlers"]
+            handlers: [
+              eventhub.ready { capability: "EventHub" },
+              neurohub.ready { capability: "NeuroHub" },
+              handlers.pattern.ready { capability: "Enhanced Handlers" }
+            ]
         };
     }
     

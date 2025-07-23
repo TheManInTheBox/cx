@@ -5,10 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
-using Azure;
-using Azure.AI.OpenAI;
-using OpenAI.Chat;
-using OpenAI.Embeddings;
+using Microsoft.Extensions.AI;
 using CxLanguage.Runtime;
 
 namespace CxLanguage.StandardLibrary.Core;
@@ -48,12 +45,12 @@ public abstract class ModernAiServiceBase
     /// <summary>
     /// Chat client for direct AI operations - lightweight replacement for Semantic Kernel
     /// </summary>
-    protected readonly ChatClient? _chatClient;
+    protected readonly IChatClient? _chatClient;
 
     /// <summary>
     /// Embedding client for vector operations - simple replacement for Kernel Memory
     /// </summary>
-    protected readonly EmbeddingClient? _embeddingClient;
+    protected readonly IEmbeddingGenerator<string, Embedding<float>>? _embeddingClient;
 
     /// <summary>
     /// Initializes a new instance of the ModernAiServiceBase with lightweight AI integration
@@ -65,8 +62,8 @@ public abstract class ModernAiServiceBase
         Hub = new EventHub(logger);
 
         // Optional dependencies - graceful degradation if not available
-        _chatClient = _serviceProvider.GetService<ChatClient>();
-        _embeddingClient = _serviceProvider.GetService<EmbeddingClient>();
+        _chatClient = _serviceProvider.GetService<IChatClient>();
+        _embeddingClient = _serviceProvider.GetService<IEmbeddingGenerator<string, Embedding<float>>>();
 
         _logger.LogInformation("🚀 Modern AI Service Base initialized");
         LogServiceAvailability();
@@ -138,16 +135,16 @@ public abstract class ModernAiServiceBase
         {
             var messages = new List<ChatMessage>
             {
-                new SystemChatMessage(systemPrompt),
-                new UserChatMessage(userPrompt)
+                new(ChatRole.System, systemPrompt),
+                new(ChatRole.User, userPrompt)
             };
 
-            var options = new ChatCompletionOptions { MaxTokens = 2048 };
+            var options = new ChatOptions { MaxOutputTokens = 2048 };
             
             _logger.LogInformation("🗣️ Sending chat completion request...");
-            Response<ChatCompletion> completion = await _chatClient.CompleteChatAsync(messages, options, cancellationToken);
+            var response = await _chatClient.GetResponseAsync(messages, options, cancellationToken);
 
-            var responseText = completion.Value.Choices.First().Message.Content;
+            var responseText = response.Messages?.LastOrDefault()?.Text ?? "";
             _logger.LogInformation("✅ Chat completion successful");
             return responseText;
         }
@@ -174,10 +171,11 @@ public abstract class ModernAiServiceBase
         try
         {
             _logger.LogInformation("🧠 Generating embedding for text...");
-            Response<Embeddings> response = await _embeddingClient.GenerateEmbeddingsAsync(new EmbeddingsOptions(new string[] { text }), cancellationToken);
-            var embedding = response.Value.Data.FirstOrDefault();
+            var values = new[] { text };
+            var response = await _embeddingClient.GenerateAsync(values, null, cancellationToken);
+            var embedding = response.FirstOrDefault();
             _logger.LogInformation("✅ Embedding generation successful");
-            return embedding?.Vector.ToReadOnlyList() ?? (IReadOnlyList<float>)new List<float>();
+            return embedding?.Vector.ToArray() ?? (IReadOnlyList<float>)new List<float>();
         }
         catch (Exception ex)
         {

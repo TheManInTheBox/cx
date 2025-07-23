@@ -42,8 +42,6 @@ public class CxCompiler : IAstVisitor<object>
     private readonly FieldBuilder _consoleField;
     private readonly IAiService? _aiService;
     private readonly FieldBuilder _aiServiceField;
-    private readonly CxLanguage.Compiler.Modules.SemanticKernelAiFunctions? _aiFunctions;
-    private readonly FieldBuilder _aiFunctionsField;
     private readonly FieldBuilder _serviceProviderField;
 
     // Import and service resolution
@@ -83,12 +81,11 @@ public class CxCompiler : IAstVisitor<object>
     private int _whileCounter = 0;
     private bool _isCompilingAsyncMethod = false; // Track if we're compiling an async method
 
-    public CxCompiler(string assemblyName, CompilerOptions options, IAiService? aiService = null, CxLanguage.Compiler.Modules.SemanticKernelAiFunctions? aiFunctions = null)
+    public CxCompiler(string assemblyName, CompilerOptions options, IAiService? aiService = null)
     {
         _options = options;
         _scriptName = assemblyName;
         _aiService = aiService;
-        _aiFunctions = aiFunctions;
         
         // Create assembly and module
         var assemblyNameObj = new AssemblyName(assemblyName);

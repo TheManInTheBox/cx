@@ -2,8 +2,10 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Azure.AI.Inference;
+using Azure.AI.OpenAI;
 using Azure;
+using CxLanguage.StandardLibrary.AI.Chat;
+using CxLanguage.StandardLibrary.AI.Embeddings;
 using CxLanguage.StandardLibrary.AI.Modern;
 
 namespace CxLanguage.StandardLibrary.Extensions
@@ -30,24 +32,39 @@ namespace CxLanguage.StandardLibrary.Extensions
                 throw new InvalidOperationException("Azure OpenAI configuration is missing. Please set Endpoint and ApiKey in AzureOpenAI section.");
             }
 
-            // Register Azure AI Inference chat client
+            // Register custom chat client with Azure OpenAI integration
             services.AddSingleton<IChatClient>(serviceProvider =>
             {
-                var logger = serviceProvider.GetRequiredService<ILogger<IChatClient>>();
-                logger.LogInformation("🚀 Initializing Azure OpenAI ChatClient with Microsoft.Extensions.AI");
+                var logger = serviceProvider.GetRequiredService<ILogger<CustomChatClient>>();
+                logger.LogInformation("🚀 Initializing CustomChatClient with Azure OpenAI");
                 logger.LogInformation("📍 Endpoint: {Endpoint}", endpoint);
                 logger.LogInformation("🤖 Model: {DeploymentName}", deploymentName);
 
-                // Use Azure OpenAI client directly with Microsoft.Extensions.AI
-                var client = new Azure.AI.OpenAI.AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
-                var chatClient = client.AsChatClient(deploymentName);
+                // Create Azure OpenAI client
+                var azureClient = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
+                var customChatClient = new CustomChatClient(azureClient, deploymentName, logger);
                 
-                logger.LogInformation("✅ Azure OpenAI ChatClient initialized successfully");
-                return chatClient;
+                logger.LogInformation("✅ CustomChatClient initialized successfully");
+                return customChatClient;
             });
 
-            // Register our modern AI service
-            services.AddSingleton<ModernAiService>();
+            // Register custom embedding generator
+            services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(serviceProvider =>
+            {
+                var logger = serviceProvider.GetRequiredService<ILogger<CustomEmbeddingGenerator>>();
+                var embeddingDeploymentName = configuration["AzureOpenAI:EmbeddingDeploymentName"] ?? "text-embedding-3-small";
+                
+                logger.LogInformation("🧠 Initializing CustomEmbeddingGenerator with Azure OpenAI");
+                logger.LogInformation("📍 Endpoint: {Endpoint}", endpoint);
+                logger.LogInformation("🤖 Embedding Model: {DeploymentName}", embeddingDeploymentName);
+
+                // Create Azure OpenAI client
+                var azureClient = new AzureOpenAIClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
+                var customEmbeddingGenerator = new CustomEmbeddingGenerator(azureClient, embeddingDeploymentName, logger);
+                
+                logger.LogInformation("✅ CustomEmbeddingGenerator initialized successfully");
+                return customEmbeddingGenerator;
+            });
 
             return services;
         }
@@ -62,7 +79,7 @@ namespace CxLanguage.StandardLibrary.Extensions
             // Note: In practice, you'd remove SK registrations here
             
             // Add our lightweight modern AI services
-            return services.AddModernAiServices(configuration);
+            return services.AddModernCxAiServices(configuration);
         }
     }
 }
