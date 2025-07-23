@@ -120,7 +120,8 @@ namespace CxLanguage.StandardLibrary.AI.Cognitive
                 _logger.LogInformation("🧠 Think request completed: {Result}", response.Substring(0, Math.Min(100, response.Length)));
 
                 // Store the thinking process in the appropriate vector memory collection
-                var thinkingPattern = $"Think request: prompt='{prompt}', response='{response}', source='{source}', timestamp={DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
+                var thinkingContent = SerializePayload(new { prompt, response });
+                var thinkingPattern = $"Thinking process: {thinkingContent}, source='{source}', timestamp={DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
                 var documentId = $"think_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
                 
                 if (instanceCollection != null)
@@ -195,8 +196,9 @@ namespace CxLanguage.StandardLibrary.AI.Cognitive
                     return;
                 }
 
-                // Store the learning data in the appropriate vector memory collection
-                var learningData = $"Learning data: content='{data}', source='{source}', timestamp={DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
+                // Serialize the data to JSON if it's a complex object
+                var learningContent = SerializePayload(data);
+                var learningData = $"Learning data: content='{learningContent}', source='{source}', timestamp={DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
                 var documentId = $"learn_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
                 
                 if (instanceCollection != null)
@@ -298,6 +300,60 @@ namespace CxLanguage.StandardLibrary.AI.Cognitive
             {
                 _eventBus.Emit(eventName, data);
                 _logger.LogInformation("✅ Emitted cognitive response: {EventName}", eventName);
+            }
+        }
+
+        /// <summary>
+        /// Serializes an object to a JSON string for Kernel Memory ingestion.
+        /// Handles primitive types by returning their string representation.
+        /// </summary>
+        private string SerializeForMemory(object data)
+        {
+            if (data is string s)
+            {
+                return s;
+            }
+
+            if (data.GetType().IsPrimitive || data is decimal)
+            {
+                return data.ToString() ?? string.Empty;
+            }
+
+            try
+            {
+                return System.Text.Json.JsonSerializer.Serialize(data, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to serialize object for memory ingestion. Using ToString() as fallback.");
+                return data.ToString() ?? string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// Serializes the given payload object to a JSON string for memory ingestion.
+        /// </summary>
+        private string SerializePayload(object payload)
+        {
+            if (payload is string s)
+            {
+                return s;
+            }
+            
+            try
+            {
+                return System.Text.Json.JsonSerializer.Serialize(payload, new System.Text.Json.JsonSerializerOptions
+                {
+                    WriteIndented = true
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to serialize payload to JSON. Falling back to ToString().");
+                return payload.ToString() ?? string.Empty;
             }
         }
     }
