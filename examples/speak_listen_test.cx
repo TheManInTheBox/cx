@@ -52,7 +52,14 @@ class VoiceTest
     
     on realtime.audio.response (event)
     {
-        print("🔊 Audio response received - " + event.length + " bytes");
+        if (event.audioData && event.audioData.length)
+        {
+            print("🔊 Audio response received - " + event.audioData.length + " bytes");
+        }
+        else
+        {
+            print("🔊 Audio response received - no data");
+        }
     }
 }
 

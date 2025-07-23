@@ -1,0 +1,179 @@
+// Turn-based speaking demo using only speak emitter
+// Agents coordinate and decide who speaks first using pure event-driven coordination
+
+class SpeakingAgent
+{
+    name: string;
+    agentId: string;
+    isMyTurn: bool = false;
+    
+    constructor(id: string, agentName: string)
+    {
+        this.agentId = id;
+        this.name = agentName;
+    }
+    
+    function requestToSpeak(message: string)
+    {
+        print("🙋 " + this.name + " wants to speak: '" + message + "'");
+        
+        // Request permission to speak through events
+        emit turn.request { 
+            agentId: this.agentId,
+            agentName: this.name,
+            message: message
+        };
+    }
+}
+
+// Global turn coordination system
+
+// Global event handlers for turn coordination
+on turn.request (event)
+{
+    print("📋 " + event.agentName + " requests permission to speak");
+    
+    // Simple first-come-first-served decision (stateless)
+    print("✅ " + event.agentName + " gets the floor!");
+    
+    // Grant permission immediately
+    emit turn.granted { 
+        agentId: event.agentId,
+        agentName: event.agentName,
+        message: event.message
+    };
+}
+
+on turn.granted (event)
+{
+    print("🎯 " + event.agentName + " gets permission to speak!");
+    
+    // ONLY use speak emitter
+    speak { text: event.message };
+}
+
+on turn.waiting (event)
+{
+    print("� " + event.agentName + " is queued to speak next");
+}
+
+// Handle Azure Realtime API connection
+on realtime.connected (event)
+{
+    print("✅ Connected to Azure Realtime API");
+    
+    emit realtime.session.create { 
+        deployment: "gpt-4o-mini-realtime-preview",
+        mode: "voice"
+    };
+}
+
+// Handle session creation  
+on realtime.session.created (event)
+{
+    print("✅ Azure voice session ready - starting turn-based demo");
+    
+    // Now agents can start requesting to speak
+    emit demo.start { };
+}
+
+// Bridge cognitive speak to Azure API
+on ai.speak.request (event)
+{
+    print("🌉 Routing speak request to Azure: " + event.text);
+    
+    emit realtime.text.send {
+        text: event.text,
+        deployment: "gpt-4o-mini-realtime-preview"
+    };
+}
+
+// Handle audio responses and automatically stream to NAudio
+on realtime.audio.response (event)
+{
+    if (event.audioData != null)
+    {
+        print("🎵 Audio received - streaming to speakers...");
+        
+        // Automatic NAudio streaming
+        emit audio.stream.direct { 
+            audioData: event.audioData,
+            format: "24kHz_16bit_mono_PCM",
+            autoPlay: true
+        };
+    }
+    
+    if (event.isComplete)
+    {
+        print("✅ Speech audio complete!");
+        
+        // Signal that speaking is done (simplified)
+        emit speaker.finished { message: "Speech complete" };
+    }
+}
+
+// Handle speaker finished
+on speaker.finished (event)
+{
+    print("🎉 Speaking complete - floor is open again");
+    print("🔄 Ready for next speaker");
+}
+
+// Create speaking agents
+var alice = new SpeakingAgent("alice", "Alice");
+var bob = new SpeakingAgent("bob", "Bob");  
+var charlie = new SpeakingAgent("charlie", "Charlie");
+
+print("=== TURN-BASED SPEAKING DEMO ===");
+print("Agents will coordinate to decide who speaks first");
+print("🎧 Make sure your audio is on!");
+print("");
+
+// Connect to Azure Realtime API
+emit realtime.connect { demo: "turn_based_speaking" };
+
+// Handle demo start - trigger speaking requests
+on demo.start (event)
+{
+    print("🚀 Demo starting - agents will now request to speak");
+    
+    // Trigger speaking requests via events instead of direct method calls
+    emit agent.alice.speak { message: "Hello! I'm Alice. I'd like to speak first about artificial intelligence." };
+    emit agent.bob.speak { message: "Hi there! I'm Bob. I want to talk about machine learning and neural networks." };
+    emit agent.charlie.speak { message: "Greetings! I'm Charlie. I'm excited to discuss the future of AI agents." };
+    
+    print("⏳ Waiting for agents to coordinate speaking order...");
+}
+
+// Agent-specific event handlers for speaking requests
+on agent.alice.speak (event)
+{
+    print("🙋 Alice wants to speak: '" + event.message + "'");
+    emit turn.request { 
+        agentId: "alice",
+        agentName: "Alice",
+        message: event.message
+    };
+}
+
+on agent.bob.speak (event)
+{
+    print("🙋 Bob wants to speak: '" + event.message + "'");
+    emit turn.request { 
+        agentId: "bob",
+        agentName: "Bob",
+        message: event.message
+    };
+}
+
+on agent.charlie.speak (event)
+{
+    print("🙋 Charlie wants to speak: '" + event.message + "'");
+    emit turn.request { 
+        agentId: "charlie",
+        agentName: "Charlie",
+        message: event.message
+    };
+}
+
+print("✨ Turn-based coordination system initialized!");

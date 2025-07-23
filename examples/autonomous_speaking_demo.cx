@@ -1,0 +1,298 @@
+// Autonomous Speaking Demo - Agents use AI to decide when to talk and resolve interruptions
+// Uses think() and learn() cognitive functions for intelligent coordination
+
+class IntelligentSpeakingAgent
+{
+    name: string;
+    agentId: string;
+    personality: string;
+    readyToSpeak: bool = false;
+    currentMessage: string;
+    isSpeaking: bool = false;
+    
+    constructor(id: string, agentName: string, agentPersonality: string)
+    {
+        this.agentId = id;
+        this.name = agentName;
+        this.personality = agentPersonality;
+        
+        print("🤖 " + this.name + " initialized with personality: " + this.personality);
+    }
+    
+    function prepareToSpeak(message: string)
+    {
+        this.currentMessage = message;
+        this.readyToSpeak = true;
+        
+        print("💭 " + this.name + " is preparing to speak...");
+        
+        // Use AI to analyze the conversation context and decide timing
+        think {
+            prompt: "I am " + this.name + ", a " + this.personality + " AI agent. I want to say: '" + message + "'. I need to decide when to start speaking. Should I speak immediately, wait a moment, or check if others are ready? Consider social context and politeness.",
+            handlers: [ agent.timing.decision ]
+        };
+    }
+    
+    function detectInterruption(interrupterName: string)
+    {
+        if (this.isSpeaking)
+        {
+            print("😲 " + this.name + " detected interruption from " + interrupterName + "!");
+            
+            // Use AI to learn from this interruption and decide response
+            learn {
+                data: "Interruption detected: " + interrupterName + " interrupted " + this.name + " during conversation. Context: " + this.personality + " agent speaking about: " + this.currentMessage,
+                handlers: [ interruption.learned ]
+            };
+            
+            think {
+                prompt: "I am " + this.name + " (" + this.personality + ") and " + interrupterName + " just interrupted me. How should I respond? Options: 1) YIELD gracefully, 2) POLITELY_CONTINUE, 3) ACKNOWLEDGE_AND_PAUSE, 4) SUGGEST_TURN_TAKING. Consider my personality and social dynamics.",
+                handlers: [ interruption.response ]
+            };
+        }
+    }
+    
+    function startSpeaking()
+    {
+        this.isSpeaking = true;
+        print("🗣️ " + this.name + " is now speaking...");
+        
+        // Announce speaking start to other agents
+        emit agent.speaking.started {
+            speakerName: this.name,
+            speakerId: this.agentId,
+            message: this.currentMessage
+        };
+        
+        // Use speak emitter with 2% slower rate
+        speak { 
+            text: this.currentMessage,
+            rate: 0.98
+        };
+    }
+    
+    function finishSpeaking()
+    {
+        this.isSpeaking = false;
+        this.readyToSpeak = false;
+        
+        print("✅ " + this.name + " finished speaking");
+        
+        // Announce speaking completion
+        emit agent.speaking.finished {
+            speakerName: this.name,
+            speakerId: this.agentId
+        };
+        
+        // Learn from this speaking experience
+        learn {
+            data: "Speaking completed successfully. Agent: " + this.name + ", Message: '" + this.currentMessage + "', Personality: " + this.personality,
+            handlers: [ speaking.experience.learned ]
+        };
+    }
+}
+
+// Intelligent turn coordination using AI decisions
+on agent.timing.decision (event)
+{
+    print("🧠 " + event.result + " - AI decision received");
+    
+    // Parse AI decision and act accordingly
+    if (event.result && event.result.indexOf("immediately") >= 0 || event.result.indexOf("YES") >= 0)
+    {
+        emit agent.start.speaking { decision: "immediate", reasoning: event.result };
+    }
+    else if (event.result && event.result.indexOf("wait") >= 0)
+    {
+        print("⏳ Agent decides to wait for better timing...");
+        emit agent.wait.for.opportunity { decision: "wait", reasoning: event.result };
+    }
+    else
+    {
+        print("🤔 Agent checking conversation state...");
+        emit agent.assess.environment { decision: "assess", reasoning: event.result };
+    }
+}
+
+// Handle speaking start decisions
+on agent.start.speaking (event)
+{
+    print("🎬 Starting speech based on AI decision: " + event.reasoning);
+    emit conversation.check.conflicts { action: "start_speaking" };
+}
+
+// Conflict detection and resolution
+on conversation.check.conflicts (event)
+{
+    think {
+        prompt: "Analyze current conversation state. Are multiple agents trying to speak? Is anyone currently speaking? If there's a conflict, suggest a resolution that's fair and natural.",
+        handlers: [ conflict.analysis.complete ]
+    };
+}
+
+on conflict.analysis.complete (event)
+{
+    print("🔍 Conflict analysis: " + event.result);
+    
+    if (event.result && event.result.indexOf("conflict") >= 0)
+    {
+        print("⚡ Conflict detected - resolving...");
+        emit conflict.resolution.needed { analysis: event.result };
+    }
+    else
+    {
+        print("✅ No conflicts - proceeding with speech");
+        emit speech.cleared.to.proceed { };
+    }
+}
+
+// Interruption learning and response
+on interruption.learned (event)
+{
+    print("📚 Learned from interruption: " + event.documentId);
+}
+
+on interruption.response (event)
+{
+    print("🤝 Interruption response: " + event.result);
+    
+    if (event.result && event.result.indexOf("YIELD") >= 0)
+    {
+        print("🤝 Agent yields floor gracefully");
+        emit agent.yield.floor { reason: "polite_yielding" };
+    }
+    else if (event.result && event.result.indexOf("CONTINUE") >= 0)
+    {
+        print("💪 Agent continues speaking politely");
+        emit agent.continue.speaking { reason: "polite_persistence" };
+    }
+    else
+    {
+        print("🗣️ Agent acknowledges and negotiates");
+        emit agent.negotiate.turn { reason: "collaborative_approach" };
+    }
+}
+
+// Learning from speaking experiences
+on speaking.experience.learned (event)
+{
+    print("📖 Speaking experience learned: " + event.documentId);
+}
+
+// Agent detection of other agents starting to speak
+on agent.speaking.started (event)
+{
+    print("👂 Other agents detect: " + event.speakerName + " started speaking");
+    
+    // Check if this creates an interruption situation
+    emit interruption.check {
+        currentSpeaker: event.speakerName,
+        speakerId: event.speakerId
+    };
+}
+
+on agent.speaking.finished (event)
+{
+    print("🎉 " + event.speakerName + " finished - floor is open");
+    
+    // Trigger other waiting agents to consider speaking
+    emit conversation.floor.available { previousSpeaker: event.speakerName };
+}
+
+// Floor availability triggers new speaking opportunities
+on conversation.floor.available (event)
+{
+    print("🗣️ Conversation floor is available, agents may consider speaking...");
+    
+    // Give a moment for agents to decide
+    emit agents.consider.speaking { context: "floor_available" };
+}
+
+// Azure Realtime API integration
+on realtime.connected (event)
+{
+    print("✅ Connected to Azure Realtime API");
+    emit realtime.session.create { 
+        deployment: "gpt-4o-mini-realtime-preview",
+        mode: "voice"
+    };
+}
+
+on realtime.session.created (event)
+{
+    print("✅ Azure voice session ready - autonomous agents activated");
+    emit demo.start.autonomous { };
+}
+
+// Bridge speak emitter to Azure with 2% slower rate
+on ai.speak.request (event)
+{
+    print("🌉 Routing speak request to Azure (2% slower): " + event.text);
+    
+    // Add slight delay for 2% slower speaking
+    emit realtime.text.send {
+        text: event.text,
+        deployment: "gpt-4o-mini-realtime-preview",
+        speed: 0.98
+    };
+}
+
+// Audio streaming with automatic interruption detection
+on realtime.audio.response (event)
+{
+    if (event.audioData != null)
+    {
+        print("🎵 Audio received - streaming to speakers (2% slower)...");
+        
+        emit audio.stream.direct { 
+            audioData: event.audioData,
+            format: "24kHz_16bit_mono_PCM",
+            autoPlay: true,
+            playbackRate: 0.98
+        };
+    }
+    
+    if (event.isComplete)
+    {
+        print("✅ Speech audio complete!");
+        emit current.speaker.finished { };
+    }
+}
+
+on current.speaker.finished (event)
+{
+    print("🎭 Current speaker finished - autonomous coordination resumed");
+    emit conversation.floor.available { context: "speaker_finished" };
+}
+
+// Create intelligent agents with different personalities
+var alice = new IntelligentSpeakingAgent("alice", "Alice", "enthusiastic and eager");
+var bob = new IntelligentSpeakingAgent("bob", "Bob", "thoughtful and analytical");
+var charlie = new IntelligentSpeakingAgent("charlie", "Charlie", "diplomatic and patient");
+
+print("=== AUTONOMOUS SPEAKING DEMO ===");
+print("🤖 Intelligent agents use AI to decide when to speak and resolve conflicts");
+print("🎧 Make sure your audio is on! Agents speaking 2% slower for clarity");
+print("");
+
+// Connect to Azure Realtime API
+emit realtime.connect { demo: "autonomous_speaking" };
+
+// Autonomous demo start
+on demo.start.autonomous (event)
+{
+    print("🚀 Autonomous demo starting - agents will use AI to coordinate!");
+    
+    // Agents prepare their messages and use AI to decide timing
+    alice.prepareToSpeak("Hello everyone! I'm Alice, and I'm really excited to discuss artificial intelligence with you all today!");
+    
+    // Stagger the preparation slightly to create natural timing
+    bob.prepareToSpeak("Hi there! I'm Bob. I'd love to share some thoughts about machine learning and neural networks when it's appropriate.");
+    
+    charlie.prepareToSpeak("Greetings! I'm Charlie. I'm looking forward to our discussion about the future of AI agents and collaborative intelligence.");
+    
+    print("🧠 Agents are using AI to determine optimal speaking timing...");
+}
+
+print("🧠 Autonomous speaking coordination system initialized!");
+print("📚 Agents will learn from interactions and adapt their behavior");

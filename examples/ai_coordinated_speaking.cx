@@ -1,0 +1,346 @@
+// Simple autonomous speaking demo - AI agents decide when to speak and resolve conflicts
+// Uses pure event-driven approach without direct method calls
+
+class IntelligentAgent
+{
+    name: string;
+    agentId: string;
+    personality: string;
+    
+    constructor(id: string, agentName: string, agentPersonality: string)
+    {
+        this.agentId = id;
+        this.name = agentName;
+        this.personality = agentPersonality;
+        
+        print("🤖 " + this.name + " (" + this.personality + ") is ready");
+    }
+    
+    // Agent-specific event handlers with proper scoping
+    on agent.ready.to.speak (event)
+    {
+        // Only respond if this event is for this agent
+        if (event.agentName == this.name)
+        {
+            print("💭 " + this.name + " is considering when to speak...");
+            
+            think {
+                prompt: "Should I speak now or wait?",
+                handlers: [ timing.decision.made ]
+            };
+        }
+    }
+    
+    on timing.decision.made (event)
+    {
+        print("🧠 " + this.name + " AI Decision received");
+        
+        // Check if anyone else is currently speaking
+        emit check.speaking.status { 
+            requestingAgent: this.name,
+            action: "wants_to_speak"
+        };
+    }
+    
+    on agent.will.speak.now (event)
+    {
+        // Only respond if this agent is the one speaking
+        if (event.agentName == this.name)
+        {
+            print("🗣️ " + this.name + " initiating speech sequence...");
+            
+            think {
+                prompt: "Should I check for conflicts or proceed to speak?",
+                handlers: [ conflict.assessment.complete ]
+            };
+        }
+    }
+    
+    on conflict.assessment.complete (event)
+    {
+        print("🔍 " + this.name + " conflict assessment complete");
+        
+        // Simplified - assume no conflicts for now
+        print("✅ " + this.name + " sees no conflicts - proceeding to speak");
+        emit speech.approved.to.proceed { 
+            agentName: this.name,
+            speakerName: this.name
+        };
+    }
+    
+    on speech.approved.to.proceed (event)
+    {
+        // Only respond if this agent is approved to speak
+        if (event.agentName == this.name)
+        {
+            print("🎬 " + this.name + " speech approved - starting voice synthesis");
+            
+            speak { 
+                text: "Hello everyone! I'm " + this.name + " and I've decided it's my turn to speak. Thank you for your patience while we coordinated.",
+                rate: 0.9
+            };
+        }
+    }
+    
+    on agent.must.wait (event)
+    {
+        if (event.agentName == this.name)
+        {
+            print("⏳ " + this.name + " will wait - " + event.reason);
+            print("🎯 " + this.name + " registered with moderator queue");
+            
+            // Use await with actual thread sleep (3 seconds)
+            await {
+                reason: "Moderator queue - waiting for permission",
+                context: event.reason,
+                durationMs: 3000,
+                handlers: [ await.completed ]
+            };
+        }
+    }
+    
+    on moderator.grants.permission (event)
+    {
+        if (event.agentName == this.name)
+        {
+            print("✅ " + this.name + " received permission from moderator!");
+            emit agent.will.speak.now { 
+                agentName: this.name,
+                decision: "moderator_approved"
+            };
+        }
+    }
+    
+    on await.completed (event)
+    {
+        print("⏰ " + this.name + " wait completed - " + event.message);
+        print("🧘 " + this.name + " is patiently waiting for moderator approval");
+    }
+}
+
+// Moderator Agent - Controls speaking order and coordination
+class ModeratorAgent
+{
+    name: string = "Moderator";
+    currentSpeaker: string = "";
+    azureConnected: string = "false";
+    sessionReady: string = "false";
+    
+    constructor()
+    {
+        print("🎭 Moderator Agent initialized - managing conversation flow");
+    }
+    
+    on check.speaking.status (event)
+    {
+        print("🎯 Moderator checking status for: " + event.requestingAgent);
+        
+        if (this.currentSpeaker == "")
+        {
+            print("✅ Moderator: Floor available - granting permission to " + event.requestingAgent);
+            this.currentSpeaker = event.requestingAgent;
+            emit moderator.grants.permission { 
+                agentName: event.requestingAgent,
+                status: "granted",
+                moderator: this.name
+            };
+        }
+        else
+        {
+            print("⏳ Moderator: " + this.currentSpeaker + " is speaking - " + event.requestingAgent + " added to queue");
+            emit agent.must.wait { 
+                agentName: event.requestingAgent,
+                reason: "moderator_queue",
+                currentSpeaker: this.currentSpeaker,
+                queuePosition: "waiting"
+            };
+        }
+    }
+    
+    on speech.completed.successfully (event)
+    {
+        print("🎭 Moderator: Speech completed, opening floor for next speaker");
+        this.currentSpeaker = "";
+        
+        emit conversation.floor.available { 
+            moderator: this.name,
+            status: "open"
+        };
+    }
+    
+    on conflict.needs.resolution (event)
+    {
+        print("🎭 Moderator resolving conflict for: " + event.agentName);
+        
+        // Use await with actual thread sleep to consider resolution timing (2 seconds)
+        await {
+            reason: "Analyzing conflict resolution timing",
+            context: "Multiple agents may be requesting speaking permission",
+            durationMs: 2000,
+            handlers: [ conflict.timing.analyzed ]
+        };
+    }
+    
+    on conflict.timing.analyzed (event)
+    {
+        print("🎭 Moderator conflict timing analysis complete");
+        
+        think {
+            prompt: "As moderator, how should I resolve this speaking conflict fairly?",
+            handlers: [ moderator.conflict.resolved ]
+        };
+    }
+    
+    on moderator.conflict.resolved (event)
+    {
+        print("🎭 Moderator conflict resolution: Fair turn-taking enforced");
+        emit speech.approved.to.proceed { 
+            agentName: "any",
+            moderator: this.name,
+            resolution: "fair_turn_taking"
+        };
+    }
+}
+
+// Azure Realtime API integration with 2% slower speech
+on realtime.connected (event)
+{
+    print("✅ Connected to Azure Realtime API for AI-coordinated speech");
+    print("🎯 Creating voice session...");
+    
+    emit realtime.session.create { 
+        deployment: "gpt-4o-mini-realtime-preview",
+        mode: "voice"
+    };
+}
+
+on realtime.session.created (event)
+{
+    print("✅ Azure voice session ready - AI agents will coordinate autonomously");
+    print("🔗 Connection stable and ready for voice synthesis");
+    
+    // Wait a moment for connection to stabilize before starting coordination
+    emit system.ready.for.coordination { delay: "connection_stable" };
+}
+
+// Connection stability handler
+on system.ready.for.coordination (event)
+{
+    print("🔗 Azure connection stabilized - starting agent coordination");
+    emit autonomous.coordination.ready { };
+}
+
+// Bridge speak emitter to Azure with 10% slower rate
+on ai.speak.request (event)
+{
+    print("🌉 Routing AI-coordinated speech to Azure (10% slower): " + event.text);
+    
+    emit realtime.text.send {
+        text: event.text,
+        deployment: "gpt-4o-mini-realtime-preview"
+    };
+}
+
+// Audio streaming with automatic coordination
+on realtime.audio.response (event)
+{
+    if (event.audioData != null)
+    {
+        print("🎵 AI-coordinated audio streaming (10% slower)...");
+        
+        emit audio.stream.direct { 
+            audioData: event.audioData,
+            format: "24kHz_16bit_mono_PCM",
+            autoPlay: true
+        };
+    }
+    
+    if (event.isComplete)
+    {
+        print("✅ AI-coordinated speech audio complete!");
+        emit speech.completed.successfully { speaker: "current" };
+    }
+}
+
+// Handle connection errors gracefully
+on realtime.error (event)
+{
+    print("⚠️ Azure Realtime API error: " + event.message);
+    print("🔄 Attempting to reconnect...");
+    
+    emit realtime.connect { demo: "ai_coordinated_speaking_retry" };
+}
+
+// Handle disconnection events
+on realtime.disconnected (event)
+{
+    print("🔌 Azure Realtime API disconnected");
+    print("🔄 Will reconnect for next speech request");
+}
+
+// Floor availability triggers new AI decisions
+on conversation.floor.available (event)
+{
+    print("🎭 Conversation floor is open - agents may use AI to decide next moves");
+    
+    // Give a moment for agents to make AI-powered decisions
+    emit agents.may.consider.speaking { context: "floor_open" };
+}
+
+print("=== AI-COORDINATED AUTONOMOUS SPEAKING ===");
+print("🧠 Agents use think() and learn() to decide timing and resolve conflicts");
+print("🎧 Audio output at 10% slower rate for clarity");
+print("🤖 Each agent has a unique personality that influences decisions");
+print("");
+
+// Create intelligent agents with distinct personalities and moderator
+var moderator = new ModeratorAgent();
+var alice = new IntelligentAgent("alice", "Alice", "enthusiastic and eager");
+var bob = new IntelligentAgent("bob", "Bob", "thoughtful and analytical");
+var charlie = new IntelligentAgent("charlie", "Charlie", "diplomatic and patient");
+
+print("🔗 Connecting to Azure Realtime API...");
+print("⏳ Please wait for connection to stabilize...");
+
+// Connect to Azure Realtime API
+emit realtime.connect { demo: "ai_coordinated_speaking" };
+
+// Start autonomous coordination
+on autonomous.coordination.ready (event)
+{
+    print("🚀 AI coordination system active!");
+    print("🧠 Agents will now use AI to decide when to speak...");
+    
+    // Trigger agents to consider speaking (event-driven, no method calls)
+    emit agent.ready.to.speak { 
+        agentName: "Alice", 
+        personality: "enthusiastic and eager",
+        message: "Hello everyone! I'm Alice and I'm really excited to discuss artificial intelligence!"
+    };
+    
+    emit agent.ready.to.speak { 
+        agentName: "Bob", 
+        personality: "thoughtful and analytical", 
+        message: "Hi there! I'm Bob. I'd like to share some analytical thoughts about machine learning when appropriate."
+    };
+    
+    emit agent.ready.to.speak { 
+        agentName: "Charlie", 
+        personality: "diplomatic and patient",
+        message: "Greetings! I'm Charlie. I'm looking forward to our thoughtful discussion about AI collaboration."
+    };
+    
+    print("🎯 All agents are using AI to determine optimal speaking timing...");
+}
+
+print("🧠 AI-powered autonomous coordination system initialized!");
+print("📚 System will learn from interactions and improve over time");
+print("🎯 Keeping program alive for continuous coordination...");
+print("Press Ctrl+C to exit...");
+
+// Keep program alive to maintain Azure connection
+on speech.completed.successfully (event)
+{
+    print("🎉 Speech cycle complete - system ready for next interaction");
+    print("💡 System continues running for ongoing coordination...");
+}

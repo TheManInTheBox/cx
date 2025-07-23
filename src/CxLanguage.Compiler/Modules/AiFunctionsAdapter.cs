@@ -136,4 +136,36 @@ public class AiFunctionsAdapter : AiFunctions
     {
         return _semanticKernelAiFunctions.Adapt(content, options);
     }
+
+    /// <summary>
+    /// Implements the 'speak' AI function using Azure Realtime API
+    /// </summary>
+    public new async Task<object> SpeakAsync(string text, object? options = null)
+    {
+        return await _semanticKernelAiFunctions.SpeakAsync(text, options);
+    }
+
+    /// <summary>
+    /// Implements the 'listen' AI function using Azure Realtime API
+    /// </summary>
+    public new async Task<object> ListenAsync(string prompt = "Listening for voice input...", object? options = null)
+    {
+        return await _semanticKernelAiFunctions.ListenAsync(prompt, options);
+    }
+
+    /// <summary>
+    /// Synchronous wrapper for speak function
+    /// </summary>
+    public new object Speak(string text, object? options = null)
+    {
+        return _semanticKernelAiFunctions.Speak(text, options);
+    }
+
+    /// <summary>
+    /// Synchronous wrapper for listen function
+    /// </summary>
+    public new object Listen(string prompt = "Listening for voice input...", object? options = null)
+    {
+        return _semanticKernelAiFunctions.Listen(prompt, options);
+    }
 }
