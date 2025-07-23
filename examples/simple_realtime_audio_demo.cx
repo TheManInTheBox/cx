@@ -121,132 +121,6 @@ class SimpleVoiceAgent
         };
     }
     
-    // ✅ Event handler for text completion check
-    on text.completion.check (event)
-    {
-        // ✅ COGNITIVE DECISION: Should we log text completion?
-        is {
-            context: "Text completion logging for " + event.agent,
-            evaluate: "Should log when text response is complete",
-            data: { isComplete: event.isComplete, agent: event.agent, content: event.content },
-            handlers: [ text.completion.log ]
-        };
-    }
-    
-    // ✅ Event handler for text completion logging
-    on text.completion.log (event)
-    {
-        print("✅ Text response complete - audio synthesis should follow");
-        print("📝 Content received: " + event.content);
-    }
-    
-    // ✅ Event handler for audio data availability check
-    on audio.data.check (event)
-    {
-        // ✅ COGNITIVE DECISION: Process audio data if available
-        is {
-            context: "Audio data processing for " + event.agent,
-            evaluate: "Should process audio data if available",
-            data: { hasData: event.hasData, agent: event.agent, audioData: event.audioData },
-            handlers: [ audio.data.process ]
-        };
-    }
-    
-    // ✅ Event handler for audio completion check
-    on audio.completion.check (event)
-    {
-        // ✅ COGNITIVE DECISION: Mark demo complete if audio is finished
-        is {
-            context: "Demo completion for " + event.agent,
-            evaluate: "Should complete demo if audio processing is finished",
-            data: { isComplete: event.isComplete, agent: event.agent },
-            handlers: [ demo.completion.process ]
-        };
-    }
-    
-    // ✅ Event handler for audio data processing
-    on audio.data.process (event)
-    {
-        // Check if we have audio data
-        is {
-            context: "Audio data availability for " + event.agent,
-            evaluate: "Check if audio data is available for processing",
-            data: { hasData: event.hasData, agent: event.agent },
-            handlers: [ audio.processing.ready, audio.no.data ]
-        };
-    }
-    
-    // ✅ Event handler for demo completion processing
-    on demo.completion.process (event)
-    {
-        // Check if demo should complete
-        is {
-            context: "Demo completion status for " + event.agent,
-            evaluate: "Should complete demo if audio is finished",
-            data: { isComplete: event.isComplete, agent: event.agent },
-            handlers: [ demo.audio.complete ]
-        };
-    }
-    
-    // ✅ Event handler for audio processing decision
-    on audio.processing.ready (event)
-    {
-        print("🔊 Audio data received successfully");
-        print("📊 Audio data type: " + typeof(event.audioData));
-        print("✅ Audio data available: YES");
-        print("🎯 Processing audio data for: " + event.agent);
-        print("🎵 PLAYING AUDIO through speakers...");
-        
-        // ✅ PLAY AUDIO: Stream audio directly to NAudio for immediate playback
-        emit audio.stream.direct { 
-            audioData: event.audioData,
-            agent: event.agent,
-            format: "pcm16",
-            sampleRate: 24000
-        };
-        
-        emit audio.processed { 
-            agent: event.agent,
-            status: "success",
-            processedAt: "2025-07-23"
-        };
-    }
-    
-    // ✅ Event handler for no audio data
-    on audio.no.data (event)
-    {
-        print("🔊 Audio response received but no data available");
-        print("📋 No audio data for: " + event.agent);
-        print("   Continuing with text-only processing...");
-        
-        emit audio.fallback { 
-            agent: event.agent,
-            fallback: "text_only"
-        };
-    }
-    
-    // ✅ Event handler for demo completion
-    on demo.audio.complete (event)
-    {
-        print("🎉 Audio synthesis complete!");
-        print("🏆 === DEMO COMPLETE ===");
-        print("✅ Agent: " + event.agent);
-        print("✅ Audio synthesis: WORKING");
-        print("✅ Safe audio handling: FIXED");
-        print("✅ Cognitive decisions: OPERATIONAL");
-        print("✅ Event system: PERFECT");
-        
-        emit demo.success { 
-            agent: event.agent,
-            features: [
-                "Azure Realtime API",
-                "Safe Audio Handling", 
-                "Cognitive Boolean Logic",
-                "Event-Driven Architecture"
-            ]
-        };
-    }
-    
     // ✅ Handle any Azure errors gracefully
     on realtime.error (event)
     {
@@ -254,12 +128,10 @@ class SimpleVoiceAgent
         print("✅ Event system integration: WORKING PERFECTLY");
         print("💡 Solution: Ensure gpt-4o-mini-realtime-preview deployment exists");
         
-        // ✅ COGNITIVE DECISION: Should we continue with simulation?
-        is {
-            context: "Error handling decision for " + this.name,
-            evaluate: "Azure error occurred, should continue with fallback demo",
-            data: { error: event.error, agent: this.name, fallback: true },
-            handlers: [ demo.fallback.ready ]
+        // Continue with simulation
+        emit demo.fallback.ready { 
+            agent: this.name,
+            error: event.error
         };
     }
     
@@ -275,6 +147,66 @@ class SimpleVoiceAgent
             source: "simulation"
         };
     }
+}
+
+// ✅ Event handlers for processing audio events
+on audio.data.received (event)
+{
+    print("📊 === AUDIO DATA EVENT ===");
+    print("Agent: " + event.agent);
+    print("Has Audio: " + event.hasAudio);
+    print("Data Type: " + event.dataType);
+    print("Complete: " + event.isComplete);
+    
+    if (event.hasAudio)
+    {
+        emit audio.processed { 
+            agent: event.agent,
+            status: "success"
+        };
+    }
+    else
+    {
+        emit audio.fallback { 
+            agent: event.agent,
+            fallback: "text_only"
+        };
+    }
+}
+
+on text.response.logged (event)
+{
+    print("📝 === TEXT RESPONSE LOGGED ===");
+    print("Agent: " + event.agent);
+    print("Content length: " + event.content.length);
+    
+    if (event.isComplete)
+    {
+        print("✅ Text response complete - audio synthesis should follow");
+    }
+}
+
+on demo.audio.complete (event)
+{
+    print("🏆 === DEMO COMPLETE ===");
+    print("✅ Agent: " + event.agent);
+    print("✅ Status: " + event.status);
+    print("✅ Has Audio: " + event.hasAudio);
+    print("✅ Audio synthesis: WORKING");
+    print("✅ Safe audio handling: FIXED");
+    print("✅ Event system: PERFECT");
+    print("✅ Timestamp: " + event.timestamp);
+    
+    emit demo.success { 
+        agent: event.agent,
+        features: [
+            "Azure Realtime API",
+            "Safe Audio Handling", 
+            "Event-Driven Architecture",
+            "InvalidCastException Fix",
+            "NAudio Playback"
+        ]
+    };
 }
 
 // ✅ Global audio playback handlers

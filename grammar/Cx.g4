@@ -5,40 +5,21 @@ program: statement* EOF;
 
 // Statements
 statement
-    : functionDeclaration
-    | classDeclaration
-    | interfaceDeclaration
+    : classDeclaration
     | variableDeclaration
     | expressionStatement
-    | importStatement
-    | returnStatement
-    | ifStatement
-    | whileStatement
     | forStatement
     | blockStatement
-    | tryStatement
-    | throwStatement
     | onStatement
     | emitStatement
     | aiServiceStatement
     ;
 
-// Import statement for CX modules
-importStatement: 'import' IDENTIFIER 'from' STRING_LITERAL ';';
-
-// Uses statement for dependency injection inside classes
-usesStatement: 'uses' IDENTIFIER 'from' dottedIdentifier ';';
-
 dottedIdentifier: IDENTIFIER ('.' IDENTIFIER)*;
-
-// Function declarations with optional async support
-functionDeclaration
-    : accessModifier? 'async'? 'function' IDENTIFIER '(' parameterList? ')' ('->' type)? blockStatement
-    ;
 
 // Class declarations with inheritance support (use : instead of implements)
 classDeclaration
-    : decorator* accessModifier? 'class' IDENTIFIER ('extends' IDENTIFIER)? (':' interfaceList)? classBody
+    : 'class' IDENTIFIER ('extends' IDENTIFIER)? classBody
     ;
 
 // Decorator support for classes
@@ -50,38 +31,13 @@ classBody: '{' classMember* '}';
 
 classMember
     : fieldDeclaration
-    | methodDeclaration
     | constructorDeclaration
     | onStatement
-    | usesStatement
     ;
 
-fieldDeclaration: accessModifier? IDENTIFIER ':' type ('=' expression)? ';';
+fieldDeclaration: IDENTIFIER ':' type ('=' expression)? ';';
 
-methodDeclaration: accessModifier? 'async'? 'function' IDENTIFIER '(' parameterList? ')' ('->' type)? blockStatement;
-
-constructorDeclaration: accessModifier? 'constructor' '(' parameterList? ')' blockStatement;
-
-// Interface declarations
-interfaceDeclaration
-    : accessModifier? 'interface' IDENTIFIER ('extends' interfaceList)? interfaceBody
-    ;
-
-interfaceBody: '{' interfaceMember* '}';
-
-interfaceMember
-    : interfaceMethodSignature
-    | interfacePropertySignature
-    ;
-
-interfaceMethodSignature: IDENTIFIER '(' parameterList? ')' ('->' type)? ';';
-
-interfacePropertySignature: IDENTIFIER ':' type ';';
-
-interfaceList: IDENTIFIER (',' IDENTIFIER)*;
-
-// Access modifiers
-accessModifier: 'public' | 'private' | 'protected';
+constructorDeclaration: 'constructor' '(' parameterList? ')' blockStatement;
 
 parameterList: parameter (',' parameter)*;
 parameter: IDENTIFIER (':' type)?;  // Make type optional
@@ -89,25 +45,18 @@ parameter: IDENTIFIER (':' type)?;  // Make type optional
 // Variable declarations
 variableDeclaration: 'var' IDENTIFIER '=' expression ';';
 
-// Control flow
-ifStatement: 'if' '(' expression ')' statement ('else' statement)?;
-whileStatement: 'while' '(' expression ')' statement;
+// For-in loop for iteration (arrays, dictionaries, collections)
 forStatement: 'for' '(' ('var' IDENTIFIER | IDENTIFIER) 'in' expression ')' statement;
-returnStatement: 'return' expression? ';';
 
-// Exception handling
-tryStatement: 'try' blockStatement ('catch' '(' IDENTIFIER ')' blockStatement)?;
-throwStatement: 'throw' expression ';';
-
-// Event-driven statements
-eventNamePart: IDENTIFIER | 'any' | 'new' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'async' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await' | 'completed' | 'ready' | 'activation' | 'bob' | 'charlie' | 'timing' | 'decision' | 'for' | 'work';
+// Cognitive Event-driven statements
+eventNamePart: IDENTIFIER | 'any' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await' | 'completed' | 'ready' | 'activation' | 'timing' | 'decision' | 'work' | 'new';
 eventName: eventNamePart ('.' eventNamePart)*;
 onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
 
-// AI service statements (learn, think, generate, etc.) - now supports both comma and no-comma syntax
-aiServiceName: 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await';
-aiServiceStatement: aiServiceName ((',' expression) | expression) ';';
+// AI service statements - cognitive capabilities only
+aiServiceName: 'is' | 'not' | 'learn' | 'think' | 'await' | 'adapt';
+aiServiceStatement: aiServiceName expression ';';
 
 // Blocks
 blockStatement: '{' statement* '}';
@@ -161,17 +110,8 @@ type
     ;
 
 CLASS: 'class';
-INTERFACE: 'interface';
 EXTENDS: 'extends';
-IMPORT: 'import';
-USES: 'uses';
 CONSTRUCTOR: 'constructor';
-PUBLIC: 'public';
-PRIVATE: 'private';
-PROTECTED: 'protected';
-TRY: 'try';
-CATCH: 'catch';
-THROW: 'throw';
 NEW: 'new';
 NULL: 'null';
 TRUE: 'true';
@@ -179,20 +119,12 @@ FALSE: 'false';
 ON: 'on';
 EMIT: 'emit';
 
-// AI service keywords
+// AI cognitive service keywords
 LEARN: 'learn';
 THINK: 'think';
-GENERATE: 'generate';
-CHAT: 'chat';
-COMMUNICATE: 'communicate';
-SEARCH: 'search';
-EXECUTE: 'execute';
-SPEAK: 'speak';
-LISTEN: 'listen';
-IMAGE: 'image';
-ANALYZE: 'analyze';
-TRANSCRIBE: 'transcribe';
-AUDIO: 'audio';
+AWAIT: 'await';
+ADAPT: 'adapt';
+NOT: 'not';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';

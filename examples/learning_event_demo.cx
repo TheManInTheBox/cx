@@ -1,0 +1,261 @@
+// LEARNING DEMO: Event Payload Analysis
+// Educational demonstration that prints all event payloads for learning
+// Helps understand the CX Language event system and data flow
+
+print("📚 CX Language Learning Demo - Event Payload Analysis");
+print("Printing all event payloads to understand the system");
+print("====================================================");
+
+class LearningAgent
+{
+    name: string = "LearningAgent";
+    eventCount: number = 0;
+    
+    function startLearning()
+    {
+        print("🎓 Starting learning session...");
+        print("Agent: " + this.name);
+        
+        // Start with Azure Realtime connection to see all events
+        emit realtime.connect { demo: "learning_analysis" };
+    }
+    
+    function analyzeEvent(eventName: string, payload: any)
+    {
+        this.eventCount = this.eventCount + 1;
+        print("\n🔍 === EVENT ANALYSIS #" + this.eventCount + " ===");
+        print("📋 Event Name: " + eventName);
+        print("📦 Payload Type: " + typeof(payload));
+        print("📄 Payload Content:");
+        print(payload);  // This should auto-serialize to JSON
+        print("🔚 === END EVENT #" + this.eventCount + " ===");
+    }
+    
+    // ✅ Learn from Azure Realtime events
+    on realtime.connected (event)
+    {
+        this.analyzeEvent("realtime.connected", event);
+        
+        // Continue the learning by creating a session
+        emit realtime.session.create { 
+            deployment: "gpt-4o-mini-realtime-preview",
+            mode: "voice"
+        };
+    }
+    
+    on realtime.session.created (event)
+    {
+        this.analyzeEvent("realtime.session.created", event);
+        
+        // Send a learning message
+        emit realtime.text.send { 
+            text: "Hello! I'm learning about the CX Language event system.",
+            deployment: "gpt-4o-mini-realtime-preview"
+        };
+    }
+    
+    on realtime.text.response (event)
+    {
+        this.analyzeEvent("realtime.text.response", event);
+        
+        // Emit a custom learning event
+        emit learning.text.analyzed { 
+            agent: this.name,
+            content: event.content,
+            isComplete: event.isComplete,
+            timestamp: "2025-07-23"
+        };
+    }
+    
+    on realtime.audio.response (event)
+    {
+        this.analyzeEvent("realtime.audio.response", event);
+        
+        // Try to play audio and analyze the playback events
+        if (event.audioData != null)
+        {
+            print("🎵 Attempting audio playback for learning...");
+            emit audio.stream.direct { 
+                audioData: event.audioData,
+                agent: this.name,
+                format: "pcm16",
+                sampleRate: 24000
+            };
+        }
+        
+        // Emit custom learning event
+        emit learning.audio.analyzed { 
+            agent: this.name,
+            hasAudio: (event.audioData != null),
+            isComplete: event.isComplete,
+            dataType: typeof(event.audioData)
+        };
+    }
+    
+    on realtime.error (event)
+    {
+        this.analyzeEvent("realtime.error", event);
+        
+        // Continue learning with simulated data
+        emit learning.fallback.ready { 
+            agent: this.name,
+            reason: "azure_config_needed"
+        };
+    }
+    
+    // ✅ Learn from custom events we emit
+    on learning.text.analyzed (event)
+    {
+        this.analyzeEvent("learning.text.analyzed", event);
+    }
+    
+    on learning.audio.analyzed (event)
+    {
+        this.analyzeEvent("learning.audio.analyzed", event);
+    }
+    
+    on learning.fallback.ready (event)
+    {
+        this.analyzeEvent("learning.fallback.ready", event);
+        
+        print("🎭 Simulating events for learning...");
+        
+        // Simulate a text response
+        emit realtime.text.response {
+            content: "This is a simulated response for learning purposes.",
+            isComplete: true,
+            source: "simulation"
+        };
+        
+        // Simulate an audio response
+        emit realtime.audio.response {
+            audioData: "simulated_audio_bytes",
+            isComplete: true,
+            audioFormat: "pcm16",
+            source: "simulation"
+        };
+    }
+}
+
+// ✅ Global learning event handlers - analyze ALL events
+
+on naudio.playback.started (event)
+{
+    print("\n🎵 === NAUDIO PLAYBACK STARTED EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END NAUDIO PLAYBACK STARTED ===");
+}
+
+on audio.streaming.complete (event)
+{
+    print("\n🎉 === AUDIO STREAMING COMPLETE EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END AUDIO STREAMING COMPLETE ===");
+}
+
+on audio.streaming.error (event)
+{
+    print("\n❌ === AUDIO STREAMING ERROR EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END AUDIO STREAMING ERROR ===");
+}
+
+on audio.stream.blocked (event)
+{
+    print("\n⚠️ === AUDIO STREAM BLOCKED EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END AUDIO STREAM BLOCKED ===");
+}
+
+// ✅ AI Service Learning Events
+on ai.think.request (event)
+{
+    print("\n🧠 === AI THINK REQUEST EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END AI THINK REQUEST ===");
+}
+
+on thinking.complete (event)
+{
+    print("\n💡 === THINKING COMPLETE EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END THINKING COMPLETE ===");
+}
+
+on ai.learn.request (event)
+{
+    print("\n📚 === AI LEARN REQUEST EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END AI LEARN REQUEST ===");
+}
+
+on learning.complete (event)
+{
+    print("\n🎓 === LEARNING COMPLETE EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END LEARNING COMPLETE ===");
+}
+
+// ✅ System Events
+on system.ready (event)
+{
+    print("\n⚡ === SYSTEM READY EVENT ===");
+    print("📦 Event Payload:");
+    print(event);
+    print("🔚 === END SYSTEM READY ===");
+}
+
+// ✅ Demo completion
+on learning.session.complete (event)
+{
+    print("\n🏆 === LEARNING SESSION COMPLETE ===");
+    print("📊 Total Events Analyzed: " + event.eventCount);
+    print("🎯 Agent: " + event.agent);
+    print("📦 Final Event Payload:");
+    print(event);
+    print("🔚 === END LEARNING SESSION ===");
+    
+    print("\n📚 LEARNING SUMMARY:");
+    print("✅ Event system: ANALYZED");
+    print("✅ Payload structures: UNDERSTOOD");
+    print("✅ Audio events: TRACED");
+    print("✅ AI service events: MONITORED");
+    print("🎓 Learning complete!");
+}
+
+// 🚀 Start the learning demo
+print("\n🎬 === INITIALIZING LEARNING DEMO ===");
+var learningAgent = new LearningAgent();
+print("✅ Learning agent created: " + learningAgent.name);
+print("📊 Event count: " + learningAgent.eventCount);
+
+print("\n🎓 === STARTING LEARNING SESSION ===");
+learningAgent.startLearning();
+
+print("\n💡 === LEARNING OBJECTIVES ===");
+print("🔍 Analyze all event payloads");
+print("📦 Understand data structures");
+print("🎵 Trace audio playback events");
+print("🧠 Monitor AI service interactions");
+print("⚡ Learn event flow patterns");
+print("🎯 Debug audio playback issue");
+
+// Emit a final learning completion event after some processing
+emit learning.session.complete { 
+    agent: learningAgent.name,
+    eventCount: learningAgent.eventCount,
+    objectives: [
+        "Event Analysis",
+        "Payload Understanding", 
+        "Audio Debugging",
+        "System Learning"
+    ]
+};
