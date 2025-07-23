@@ -75,22 +75,23 @@ class SmartAgent
     // ✅ PREPARATION COMPLETE: Move to speech phase
     on preparation.complete (event)
     {
-        if (event.reason.indexOf(this.name) >= 0)
-        {
-            print("🧠 " + this.name + " preparation optimized (" + event.actualDurationMs + "ms)");
-            print("  Smart await determined optimal timing");
-            this.speakWithOptimalTiming();
-        }
+        is { 
+            context: "Cognitive decision: Should " + this.name + " proceed to speech phase?",
+            evaluate: event.reason + " contains agent name " + this.name,
+            data: { eventReason: event.reason, agentName: this.name, timing: event.actualDurationMs },
+            handlers: [ agent.decision.ready ]
+        };
     }
     
     // ✅ SPEECH TIMING READY: Start voice synthesis
     on speech.timing.ready (event)
     {
-        if (event.reason.indexOf(this.name) >= 0)
-        {
-            print("🎙️ " + this.name + " speech timing optimized (" + event.actualDurationMs + "ms)");
-            this.synthesizeVoice();
-        }
+        is { 
+            context: "Cognitive decision: Should " + this.name + " start voice synthesis?",
+            evaluate: event.reason + " matches speech timing for " + this.name,
+            data: { eventReason: event.reason, agentName: this.name, timing: event.actualDurationMs },
+            handlers: [ speech.decision.ready ]
+        };
     }
     
     // ✅ AZURE REALTIME: Connection handler
@@ -128,45 +129,30 @@ class SmartAgent
     {
         print("🔊 " + this.name + " audio response (speed: " + this.speechSpeed + ")");
         
-        if (event.audioData != null)
-        {
-            print("  Audio size: " + event.audioSize + " bytes");
-            print("  Audio format: " + event.audioFormat);
-            print("  Sample rate: " + event.sampleRate + "Hz");
-            
-            // Direct audio streaming with NAudio playback
-            emit audio.stream.direct { 
-                audioData: event.audioData,
-                format: event.audioFormat,
-                sampleRate: event.sampleRate,
-                autoPlay: true,
-                source: "smart_await_" + this.name,
-                speechSpeed: this.speechSpeed,
-                agent: this.name
-            };
-        }
+        is { 
+            context: "Cognitive decision: Is audio data available for processing?",
+            evaluate: "Audio data presence check for " + this.name,
+            data: { audioData: event.audioData, agent: this.name },
+            handlers: [ audio.data.evaluated ]
+        };
         
-        if (event.isComplete)
-        {
-            print("✅ " + this.name + " speech synthesis complete with smart await optimization");
-            this.completeDemo();
-        }
+        is { 
+            context: "Cognitive decision: Is audio synthesis complete?",
+            evaluate: "Completion status check for " + this.name + " audio synthesis",
+            data: { isComplete: event.isComplete, agent: this.name },
+            handlers: [ audio.completion.evaluated ]
+        };
     }
     
     // ✅ DEMO COMPLETE: Final smart await demonstration
     on demo.complete (event)
     {
-        if (event.reason.indexOf(this.name) >= 0)
-        {
-            print("🎉 " + this.name + " smart await demo complete (" + event.actualDurationMs + "ms final timing)");
-            
-            emit agent.demo.finished { 
-                agent: this.name,
-                speechSpeed: this.speechSpeed,
-                totalOptimizations: 3,
-                success: true
-            };
-        }
+        is { 
+            context: "Cognitive decision: Should " + this.name + " complete the demonstration?",
+            evaluate: event.reason + " indicates demo completion for " + this.name,
+            data: { eventReason: event.reason, agentName: this.name, finalTiming: event.actualDurationMs },
+            handlers: [ demo.decision.ready ]
+        };
     }
 }
 
@@ -196,10 +182,13 @@ on audio.stream.direct (event)
     print("  Speed: " + event.speechSpeed + " (10% slower)");
     print("  Source: " + event.source);
     print("  Format: " + event.format);
-    if (event.audioData != null)
-    {
-        print("  🎵 Playing audio through NAudio...");
-    }
+    
+    is { 
+        context: "Cognitive decision: Should audio be played through NAudio?",
+        evaluate: "Audio data availability check for streaming",
+        data: { audioData: event.audioData, source: event.source },
+        handlers: [ audio.playback.evaluated ]
+    };
 }
 
 // ✅ DEMO COMPLETION HANDLER
