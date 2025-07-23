@@ -21,6 +21,8 @@
     <!-- Modern Microsoft.Extensions.AI ecosystem - lightweight and performant -->
     <PackageReference Include="Microsoft.Extensions.AI" Version="9.7.1" />
     <PackageReference Include="Microsoft.Extensions.AI.AzureAIInference" Version="9.7.1-preview.1.25365.4" />
+    <!-- Azure OpenAI for ChatClient and EmbeddingClient -->
+    <PackageReference Include="Azure.AI.OpenAI" Version="2.2.0-beta.5" />
     <!-- Core Microsoft Extensions -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />

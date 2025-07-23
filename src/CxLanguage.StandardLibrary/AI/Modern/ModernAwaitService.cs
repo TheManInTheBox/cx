@@ -12,8 +12,6 @@ namespace CxLanguage.StandardLibrary.AI.Modern;
 /// </summary>
 public class ModernAwaitService : ModernAiServiceBase
 {
-    private readonly IServiceProvider _serviceProvider;
-
     /// <summary>
     /// Initializes a new instance of the ModernAwaitService
     /// </summary>
@@ -22,7 +20,6 @@ public class ModernAwaitService : ModernAiServiceBase
     public ModernAwaitService(IServiceProvider serviceProvider, ILogger<ModernAwaitService> logger) 
         : base(serviceProvider, logger)
     {
-        _serviceProvider = serviceProvider;
     }
 
     /// <summary>

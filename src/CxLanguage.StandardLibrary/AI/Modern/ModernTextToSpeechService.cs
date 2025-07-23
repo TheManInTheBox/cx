@@ -12,8 +12,6 @@ namespace CxLanguage.StandardLibrary.AI.Modern;
 /// </summary>
 public class ModernTextToSpeechService : ModernAiServiceBase
 {
-    private readonly IServiceProvider _serviceProvider;
-
     /// <summary>
     /// Initializes a new instance of the ModernTextToSpeechService
     /// </summary>
@@ -22,7 +20,6 @@ public class ModernTextToSpeechService : ModernAiServiceBase
     public ModernTextToSpeechService(IServiceProvider serviceProvider, ILogger<ModernTextToSpeechService> logger) 
         : base(serviceProvider, logger)
     {
-        _serviceProvider = serviceProvider;
     }
 
     /// <summary>

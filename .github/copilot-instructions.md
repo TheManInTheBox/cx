@@ -22,10 +22,10 @@ This document provides development guidance and standards for the CX Language pl
 
 ## Development Standards
 - ✅ **ALWAYS** use the latest Cx Language features and syntax defined in cx.instructions.md
-- ✅ **Production-Ready**: Complete end-to-end implementations with working unified event system, namespace scoping, and interactive CLI
+- ✅ **Production-Ready**: Complete end-to-end implementations with working Aura Cognitive Framework, namespace scoping, and interactive CLI
 - ✅ **Real Implementation**: Actual event emission/handling, namespace isolation, press-key-to-exit functionality
 - ✅ **Complete CX Integration**: Seamless compiler and runtime operation with zero exceptions
-- ✅ **Event-Driven Architecture**: Fully operational unified event system with proper handler registration
+- ✅ **Event-Driven Architecture**: Fully operational Aura Cognitive Framework with proper handler registration
 - ✅ **Interactive CLI**: Working background event processing with user-controlled termination
 - ✅ **Enhanced Handlers Pattern**: Complete implementation with custom payload support `handlers: [ analysis.complete { option: "value" } ]`
 - ✅ **Automatic Object Serialization**: CX objects display as JSON with recursive nesting for debugging
@@ -57,7 +57,7 @@ wiki/                         → Static documentation (timeless reference mater
 - **No Member Fields**: All state management through AI services and event payloads
 - **No `this` Keyword**: Complete elimination of instance references for pure stateless programming
 - **Cognitive Constructors**: `realize(self: object)` with `learn self;` for AI-driven initialization
-- **Event-Only Communication**: All behavior flows through the unified event system
+- **Event-Only Communication**: All behavior flows through the Aura Cognitive Framework
 - **Aura Cognitive Framework**: A decentralized eventing model where each agent possesses a local `EventHub` (a personal nervous system) for internal processing, all orchestrated by a global `EventBus` that manages inter-agent communication.
 
 ### **File Organization**
