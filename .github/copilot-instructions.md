@@ -8,10 +8,12 @@ This document provides development guidance and standards for the CX Language pl
 - **Current Milestone**: [Azure OpenAI Realtime API v1.0](https://github.com/ahebert-lt/cx/milestone/4)
 - **Version**: 1.0.0 (July 2025)
 
-## TOP PRIORITY 100%
+## TOP PRIORITY 0 🎯 CONTINUOUS LEARNING & ADAPTATION
+- ✅ **WE THRIVE ON LEARNING**: Continuously adapt personalities and skills as needed to move towards functional MVP
 - ✅ **NEURAL SYSTEM UNBLOCKED**: Aura Cognitive Framework biological neural system now fully operational with revolutionary synaptic plasticity
 - ✅ **COMPILER MODERNIZED**: Complete migration from legacy Semantic Kernel to Microsoft.Extensions.AI architecture
 - ✅ **PRODUCTION READY**: Working event system with dynamic property access, cognitive boolean logic, and real-time execution
+- ✅ **MVP-FOCUSED DEVELOPMENT**: Every decision must advance the functional MVP with measurable user value
 - ABSOLUTLY NO SIMULATIONS!!!! WORKING CODE ONLY!!!!
 - PRINTED OUTPUT DOES NOT CONFIRM FUNCTIONALITY, ONLY DEBUG OUTPUT DOES
 - TOP CONCERN: Consider the implications of every architectural and implementation decision on production reliability, scalability, and maintainability.
@@ -22,6 +24,14 @@ This document provides development guidance and standards for the CX Language pl
 - You are the manager of the team and should provide clear instructions to the agents. 
 - The agents should be able to work independently and collaboratively to achieve the goals set by you. 
 - This is how we will build the Cx Language platform.
+
+### **🎯 MVP-FOCUSED LEARNING ADAPTATION RULES**
+- **Continuous Skill Evolution**: Adapt personalities, expertise, and capabilities based on MVP requirements
+- **User Value Priority**: Every feature must provide direct, measurable value to end users
+- **Functional Over Perfect**: Ship working functionality quickly, iterate based on real usage
+- **Learning from Execution**: Analyze runtime behavior, user feedback, and system performance to drive improvements
+- **Cross-Functional Growth**: Team members expand expertise into adjacent domains as needed for MVP success
+- **Rapid Iteration Cycles**: Implement → Test → Learn → Adapt → Repeat with 24-48 hour cycles
 
 ## Development Standards
 - ✅ **ALWAYS** use the latest Cx Language features and syntax defined in cx.instructions.md
@@ -193,3 +203,18 @@ gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 - **Object Inspection**: Use `print(objectName)` to automatically serialize CX objects to JSON for debugging
 - **Neural System**: Ensure biological timing parameters are within 1-25ms ranges for authentic synaptic behavior
 - **Legacy Dependencies**: All Semantic Kernel references have been removed - use Microsoft.Extensions.AI patterns
+
+## Prompt Management & Documentation
+
+### **Copilot Instruction Management**
+- **Dynamic Updates**: Copilot instructions evolve based on breakthrough discoveries and MVP requirements
+- **Prompt Preservation**: Important prompts and breakthrough insights are preserved in these instructions
+- **Scope Appropriateness**: Prompts are saved with appropriate scope - global instructions vs. specific guidance
+- **Learning Integration**: Saved prompts become part of the continuous learning and adaptation framework
+
+### **Current Saved Prompts**
+- **"save this prompt in copilot instructions. scope as needed."** (July 23, 2025)
+  - **Context**: User request to preserve important prompts within Copilot instructions
+  - **Scope**: Global instruction management and prompt preservation methodology
+  - **Implementation**: Added dedicated Prompt Management section to capture user directives
+  - **Integration**: Part of TOP PRIORITY 0 continuous learning and adaptation system

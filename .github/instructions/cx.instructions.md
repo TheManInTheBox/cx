@@ -10,7 +10,7 @@
 7. [Service Integration](#service-integration)
 8. [Asynchronous Programming](#asynchronous-programming)
 9. [Loops and Iteration](#loops-and-iteration)
-10. [Reserved Event Names](#reserved-event-names)
+10. [Reserved Event Names & Scope Organization](#reserved-event-names--scope-organization)
 11. [Code Examples](#code-examples)
 
 ## Introduction
@@ -19,6 +19,7 @@ CX Language is an event-driven programming language designed for AI agent orches
 **Key Features:**
 - **Cognitive Boolean Logic**: `is { }` syntax for AI-driven decision-making with contextual evaluation
 - **Negative Cognitive Logic**: `not { }` syntax for AI-driven false/negative decision-making
+- **Self-Reflective Logic**: `iam { }` syntax for AI-driven self-assessment and identity verification
 - **Advanced Event System**: Full event parameter property access with `event.property` syntax
 - **Enhanced Handlers Pattern**: Custom payload support with `handlers: [ event.name { custom: "data" } ]`
 - **Aura Cognitive Framework**: A decentralized eventing model where each agent possesses a local `EventHub` (a personal nervous system) for internal processing, all orchestrated by a global `EventBus` that manages inter-agent communication.
@@ -39,7 +40,7 @@ The following rules are mandatory for all CX Language code:
 - Always use Allman-style brackets `{ }` for code blocks
 - Use `print()` for console output - NEVER use `console.log()`
 - **NO `if` statements**: Use cognitive `is { }` and `not { }` patterns for all decision logic
-- **NO `function` declarations**: Use only cognitive functions (`learn`, `think`, `is`, `not`, `await`, `adapt`)
+- **NO `function` declarations**: Use only cognitive functions (`learn`, `think`, `is`, `not`, `iam`, `await`, `adapt`)
 - `print()` automatically serializes complex objects to JSON for debugging
 - `print()` displays primitive types (strings, numbers, booleans) directly
 - `print()` provides nested object visualization for CX classes
@@ -68,7 +69,7 @@ The following rules are mandatory for all CX Language code:
 - Use event handlers (`on eventName`) for all behavioral logic inside objects
 - **Pure Event-Driven**: Objects contain only `realize()` constructors and event handlers - NO member fields or methods
 - **NO `this` keyword**: CX Language eliminates instance references for pure stateless programming
-- **NO `function` declarations**: Traditional functions eliminated - use only cognitive functions for all behavior
+- **NO `function` declarations**: Traditional functions eliminated - use only cognitive functions (`learn`, `think`, `is`, `not`, `iam`, `await`, `adapt`) for all behavior
 - **No Member Fields**: All state is managed through AI services and event payloads - no instance variables
 - **No Public/Private Modifiers**: CX does not use access modifiers - pure event-driven architecture
 - **No Static Members**: CX does not support static members - all behavior is event-based
@@ -94,7 +95,7 @@ The following rules are mandatory for all CX Language code:
 - **No Class-level Injection**: Classes cannot have services injected into them or declare their own service instances.
 - **Invocation**: Services are called using their name followed by a comma-less block of parameters, e.g., `think { prompt: "Hello" }`.
 - **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
-- **Core Cognitive Services**: `is` (cognitive boolean logic), `not` (negative boolean logic), `learn` (knowledge acquisition), `think` (reasoning), `await` (smart timing), `adapt` (behavioral evolution)
+- **Core Cognitive Services**: `is` (cognitive boolean logic), `not` (negative boolean logic), `iam` (self-reflective logic), `learn` (knowledge acquisition), `think` (reasoning), `await` (smart timing), `adapt` (behavioral evolution)
 - **Pure Event-Driven State**: All state management occurs through AI services and event payloads, eliminating the need for instance variables
 
 ## Syntax Basics
@@ -129,16 +130,50 @@ The following rules are mandatory for all CX Language code:
 - Event names are case-sensitive and follow dot notation (namespace.action)
 - Always use descriptive event names for maintainable code
 
-### **Reserved Event Names**
-The following event name parts are reserved by the CX Language system and have special meaning:
+### **Reserved Event Names & Scope Organization**
 
-**System Events:**
-- `system` - Core system lifecycle events (system.ready, system.shutdown)
-- `alerts` - System alert and notification events
-- `dev` - Development and debugging events
+CX Language organizes event handlers by scope to ensure clean architecture and prevent conflicts. The following event organization follows the Program.cs root pattern:
 
-**General Events:**
-- `any` - Wildcard event matching
+#### **Program Scope (Global) - SYSTEM EVENTS ONLY**
+Only `system` namespace events are allowed at program scope, representing core application lifecycle:
+
+**System Lifecycle Events:**
+- `system.start` - Application initialization and startup
+- `system.ready` - System fully loaded and operational
+- `system.shutdown` - Graceful application termination
+- `system.error` - Critical system-level errors
+- `system.restart` - Application restart coordination
+
+**System Wildcard Events:**
+- `system.any.*` - Wildcard patterns for system event monitoring
+- `system.any.ready` - Monitor all system readiness events
+- `system.any.complete` - Monitor all system completion events
+
+**Development & Debugging (Program Scope):**
+- `system.debug.*` - Debug and development events
+- `system.alerts.*` - System alert and notification events
+- `system.dev.*` - Development-specific events
+
+#### **Object Scope - ALL OTHER EVENTS**
+All non-system events must be declared within object scope for proper encapsulation:
+
+**User Interaction Events:**
+- `user.*` - User input, commands, and interactions
+- `user.input`, `user.message`, `user.command`
+
+**Agent Communication Events:**
+- `agent.*` - Inter-agent communication and coordination
+- `ai.*` - AI service requests and responses
+- `voice.*` - Voice processing and synthesis
+
+**Application Domain Events:**
+- `data.*` - Data processing and management
+- `task.*` - Task execution and completion
+- `workflow.*` - Process orchestration
+
+**Wildcard Support:**
+- `any` - Universal wildcard for cross-namespace communication (object scope only)
+- `*.any.*` - Flexible wildcard patterns within object scope
 
 ## Code Examples
 
@@ -1292,6 +1327,18 @@ not {
     evaluate: "What is being evaluated for false condition",
     data: { condition: false },
     handlers: [ decision.negative ]
+};
+
+// ✅ SELF-REFLECTIVE COGNITIVE BOOLEAN LOGIC: AI-driven self-assessment and identity verification
+iam {
+    context: "Self-assessment: Can I handle this request?",
+    evaluate: "Agent capability and readiness evaluation",
+    data: { 
+        capabilities: { cognitive: [], technical: [], social: [] },
+        confidence: 0.95,
+        readiness: "high"
+    },
+    handlers: [ self.capability.assessed ]
 };
 
 // ✅ COGNITIVE LEARNING: Knowledge acquisition and adaptation
