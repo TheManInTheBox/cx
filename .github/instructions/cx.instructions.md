@@ -5,15 +5,11 @@
 2. [Core Language Rules](#co## Syntax Basics
 
 ### Formatting Rules
+```cx
 // ❌ NEVER use K&R brackets in CX
-if (condition)
-{
+if (condition) {
     doSomething();
 }
-
-```cx
-
-```
 
 // ✅ Console output - ALWAYS use print()
 print("Hello World");
@@ -23,6 +19,7 @@ if (condition)
 {
     doSomething();
 }
+```
 
 ## Class and Member Declaration
 3. [Syntax Basics](#syntax-basics)
@@ -90,6 +87,7 @@ The following rules are mandatory for all CX Language code:
 - **Method parameters**: Type annotations recommended for clarity
 
 ### Event System
+- Only `on system` eventhandlers are allowed in Program scope. No exceptions.
 - Use `on` keyword for event handlers - available at both program scope and in classes
 - Use `emit` keyword for event emission - always fire-and-forget
 - Use `any` for wildcard patterns in event handlers - supports cross-namespace communication
@@ -107,7 +105,7 @@ The following rules are mandatory for all CX Language code:
 - **No Class-level Injection**: It is illegal for classes to have services injected into them or to declare their own service instances.
 - **Invocation**: Services are called using their name followed by a comma-less block of parameters, e.g., `think { prompt: "Hello" }`.
 - **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
-- **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
+- **Smart Await Service**: Use `await` service for AI-determined optimal timing: `await { reason: "context", minDurationMs: 1000, maxDurationMs: 3000 }`
 
 ## Syntax Basics
 - **Use constructors to inject data** - DO NOT ACCESS MEMBERS DIRECTLY FOR INITIALIZATION.
@@ -454,14 +452,17 @@ for (result in searchResults)
     print("Content: " + result.content);
 }
 
-// ✅ For...in loop for dictionary iteration (event payloads)
-on user.input (event)
+// ✅ For...in loop for dictionary iteration (event payloads) - in class scope
+class EventProcessor
 {
-    for (var eve in event.payload) 
+    on user.input (event)
     {
-        print("Key: " + eve.Key);      // Access dictionary key
-        print("Value: " + eve.Value);  // Access dictionary value
-        print("Type: " + typeof(eve.Value));
+        for (var eve in event.payload) 
+        {
+            print("Key: " + eve.Key);      // Access dictionary key
+            print("Value: " + eve.Value);  // Access dictionary value
+            print("Type: " + typeof(eve.Value));
+        }
     }
 }
 
@@ -583,16 +584,18 @@ class ComplexEventHandler
 - **Runtime Resolution**: Properties are resolved at runtime using reflection-based property access
 - **Payload Dictionary**: `event.payload` contains the full dictionary of event data
 - **Metadata Access**: Built-in properties like `event.name`, `event.timestamp` are always available
+- **Class Instance Access**: In class-based event handlers, use `this.fieldName` to access instance variables for proper scope resolution
 ### Event Handler Declaration and Emission
 ```
-// ✅ Event handlers - available at both program scope AND in classes
-on user.input (event) { ... }        // ✅ CORRECT: Program scope event handler
+// ✅ Event handlers - Only `on system` handlers allowed at program scope
 on system.ready (event) { ... }      // ✅ CORRECT: Program scope event handler
+on system.shutdown (event) { ... }   // ✅ CORRECT: Program scope event handler
 
 class MyAgent 
 {
     on user.message (event) { ... }  // ✅ CORRECT: Class scope event handler
     on ai.request (event) { ... }    // ✅ CORRECT: Class scope event handler
+    on user.input (event) { ... }    // ✅ CORRECT: Class scope event handler
 }
 
 // ✅ CORRECT: Emitting system message event
@@ -603,34 +606,34 @@ adapt {
   name: "MyAgent", 
   reason: "maintenance", 
   handlers [ 
-    event.bus { 
-      options: "option" }
-      ] 
+    event.bus { options: "option" }
+  ] 
 }; // ✅ CORRECT: Emitting adatation event of a class instance.
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
-on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
-on user.any.response (payload) { ... }             // Matches user.chat.response, user.voice.response, etc.
-on system.any.ready (payload) { ... }              // Matches system.audio.ready, system.network.ready, etc.
-on agent.any.thinking.any.complete (payload) { ... } // Complex wildcard pattern matching
+// ❌ INCORRECT: Non-system handlers at program scope not allowed
+// on name.any.other.any.final (payload) { ... }     // Must be in class scope
+// on user.any.response (payload) { ... }             // Must be in class scope
+on system.any.ready (payload) { ... }              // ✅ CORRECT: System handlers allowed at program scope
+// on agent.any.thinking.any.complete (payload) { ... } // Must be in class scope
 
-// Advanced wildcard patterns - ALL SCOPES SUPPORTED ✅
-on user.any.input (payload) { ... }                // Global wildcard - catches user.chat.input, user.voice.input, etc.
-on ai.any.response (payload) { ... }               // AI service wildcard - catches all AI responses
-on voice.any.command (payload) { ... }             // Voice command wildcard - universal command handler
-on any.any.critical (payload) { ... }              // Ultra-flexible wildcard - catches any critical events
-on any.any.any.complete (payload) { ... }          // Maximum flexibility - catches all completion events
+// ❌ INCORRECT: Advanced wildcard patterns at program scope
+// on user.any.input (payload) { ... }                // Must be in class scope
+// on ai.any.response (payload) { ... }               // Must be in class scope
+// on voice.any.command (payload) { ... }             // Must be in class scope
+// on any.any.critical (payload) { ... }              // Must be in class scope
+// on any.any.any.complete (payload) { ... }          // Must be in class scope
 
-// Class-level wildcards work alongside global wildcards
+// ✅ CORRECT: Class-level wildcards - ALL patterns supported in class scope
 class ChatAgent 
 {
     on user.any.input (payload) 
-    {                  // Class-scoped wildcard handler
+    {                  // ✅ CORRECT: Class-scoped wildcard handler
         print("Chat agent received: " + payload.message);
     }
     
     on voice.any.command (payload) 
-    {               // Multi-scope wildcard support
+    {               // ✅ CORRECT: Multi-scope wildcard support in class
         emit user.chat.message, { text: "Voice: " + payload.command };
     }
 }
@@ -641,28 +644,29 @@ emit user.message { text: "hello" };
 emit system.shutdown { reason: "maintenance" };
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
-on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
-on user.any.response (payload) { ... }             // Matches user.chat.response, user.voice.response, etc.
-on system.any.ready (payload) { ... }              // Matches system.audio.ready, system.network.ready, etc.
-on agent.any.thinking.any.complete (payload) { ... } // Complex wildcard pattern matching
+// ❌ INCORRECT: Non-system handlers at program scope not allowed
+// on name.any.other.any.final (payload) { ... }     // Must be in class scope
+// on user.any.response (payload) { ... }             // Must be in class scope
+on system.any.ready (payload) { ... }              // ✅ CORRECT: System handlers allowed at program scope
+// on agent.any.thinking.any.complete (payload) { ... } // Must be in class scope
 
-// Advanced wildcard patterns - ALL SCOPES SUPPORTED ✅
-on user.any.input (payload) { ... }                // Global wildcard - catches user.chat.input, user.voice.input, etc.
-on ai.any.response (payload) { ... }               // AI service wildcard - catches all AI responses
-on voice.any.command (payload) { ... }             // Voice command wildcard - universal command handler
-on any.any.critical (payload) { ... }              // Ultra-flexible wildcard - catches any critical events
-on any.any.any.complete (payload) { ... }          // Maximum flexibility - catches all completion events
+// ❌ INCORRECT: Advanced wildcard patterns at program scope
+// on user.any.input (payload) { ... }                // Must be in class scope
+// on ai.any.response (payload) { ... }               // Must be in class scope
+// on voice.any.command (payload) { ... }             // Must be in class scope
+// on any.any.critical (payload) { ... }              // Must be in class scope
+// on any.any.any.complete (payload) { ... }          // Must be in class scope
 
-// Class-level wildcards work alongside global wildcards
+// ✅ CORRECT: Class-level wildcards - ALL patterns supported in class scope
 class ChatAgent 
 {
     on user.any.input (payload) 
-    {                  // Class-scoped wildcard handler
+    {                  // ✅ CORRECT: Class-scoped wildcard handler
         print("Chat agent received: " + payload.message);
     }
     
     on voice.any.command (payload) 
-    {               // Multi-scope wildcard support
+    {               // ✅ CORRECT: Multi-scope wildcard support in class
         emit user.chat.message { text: "Voice: " + payload.command };
     }
 }
@@ -762,21 +766,24 @@ class DataAnalysisAgent
     }
 }
 
-// Global event handlers with wildcard patterns
-on user.any.input (event)
+// ✅ CORRECT: Global system handlers with wildcard patterns (only system handlers allowed at global scope)
+on system.any.ready (event)
 {
-    print("Global handler: User input detected");
+    print("Global system handler: System component ready");
     print("Event type: " + typeof(event));
     
-    // Log all user inputs for monitoring
+    // Log all system events for monitoring
     for (var data in event.payload)
     {
-        if (data.Key == "sensitive" && data.Value == true)
+        if (data.Key == "critical" && data.Value == true)
         {
-            print("Sensitive data detected in user input");
+            print("Critical system event detected");
         }
     }
 }
+
+// ❌ INCORRECT: Non-system handlers must be in class scope
+// on user.any.input (event) { ... }  // Must be in class scope
 
 // Usage example
 var dataAgent = new DataAnalysisAgent();
@@ -789,6 +796,198 @@ emit user.input, {
     sensitive: false
 };
 ```
+
+### Multi-Event Handlers System
+
+The CX Language features a powerful **handlers** system that allows single operations to trigger multiple event listeners automatically, enabling sophisticated event orchestration patterns.
+
+### Class-Based Event Handler Patterns
+
+**Critical Finding**: Class-based event handlers provide superior variable scope resolution compared to global handlers when accessing instance state.
+
+#### Class Instance Variable Access
+```cx
+// ✅ RECOMMENDED: Class-based event handlers with proper instance variable access
+class SmartAwaitAgent
+{
+    name: string = "SmartAgent";
+    currentPhase: string = "initialization";
+    speechSpeed: number = 0.9;  // 10% slower than normal for better comprehension
+    
+    function startPhase(phaseName: string)
+    {
+        this.currentPhase = phaseName;
+        print("Starting phase: " + this.currentPhase);
+        
+        // Smart await with instance context
+        await { 
+            reason: "phase_transition_" + this.name,
+            context: "Moving to " + this.currentPhase + " phase",
+            minDurationMs: 1000,
+            maxDurationMs: 3000,
+            handlers: [ phase.started ]
+        };
+    }
+    
+    // ✅ CORRECT: Class-based event handler accessing instance variables
+    on phase.started (event)
+    {
+        print("Phase started for agent: " + this.name);  // ✅ Instance access works
+        print("Current phase: " + this.currentPhase);    // ✅ Instance access works
+        
+        // Voice synthesis with controlled speech speed
+        emit realtime.text.send {
+            text: "Phase " + this.currentPhase + " is now active for " + this.name,
+            deployment: "gpt-4o-mini-realtime-preview",
+            speechSpeed: this.speechSpeed  // ✅ Instance variable access
+        };
+    }
+    
+    on realtime.audio.response (event)
+    {
+        if (event.isComplete)
+        {
+            print("Audio complete for agent: " + this.name);  // ✅ Instance access
+            this.currentPhase = "ready";  // ✅ Can modify instance state
+        }
+    }
+}
+
+// ❌ PROBLEMATIC: Global event handlers cannot access instance variables
+on phase.started (event)
+{
+    // ❌ ERROR: Cannot access this.name, this.currentPhase, etc.
+    print("Global handler - no instance access");
+}
+```
+
+#### Class-Based Pattern Benefits
+- **Instance Variable Access**: Direct access to `this.fieldName` variables in event handlers
+- **State Management**: Can modify instance state (`this.currentPhase = "new_value"`)
+- **Contextual Logic**: Event handlers can use instance context for decision making
+- **Scope Isolation**: Each class instance has its own event handler scope
+- **Better Debugging**: Instance variables provide context for debugging and logging
+
+#### Smart Await Integration Patterns
+```cx
+// ✅ PRODUCTION PATTERN: Smart await with class-based handlers
+class DebateAgent
+{
+    name: string;
+    role: string;
+    speechSpeed: number = 0.9;  // Slower speech for clarity
+    turnComplete: boolean = false;
+    
+    constructor(agentName: string, agentRole: string)
+    {
+        this.name = agentName;
+        this.role = agentRole;
+    }
+    
+    function takeTurn(topic: string)
+    {
+        this.turnComplete = false;
+        
+        // AI-determined optimal timing before speaking
+        await { 
+            reason: "pre_speech_pause_" + this.name,
+            context: "Preparing " + this.role + " response on " + topic,
+            minDurationMs: 1000,
+            maxDurationMs: 2000,
+            handlers: [ turn.ready ]
+        };
+    }
+    
+    on turn.ready (event)
+    {
+        print("Agent " + this.name + " (" + this.role + ") taking turn");
+        
+        // Generate response with context
+        think {
+            prompt: "As a " + this.role + ", respond to: " + event.context,
+            handlers: [ response.generated ]
+        };
+    }
+    
+    on response.generated (event)
+    {
+        // Voice synthesis with instance-specific speed
+        emit realtime.text.send {
+            text: event.result,
+            deployment: "gpt-4o-mini-realtime-preview",
+            speechSpeed: this.speechSpeed
+        };
+    }
+    
+    on realtime.audio.response (event)
+    {
+        if (event.isComplete)
+        {
+            this.turnComplete = true;
+            
+            // Smart await for natural pause after speaking
+            await { 
+                reason: "post_turn_pause_" + this.name,
+                context: "Natural pause after " + this.name + " completes turn",
+                minDurationMs: 1500,
+                maxDurationMs: 2500,
+                handlers: [ turn.complete ]
+            };
+        }
+    }
+    
+    on turn.complete (event)
+    {
+        print("Turn complete for: " + this.name);
+        emit debate.turn.finished { agent: this.name, role: this.role };
+    }
+}
+```
+
+#### Voice Speed Control Patterns
+```cx
+// ✅ Voice speed control for improved comprehension
+class VoiceControlAgent
+{
+    speechSpeed: number = 0.9;  // 10% slower than normal (1.0)
+    
+    function speakSlowly(message: string)
+    {
+        emit realtime.text.send {
+            text: message,
+            deployment: "gpt-4o-mini-realtime-preview",
+            speechSpeed: this.speechSpeed  // Slows speech by 10%
+        };
+    }
+    
+    function speakNormally(message: string)
+    {
+        emit realtime.text.send {
+            text: message,
+            deployment: "gpt-4o-mini-realtime-preview",
+            speechSpeed: 1.0  // Normal speed
+        };
+    }
+    
+    function speakQuickly(message: string)
+    {
+        emit realtime.text.send {
+            text: message,
+            deployment: "gpt-4o-mini-realtime-preview",
+            speechSpeed: 1.2  // 20% faster than normal
+        };
+    }
+}
+```
+
+#### Class-Based Event Handler Rules
+- **Prefer Class Handlers**: Use class-based event handlers when accessing instance variables
+- **Instance Context**: Always use `this.fieldName` for instance variable access
+- **State Modification**: Event handlers can modify instance state directly
+- **Scope Isolation**: Each class instance maintains separate event handler scope
+- **Global Fallback**: Use global handlers only for system-wide coordination
+- **Variable Scope**: Class handlers resolve variable scope more reliably than global handlers
+- **Debugging Context**: Instance variables provide better debugging information
 
 ### Multi-Event Handlers System
 
@@ -862,43 +1061,47 @@ class AnalysisAgent
     }
 }
 
-// Handler events receive BOTH original payload AND custom handler payload
-on analysis.complete (event)
+// ✅ CORRECT: Handler events in class scope - receive BOTH original payload AND custom handler payload
+class HandlerDemoClass
 {
-    print("=== ANALYSIS COMPLETE ===");
-    print("Analysis finished for data: " + event.data);      // ✅ Original payload
-    print("Category: " + event.category);                    // ✅ Original payload
-    print("Priority: " + event.priority);                    // ✅ Original payload
-    print("Report option: " + event.option);                 // ✅ Custom handler payload
-    print("Report format: " + event.format);                 // ✅ Custom handler payload
-}
-
-on task.finished (event)
-{
-    print("=== TASK TRACKING ===");
-    print("Task completed: " + event.data);                  // ✅ Original payload
-    print("Task status: " + event.status);                   // ✅ Custom handler payload
-    print("Completion timestamp: " + event.timestamp);       // ✅ Custom handler payload
-}
-
-on notify.users (event)
-{
-    print("=== USER NOTIFICATION ===");
-    print("Notifying users about: " + event.data);           // ✅ Original payload
-    print("Priority level: " + event.priority);              // ✅ Original payload
-    print("Notification urgency: " + event.urgency);         // ✅ Custom handler payload
-    print("Notification channel: " + event.channel);         // ✅ Custom handler payload
-}
-
-on ai.learn.request (event)
-{
-    print("=== AI LEARNING ===");
-    print("AI system learning from: " + event.data);         // ✅ Same data as above
-    print("Category: " + event.category);                    // ✅ "analysis"
+    on analysis.complete (event)
+    {
+        print("=== ANALYSIS COMPLETE ===");
+        print("Analysis finished for data: " + event.data);      // ✅ Original payload
+        print("Category: " + event.category);                    // ✅ Original payload
+        print("Priority: " + event.priority);                    // ✅ Original payload
+        print("Report option: " + event.option);                 // ✅ Custom handler payload
+        print("Report format: " + event.format);                 // ✅ Custom handler payload
+    }
+    
+    on task.finished (event)
+    {
+        print("=== TASK TRACKING ===");
+        print("Task completed: " + event.data);                  // ✅ Original payload
+        print("Task status: " + event.status);                   // ✅ Custom handler payload
+        print("Completion timestamp: " + event.timestamp);       // ✅ Custom handler payload
+    }
+    
+    on notify.users (event)
+    {
+        print("=== USER NOTIFICATION ===");
+        print("Notifying users about: " + event.data);           // ✅ Original payload
+        print("Priority level: " + event.priority);              // ✅ Original payload
+        print("Notification urgency: " + event.urgency);         // ✅ Custom handler payload
+        print("Notification channel: " + event.channel);         // ✅ Custom handler payload
+    }
+    
+    on ai.learn.request (event)
+    {
+        print("=== AI LEARNING ===");
+        print("AI system learning from: " + event.data);         // ✅ Same data as above
+        print("Category: " + event.category);                    // ✅ "analysis"
+    }
 }
 
 // Usage
 var agent = new AnalysisAgent();
+var handlerDemo = new HandlerDemoClass();
 agent.analyzeData("Customer feedback dataset");
 ```
 
@@ -910,15 +1113,53 @@ agent.analyzeData("Customer feedback dataset");
 - **Mixed Names**: Can mix simple names (`complete`) and dotted names (`analysis.complete`) in same array
 - **Performance**: Handlers are efficiently compiled and execute with minimal overhead
 
-### **Service Method Structured Parameters**
+### **Cognitive Functions**
 ```cx
 // All service methods use comma-less structured parameters with enhanced handlers pattern:
 
-search { 
-    query: "search term",
+// ✅ SMART AWAIT SERVICE: AI-determined optimal timing for natural interactions
+await { 
+    reason: "post_turn_pause_" + this.name,
+    context: "Natural pause after " + this.name + " completes turn",
+    minDurationMs: 1000,
+    maxDurationMs: 3000,
+    handlers: [ turn.complete ]
+};
+
+// Smart await for different scenarios
+await { 
+    reason: "thinking_pause",
+    context: "Processing complex information",
+    minDurationMs: 500,
+    maxDurationMs: 1500,
+    handlers: [ processing.ready ]
+};
+
+await { 
+    reason: "conversation_flow",
+    context: "Natural conversation timing",
+    minDurationMs: 800,
+    maxDurationMs: 2000,
+    handlers: [ response.ready ]
+};
+
+think { 
+    prompt: {},
     handlers: [ 
-        results.found { option: "detailed" },
-        search.logged { level: "info" }
+        thinking.complete { option: "detailed" },
+        analysis.logged { level: "info" }
+    ]
+};
+
+// Class introspection
+learn { self: this };
+
+// Enhanced handlers with custom payloads
+learn {
+    data: {},
+    handlers: [
+        analysis.complete { option: "detailed" },
+        storage.saved { format: "json" }
     ]
 };
 
@@ -930,117 +1171,11 @@ learn {
     ]
 };
 
-think { 
-    prompt: "thinking prompt",
-    handlers: [ 
-        thinking.complete { option: "detailed" },
-        analysis.logged { level: "info" }
-    ]
-};
-
-execute { 
-    command: "pwd",
-    handlers: [ 
-        execution.complete { option: "detailed" },
-        output.logged { level: "info" }
-    ]
-};
-
-communicate { 
-    message: "communication content",
-    handlers: [ 
-        message.sent { option: "detailed" },
-        communication.logged { level: "info" }
-    ]
-};
-
-generate { 
-    prompt: "generation prompt",
-    handlers: [ 
-        content.generated { option: "detailed" },
-        generation.logged { level: "info" }
-    ]
-};
-
-chat { 
-    message: "chat message",
-    handlers: [ 
-        response.ready { option: "detailed" },
-        chat.logged { level: "info" }
-    ]
-};
-
-speak { 
-    text: "text to convert to speech",
-    handlers: [ 
-        voice.output.complete { channel: "main" },
-        speech.logged { level: "info" }
-    ]
-};
-
 listen { 
     prompt: "listening prompt",
     handlers: [ 
         voice.input.received { mode: "realtime" },
         audio.processed { quality: "high" }
-    ]
-};
-
-// ✅ AZURE REALTIME API: For production voice processing, use Azure Realtime events:
-// emit realtime.connect { demo: "app" };
-// emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview" };
-// emit realtime.text.send { text: "message", deployment: "gpt-4o-mini-realtime-preview" };
-// Handle responses with: on realtime.text.response, on realtime.audio.response
-
-image { 
-    prompt: "image generation prompt",
-    handlers: [ 
-        image.generated { option: "detailed" },
-        creation.logged { level: "info" }
-    ]
-};
-
-analyze { 
-    data: "data to analyze",
-    handlers: [ 
-        analysis.complete { option: "detailed" },
-        results.logged { level: "info" }
-    ]
-};
-
-transcribe { 
-    audio: audioData,
-    handlers: [ 
-        transcription.complete { option: "detailed" },
-        transcribe.logged { level: "info" }
-    ]
-};
-
-audio { 
-    data: audioData,
-    handlers: [ 
-        audio.processed { option: "detailed" },
-        processing.logged { level: "info" }
-    ]
-};
-
-adapt { 
-    context: "adaptation context",
-    handlers: [ 
-        adaptation.complete { option: "detailed" },
-        adapt.logged { level: "info" }
-    ]
-};
-
-// Class introspection
-learn { self: this };
-
-// Enhanced handlers with custom payloads
-learn {
-    data: "content",
-    handlers: [
-        analysis.complete { option: "detailed" },
-        storage.saved { format: "json" }
     ]
 };
 
@@ -1055,32 +1190,61 @@ listen {
 };
 
 speak { 
-    text: "text to convert to speech",
+    text: {},
     name: "user_voice_output",
     handlers: [ 
         voice.output.complete { channel: "main" },
         speech.logged { level: "info" }
     ]
 };
+
+speak { 
+    text: "text to convert to speech",
+    handlers: [ 
+        voice.output.complete { channel: "main" },
+        speech.logged { level: "info" }
+    ]
+};
+
+adapt { 
+    context: "adaptation context",
+    handlers: [ 
+        adaptation.complete { option: "detailed" },
+        adapt.logged { level: "info" }
+    ]
+};
+
+execute { 
+    command: {},
+    handlers: [ 
+        execution.complete { option: "detailed" },
+        output.logged { level: "info" }
+    ]
+};
+
+
+
+
 ```
 
 ## Asynchronous Programming
 ```cx
-// ✅ CORRECT - Using reserved event names
-on user.input (payload) { ... }          // User interaction
-on system.ready (payload) { ... }        // System lifecycle  
-on ai.request (payload) { ... }          // AI processing
-on async.complete (payload) { ... }      // Async operations
+// ❌ INCORRECT - Custom events at program scope not allowed
+// on custom.event (payload) { ... }        // Must be in class scope
+// on myapp.data.updated (payload) { ... }  // Must be in class scope
 
-// ✅ CORRECT - Custom namespaced events
-on custom.event (payload) { ... }        // Custom events allowed
-on myapp.data.updated (payload) { ... }  // Application-specific events
+// ❌ INCORRECT - Wildcard event patterns at program scope
+// on name.any.other.any.final (payload) { ... }     // Must be in class scope
+// on user.any.response (payload) { ... }             // Must be in class scope
+on system.any.ready (payload) { ... }              // ✅ CORRECT: System handlers allowed at program scope
+// on agent.any.thinking.any.complete (payload) { ... } // Must be in class scope
 
-// ✅ CORRECT - Wildcard event patterns for cross-namespace communication
-on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
-on user.any.response (payload) { ... }             // Matches user.chat.response, user.voice.response, etc.
-on system.any.ready (payload) { ... }              // Matches system.audio.ready, system.network.ready, etc.
-on agent.any.thinking.any.complete (payload) { ... } // Complex wildcard pattern matching
+// ✅ CORRECT: Custom events allowed in class scope
+class MyApp 
+{
+    on custom.event (payload) { ... }        // ✅ CORRECT: Custom events in class scope
+    on myapp.data.updated (payload) { ... }  // ✅ CORRECT: Application-specific events in class scope
+}
 ```
 
 ### **Event-Driven Async Pattern**
@@ -1093,25 +1257,28 @@ Cx uses a pure fire-and-forget model for all asynchronous operations, including 
 
 ```cx
 // ✅ CORRECT: Pure fire-and-forget with event bus coordination
-function processData(input) 
+class AsyncProcessor 
 {
-    // All async operations are fire-and-forget. No return values, no blocking.
-    think { prompt: input, handlers: [thinking.complete] };
-    learn { content: input, handlers: [learning.complete] };
+    function processData(input) 
+    {
+        // All async operations are fire-and-forget. No return values, no blocking.
+        think { prompt: { input }, handlers: [thinking.complete] };
+        learn { content:{ input }, handlers: [learning.complete] };
+        
+        // Immediately emit an event to signal the start of processing.
+        emit processing.started { input: input };
+    }
     
-    // Immediately emit an event to signal the start of processing.
-    emit processing.started { input: input };
-}
-
-// Results flow through the event system.
-on thinking.complete (event) 
-{
-    print("Thinking complete: " + event.result);
-}
-
-on learning.complete (event) 
-{
-    print("Learning complete for document: " + event.documentId);
+    // Results flow through the event system.
+    on thinking.complete (event) 
+    {
+        print("Thinking complete: " + event.result);
+    }
+    
+    on learning.complete (event) 
+    {
+        print("Learning complete for document: " + event.documentId);
+    }
 }
 ```
 
@@ -1123,6 +1290,11 @@ CX Language integrates with Azure OpenAI Realtime API through specific event pat
 #### **Core Realtime Events**
 ```cx
 // ✅ PRODUCTION READY: Azure Realtime API event patterns
+// ✅ AZURE REALTIME API: For production voice processing, use Azure Realtime events:
+// emit realtime.connect { demo: "app" };
+// emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview" };
+// emit realtime.text.send { text: "message", deployment: "gpt-4o-mini-realtime-preview" };
+// Handle responses with: on realtime.text.response, on realtime.audio.response
 
 // Connect to Azure Realtime API
 emit realtime.connect { demo: "app_name" };
@@ -1148,35 +1320,39 @@ emit realtime.audio.send {
 
 #### **Event Handlers for Azure Responses**
 ```cx
-// Handle connection confirmation
-on realtime.connected (event)
+// ✅ CORRECT: Event handlers in class scope
+class AzureRealtimeHandler
 {
-    print("✅ Connected to Azure Realtime API");
-    emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview" };
-}
-
-// Handle session creation
-on realtime.session.created (event)
-{
-    print("✅ Voice session ready");
-    emit realtime.text.send { text: "Hello!" };
-}
-
-// Handle streaming text responses
-on realtime.text.response (event)
-{
-    print("Text chunk: " + event.content);
-    print("Complete: " + event.isComplete);
-}
-
-// Handle audio responses
-on realtime.audio.response (event)
-{
-    if (event.audioData && event.audioData.length)
+    // Handle connection confirmation
+    on realtime.connected (event)
     {
-        print("Audio received: " + event.audioData.length + " bytes");
+        print("✅ Connected to Azure Realtime API");
+        emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview" };
     }
-    print("Complete: " + event.isComplete);
+    
+    // Handle session creation
+    on realtime.session.created (event)
+    {
+        print("✅ Voice session ready");
+        emit realtime.text.send { text: "Hello!" };
+    }
+    
+    // Handle streaming text responses
+    on realtime.text.response (event)
+    {
+        print("Text chunk: " + event.content);
+        print("Complete: " + event.isComplete);
+    }
+    
+    // Handle audio responses
+    on realtime.audio.response (event)
+    {
+        if (event.audioData && event.audioData.length)
+        {
+            print("Audio received: " + event.audioData.length + " bytes");
+        }
+        print("Complete: " + event.isComplete);
+    }
 }
 ```
 
@@ -1244,4 +1420,5 @@ demo.startDemo();
 - **Session Management**: Always connect → create session → send data
 - **Deployment Required**: Include `deployment: "gpt-4o-mini-realtime-preview"` for voice
 - **Real-Time Processing**: Responses stream in real-time, handle incrementally
+- **Speech Speed Control**: Use `speechSpeed` parameter to control voice timing (0.9 = 10% slower, 1.0 = normal, 1.2 = 20% faster)
 
