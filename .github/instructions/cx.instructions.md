@@ -11,6 +11,8 @@ if (condition) {
     doSomething();
 }
 
+// ❌ NEVER use \n or escape sequences when using print().
+
 // ✅ Console output - ALWAYS use print()
 print("Hello World");
 
@@ -39,6 +41,7 @@ CX Language is an event-driven programming language designed for AI agent orches
 
 **Key Features:**
 - **Cognitive Boolean Logic**: `is { }` syntax for AI-driven decision-making with contextual evaluation
+- **Negative Cognitive Logic**: `not { }` syntax for AI-driven false/negative decision-making
 - **Advanced Event System**: Full event parameter property access with `event.property` syntax
 - **Enhanced Handlers Pattern**: Custom payload support with `handlers: [ event.name { custom: "data" } ]`
 - **Voice Processing**: Azure OpenAI Realtime API integration via event system (`emit realtime.connect`, `realtime.text.send`, `realtime.audio.response`)
@@ -54,7 +57,6 @@ CX Language is an event-driven programming language designed for AI agent orches
 The following rules are mandatory for all CX Language code:
 
 ### Syntax Requirements
-- Do not use `\n` or escape sequences when using `print()`.
 - Always use Allman-style brackets `{ }` for code blocks
 - Use `print()` for console output - NEVER use `console.log()`
 - `print()` automatically serializes complex objects to JSON for debugging
@@ -109,7 +111,7 @@ The following rules are mandatory for all CX Language code:
 - **No Class-level Injection**: It is illegal for classes to have services injected into them or to declare their own service instances.
 - **Invocation**: Services are called using their name followed by a comma-less block of parameters, e.g., `think { prompt: "Hello" }`.
 - **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
-- **Smart Await Service**: Use `await` service for AI-determined optimal timing: `await { reason: "context", minDurationMs: 1000, maxDurationMs: 3000 }`
+- **Core Cognitive Services**: `is` (cognitive boolean logic), `not` (negative boolean logic), `learn` (knowledge acquisition), `think` (reasoning), `await` (smart timing), `adapt` (behavioral evolution)
 
 ## Syntax Basics
 - **Use constructors to inject data** - DO NOT ACCESS MEMBERS DIRECTLY FOR INITIALIZATION.
@@ -127,18 +129,15 @@ The following rules are mandatory for all CX Language code:
 - **Service access**: Cognitive services are globally available functions. They are not methods and are not accessed with `this.`
 - **Service injection**: ILLEGAL - classes cannot declare their own service instances
 - **Event handlers**: Available at both program scope AND in classes
-- **Class scope**: Fields, methods, constructors, event handlers only - NO `uses` statements or service declarations
+- **Class scope**: Fields, methods, constructors, event handlers only - NO service declarations
 - **Field declarations**: Use `fieldName: type;` syntax for field declarations in classes
 - **Constructor parameters**: Type annotations recommended for clarity
 - **Method parameters**: Type annotations recommended for clarity
 - **Local variables**: Use `var` keyword for variables inside methods/constructors/functions
 - **Global variables**: Use `var` keyword for variables declared at program scope
-- **Async Functions**: Return void - all results delivered via event bus system
-- **No Await**: Completely eliminated from CX language for pure fire-and-forget pattern
+- **Functions**: Return void - all results delivered via event bus system
+- **Pure Fire-and-Forget**: All cognitive operations non-blocking by default
 - **Event handlers**: Cannot return values, execute asynchronously
-- **No await keyword**: Completely eliminated from CX language  
-- **No return values**: Async functions return void, results via events
-- **Fire-and-forget**: All cognitive operations non-blocking by default
 - **Event coordination**: Results delivered through event bus system
 - **Immediate responses**: Functions complete instantly, async work continues in background
 - Reserved event names ensure consistent system behavior across all CX applications
@@ -168,6 +167,14 @@ is {
     evaluate: "System readiness check",
     data: { condition: true },
     handlers: [ system.decision.ready ]
+};  // ✅ Semicolon ends the decision - triggers events only
+
+// Negative cognitive boolean logic
+not { 
+    context: "Should the system halt operation?",
+    evaluate: "System failure check", 
+    data: { condition: false },
+    handlers: [ system.decision.negative ]
 };  // ✅ Semicolon ends the decision - triggers events only
 
 // Variable declarations
@@ -416,7 +423,6 @@ class CognitiveAgent : BaseAgent
     function processRequest(input: string)
     {
         print("Processing: " + input);
-        return "completed";
     }
     
     // ✅ Event handlers within class scope
@@ -540,6 +546,14 @@ is {
     data: { eventReason: event.reason, agentName: this.name },
     handlers: [ decision.ready ]
 };  // ✅ Semicolon ends the decision - triggers events only
+
+// ✅ Negative cognitive boolean logic - AI-driven false/negative decision making
+not { 
+    context: "Cognitive decision: Should agent NOT proceed?",
+    evaluate: event.reason + " excludes agent name " + this.name,
+    data: { eventReason: event.reason, agentName: this.name },
+    handlers: [ decision.negative ]
+};  // ✅ Semicolon ends the decision - triggers events only
 ```
 
 ### Cognitive Boolean Features
@@ -629,16 +643,19 @@ class SmartAgent
 ```
 
 ### Cognitive Boolean Rules
-- **Replace Traditional If**: Use `is { }` instead of `if (condition)` for all decision logic
+- **Replace Traditional If**: Use `is { }` and `not { }` instead of `if (condition)` for all decision logic
 - **Context Required**: Always provide meaningful context describing the decision being made
 - **Descriptive Evaluation**: Use natural language descriptions instead of technical operations
 - **Data Structure**: Include relevant data for the cognitive evaluation
 - **Event Integration**: Use `handlers` to emit events based on cognitive decisions
 - **AI-First Logic**: Design decisions that can evolve and improve over time
+- **Positive vs Negative**: Use `is { }` for positive decisions, `not { }` for negative decisions
 
 ### Cognitive Boolean Behavior
-- **When Evaluation is True**: The `handlers` are called
-- **When Evaluation is False**: The `handlers` are NOT called
+- **`is { }` - When Evaluation is True**: The `handlers` are called
+- **`is { }` - When Evaluation is False**: The `handlers` are NOT called
+- **`not { }` - When Evaluation is False**: The `handlers` are called  
+- **`not { }` - When Evaluation is True**: The `handlers` are NOT called
 - **Event-Only Execution**: Unlike traditional `if` statements, cognitive boolean logic only triggers events, not code blocks
 - **Pure Event-Driven**: All logic flows through the event system for maximum flexibility and AI integration
 
@@ -660,17 +677,28 @@ on preparation.complete (event)
 The cognitive boolean logic pattern is a fundamental CX Language feature that replaces traditional `if` statements with AI-driven decision making:
 
 ```cx
+// Positive cognitive logic
 is { 
     context: "Clear description of the decision being made",
     evaluate: "Natural language evaluation criteria",
     data: { key: value, contextData: data },
     handlers: [ event.name, another.event { custom: "payload" } ]
-};  // ✅ Semicolon ends the decision - triggers handlers only
+};  // ✅ Semicolon ends the decision - triggers handlers only when TRUE
+
+// Negative cognitive logic  
+not {
+    context: "Clear description of the negative decision being made", 
+    evaluate: "Natural language evaluation criteria for false condition",
+    data: { key: value, contextData: data },
+    handlers: [ event.name, another.event { custom: "payload" } ]
+};  // ✅ Semicolon ends the decision - triggers handlers only when FALSE
 ```
 
 #### Pattern Behavior
-- **When Evaluation is True**: The `handlers` are called
-- **When Evaluation is False**: The `handlers` are NOT called
+- **`is { }` - When Evaluation is True**: The `handlers` are called
+- **`is { }` - When Evaluation is False**: The `handlers` are NOT called
+- **`not { }` - When Evaluation is False**: The `handlers` are called
+- **`not { }` - When Evaluation is True**: The `handlers` are NOT called
 - **Event-Only Execution**: Unlike traditional `if` statements, cognitive boolean logic only triggers events, not code blocks
 - **Pure Event-Driven**: All logic flows through the event system for maximum flexibility and AI integration
 
@@ -873,17 +901,6 @@ on system.any.ready (payload)
 {  // Registered in global namespace scope
     print("System ready globally: " + payload.component);
 }
-
-on agent.any.thinking.any.complete (payload) 
-{  // Complex global wildcard
-    print("Agent thinking complete: " + payload.thought);
-}
-
-// Ultra-flexible wildcards for maximum event coverage
-on any.any.critical (payload) 
-{     // Catches ALL critical events system-wide
-    print("CRITICAL EVENT: " + payload);
-}
 ```
 
 ### Practical Event System Example
@@ -908,17 +925,23 @@ class DataAnalysisAgent
         for (var item in event.payload)
         {
             print("  " + item.Key + ": " + item.Value);
+
+            // Cognitive boolean logic example for each payload item
+            is {
+              context: "Should the agent highlight this event property?",
+              evaluate: "Check if " + item.Key + " is 'priority' and value is 'high'",
+              data: { key: item.Key, value: item.Value, agent: this.name },
+              handlers: [ property.highlighted { key: item.Key, value: item.Value } ]
+            };
         }
         
         // Process based on event data
-        if (event.type == "analysis_request")
-        {
-            emit analysis.started, { 
-                agent: this.name, 
-                request: event.message,
-                timestamp: event.timestamp 
-            };
-        }
+        is {
+            context: "Should the agent start analysis based on event type?",
+            evaluate: "Event type is analysis_request",
+            data: { type: event.type, agent: this.name, message: event.message, timestamp: event.timestamp },
+            handlers: [ analysis.started { agent: this.name, request: event.message, timestamp: event.timestamp } ]
+        };
     }
     
     on analysis.started (event)
@@ -1286,7 +1309,41 @@ agent.analyzeData("Customer feedback dataset");
 
 ### **Cognitive Functions**
 ```cx
-// All service methods use comma-less structured parameters with enhanced handlers pattern:
+// All cognitive service methods use comma-less structured parameters with enhanced handlers pattern:
+
+// ✅ COGNITIVE BOOLEAN LOGIC: AI-driven decision making
+is { 
+    context: "Decision context description",
+    evaluate: "What is being evaluated",
+    data: { condition: true },
+    handlers: [ decision.ready ]
+};
+
+// ✅ NEGATIVE COGNITIVE BOOLEAN LOGIC: AI-driven false/negative decision making
+not { 
+    context: "Decision context description",
+    evaluate: "What is being evaluated for false condition",
+    data: { condition: false },
+    handlers: [ decision.negative ]
+};
+
+// ✅ COGNITIVE LEARNING: Knowledge acquisition and adaptation
+learn { 
+    data: "content to learn",
+    handlers: [ 
+        analysis.complete { option: "detailed" },
+        storage.saved { format: "json" }
+    ]
+};
+
+// ✅ COGNITIVE REASONING: Deep thinking and analysis
+think { 
+    prompt: "reasoning prompt",
+    handlers: [ 
+        thinking.complete { option: "detailed" },
+        analysis.logged { level: "info" }
+    ]
+};
 
 // ✅ SMART AWAIT SERVICE: AI-determined optimal timing for natural interactions
 await { 
@@ -1297,86 +1354,7 @@ await {
     handlers: [ turn.complete ]
 };
 
-// Smart await for different scenarios
-await { 
-    reason: "thinking_pause",
-    context: "Processing complex information",
-    minDurationMs: 500,
-    maxDurationMs: 1500,
-    handlers: [ processing.ready ]
-};
-
-await { 
-    reason: "conversation_flow",
-    context: "Natural conversation timing",
-    minDurationMs: 800,
-    maxDurationMs: 2000,
-    handlers: [ response.ready ]
-};
-
-think { 
-    prompt: {},
-    handlers: [ 
-        thinking.complete { option: "detailed" },
-        analysis.logged { level: "info" }
-    ]
-};
-
-// Class introspection
-learn { self: this };
-
-// Enhanced handlers with custom payloads
-learn {
-    data: {},
-    handlers: [
-        analysis.complete { option: "detailed" },
-        storage.saved { format: "json" }
-    ]
-};
-
-learn { 
-    data: "content to learn",
-    handlers: [ 
-        analysis.complete { option: "detailed" },
-        storage.saved { format: "json" }
-    ]
-};
-
-listen { 
-    prompt: "listening prompt",
-    handlers: [ 
-        voice.input.received { mode: "realtime" },
-        audio.processed { quality: "high" }
-    ]
-};
-
-// Voice processing with Azure OpenAI Realtime API integration
-listen { 
-    prompt: message, 
-    name: "user_input_analysis",
-    handlers: [ 
-        thinking.complete { option: "detailed" },
-        analysis.logged { level: "info" }
-    ]
-};
-
-speak { 
-    text: {},
-    name: "user_voice_output",
-    handlers: [ 
-        voice.output.complete { channel: "main" },
-        speech.logged { level: "info" }
-    ]
-};
-
-speak { 
-    text: "text to convert to speech",
-    handlers: [ 
-        voice.output.complete { channel: "main" },
-        speech.logged { level: "info" }
-    ]
-};
-
+// ✅ COGNITIVE ADAPTATION: Behavioral evolution and learning
 adapt { 
     context: "adaptation context",
     handlers: [ 
@@ -1385,17 +1363,8 @@ adapt {
     ]
 };
 
-execute { 
-    command: {},
-    handlers: [ 
-        execution.complete { option: "detailed" },
-        output.logged { level: "info" }
-    ]
-};
-
-
-
-
+// Class introspection for self-awareness
+learn { self: this };
 ```
 
 ## Asynchronous Programming

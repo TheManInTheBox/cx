@@ -20,7 +20,7 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         "class", "interface", "extends", "import", "uses", "constructor",
         "public", "private", "protected", "try", "catch", "throw", "new",
         "null", "true", "false", "on", "emit", "function",
-        "var", "if", "else", "while", "for", "return", "in", "async", "await"
+        "var", "in", "async", "await"
     };
 
     public AstBuilder(string? fileName = null)
@@ -205,58 +205,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         exprStmt.Expression = (ExpressionNode)Visit(context.expression());
 
         return exprStmt;
-    }
-
-    public override AstNode VisitReturnStatement(ReturnStatementContext context)
-    {
-        var returnStmt = new ReturnStatementNode();
-        SetLocation(returnStmt, context);
-
-        if (context.expression() != null)
-        {
-            returnStmt.Value = (ExpressionNode)Visit(context.expression());
-        }
-
-        return returnStmt;
-    }
-
-    public override AstNode VisitIfStatement(IfStatementContext context)
-    {
-        var ifStmt = new IfStatementNode();
-        SetLocation(ifStmt, context);
-
-        ifStmt.Condition = (ExpressionNode)Visit(context.expression());
-        ifStmt.ThenStatement = (StatementNode)Visit(context.statement(0));
-        
-        if (context.statement().Length > 1)
-        {
-            ifStmt.ElseStatement = (StatementNode)Visit(context.statement(1));
-        }
-
-        return ifStmt;
-    }
-
-    public override AstNode VisitWhileStatement(WhileStatementContext context)
-    {
-        var whileStmt = new WhileStatementNode();
-        SetLocation(whileStmt, context);
-
-        whileStmt.Condition = (ExpressionNode)Visit(context.expression());
-        whileStmt.Body = (StatementNode)Visit(context.statement());
-
-        return whileStmt;
-    }
-
-    public override AstNode VisitForStatement(ForStatementContext context)
-    {
-        var forStmt = new ForStatementNode();
-        SetLocation(forStmt, context);
-
-        forStmt.Variable = context.IDENTIFIER().GetText();
-        forStmt.Iterable = (ExpressionNode)Visit(context.expression());
-        forStmt.Body = (StatementNode)Visit(context.statement());
-
-        return forStmt;
     }
 
     // Expression visitors
