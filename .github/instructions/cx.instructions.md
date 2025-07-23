@@ -78,19 +78,20 @@ The following rules are mandatory for all CX Language code:
 ### Variable Declarations
 - Use `var` keyword for local variables inside methods/constructors
 - Use `var` keyword for global variables at program scope
-- **Local Variables**: Use `var` keyword for variables inside methods/constructors/functions
+- **Local Variables**: Use `var` keyword for variables inside constructors and event handlers
 - **Global Variables**: Use `var` keyword for variables declared at program scope
 - **Type Annotations**: Use `fieldName: type` for fields, `parameterName: type` for method parameters
 
 ### Class Structure
 - Use `class` keyword for class declarations - NO `public` or `private` modifiers
-- Use `function` keyword for method declarations inside classes
-- Use `this` keyword to access class members (fields, methods, event handlers)
+- Use event handlers (`on eventName`) for all behavioral logic inside classes
+- **Pure Event-Driven**: Classes contain only fields, constructors, and event handlers - NO functions/methods
+- Use `this` keyword to access class members (fields, event handlers)
 - **No Public/Private Modifiers**: CX does not use access modifiers - all members are accessible within class scope
 - **No Static Members**: CX does not support static members - all members are instance-based
 - **Field declarations**: Use `fieldName: type;` syntax for field declarations in classes
 - **Constructor parameters**: Type annotations recommended for clarity
-- **Method parameters**: Type annotations recommended for clarity
+- **Event handler parameters**: Type annotations recommended for clarity
 
 ### Event System
 - Only `on system` eventhandlers are allowed in Program scope. No exceptions.
@@ -126,20 +127,21 @@ The following rules are mandatory for all CX Language code:
 - **Block Syntax**: Must use Allman-style brackets `{ }` 
 - **Scope**: Loop variables follow standard CX scoping rules
 - **Type Safety**: Loop variables are dynamically typed, use `typeof()` for type checking
-- **Service access**: Cognitive services are globally available functions. They are not methods and are not accessed with `this.`
+- **Service access**: Cognitive services are globally available. They are not methods and are not accessed with `this.`
 - **Service injection**: ILLEGAL - classes cannot declare their own service instances
 - **Event handlers**: Available at both program scope AND in classes
-- **Class scope**: Fields, methods, constructors, event handlers only - NO service declarations
+- **Class scope**: Fields, constructors, event handlers only - NO service declarations or methods
 - **Field declarations**: Use `fieldName: type;` syntax for field declarations in classes
 - **Constructor parameters**: Type annotations recommended for clarity
-- **Method parameters**: Type annotations recommended for clarity
-- **Local variables**: Use `var` keyword for variables inside methods/constructors/functions
+- **Event handler parameters**: Type annotations recommended for clarity
+- **Local variables**: Use `var` keyword for variables inside constructors and event handlers
 - **Global variables**: Use `var` keyword for variables declared at program scope
-- **Functions**: Return void - all results delivered via event bus system
+- **Event-driven behavior**: All class behavior is implemented through event handlers, not methods
+- **Event communication**: Use `emit` statements to trigger behavior across objects
 - **Pure Fire-and-Forget**: All cognitive operations non-blocking by default
 - **Event handlers**: Cannot return values, execute asynchronously
 - **Event coordination**: Results delivered through event bus system
-- **Immediate responses**: Functions complete instantly, async work continues in background
+- **Immediate responses**: Event handlers complete instantly, async work continues in background
 - Reserved event names ensure consistent system behavior across all CX applications
 - Custom event names can be used alongside reserved names
 - Event names are case-sensitive and follow dot notation (namespace.action)
@@ -181,10 +183,12 @@ not {
 var globalCounter = 0;
 var systemStatus = "initialized";
 
-function processData()
+// Global event handler
+on system.start (event)
 {
     var localVariable = "processing";
     print("Status: " + localVariable);
+    emit system.ready;
 }
 ```
 
@@ -202,15 +206,16 @@ class AssistantAgent
     {
         this.name = agentName;
         print("Agent initialized: " + this.name);
+        emit agent.initialized { name: this.name };
     }
     
-    function processMessage(message: string)
+    on user.message (event)
     {
         this.status = "processing";
         
         // Enhanced cognitive methods with custom payload handlers
         var promptObject = {
-            message: message,
+            message: event.text,
             context: "User interaction with an assistant agent."
         };
 
@@ -223,15 +228,7 @@ class AssistantAgent
             ]
         };
         
-        emit agent.processing { agent: this.name, message: message };
-    }
-    
-    on user.message (event)
-    {
-        print("Message received: " + event.text);
-        print("Event details:");
-        print(event);  // Automatic JSON serialization of event object
-        this.processMessage(event.text);
+        emit agent.processing { agent: this.name, message: event.text };
     }
     
     on thinking.complete (event)
