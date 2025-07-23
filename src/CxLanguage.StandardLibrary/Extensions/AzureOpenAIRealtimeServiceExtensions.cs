@@ -60,6 +60,7 @@ namespace CxLanguage.StandardLibrary.Extensions
         private readonly RealtimeService _realtimeService;
         private readonly ICxEventBus _eventBus;
         private readonly ILogger<RealtimeEventHandler> _logger;
+        private readonly HashSet<string> _waitingAgents;
         
         public RealtimeEventHandler(
             RealtimeService realtimeService,
@@ -69,6 +70,7 @@ namespace CxLanguage.StandardLibrary.Extensions
             _realtimeService = realtimeService;
             _eventBus = eventBus;
             _logger = logger;
+            _waitingAgents = new HashSet<string>();
             
             // Subscribe to CX events
             RegisterEventHandlers();
@@ -165,7 +167,25 @@ namespace CxLanguage.StandardLibrary.Extensions
             // Handle direct audio streaming to NAudio (automatic playback)
             _eventBus.Subscribe("audio.stream.direct", async (cxEvent) =>
             {
-                _logger.LogInformation("🎧 CX EVENT RECEIVED: audio.stream.direct - initiating NAudio playback");
+                _logger.LogInformation("🎧 CX EVENT RECEIVED: audio.stream.direct - checking wait status");
+                
+                // Check if any agent is currently waiting before starting audio stream
+                var isWaiting = _waitingAgents.Count > 0;
+                if (isWaiting)
+                {
+                    _logger.LogInformation("⏸️ AUDIO BLOCKED: Agent is currently waiting, audio stream postponed");
+                    
+                    // Emit blocked event
+                    _eventBus.Emit("audio.stream.blocked", new
+                    {
+                        reason = "agent_waiting",
+                        waitingAgents = _waitingAgents.Count,
+                        timestamp = DateTimeOffset.UtcNow
+                    });
+                    return;
+                }
+                
+                _logger.LogInformation("🎧 AUDIO ALLOWED: No agents waiting, proceeding with audio stream");
                 
                 byte[]? audioData = null;
                 
@@ -222,6 +242,70 @@ namespace CxLanguage.StandardLibrary.Extensions
                 {
                     _logger.LogWarning("⚠️ audio.stream.direct event received but no valid audio data found");
                 }
+            });
+
+            // Handle agent waiting status tracking for audio stream control
+            _eventBus.Subscribe("agent.waiting.started", (cxEvent) =>
+            {
+                var agentId = "default_agent"; // Default agent ID
+                
+                // Try to extract agent identifier from payload
+                if (cxEvent.payload is Dictionary<string, object> dict)
+                {
+                    if (dict.TryGetValue("agentId", out var id))
+                    {
+                        agentId = id?.ToString() ?? "default_agent";
+                    }
+                    else if (dict.TryGetValue("reason", out var reason))
+                    {
+                        agentId = reason?.ToString() ?? "default_agent";
+                    }
+                }
+                
+                _waitingAgents.Add(agentId);
+                _logger.LogInformation("🔄 Agent waiting started: {AgentId} (Total waiting: {Count})", agentId, _waitingAgents.Count);
+            });
+
+            _eventBus.Subscribe("agent.waiting.completed", (cxEvent) =>
+            {
+                var agentId = "default_agent"; // Default agent ID
+                
+                // Try to extract agent identifier from payload
+                if (cxEvent.payload is Dictionary<string, object> dict)
+                {
+                    if (dict.TryGetValue("agentId", out var id))
+                    {
+                        agentId = id?.ToString() ?? "default_agent";
+                    }
+                    else if (dict.TryGetValue("Reason", out var reason))
+                    {
+                        agentId = reason?.ToString() ?? "default_agent";
+                    }
+                }
+                
+                _waitingAgents.Remove(agentId);
+                _logger.LogInformation("✅ Agent waiting completed: {AgentId} (Total waiting: {Count})", agentId, _waitingAgents.Count);
+            });
+
+            _eventBus.Subscribe("agent.waiting.failed", (cxEvent) =>
+            {
+                var agentId = "default_agent"; // Default agent ID
+                
+                // Try to extract agent identifier from payload
+                if (cxEvent.payload is Dictionary<string, object> dict)
+                {
+                    if (dict.TryGetValue("agentId", out var id))
+                    {
+                        agentId = id?.ToString() ?? "default_agent";
+                    }
+                    else if (dict.TryGetValue("Reason", out var reason))
+                    {
+                        agentId = reason?.ToString() ?? "default_agent";
+                    }
+                }
+                
+                _waitingAgents.Remove(agentId);
+                _logger.LogInformation("❌ Agent waiting failed: {AgentId} (Total waiting: {Count})", agentId, _waitingAgents.Count);
             });
         }
         
