@@ -188,6 +188,7 @@ public static class SimpleSemanticKernelServiceExtensions
             services.AddSingleton<CxLanguage.StandardLibrary.AI.MicrophoneCapture.MicrophoneCaptureService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.LiveAudio.LiveAudioService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.Wait.AwaitService>();
+            services.AddSingleton<CxLanguage.StandardLibrary.AI.Cognitive.CognitiveService>();
             // Note: SpeechRecognitionService removed - replaced by Azure OpenAI Realtime API integration
         }
 

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
+using Microsoft.KernelMemory;
 using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.AI.VectorDatabase;
 using System;
@@ -30,6 +31,16 @@ public abstract class AiServiceBase
     protected readonly ILogger _logger = null!;
 
     /// <summary>
+    /// Unique Kernel Memory collection for this class instance
+    /// </summary>
+    protected readonly IKernelMemory? _instanceMemory = null!;
+
+    /// <summary>
+    /// Unique collection name for this instance's vector store
+    /// </summary>
+    protected readonly string _instanceCollectionName;
+
+    /// <summary>
     /// Initializes a new instance of AiServiceBase with service provider injection
     /// </summary>
     /// <param name="serviceProvider">The service provider for dependency injection</param>
@@ -39,9 +50,18 @@ public abstract class AiServiceBase
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
+        // Create unique collection name for this instance
+        var instanceId = Guid.NewGuid().ToString("N")[..8];
+        _instanceCollectionName = $"{GetType().Name}_{instanceId}";
+        
+        // Get Kernel Memory service and set up instance-specific collection
+        _instanceMemory = _serviceProvider.GetService<IKernelMemory>();
+        
         _logger.LogInformation("RUNTIME: AiServiceBase constructor called for {ClassName}", GetType().Name);
         _logger.LogInformation("RUNTIME: ServiceProvider available: {Available}", _serviceProvider != null);
-        _logger.LogInformation("RUNTIME: Logger available: {Available}", _logger != null);
+        _logger.LogInformation("RUNTIME: Logger available: {Available}", logger != null);
+        _logger.LogInformation("RUNTIME: Instance memory collection: {CollectionName}", _instanceCollectionName);
+        _logger.LogInformation("RUNTIME: Kernel Memory available: {Available}", _instanceMemory != null);
     }
 
     /// <summary>
@@ -606,5 +626,123 @@ public abstract class AiServiceBase
         });
         
         _logger.LogInformation("🔍 RUNTIME: Search() method completed - search task started in background");
+    }
+
+    /// <summary>
+    /// Gets the unique collection name for this instance's vector store
+    /// Used by the compiler to route AI service calls to instance-specific memory
+    /// </summary>
+    /// <returns>The unique collection name for this instance</returns>
+    public string GetInstanceCollectionName()
+    {
+        return _instanceCollectionName;
+    }
+
+    /// <summary>
+    /// Instance-specific think operation using this instance's unique Kernel Memory collection
+    /// </summary>
+    /// <param name="prompt">The thinking prompt</param>
+    /// <param name="context">Additional context for the thought</param>
+    /// <returns>Task representing the async operation</returns>
+    protected async Task<string> ThinkAsync(string prompt, string? context = null)
+    {
+        if (_instanceMemory == null)
+        {
+            _logger.LogWarning("🧠 INSTANCE THINK: Kernel Memory not available for instance {Collection}", _instanceCollectionName);
+            return "[THINK] Memory not available";
+        }
+
+        try
+        {
+            _logger.LogInformation("🧠 INSTANCE THINK: Starting for {Collection} - Prompt: {Prompt}", _instanceCollectionName, prompt);
+            
+            // Use instance-specific collection for thinking
+            var fullPrompt = context != null ? $"{context}\n\n{prompt}" : prompt;
+            var response = await _instanceMemory.AskAsync(fullPrompt, index: _instanceCollectionName);
+            
+            var result = response.Result ?? "[THINK] No response";
+            
+            // Store this thought in the instance's memory for learning
+            var thoughtRecord = $"Thought: {prompt}\nContext: {context ?? "none"}\nResponse: {result}\nTimestamp: {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
+            var documentId = $"thought_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
+            
+            await _instanceMemory.ImportTextAsync(thoughtRecord, documentId: documentId, index: _instanceCollectionName);
+            
+            _logger.LogInformation("🧠 INSTANCE THINK: Completed for {Collection} - Result stored", _instanceCollectionName);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🧠 INSTANCE THINK: Error for {Collection}", _instanceCollectionName);
+            return $"[THINK ERROR] {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Instance-specific learn operation using this instance's unique Kernel Memory collection
+    /// </summary>
+    /// <param name="data">The data to learn</param>
+    /// <param name="category">Category for the learning</param>
+    /// <returns>Task representing the async operation</returns>
+    protected async Task<string> LearnAsync(string data, string? category = null)
+    {
+        if (_instanceMemory == null)
+        {
+            _logger.LogWarning("📚 INSTANCE LEARN: Kernel Memory not available for instance {Collection}", _instanceCollectionName);
+            return "[LEARN] Memory not available";
+        }
+
+        try
+        {
+            _logger.LogInformation("📚 INSTANCE LEARN: Starting for {Collection} - Data length: {Length}", _instanceCollectionName, data.Length);
+            
+            // Store learning data in instance-specific collection
+            var learningRecord = $"Learning: {data}\nCategory: {category ?? "general"}\nTimestamp: {DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
+            var documentId = $"learning_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
+            
+            await _instanceMemory.ImportTextAsync(learningRecord, documentId: documentId, index: _instanceCollectionName);
+            
+            _logger.LogInformation("📚 INSTANCE LEARN: Completed for {Collection} - Data stored", _instanceCollectionName);
+            return $"[LEARN] Stored in {_instanceCollectionName}";
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "📚 INSTANCE LEARN: Error for {Collection}", _instanceCollectionName);
+            return $"[LEARN ERROR] {ex.Message}";
+        }
+    }
+
+    /// <summary>
+    /// Search this instance's personal memory
+    /// </summary>
+    /// <param name="query">Search query</param>
+    /// <param name="limit">Maximum results to return</param>
+    /// <returns>Search results from this instance's memory</returns>
+    protected async Task<string[]> SearchInstanceMemoryAsync(string query, int limit = 5)
+    {
+        if (_instanceMemory == null)
+        {
+            _logger.LogWarning("🔍 INSTANCE SEARCH: Kernel Memory not available for instance {Collection}", _instanceCollectionName);
+            return new[] { "[SEARCH] Memory not available" };
+        }
+
+        try
+        {
+            _logger.LogInformation("🔍 INSTANCE SEARCH: Searching {Collection} for: {Query}", _instanceCollectionName, query);
+            
+            var searchResult = await _instanceMemory.SearchAsync(query, index: _instanceCollectionName, limit: limit);
+            
+            var results = searchResult.Results
+                .Select(r => r.Partitions.FirstOrDefault()?.Text ?? "No content")
+                .ToArray();
+            
+            _logger.LogInformation("🔍 INSTANCE SEARCH: Found {Count} results in {Collection}", results.Length, _instanceCollectionName);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "🔍 INSTANCE SEARCH: Error searching {Collection}", _instanceCollectionName);
+            return new[] { $"[SEARCH ERROR] {ex.Message}" };
+        }
     }
 }
