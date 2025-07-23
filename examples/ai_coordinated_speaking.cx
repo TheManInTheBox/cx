@@ -24,11 +24,24 @@ class IntelligentAgent
         {
             print("💭 " + this.name + " is considering when to speak...");
             
-            think {
-                prompt: "Should I speak now or wait?",
-                handlers: [ timing.decision.made ]
+            // Add a small delay before thinking to prevent race conditions
+            await {
+                reason: "Preventing race condition in agent thinking",
+                context: "Ensuring agents don't all think simultaneously",
+                durationMs: 1000,
+                handlers: [ timing.decision.ready ]
             };
         }
+    }
+    
+    on timing.decision.ready (event)
+    {
+        print("🧠 " + this.name + " ready to make timing decision");
+        
+        think {
+            prompt: "Should I speak now or wait?",
+            handlers: [ timing.decision.made ]
+        };
     }
     
     on timing.decision.made (event)
@@ -311,26 +324,51 @@ on autonomous.coordination.ready (event)
     print("🚀 AI coordination system active!");
     print("🧠 Agents will now use AI to decide when to speak...");
     
-    // Trigger agents to consider speaking (event-driven, no method calls)
+    // Stagger agent activation to prevent race conditions
+    print("🎯 Activating Alice first...");
     emit agent.ready.to.speak { 
         agentName: "Alice", 
         personality: "enthusiastic and eager",
         message: "Hello everyone! I'm Alice and I'm really excited to discuss artificial intelligence!"
     };
     
+    // Bob will be triggered after a delay via await system
+    await {
+        reason: "Staggered agent activation - preparing Bob",
+        context: "Ensuring sequential agent activation for proper coordination",
+        durationMs: 2000,
+        handlers: [ bob.activation.ready ]
+    };
+}
+
+on bob.activation.ready (event)
+{
+    print("🎯 Activating Bob second...");
     emit agent.ready.to.speak { 
         agentName: "Bob", 
         personality: "thoughtful and analytical", 
         message: "Hi there! I'm Bob. I'd like to share some analytical thoughts about machine learning when appropriate."
     };
     
+    // Charlie will be triggered after another delay
+    await {
+        reason: "Staggered agent activation - preparing Charlie",
+        context: "Final agent activation for coordinated conversation",
+        durationMs: 2000,
+        handlers: [ charlie.activation.ready ]
+    };
+}
+
+on charlie.activation.ready (event)
+{
+    print("🎯 Activating Charlie third...");
     emit agent.ready.to.speak { 
         agentName: "Charlie", 
         personality: "diplomatic and patient",
         message: "Greetings! I'm Charlie. I'm looking forward to our thoughtful discussion about AI collaboration."
     };
     
-    print("🎯 All agents are using AI to determine optimal speaking timing...");
+    print("🎯 All agents activated with proper timing coordination...");
 }
 
 print("🧠 AI-powered autonomous coordination system initialized!");

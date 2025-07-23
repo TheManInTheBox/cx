@@ -58,7 +58,7 @@ public class AwaitService : AiServiceBase
     public async Task<AwaitResult> AwaitAsync(
         [Description("Reason for waiting")] string reason,
         [Description("Context information for the wait")] string? context = null,
-        [Description("Duration in milliseconds")] int durationMs = 2000)
+        [Description("Duration in milliseconds")] int durationMs = 7000)
     {
         var result = new AwaitResult();
         var startTime = DateTimeOffset.UtcNow;
@@ -72,6 +72,18 @@ public class AwaitService : AiServiceBase
             result.RequestedDurationMs = durationMs;
             result.StartTime = startTime;
 
+            // Emit waiting started event to prevent audio streaming
+            var eventBus = GetEventBus();
+            if (eventBus != null)
+            {
+                await eventBus.EmitAsync("agent.waiting.started", new { 
+                    reason = reason, 
+                    context = context, 
+                    durationMs = durationMs,
+                    startTime = startTime
+                });
+            }
+
             // Actual thread sleep/delay
             await Task.Delay(durationMs);
 
@@ -83,8 +95,13 @@ public class AwaitService : AiServiceBase
 
             _logger.LogInformation("✅ AWAIT: Completed wait - Actual duration: {ActualDuration}ms", result.ActualDurationMs);
 
+            // Emit waiting completed event to re-enable audio streaming
+            if (eventBus != null)
+            {
+                await eventBus.EmitAsync("agent.waiting.completed", result);
+            }
+
             // Emit completion event via event bus
-            var eventBus = GetEventBus();
             if (eventBus != null)
             {
                 await eventBus.EmitAsync("await.completed", result);
@@ -101,8 +118,14 @@ public class AwaitService : AiServiceBase
 
             _logger.LogError(ex, "❌ AWAIT: Wait failed - {Error}", ex.Message);
 
-            // Emit error event via event bus
+            // Emit waiting failed event to re-enable audio streaming
             var eventBus = GetEventBus();
+            if (eventBus != null)
+            {
+                await eventBus.EmitAsync("agent.waiting.failed", result);
+            }
+
+            // Emit error event via event bus
             if (eventBus != null)
             {
                 await eventBus.EmitAsync("await.error", result);
