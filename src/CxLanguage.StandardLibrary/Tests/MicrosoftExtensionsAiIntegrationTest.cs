@@ -2,6 +2,7 @@ using Microsoft.Extensions.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Azure.AI.OpenAI;
+using Azure;
 using CxLanguage.StandardLibrary.AI.Chat;
 using CxLanguage.StandardLibrary.AI.Embeddings;
 
@@ -23,7 +24,7 @@ namespace CxLanguage.StandardLibrary.Tests
             // Add Azure OpenAI client (mock for testing)
             var azureClient = new AzureOpenAIClient(
                 new Uri("https://test.openai.azure.com/"),
-                new Azure.AzureKeyCredential("test-key")
+                new AzureKeyCredential("test-key")
             );
             services.AddSingleton(azureClient);
             

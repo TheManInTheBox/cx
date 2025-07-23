@@ -46,11 +46,39 @@ wiki/                         → Static documentation (timeless reference mater
 .github/                      → GitHub workflows, issue templates, and Copilot instructions
 .github/copilot-instructions.md → Copilot instructions for code generation
 .github/instructions/cx.instructions.md → Detailed CX language syntax and guidelines
+.github/instructions/aura-visionary-team.instructions.md → Aura Cognitive Framework visionary team activation
+.github/issue_templates/      → Issue templates for bug reports and feature requests
+.github/workflows/            → GitHub Actions workflows for CI/CD
+```
+```
+src/CxLanguage.CLI/           → Command-line interface + Azure OpenAI config
+src/CxLanguage.Parser/        → ANTLR4 parser (grammar/Cx.g4 = source of truth)
+src/CxLanguage.Compiler/      → IL generation with three-pass compilation
+src/CxLanguage.Runtime/       → UnifiedEventBus + CxRuntimeHelper with global event system
+src/CxLanguage.StandardLibrary/ → 9 AI services via Semantic Kernel 1.26.0
+examples/                     → All CX programs and demonstrations
+research/                     → Research papers and critical information on AI architecture and documentation on ground breaking achievements in Aura/Cx Language
+wiki/                         → Static documentation (timeless reference material only)
+.github/                      → GitHub workflows, issue templates, and Copilot instructions
+.github/copilot-instructions.md → Copilot instructions for code generation
+.github/instructions/cx.instructions.md → Detailed CX language syntax and guidelines
 .github/issue_templates/      → Issue templates for bug reports and feature requests
 .github/workflows/            → GitHub Actions workflows for CI/CD
 .github/issue_templates/bug_report.md → Template for bug reports
 .github/issue_templates/feature_request.md → Template for feature requests
 ```
+
+## **🧠 Aura Cognitive Framework Visionary Team**
+
+For advanced AI agent coordination challenges, consciousness simulation, and breakthrough cognitive computing innovations, activate the **Aura Visionary Team** - five world-class computer scientists specialized in:
+
+- **Dr. Maya Chen** - Neural Architecture Pioneer (biological neural pathway modeling)
+- **Dr. Amara Okafor** - Emergent Systems Theorist (multi-agent coordination)  
+- **Dr. Kai Nakamura** - Distributed Intelligence Architect (system optimization)
+- **Dr. Elena Vasquez** - Human-AI Symbiosis Researcher (interface design)
+- **Dr. Alexandre Dubois** - Philosophical AI Theorist (consciousness & ethics)
+
+**Activation**: For Aura Cognitive Framework development, neural modeling, consciousness simulation, or massive agent coordination challenges, refer to [aura-visionary-team.instructions.md](instructions/aura-visionary-team.instructions.md) for detailed team activation protocols.
 
 ### **Revolutionary Language Design**
 - **Pure Event-Driven Architecture**: Classes contain ONLY `realize()` constructors and event handlers

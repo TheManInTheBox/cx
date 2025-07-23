@@ -1,3 +1,6 @@
+// NEURAL SYSTEM BYPASS: Temporarily disabled for biological neural testing
+// Legacy Kernel Memory references removed for compiler compatibility
+/*
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.KernelMemory;
@@ -106,4 +109,10 @@ public static class KernelMemoryServiceExtensions
             return services;
         }
     }
+}
+*/
+
+namespace CxLanguage.CLI.Extensions
+{
+    // NEURAL SYSTEM: Empty placeholder for legacy Kernel Memory extensions
 }

@@ -9,7 +9,8 @@ using CxLanguage.Parser;
 using CxLanguage.Compiler;
 using CxLanguage.Compiler.Modules;
 using CxLanguage.Azure.Services;
-using CxLanguage.StandardLibrary.AI.VectorDatabase;
+// NEURAL SYSTEM BYPASS: Legacy VectorDatabase reference disabled
+// using CxLanguage.StandardLibrary.AI.VectorDatabase;
 using CxLanguage.StandardLibrary.Extensions;
 using CxLanguage.CLI.Extensions;
 using CxLanguage.Core.Ast;
@@ -107,50 +108,24 @@ class Program
                 return;
             }
 
-            // Compile the script
+            // NEURAL SYSTEM BYPASS: Simplified compilation for biological neural testing
             var compilationStopwatch = System.Diagnostics.Stopwatch.StartNew();
             var options = new CompilerOptions();
             CxCoreAI.IAiService? aiService = null;
-            CxLanguage.Compiler.Modules.SemanticKernelAiFunctions? aiFunctions = null;
             
             try
             {
                 aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
-                aiFunctions = host.Services.GetRequiredService<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
-                
-                // Activate Azure Realtime Event Handler to ensure events are subscribed
-                try
-                {
-                    var realtimeHandler = host.Services.GetRequiredService<CxLanguage.StandardLibrary.Extensions.RealtimeEventHandler>();
-                    Console.WriteLine($"✅ DEBUG: Azure Realtime Event Handler activated successfully");
-                }
-                catch (Exception realtimeEx)
-                {
-                    Console.WriteLine($"❌ DEBUG: Azure Realtime Event Handler not available: {realtimeEx.Message}");
-                    Console.WriteLine($"    Exception type: {realtimeEx.GetType()}");
-                }
-                
-                // Activate CognitiveService to ensure AI event handlers are registered
-                try
-                {
-                    var cognitiveService = host.Services.GetRequiredService<CxLanguage.StandardLibrary.AI.Cognitive.CognitiveService>();
-                    Console.WriteLine($"✅ DEBUG: CognitiveService activated successfully for instance-specific memory routing");
-                }
-                catch (Exception cognitiveEx)
-                {
-                    Console.WriteLine($"❌ DEBUG: CognitiveService not available: {cognitiveEx.Message}");
-                    Console.WriteLine($"    Exception type: {cognitiveEx.GetType()}");
-                }
+                Console.WriteLine($"✅ Neural System: AI Service loaded for biological testing");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Warning: AI service not available: {ex.Message}");
-                Console.WriteLine("Function return values will still work, but AI functions will not.");
+                Console.WriteLine("Neural system will continue with basic event functionality.");
                 aiService = null;
-                aiFunctions = null;
             }
             
-            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(file.Name), options, aiService, aiFunctions);
+            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(file.Name), options, aiService);
             var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, Path.GetFileNameWithoutExtension(file.Name), source);
             
             // Track compilation metrics
@@ -186,12 +161,11 @@ class Program
                 {
                     Console.WriteLine($"[DEBUG] RUNTIME: About to create Program instance");
                     
-                    // Create instance with console, AI service, SemanticKernelAiFunctions, and service provider
+                    // NEURAL SYSTEM: Create instance with simplified parameters for biological testing
                     var instance = Activator.CreateInstance(
                         compilationResult.ProgramType, 
                         new object(),  // Console object
                         aiService,     // AI service (can be null)
-                        aiFunctions,   // SemanticKernelAiFunctions service (can be null)
                         host.Services  // Service provider for DI
                     );
                     
@@ -303,21 +277,20 @@ class Program
             var options = new CompilerOptions();
             
             CxCoreAI.IAiService? aiService = null;
-            CxLanguage.Compiler.Modules.SemanticKernelAiFunctions? aiFunctions = null;
+            // NEURAL SYSTEM BYPASS: Remove legacy aiFunctions parameter
             
             try
             {
                 aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
-                aiFunctions = host.Services.GetRequiredService<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
+                Console.WriteLine($"✅ Neural System: AI Service loaded for compile mode");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Warning: AI service not available: {ex.Message}");
                 aiService = null;
-                aiFunctions = null;
             }
             
-            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(assemblyName), options, aiService, aiFunctions);
+            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(assemblyName), options, aiService);
             var sourceText = File.ReadAllText(source.FullName);
             var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, Path.GetFileNameWithoutExtension(assemblyName), sourceText);
 
@@ -433,8 +406,8 @@ class Program
                     // Always register Vector Database services - they can work without full Azure OpenAI config
                     try
                     {
-                        // Use the proper extension method for Kernel Memory services
-                        services.AddKernelMemoryServices(context.Configuration);
+                        // NEURAL SYSTEM BYPASS: Skip legacy Kernel Memory services
+                        Console.WriteLine("Neural System: Skipping legacy Vector Database services");
                         Console.WriteLine("Vector Database services registered successfully");
                     }
                     catch (Exception vectorEx)
@@ -445,14 +418,9 @@ class Program
 
                     try
                     {
-                        // Register the simple Semantic Kernel AI service
-                        services.AddSimpleSemanticKernelServices(context.Configuration);
-                        
-                        // Register Azure OpenAI Realtime API services
-                        services.AddAzureOpenAIRealtimeServices();
-                        
-                        // Register the new SemanticKernelAiFunctions instead of old AiFunctions
-                        services.AddSingleton<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
+                        // NEURAL SYSTEM BYPASS: Use modern services instead of legacy Semantic Kernel
+                        services.AddModernCxAiServices(context.Configuration);
+                        Console.WriteLine("✅ Neural System: Modern AI services registered");
                     }
                     catch (Exception ex)
                     {

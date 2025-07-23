@@ -112,11 +112,7 @@ public class CxCompiler : IAstVisitor<object>
             typeof(IAiService), 
             FieldAttributes.Private);
         
-        // Create AiFunctions field for AI function calls (static so it can be accessed from static methods)
-        _aiFunctionsField = _programTypeBuilder.DefineField(
-            "_aiFunctions", 
-            typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions), 
-            FieldAttributes.Private | FieldAttributes.Static);
+        // Note: AiFunctions field removed - modern architecture uses individual services via dependency injection
         
         // Create service provider field for dependency injection
         _serviceProviderField = _programTypeBuilder.DefineField(
@@ -139,7 +135,7 @@ public class CxCompiler : IAstVisitor<object>
             var ctorBuilder = _programTypeBuilder.DefineConstructor(
                 MethodAttributes.Public,
                 CallingConventions.Standard,
-                new[] { typeof(object), typeof(IAiService), typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions), typeof(IServiceProvider) });
+                new[] { typeof(object), typeof(IAiService), typeof(IServiceProvider) });
             
             var ctorIl = ctorBuilder.GetILGenerator();
             ctorIl.Emit(OpCodes.Ldarg_0);
@@ -155,15 +151,10 @@ public class CxCompiler : IAstVisitor<object>
             ctorIl.Emit(OpCodes.Ldarg_2);
             ctorIl.Emit(OpCodes.Stfld, _aiServiceField);
             
-            // Store AiFunctions in static field
-            Console.WriteLine($"[DEBUG] IL-EMIT: Storing AiFunctions in static field");
-            ctorIl.Emit(OpCodes.Ldarg_3);
-            ctorIl.Emit(OpCodes.Stsfld, _aiFunctionsField);
-            
-            // Store service provider in static field (arg 4)
+            // Store service provider in static field (arg 3)
             Console.WriteLine($"[DEBUG] IL-EMIT: Storing service provider in static field");
             Console.WriteLine($"[DEBUG] IL-EMIT: Service provider field info - Name: {_serviceProviderField.Name}, Type: {_serviceProviderField.FieldType}, IsStatic: {_serviceProviderField.IsStatic}");
-            ctorIl.Emit(OpCodes.Ldarg, 4);
+            ctorIl.Emit(OpCodes.Ldarg_3);
             ctorIl.Emit(OpCodes.Stsfld, _serviceProviderField);
             
             // Initialize imported services (this will be populated after import processing)
@@ -2490,18 +2481,11 @@ public class CxCompiler : IAstVisitor<object>
         // Map module paths to actual service types with Cx namespace prefix
         return modulePath switch
         {
-            // AI Services - clean Cx.AI namespace for AI functionality
-            "Cx.AI.ChatCompletion" => typeof(CxLanguage.StandardLibrary.AI.ChatCompletion.ChatCompletionService),
-            "Cx.AI.TextEmbeddings" => typeof(CxLanguage.StandardLibrary.AI.TextEmbeddings.TextEmbeddingsService),
-            "Cx.AI.TextToImage" => typeof(CxLanguage.StandardLibrary.AI.TextToImage.TextToImageService),
-            "Cx.AI.ImageToText" => typeof(CxLanguage.StandardLibrary.AI.ImageToText.ImageToTextService),
-            "Cx.AI.TextToAudio" => typeof(CxLanguage.StandardLibrary.AI.TextToAudio.TextToAudioService),
-            "Cx.AI.TextToSpeech" => typeof(CxLanguage.StandardLibrary.AI.TextToSpeech.TextToSpeechService),
-            "Cx.AI.AudioToText" => typeof(CxLanguage.StandardLibrary.AI.AudioToText.AudioToTextService),
-            "Cx.AI.MicrophoneCapture" => typeof(CxLanguage.StandardLibrary.AI.MicrophoneCapture.MicrophoneCaptureService),
-            "Cx.AI.LiveAudio" => typeof(CxLanguage.StandardLibrary.AI.LiveAudio.LiveAudioService),
-            "Cx.AI.Realtime" => typeof(CxLanguage.StandardLibrary.AI.Realtime.RealtimeService),
-            "Cx.AI.VectorDatabase" => typeof(CxLanguage.StandardLibrary.AI.VectorDatabase.VectorDatabaseService),
+            // AI Services - Modern Microsoft.Extensions.AI architecture
+            "Cx.AI.Wait" => typeof(CxLanguage.StandardLibrary.AI.Wait.AwaitService),
+            "Cx.AI.Realtime" => typeof(CxLanguage.StandardLibrary.AI.Realtime.ModernRealtimeService),
+            "Cx.AI.TextToSpeech" => typeof(CxLanguage.StandardLibrary.AI.Modern.ModernTextToSpeechService),
+            "Cx.AI.Modern" => typeof(CxLanguage.StandardLibrary.AI.Modern.ModernAwaitService),
             
             // Core Standard Library - for future non-AI services like:
             // "Cx.Core.IO" => typeof(...),
@@ -3342,426 +3326,29 @@ public class CxCompiler : IAstVisitor<object>
 
         Console.WriteLine($"[DEBUG] Compiling AI call: {node.FunctionName}");
         
-        // Handle different AI function types
-        switch (node.FunctionName.ToLower())
+        // NEURAL SYSTEM BYPASS: Temporarily bypass AI functions to enable biological neural testing
+        // All AI functions return simple confirmation messages
+        if (node.Arguments.Count > 0)
         {
-            case "task":
-                return CompileTaskFunction(node);
-            case "reason":
-                return CompileReasonFunction(node);
-            case "synthesize":
-                return CompileSynthesizeFunction(node);
-            case "process":
-                return CompileProcessFunction(node);
-            case "generate":
-                return CompileGenerateFunction(node);
-            case "embed":
-                return CompileEmbedFunction(node);
-            case "adapt":
-                return CompileAdaptFunction(node);
-            default:
-                Console.WriteLine($"[DEBUG] Unknown AI function: {node.FunctionName}");
-                _currentIl!.Emit(OpCodes.Ldstr, $"[AI Function] {node.FunctionName}: Not implemented");
-                return new object();
+            node.Arguments[0].Accept(this);
+            _currentIl!.Emit(OpCodes.Ldstr, $" - [Neural System: {node.FunctionName} bypassed]");
+            
+            var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
+            if (concatMethod != null)
+            {
+                _currentIl.Emit(OpCodes.Call, concatMethod);
+            }
         }
-    }
-    
-    private object CompileTaskFunction(AICallNode node)
-    {
-        if (node.Arguments.Count == 0)
+        else
         {
-            _currentIl!.Emit(OpCodes.Ldstr, "[AI Task] No goal specified");
-            return new object();
+            _currentIl!.Emit(OpCodes.Ldstr, $"[Neural System: {node.FunctionName} ready]");
         }
-
-        // Generate IL to check if AiFunctions service is available at runtime
-        var serviceAvailableLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Check if it's null
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ceq);
-        _currentIl.Emit(OpCodes.Brfalse, serviceAvailableLabel);
-        
-        // If service is null, return fallback response
-        node.Arguments[0].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, " - [No AI Service] Mock task response");
-        
-        var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
-        if (concatMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Call, concatMethod);
-        }
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // If service is available, call the actual service
-        _currentIl.MarkLabel(serviceAvailableLabel);
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Load the argument (goal) onto the stack
-        node.Arguments[0].Accept(this);
-        
-        // Load null for options parameter
-        _currentIl.Emit(OpCodes.Ldnull);
-        
-        // Call Task method (synchronous wrapper)
-        var taskMethod = typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions).GetMethod("Task");
-        if (taskMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Callvirt, taskMethod);
-        }
-        
-        // Mark end label
-        _currentIl.MarkLabel(endLabel);
         
         return new object();
     }
     
-    private object CompileReasonFunction(AICallNode node)
-    {
-        if (node.Arguments.Count == 0)
-        {
-            _currentIl!.Emit(OpCodes.Ldstr, "[AI Reason] No question specified");
-            return new object();
-        }
-
-        // Generate IL to check if AiFunctions service is available at runtime
-        var serviceAvailableLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Check if it's null
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ceq);
-        _currentIl.Emit(OpCodes.Brfalse, serviceAvailableLabel);
-        
-        // If service is null, return fallback response
-        node.Arguments[0].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, " - [No AI Service] Mock reasoning response");
-        
-        var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
-        if (concatMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Call, concatMethod);
-        }
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // If service is available, call the actual service
-        _currentIl.MarkLabel(serviceAvailableLabel);
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Load the argument (question) onto the stack
-        node.Arguments[0].Accept(this);
-        
-        // Load null for options parameter
-        _currentIl.Emit(OpCodes.Ldnull);
-        
-        // Call Reason method (synchronous wrapper)
-        var reasonMethod = typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions).GetMethod("Reason");
-        if (reasonMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Callvirt, reasonMethod);
-        }
-        
-        // Mark end label
-        _currentIl.MarkLabel(endLabel);
-        
-        return new object();
-    }
+    // NEURAL SYSTEM: Orphaned AI function methods removed to enable biological neural testing
     
-    private object CompileSynthesizeFunction(AICallNode node)
-    {
-        if (node.Arguments.Count == 0)
-        {
-            _currentIl!.Emit(OpCodes.Ldstr, "[AI Synthesize] No specification provided");
-            return new object();
-        }
-
-        // Generate IL to check if AiFunctions service is available at runtime
-        var serviceAvailableLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Check if it's null
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ceq);
-        _currentIl.Emit(OpCodes.Brfalse, serviceAvailableLabel);
-        
-        // If service is null, return fallback response
-        node.Arguments[0].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, " - [No AI Service] Mock synthesis response");
-        
-        var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
-        if (concatMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Call, concatMethod);
-        }
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // If service is available, call the actual service
-        _currentIl.MarkLabel(serviceAvailableLabel);
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Load the argument (specification) onto the stack
-        node.Arguments[0].Accept(this);
-        
-        // Load null for options parameter
-        _currentIl.Emit(OpCodes.Ldnull);
-        
-        // Call Synthesize method (synchronous wrapper)
-        var synthesizeMethod = typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions).GetMethod("Synthesize");
-        if (synthesizeMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Callvirt, synthesizeMethod);
-        }
-        
-        // Mark end label
-        _currentIl.MarkLabel(endLabel);
-        
-        return new object();
-    }
-    
-    private object CompileProcessFunction(AICallNode node)
-    {
-        if (node.Arguments.Count < 2)
-        {
-            _currentIl!.Emit(OpCodes.Ldstr, "[AI Process] Requires input and context arguments");
-            return new object();
-        }
-
-        // Generate IL to check if AiFunctions service is available at runtime
-        var serviceAvailableLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Check if it's null
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ceq);
-        _currentIl.Emit(OpCodes.Brfalse, serviceAvailableLabel);
-        
-        // If service is null, return fallback response
-        node.Arguments[0].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, " [Context: ");
-        node.Arguments[1].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, "] - [No AI Service] Mock processing response");
-        
-        var concatMethod4 = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string), typeof(string), typeof(string) });
-        if (concatMethod4 != null)
-        {
-            _currentIl.Emit(OpCodes.Call, concatMethod4);
-        }
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // If service is available, call the actual service
-        _currentIl.MarkLabel(serviceAvailableLabel);
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Load the first argument (input) onto the stack
-        node.Arguments[0].Accept(this);
-        
-        // Load the second argument (context) onto the stack
-        node.Arguments[1].Accept(this);
-        
-        // Load null for options parameter
-        _currentIl.Emit(OpCodes.Ldnull);
-        
-        // Call Process method (synchronous wrapper)
-        var processMethod = typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions).GetMethod("Process");
-        if (processMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Callvirt, processMethod);
-        }
-        
-        // Mark end label
-        _currentIl.MarkLabel(endLabel);
-        
-        return new object();
-    }
-    
-    private object CompileGenerateFunction(AICallNode node)
-    {
-        if (node.Arguments.Count == 0)
-        {
-            _currentIl!.Emit(OpCodes.Ldstr, "[AI Generate] No prompt specified");
-            return new object();
-        }
-
-        // Generate IL to check if AiFunctions service is available at runtime
-        var serviceAvailableLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Check if it's null
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ceq);
-        _currentIl.Emit(OpCodes.Brfalse, serviceAvailableLabel);
-        
-        // If service is null, return fallback response
-        node.Arguments[0].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, " - [No AI Service] Mock generation response");
-        
-        var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
-        if (concatMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Call, concatMethod);
-        }
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // If service is available, call the actual service
-        _currentIl.MarkLabel(serviceAvailableLabel);
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Load the argument (prompt) onto the stack
-        node.Arguments[0].Accept(this);
-        
-        // Load null for options parameter
-        _currentIl.Emit(OpCodes.Ldnull);
-        
-        // Call Generate method (synchronous wrapper)
-        var generateMethod = typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions).GetMethod("Generate");
-        if (generateMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Callvirt, generateMethod);
-        }
-        
-        // Mark end label
-        _currentIl.MarkLabel(endLabel);
-        
-        return new object();
-    }
-    
-    private object CompileEmbedFunction(AICallNode node)
-    {
-        if (node.Arguments.Count == 0)
-        {
-            _currentIl!.Emit(OpCodes.Ldstr, "[AI Embed] No text specified");
-            return new object();
-        }
-
-        // Generate IL to check if AiFunctions service is available at runtime
-        var serviceAvailableLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Check if it's null
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ceq);
-        _currentIl.Emit(OpCodes.Brfalse, serviceAvailableLabel);
-        
-        // If service is null, return fallback response
-        node.Arguments[0].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, " - [No AI Service] Mock embedding response");
-        
-        var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
-        if (concatMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Call, concatMethod);
-        }
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // If service is available, call the actual service
-        _currentIl.MarkLabel(serviceAvailableLabel);
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Load the argument (text) onto the stack
-        node.Arguments[0].Accept(this);
-        
-        // Load null for options parameter
-        _currentIl.Emit(OpCodes.Ldnull);
-        
-        // Call Embed method (synchronous wrapper)
-        var embedMethod = typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions).GetMethod("Embed");
-        if (embedMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Callvirt, embedMethod);
-        }
-        
-        // Mark end label
-        _currentIl.MarkLabel(endLabel);
-        
-        return new object();
-    }
-    
-    private object CompileAdaptFunction(AICallNode node)
-    {
-        if (node.Arguments.Count == 0)
-        {
-            _currentIl!.Emit(OpCodes.Ldstr, "[AI Adapt] No function or code specified");
-            return new object();
-        }
-
-        // Generate IL to check if AiFunctions service is available at runtime
-        var serviceAvailableLabel = _currentIl!.DefineLabel();
-        var endLabel = _currentIl.DefineLabel();
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Check if it's null
-        _currentIl.Emit(OpCodes.Ldnull);
-        _currentIl.Emit(OpCodes.Ceq);
-        _currentIl.Emit(OpCodes.Brfalse, serviceAvailableLabel);
-        
-        // If service is null, return fallback response
-        node.Arguments[0].Accept(this);
-        _currentIl.Emit(OpCodes.Ldstr, " - [No AI Service] Mock adaptation response");
-        
-        var concatMethod = typeof(string).GetMethod("Concat", new[] { typeof(string), typeof(string) });
-        if (concatMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Call, concatMethod);
-        }
-        _currentIl.Emit(OpCodes.Br, endLabel);
-        
-        // If service is available, call the actual service
-        _currentIl.MarkLabel(serviceAvailableLabel);
-        
-        // Load the static _aiFunctions field
-        _currentIl.Emit(OpCodes.Ldsfld, _aiFunctionsField);
-        
-        // Load the argument (code) onto the stack
-        node.Arguments[0].Accept(this);
-        
-        // Load null for options parameter
-        _currentIl.Emit(OpCodes.Ldnull);
-        
-        // Call Adapt method (synchronous wrapper)
-        var adaptMethod = typeof(CxLanguage.Compiler.Modules.SemanticKernelAiFunctions).GetMethod("Adapt");
-        if (adaptMethod != null)
-        {
-            _currentIl.Emit(OpCodes.Callvirt, adaptMethod);
-        }
-        
-        // Mark end label
-        _currentIl.MarkLabel(endLabel);
-        
-        return new object();
-    }
     public object VisitAIReason(AIReasonNode node) => new object();
     public object VisitAIProcess(AIProcessNode node) => new object();
     public object VisitAIEmbed(AIEmbedNode node) => new object();
@@ -4059,8 +3646,8 @@ public class CxCompiler : IAstVisitor<object>
             // Load 'this' reference to get the instance collection name
             _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
             
-            // Call GetInstanceCollectionName() method on the instance (defined in AiServiceBase)
-            var getCollectionMethod = typeof(CxLanguage.StandardLibrary.Core.AiServiceBase)
+            // Call GetInstanceCollectionName() method on the instance (defined in ModernAiServiceBase)
+            var getCollectionMethod = typeof(CxLanguage.StandardLibrary.Core.ModernAiServiceBase)
                 .GetMethod("GetInstanceCollectionName", BindingFlags.Public | BindingFlags.Instance);
             if (getCollectionMethod != null)
             {
