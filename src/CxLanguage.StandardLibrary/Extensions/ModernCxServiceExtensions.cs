@@ -1,7 +1,12 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.AI;
+using Azure.AI.OpenAI;
+using Azure;
 using System;
+using CxLanguage.StandardLibrary.AI.Chat;
+using CxLanguage.StandardLibrary.AI.Embeddings;
 
 namespace CxLanguage.StandardLibrary.Extensions
 {
@@ -80,22 +85,22 @@ namespace CxLanguage.StandardLibrary.Extensions
             var chatDeploymentName = azureConfig["DeploymentName"] ?? "gpt-4";
             var embeddingDeploymentName = azureConfig["EmbeddingDeploymentName"] ?? "text-embedding-ada-002";
 
-            // Register ChatClient
-            services.AddSingleton(serviceProvider =>
+            // Register IChatClient using our custom implementation
+            services.AddSingleton<IChatClient>(serviceProvider =>
             {
-                var logger = serviceProvider.GetRequiredService<ILogger<global::Azure.AI.OpenAI.ChatClient>>();
-                logger.LogInformation("🚀 Initializing Azure OpenAI ChatClient with Microsoft.Extensions.AI");
-                var client = new global::Azure.AI.OpenAI.AzureOpenAIClient(new Uri(endpoint!), new global::Azure.AzureKeyCredential(apiKey!));
-                return client.GetChatClient(chatDeploymentName);
+                var logger = serviceProvider.GetRequiredService<ILogger<CustomChatClient>>();
+                logger.LogInformation("🚀 Initializing CustomChatClient with Azure OpenAI");
+                var client = new AzureOpenAIClient(new Uri(endpoint!), new AzureKeyCredential(apiKey!));
+                return new CustomChatClient(client, chatDeploymentName, logger);
             });
 
-            // Register EmbeddingClient
-            services.AddSingleton(serviceProvider =>
+            // Register IEmbeddingGenerator using our custom implementation  
+            services.AddSingleton<IEmbeddingGenerator<string, Embedding<float>>>(serviceProvider =>
             {
-                var logger = serviceProvider.GetRequiredService<ILogger<global::Azure.AI.OpenAI.EmbeddingClient>>();
-                logger.LogInformation("🚀 Initializing Azure OpenAI EmbeddingClient with Microsoft.Extensions.AI");
-                var client = new global::Azure.AI.OpenAI.AzureOpenAIClient(new Uri(endpoint!), new global::Azure.AzureKeyCredential(apiKey!));
-                return client.GetEmbeddingClient(embeddingDeploymentName);
+                var logger = serviceProvider.GetRequiredService<ILogger<CustomEmbeddingGenerator>>();
+                logger.LogInformation("🚀 Initializing CustomEmbeddingGenerator with Azure OpenAI");
+                var client = new AzureOpenAIClient(new Uri(endpoint!), new AzureKeyCredential(apiKey!));
+                return new CustomEmbeddingGenerator(client, embeddingDeploymentName, logger);
             });
 
             return services;
@@ -109,7 +114,7 @@ namespace CxLanguage.StandardLibrary.Extensions
         /// <returns>The updated service collection.</returns>
         public static IServiceCollection AddModernCxServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddModernAiServices(configuration);
+            services.AddModernCxAiServices(configuration);
             services.AddSingleton<CxLanguage.StandardLibrary.AI.Wait.AwaitService>();
 
             return services;

@@ -40,7 +40,7 @@ public class ModernTextToSpeechService : ModernAiServiceBase
     /// <param name="speechSpeed">Speech speed multiplier (0.8-1.2, default 1.0)</param>
     /// <returns>Text-to-speech result with audio data</returns>
     [Description("Convert text to speech using Azure OpenAI Realtime API")]
-    public async Task<TextToSpeechResult> SpeakAsync(
+    public Task<TextToSpeechResult> SpeakAsync(
         [Description("Text to convert to speech")] string text,
         [Description("Voice to use (alloy, echo, fable, onyx, nova, shimmer)")] string voice = "alloy",
         [Description("Speech speed multiplier (0.8-1.2)")] double speechSpeed = 1.0)
@@ -84,7 +84,7 @@ public class ModernTextToSpeechService : ModernAiServiceBase
 
             _logger.LogInformation("✅ TEXT-TO-SPEECH: Request completed - Duration: {Duration}ms", result.ActualDurationMs);
 
-            return result;
+            return Task.FromResult(result);
         }
         catch (Exception ex)
         {
@@ -97,7 +97,7 @@ public class ModernTextToSpeechService : ModernAiServiceBase
             result.Message = $"Text-to-speech error: {ex.Message}";
             result.ErrorMessage = ex.Message;
 
-            return result;
+            return Task.FromResult(result);
         }
     }
 

@@ -6,7 +6,7 @@ using CxLanguage.Runtime;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using OpenAI.Chat;
+using Microsoft.Extensions.AI;
 
 namespace CxLanguage.StandardLibrary.AI.Wait;
 
@@ -140,12 +140,11 @@ public class AwaitService : ModernAiServiceBase
             {
                 try
                 {
-                    var messages = new List<ChatMessage> { new SystemChatMessage(aiPrompt) };
-                    var response = await _chatClient.CompleteChatAsync(messages);
-                    var responseValue = response.Value;
-                    if (responseValue != null && responseValue.Content.Count > 0)
+                    var messages = new List<ChatMessage> { new ChatMessage(ChatRole.System, aiPrompt) };
+                    var response = await _chatClient.GetResponseAsync(messages);
+                    if (response?.Messages?.Count > 0)
                     {
-                        aiDurationText = responseValue.Content[0].Text;
+                        aiDurationText = response.Messages.Last().Text ?? "";
                     }
                     _logger.LogInformation("🤖 AI response: {Response}", aiDurationText);
                 }
