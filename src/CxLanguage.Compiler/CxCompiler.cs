@@ -4043,16 +4043,100 @@ public class CxCompiler : IAstVisitor<object>
         // Load the event name as string parameter
         _currentIl!.Emit(OpCodes.Ldstr, eventName);
         
-        // Generate code for the payload (if present)
-        if (node.Payload != null)
+        // Generate enhanced payload with instance collection information when in class context
+        if (_currentClassName != null)
         {
-            // Evaluate the payload expression (this will handle the handlers extraction automatically)
-            node.Payload.Accept(this);
+            Console.WriteLine($"[DEBUG] AI service call within class {_currentClassName} - adding instance collection info");
+            
+            // Create a dictionary to hold the enhanced payload
+            var dictType = typeof(Dictionary<string, object>);
+            var dictCtor = dictType.GetConstructor(Type.EmptyTypes);
+            var addMethod = dictType.GetMethod("Add", new[] { typeof(string), typeof(object) });
+            
+            // Create new Dictionary<string, object>()
+            _currentIl.Emit(OpCodes.Newobj, dictCtor!);
+            var dictLocal = _currentIl.DeclareLocal(dictType);
+            _currentIl.Emit(OpCodes.Stloc, dictLocal);
+            
+            // Add original payload properties if present
+            if (node.Payload != null)
+            {
+                Console.WriteLine("[DEBUG] Merging original payload with instance collection info");
+                
+                // Check if payload is just 'this' reference - special case for self-learning
+                if (IsThisReference(node.Payload))
+                {
+                    Console.WriteLine("[DEBUG] Detected 'this' reference in AI service call - enabling self-learning pattern");
+                    
+                    // Add special flag for self-learning pattern
+                    _currentIl.Emit(OpCodes.Ldloc, dictLocal);
+                    _currentIl.Emit(OpCodes.Ldstr, "_selfLearning");
+                    _currentIl.Emit(OpCodes.Ldc_I4_1); // true
+                    _currentIl.Emit(OpCodes.Box, typeof(bool));
+                    _currentIl.Emit(OpCodes.Callvirt, addMethod!);
+                    
+                    // Add the 'this' instance directly for serialization
+                    _currentIl.Emit(OpCodes.Ldloc, dictLocal);
+                    _currentIl.Emit(OpCodes.Ldstr, "data");
+                    _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this' reference
+                    _currentIl.Emit(OpCodes.Callvirt, addMethod!);
+                }
+                else
+                {
+                    // Load dict, key "originalPayload", and value
+                    _currentIl.Emit(OpCodes.Ldloc, dictLocal);
+                    _currentIl.Emit(OpCodes.Ldstr, "originalPayload");
+                    node.Payload.Accept(this); // This puts the original payload on the stack
+                    _currentIl.Emit(OpCodes.Callvirt, addMethod!);
+                }
+            }
+            
+            // Add instance collection name for routing to instance-specific memory
+            // Load dict, key "_instanceCollection", and value (this reference + collection name)
+            _currentIl.Emit(OpCodes.Ldloc, dictLocal);
+            _currentIl.Emit(OpCodes.Ldstr, "_instanceCollection");
+            
+            // Load 'this' reference to get the instance collection name
+            _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
+            
+            // Call GetInstanceCollectionName() method on the instance (defined in AiServiceBase)
+            var getCollectionMethod = typeof(CxLanguage.StandardLibrary.Core.AiServiceBase)
+                .GetMethod("GetInstanceCollectionName", BindingFlags.Public | BindingFlags.Instance);
+            if (getCollectionMethod != null)
+            {
+                _currentIl.Emit(OpCodes.Callvirt, getCollectionMethod);
+            }
+            else
+            {
+                // Fallback to class name if method not found
+                _currentIl.Emit(OpCodes.Pop); // Remove 'this' from stack
+                _currentIl.Emit(OpCodes.Ldstr, _currentClassName + "_instance");
+            }
+            
+            _currentIl.Emit(OpCodes.Callvirt, addMethod!);
+            
+            // Add source information
+            _currentIl.Emit(OpCodes.Ldloc, dictLocal);
+            _currentIl.Emit(OpCodes.Ldstr, "source");
+            _currentIl.Emit(OpCodes.Ldstr, _currentClassName);
+            _currentIl.Emit(OpCodes.Callvirt, addMethod!);
+            
+            // Load the final dictionary as the payload
+            _currentIl.Emit(OpCodes.Ldloc, dictLocal);
         }
         else
         {
-            // No payload - load null
-            _currentIl.Emit(OpCodes.Ldnull);
+            // Generate code for the payload (if present) - global scope
+            if (node.Payload != null)
+            {
+                // Evaluate the payload expression (this will handle the handlers extraction automatically)
+                node.Payload.Accept(this);
+            }
+            else
+            {
+                // No payload - load null
+                _currentIl.Emit(OpCodes.Ldnull);
+            }
         }
         
         // Load source identifier

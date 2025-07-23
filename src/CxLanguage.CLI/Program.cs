@@ -136,6 +136,18 @@ class Program
                     Console.WriteLine($"❌ DEBUG: Azure Realtime Event Handler not available: {realtimeEx.Message}");
                     Console.WriteLine($"    Exception type: {realtimeEx.GetType()}");
                 }
+                
+                // Activate CognitiveService to ensure AI event handlers are registered
+                try
+                {
+                    var cognitiveService = host.Services.GetRequiredService<CxLanguage.StandardLibrary.AI.Cognitive.CognitiveService>();
+                    Console.WriteLine($"✅ DEBUG: CognitiveService activated successfully for instance-specific memory routing");
+                }
+                catch (Exception cognitiveEx)
+                {
+                    Console.WriteLine($"❌ DEBUG: CognitiveService not available: {cognitiveEx.Message}");
+                    Console.WriteLine($"    Exception type: {cognitiveEx.GetType()}");
+                }
             }
             catch (Exception ex)
             {

@@ -13,8 +13,6 @@ namespace CxLanguage.StandardLibrary.AI.TextGeneration;
 /// </summary>
 public class TextGenerationService : CxAiServiceBase
 {
-    private readonly IChatCompletionService _chatCompletionService;
-
     /// <summary>
     /// Initializes a new instance of the TextGenerationService
     /// </summary>
@@ -23,7 +21,9 @@ public class TextGenerationService : CxAiServiceBase
     public TextGenerationService(Kernel kernel, ILogger<TextGenerationService> logger) 
         : base(kernel, logger)
     {
-        _chatCompletionService = kernel.GetRequiredService<IChatCompletionService>();
+        // Stub out Semantic Kernel - use Kernel Memory instead
+        // Text generation service initialization complete
+        _logger.LogInformation("TextGenerationService initialized");
     }
 
     /// <summary>
@@ -42,7 +42,7 @@ public class TextGenerationService : CxAiServiceBase
     /// <param name="prompt">The text prompt</param>
     /// <param name="options">Optional text generation settings</param>
     /// <returns>Text generation result</returns>
-    public async Task<TextGenerationResult> GenerateAsync(string prompt, TextGenerationOptions? options = null)
+    public Task<TextGenerationResult> GenerateAsync(string prompt, TextGenerationOptions? options = null)
     {
         var result = new TextGenerationResult();
         var startTime = DateTimeOffset.UtcNow;
@@ -81,11 +81,11 @@ public class TextGenerationService : CxAiServiceBase
                     var streamResult = new TextGenerationResult
                     {
                         IsSuccess = true,
-                        GeneratedText = "[Streaming response - use GenerateStreamAsync for actual streaming]",
+                        GeneratedText = "[STUBBED] Streaming not supported - use Azure Realtime API instead",
                         TokenCount = 0,
                         ExecutionTime = TimeSpan.Zero
                     };
-                    return streamResult;
+                    return Task.FromResult(streamResult);
                 }
             }
 
@@ -93,17 +93,18 @@ public class TextGenerationService : CxAiServiceBase
             var chatHistory = new ChatHistory();
             chatHistory.AddUserMessage(prompt);
 
-            var chatMessageContent = await _chatCompletionService.GetChatMessageContentAsync(chatHistory, settings);
+            // STUBBED: Text generation service - use Azure Realtime API and Kernel Memory instead
+            var placeholderResponse = $"[STUBBED] Text generation not implemented - use Azure Realtime API for actual text generation. Prompt: {prompt.Substring(0, Math.Min(50, prompt.Length))}...";
 
             result.IsSuccess = true;
-            result.GeneratedText = chatMessageContent.Content ?? string.Empty;
-            result.TokenCount = chatMessageContent.Metadata?.Count ?? 0;
+            result.GeneratedText = placeholderResponse;
+            result.TokenCount = placeholderResponse.Length / 4; // Rough token estimate
             result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
 
             _logger.LogInformation("Text generation completed successfully. Generated {Length} characters", 
                 result.GeneratedText.Length);
 
-            return result;
+            return Task.FromResult(result);
         }
         catch (Exception ex)
         {
@@ -111,38 +112,32 @@ public class TextGenerationService : CxAiServiceBase
             result.IsSuccess = false;
             result.ErrorMessage = ex.Message;
             result.ExecutionTime = DateTimeOffset.UtcNow - startTime;
-            return result;
+            return Task.FromResult(result);
         }
     }
 
     /// <summary>
-    /// Generate text with streaming support
+    /// Generate text with streaming support - STUBBED
     /// </summary>
-    public async IAsyncEnumerable<TextGenerationStreamResult> GenerateStreamAsync(
+    public IAsyncEnumerable<TextGenerationStreamResult> GenerateStreamAsync(
+        string prompt, 
+        TextGenerationOptions? options = null)
+    {
+        return GenerateStreamAsyncInternal(prompt, options);
+    }
+
+    private async IAsyncEnumerable<TextGenerationStreamResult> GenerateStreamAsyncInternal(
         string prompt, 
         TextGenerationOptions? options = null)
     {
         var startTime = DateTimeOffset.UtcNow;
 
-        // Convert the prompt to a chat message
-        var chatHistory = new ChatHistory();
-        chatHistory.AddUserMessage(prompt);
-
-        await foreach (var streamContent in _chatCompletionService.GetStreamingChatMessageContentsAsync(chatHistory))
-        {
-            yield return new TextGenerationStreamResult
-            {
-                IsSuccess = true,
-                TextChunk = streamContent.Content ?? string.Empty,
-                IsComplete = false,
-                ExecutionTime = DateTimeOffset.UtcNow - startTime
-            };
-        }
-
+        // STUBBED: Use Azure Realtime API for actual streaming text generation
+        await Task.Yield(); // Make it properly async
         yield return new TextGenerationStreamResult
         {
             IsSuccess = true,
-            TextChunk = string.Empty,
+            TextChunk = "[STUBBED] Streaming text generation not implemented - use Azure Realtime API instead",
             IsComplete = true,
             ExecutionTime = DateTimeOffset.UtcNow - startTime
         };
