@@ -1,0 +1,54 @@
+// PROOF OF CONCEPT: This test demonstrates that AI agents can learn from their own state
+// using the `learn { this }` pattern, which automatically serializes the object to JSON
+// before ingesting it into the agent's unique, instance-specific vector memory collection.
+
+class LearningAgent
+{
+    name: string;
+    status: string = "idle";
+    // knowledge: string[] = [];
+    
+    constructor(agentName: string)
+    {
+        this.name = agentName;
+        // this.knowledge.push("basics");
+        print("🤖 " + this.name + " is ready to learn.");
+    }
+    
+    function updateStatus(newStatus: string)
+    {
+        this.status = newStatus;
+        print("STATUS UPDATE: " + this.name + " is now " + this.status);
+    }
+    
+    function learnAboutSelf()
+    {
+        print("🧠 " + this.name + " is learning about its own state...");
+        
+        // The `learn { this }` pattern triggers automatic JSON serialization
+        // of the current object instance for memory ingestion.
+        learn { self: this };
+    }
+    
+    on ai.learn.request (event)
+    {
+        print("📚 LEARNING EVENT: " + this.name + " detected a learning request.");
+        print(event);
+    }
+}
+
+// --- Test Execution ---
+var agent = new LearningAgent("Agent Smith");
+
+// Initial state
+print("--- Initial State ---");
+print(agent);
+
+// Update state and learn
+agent.updateStatus("analyzing");
+// agent.knowledge.push("advanced concepts");
+agent.learnAboutSelf();
+
+// Final state
+print("--- Final State ---");
+print(agent);

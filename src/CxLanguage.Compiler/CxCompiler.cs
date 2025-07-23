@@ -4061,34 +4061,15 @@ public class CxCompiler : IAstVisitor<object>
             // Add original payload properties if present
             if (node.Payload != null)
             {
+                // We need to evaluate the original payload and copy its properties
+                // For now, we'll handle this by adding a special flag to indicate we need instance routing
                 Console.WriteLine("[DEBUG] Merging original payload with instance collection info");
                 
-                // Check if payload is just 'this' reference - special case for self-learning
-                if (IsThisReference(node.Payload))
-                {
-                    Console.WriteLine("[DEBUG] Detected 'this' reference in AI service call - enabling self-learning pattern");
-                    
-                    // Add special flag for self-learning pattern
-                    _currentIl.Emit(OpCodes.Ldloc, dictLocal);
-                    _currentIl.Emit(OpCodes.Ldstr, "_selfLearning");
-                    _currentIl.Emit(OpCodes.Ldc_I4_1); // true
-                    _currentIl.Emit(OpCodes.Box, typeof(bool));
-                    _currentIl.Emit(OpCodes.Callvirt, addMethod!);
-                    
-                    // Add the 'this' instance directly for serialization
-                    _currentIl.Emit(OpCodes.Ldloc, dictLocal);
-                    _currentIl.Emit(OpCodes.Ldstr, "data");
-                    _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this' reference
-                    _currentIl.Emit(OpCodes.Callvirt, addMethod!);
-                }
-                else
-                {
-                    // Load dict, key "originalPayload", and value
-                    _currentIl.Emit(OpCodes.Ldloc, dictLocal);
-                    _currentIl.Emit(OpCodes.Ldstr, "originalPayload");
-                    node.Payload.Accept(this); // This puts the original payload on the stack
-                    _currentIl.Emit(OpCodes.Callvirt, addMethod!);
-                }
+                // Load dict, key "originalPayload", and value
+                _currentIl.Emit(OpCodes.Ldloc, dictLocal);
+                _currentIl.Emit(OpCodes.Ldstr, "originalPayload");
+                node.Payload.Accept(this); // This puts the original payload on the stack
+                _currentIl.Emit(OpCodes.Callvirt, addMethod!);
             }
             
             // Add instance collection name for routing to instance-specific memory
