@@ -101,81 +101,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return varDecl;
     }
 
-    public override AstNode VisitFunctionDeclaration(FunctionDeclarationContext context)
-    {
-        var funcDecl = new FunctionDeclarationNode();
-        SetLocation(funcDecl, context);
-
-        var identifier = context.IDENTIFIER().GetText();
-        ValidateIdentifierNotKeyword(identifier, context, "function name");
-        funcDecl.Name = identifier;
-        funcDecl.IsAsync = context.GetText().StartsWith("async");
-        
-        // Store source position information for self keyword
-        funcDecl.StartLine = context.Start.Line;
-        funcDecl.EndLine = context.Stop.Line;
-        
-        // Parse access modifier if present
-        if (context.accessModifier() != null)
-        {
-            funcDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
-        }
-        
-        // Parameters
-        if (context.parameterList() != null)
-        {
-            foreach (var paramContext in context.parameterList().parameter())
-            {
-                var param = new ParameterNode
-                {
-                    Name = paramContext.IDENTIFIER().GetText(),
-                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
-                };
-                SetLocation(param, paramContext);
-                funcDecl.Parameters.Add(param);
-            }
-        }
-
-        // Return type
-        if (context.type() != null)
-        {
-            funcDecl.ReturnType = ParseType(context.type());
-        }
-
-        // Body
-        funcDecl.Body = (BlockStatementNode)Visit(context.blockStatement());
-
-        return funcDecl;
-    }
-
-    public override AstNode VisitImportStatement(ImportStatementContext context)
-    {
-        var importStmt = new ImportStatementNode();
-        SetLocation(importStmt, context);
-
-        importStmt.Alias = context.IDENTIFIER().GetText();
-        importStmt.ModulePath = context.STRING_LITERAL().GetText().Trim('"');
-
-        return importStmt;
-    }
-
-    public override AstNode VisitUsesStatement(UsesStatementContext context)
-    {
-        Console.WriteLine($"[DEBUG] AstBuilder: Processing 'uses' statement");
-        var usesStmt = new UsesStatementNode();
-        SetLocation(usesStmt, context);
-
-        // First IDENTIFIER is the alias (service name)
-        usesStmt.Alias = context.IDENTIFIER().GetText();
-        Console.WriteLine($"[DEBUG] AstBuilder: Uses alias = {usesStmt.Alias}");
-        // Service path from dottedIdentifier
-        var dottedIdentifier = (LiteralNode)Visit(context.dottedIdentifier());
-        usesStmt.ServicePath = dottedIdentifier?.Value?.ToString() ?? string.Empty;
-        Console.WriteLine($"[DEBUG] AstBuilder: Uses service path = {usesStmt.ServicePath}");
-
-        return usesStmt;
-    }
-
     public override AstNode VisitDottedIdentifier(DottedIdentifierContext context)
     {
         // Build the dotted identifier string (e.g., "Cx.AI.TextGeneration")
@@ -600,32 +525,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
     }
 
-    public override AstNode VisitTryStatement(TryStatementContext context)
-    {
-        var tryStmt = new TryStatementNode();
-        SetLocation(tryStmt, context);
-
-        tryStmt.TryBlock = (StatementNode)Visit(context.blockStatement(0));
-
-        if (context.blockStatement().Length > 1)
-        {
-            tryStmt.CatchVariableName = context.IDENTIFIER()?.GetText();
-            tryStmt.CatchBlock = (StatementNode)Visit(context.blockStatement(1));
-        }
-
-        return tryStmt;
-    }
-
-    public override AstNode VisitThrowStatement(ThrowStatementContext context)
-    {
-        var throwStmt = new ThrowStatementNode();
-        SetLocation(throwStmt, context);
-
-        throwStmt.Expression = (ExpressionNode)Visit(context.expression());
-
-        return throwStmt;
-    }
-
     public override AstNode VisitNewExpression(NewExpressionContext context)
     {
         var newExpr = new NewExpressionNode();
@@ -650,39 +549,14 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         var classDecl = new ClassDeclarationNode();
         SetLocation(classDecl, context);
 
-        // Parse decorators if present
-        if (context.decorator() != null && context.decorator().Length > 0)
-        {
-            foreach (var decoratorContext in context.decorator())
-            {
-                var decorator = (DecoratorNode)Visit(decoratorContext);
-                classDecl.Decorators.Add(decorator);
-            }
-        }
-
         var className = context.IDENTIFIER(0).GetText();
         ValidateIdentifierNotKeyword(className, context, "class name");
         classDecl.Name = className;
         
-        // Parse access modifier if present
-        if (context.accessModifier() != null)
-        {
-            classDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
-        }
-
-        // Parse base class if present
+        // Parse base class if present (extends keyword)
         if (context.IDENTIFIER().Length > 1)
         {
             classDecl.BaseClass = context.IDENTIFIER(1).GetText();
-        }
-
-        // Parse interfaces if present
-        if (context.interfaceList() != null)
-        {
-            foreach (var interfaceContext in context.interfaceList().IDENTIFIER())
-            {
-                classDecl.Interfaces.Add(interfaceContext.GetText());
-            }
         }
 
         // Parse class body
@@ -694,10 +568,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
                 {
                     classDecl.Fields.Add((FieldDeclarationNode)Visit(memberContext.fieldDeclaration()));
                 }
-                else if (memberContext.methodDeclaration() != null)
-                {
-                    classDecl.Methods.Add((MethodDeclarationNode)Visit(memberContext.methodDeclaration()));
-                }
                 else if (memberContext.constructorDeclaration() != null)
                 {
                     classDecl.Constructors.Add((ConstructorDeclarationNode)Visit(memberContext.constructorDeclaration()));
@@ -707,12 +577,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
                     // Handle event handlers inside classes
                     var eventHandler = (OnStatementNode)Visit(memberContext.onStatement());
                     classDecl.EventHandlers.Add(eventHandler);
-                }
-                else if (memberContext.usesStatement() != null)
-                {
-                    // Handle uses statements inside classes for dependency injection
-                    var usesStmt = (UsesStatementNode)Visit(memberContext.usesStatement());
-                    classDecl.UsesStatements.Add(usesStmt);
                 }
             }
         }
@@ -738,12 +602,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         fieldDecl.Name = context.IDENTIFIER().GetText();
         fieldDecl.Type = ParseType(context.type());
         
-        // Parse access modifier if present
-        if (context.accessModifier() != null)
-        {
-            fieldDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
-        }
-
         // Parse initializer if present
         if (context.expression() != null)
         {
@@ -753,57 +611,10 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return fieldDecl;
     }
 
-    public override AstNode VisitMethodDeclaration(MethodDeclarationContext context)
-    {
-        var methodDecl = new MethodDeclarationNode();
-        SetLocation(methodDecl, context);
-
-        methodDecl.Name = context.IDENTIFIER().GetText();
-        methodDecl.IsAsync = context.GetText().Contains("async");
-        
-        // Parse access modifier if present
-        if (context.accessModifier() != null)
-        {
-            methodDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
-        }
-
-        // Parameters
-        if (context.parameterList() != null)
-        {
-            foreach (var paramContext in context.parameterList().parameter())
-            {
-                var param = new ParameterNode
-                {
-                    Name = paramContext.IDENTIFIER().GetText(),
-                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
-                };
-                SetLocation(param, paramContext);
-                methodDecl.Parameters.Add(param);
-            }
-        }
-
-        // Return type
-        if (context.type() != null)
-        {
-            methodDecl.ReturnType = ParseType(context.type());
-        }
-
-        // Body
-        methodDecl.Body = (BlockStatementNode)Visit(context.blockStatement());
-
-        return methodDecl;
-    }
-
     public override AstNode VisitConstructorDeclaration(ConstructorDeclarationContext context)
     {
         var ctorDecl = new ConstructorDeclarationNode();
         SetLocation(ctorDecl, context);
-
-        // Parse access modifier if present
-        if (context.accessModifier() != null)
-        {
-            ctorDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
-        }
 
         // Parameters
         if (context.parameterList() != null)
@@ -824,89 +635,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         ctorDecl.Body = (BlockStatementNode)Visit(context.blockStatement());
 
         return ctorDecl;
-    }
-
-    public override AstNode VisitInterfaceDeclaration(InterfaceDeclarationContext context)
-    {
-        var interfaceDecl = new InterfaceDeclarationNode();
-        SetLocation(interfaceDecl, context);
-
-        interfaceDecl.Name = context.IDENTIFIER().GetText();
-        
-        // Parse access modifier if present
-        if (context.accessModifier() != null)
-        {
-            interfaceDecl.AccessModifier = ParseAccessModifier(context.accessModifier());
-        }
-
-        // Parse extended interfaces if present
-        if (context.interfaceList() != null)
-        {
-            foreach (var interfaceContext in context.interfaceList().IDENTIFIER())
-            {
-                interfaceDecl.ExtendedInterfaces.Add(interfaceContext.GetText());
-            }
-        }
-
-        // Parse interface body
-        if (context.interfaceBody() != null)
-        {
-            foreach (var memberContext in context.interfaceBody().interfaceMember())
-            {
-                if (memberContext.interfaceMethodSignature() != null)
-                {
-                    interfaceDecl.Methods.Add((InterfaceMethodSignatureNode)Visit(memberContext.interfaceMethodSignature()));
-                }
-                else if (memberContext.interfacePropertySignature() != null)
-                {
-                    interfaceDecl.Properties.Add((InterfacePropertySignatureNode)Visit(memberContext.interfacePropertySignature()));
-                }
-            }
-        }
-
-        return interfaceDecl;
-    }
-
-    public override AstNode VisitInterfaceMethodSignature(InterfaceMethodSignatureContext context)
-    {
-        var methodSig = new InterfaceMethodSignatureNode();
-        SetLocation(methodSig, context);
-
-        methodSig.Name = context.IDENTIFIER().GetText();
-
-        // Parameters
-        if (context.parameterList() != null)
-        {
-            foreach (var paramContext in context.parameterList().parameter())
-            {
-                var param = new ParameterNode
-                {
-                    Name = paramContext.IDENTIFIER().GetText(),
-                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
-                };
-                SetLocation(param, paramContext);
-                methodSig.Parameters.Add(param);
-            }
-        }
-
-        // Return type
-        if (context.type() != null)
-        {
-            methodSig.ReturnType = ParseType(context.type());
-        }
-
-        return methodSig;
-    }
-
-    public override AstNode VisitInterfacePropertySignature(InterfacePropertySignatureContext context)
-    {
-        var propSig = new InterfacePropertySignatureNode();
-        SetLocation(propSig, context);
-
-        propSig.Name = context.IDENTIFIER().GetText();
-        propSig.Type = ParseType(context.type());
-
-        return propSig;
     }
 
     public override AstNode VisitEventName(EventNameContext context)
@@ -975,17 +703,5 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
 
         return aiServiceStmt;
-    }
-
-    private AccessModifier ParseAccessModifier(AccessModifierContext context)
-    {
-        var text = context.GetText();
-        return text switch
-        {
-            "public" => AccessModifier.Public,
-            "private" => AccessModifier.Private,
-            "protected" => AccessModifier.Protected,
-            _ => AccessModifier.Public
-        };
     }
 }
