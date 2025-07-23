@@ -176,7 +176,6 @@ public static class SimpleSemanticKernelServiceExtensions
             // Note: Azure Speech Service removed - replaced by Azure OpenAI Realtime API integration
             
             // Register all the individual AI services that can be imported
-            services.AddSingleton<CxLanguage.StandardLibrary.AI.TextGeneration.TextGenerationService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.ChatCompletion.ChatCompletionService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.TextEmbeddings.TextEmbeddingsService>();
             services.AddSingleton<CxLanguage.StandardLibrary.AI.TextToImage.TextToImageService>();

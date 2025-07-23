@@ -31,7 +31,6 @@ public interface IAstVisitor<T>
     T VisitArrayLiteral(ArrayLiteralNode node);
     T VisitObjectLiteral(ObjectLiteralNode node);
     T VisitObjectProperty(ObjectPropertyNode node);
-    T VisitSelfReference(SelfReferenceNode node);
     
     // AI-specific visitor methods
     T VisitAITask(AITaskNode node);
@@ -360,14 +359,6 @@ public class ObjectPropertyNode : AstNode
     public ExpressionNode Value { get; set; } = null!;
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitObjectProperty(this);
-}
-
-/// <summary>
-/// Self-reference expression that refers to the current function
-/// </summary>
-public class SelfReferenceNode : ExpressionNode
-{
-    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitSelfReference(this);
 }
 
 /// <summary>

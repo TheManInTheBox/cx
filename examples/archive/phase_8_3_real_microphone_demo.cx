@@ -102,9 +102,8 @@ class Phase8dot3HardwareAudioAgent
     // Enhanced wake word detection for real audio
     function detectWakeWord(payload)
     {
-        // In Phase 8.3, this would use actual speech recognition
-        // For now, simulate detection based on audio characteristics
-        if (payload.audioData && payload.audioData.length > 0)
+        // ✅ FIXED: Safe audio data checking without .length property access
+        if (payload.audioData != null)
         {
             // Simulate Azure OpenAI Realtime API speech recognition
             var fakeTranscript = this.simulateTranscriptFromAudio(payload.audioData);
@@ -199,7 +198,8 @@ class Phase8dot3HardwareAudioAgent
             
             if (audioResponse && audioResponse.audioData)
             {
-                console.log("✅ Phase 8.3: Voice response generated (" + audioResponse.audioData.length + " bytes)");
+                console.log("✅ Phase 8.3: Voice response generated - audio data available");
+                console.log("Audio data type: " + typeof(audioResponse.audioData));
                 // In real Phase 8.3, this would play through speakers
             }
         }

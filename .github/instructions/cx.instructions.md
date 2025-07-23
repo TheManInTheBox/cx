@@ -357,13 +357,15 @@ class VoiceAgent
         }
     }
     
-    // ✅ PROVEN WORKING: Real-time audio response handler
-    // FIXED: Safe property access for audio data
+    // ✅ FIXED: Real-time audio response handler with proper type safety
+    // CRITICAL: Safe property access for audio data to prevent InvalidCastException
     on realtime.audio.response (event)
     {
-        if (event.audioData && event.audioData.length)
+        // ✅ FIXED: Safe audio data check without .length property access
+        if (event.audioData != null)
         {
-            print("🔊 Audio response received - " + event.audioData.length + " bytes");
+            print("🔊 Audio response received - data available");
+            print("📊 Audio data type: " + typeof(event.audioData));
         }
         else
         {
@@ -1031,7 +1033,7 @@ adapt {
 };
 
 // Class introspection
-learn { this }
+learn { self: this };
 
 // Enhanced handlers with custom payloads
 learn {
@@ -1213,9 +1215,20 @@ class VoiceDemo
     
     on realtime.audio.response (event)
     {
-        if (event.audioData && event.audioData.length)
+        // ✅ FIXED: Safe audio data handling without byte array casting issues
+        if (event.audioData != null)
         {
-            print("🔊 Voice audio: " + event.audioData.length + " bytes");
+            print("🔊 Voice audio data received");
+            print("📊 Data type: " + typeof(event.audioData));
+        }
+        else
+        {
+            print("🔊 Audio response - no data");
+        }
+        
+        if (event.isComplete)
+        {
+            print("🎵 Voice synthesis complete!");
         }
     }
 }

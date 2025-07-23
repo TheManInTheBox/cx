@@ -52,13 +52,20 @@ class VoiceTest
     
     on realtime.audio.response (event)
     {
-        if (event.audioData && event.audioData.length)
+        // ✅ FIXED: Safe audio data handling without .length property access
+        if (event.audioData != null)
         {
-            print("🔊 Audio response received - " + event.audioData.length + " bytes");
+            print("🔊 Audio response received - data available");
+            print("📊 Audio data type: " + typeof(event.audioData));
         }
         else
         {
             print("🔊 Audio response received - no data");
+        }
+        
+        if (event.isComplete)
+        {
+            print("🎵 Audio synthesis complete!");
         }
     }
 }

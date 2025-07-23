@@ -455,23 +455,6 @@ public class CxCompiler : IAstVisitor<object>
         return new object();
     }
 
-    public object VisitSelfReference(SelfReferenceNode node)
-    {
-        Console.WriteLine("[DEBUG] Processing self reference");
-        
-        if (_currentMethod == null)
-        {
-            throw new InvalidOperationException("'self' can only be used within class methods");
-        }
-        
-        // In class methods, 'self' refers to the current instance (this)
-        // Load 'this' pointer onto the stack
-        _currentIl!.Emit(OpCodes.Ldarg_0);
-        Console.WriteLine("[DEBUG] Loaded 'this' pointer for self reference");
-        
-        return new object();
-    }
-
     public object VisitIf(IfStatementNode node)
     {
         int ifId = _ifCounter++;
@@ -2511,7 +2494,6 @@ public class CxCompiler : IAstVisitor<object>
         return modulePath switch
         {
             // AI Services - clean Cx.AI namespace for AI functionality
-            "Cx.AI.TextGeneration" => typeof(CxLanguage.StandardLibrary.AI.TextGeneration.TextGenerationService),
             "Cx.AI.ChatCompletion" => typeof(CxLanguage.StandardLibrary.AI.ChatCompletion.ChatCompletionService),
             "Cx.AI.TextEmbeddings" => typeof(CxLanguage.StandardLibrary.AI.TextEmbeddings.TextEmbeddingsService),
             "Cx.AI.TextToImage" => typeof(CxLanguage.StandardLibrary.AI.TextToImage.TextToImageService),
