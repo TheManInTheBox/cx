@@ -1,0 +1,115 @@
+// Azure OpenAI Realtime API Service Integration Test
+// Tests the actual service integration and connection
+
+class RealtimeServiceAgent
+{
+    name: string = "RealtimeServiceAgent";
+    
+    function initiateRealtimeConnection()
+    {
+        print("🚀 Initiating Azure OpenAI Realtime API connection...");
+        
+        // Use the correct event names expected by RealtimeEventHandler
+        emit realtime.connect { 
+            agent: this.name,
+            timestamp: "2025-07-22"
+        };
+        
+        print("Connection request sent to Azure OpenAI Realtime services");
+    }
+    
+    function createRealtimeSession()
+    {
+        print("📱 Creating realtime session...");
+        
+        emit realtime.session.create {
+            agent: this.name,
+            options: {
+                maxLatency: 200,
+                voice: "alloy"
+            }
+        };
+        
+        print("Session creation request sent");
+    }
+    
+    function sendRealtimeMessage()
+    {
+        print("💬 Sending realtime text message...");
+        
+        emit realtime.text.send {
+            text: "Hello Azure OpenAI Realtime API, this is a test message",
+            agent: this.name
+        };
+        
+        print("Text message sent to realtime API");
+    }
+    
+    // Event handlers for Azure OpenAI Realtime API responses
+    on realtime.connected (event)
+    {
+        print("✅ Successfully connected to Azure OpenAI Realtime API!");
+        print("Connection details:");
+        print(event);
+        
+        // After connection, create a session
+        this.createRealtimeSession();
+    }
+    
+    on realtime.session.created (event)
+    {
+        print("✅ Realtime session created successfully!");
+        print("Session ID: " + event.sessionId);
+        print(event);
+        
+        // After session creation, send a test message
+        this.sendRealtimeMessage();
+    }
+    
+    on realtime.session.error (event)
+    {
+        print("❌ Session creation error:");
+        print("Error: " + event.error);
+        print(event);
+    }
+    
+    on realtime.text.response (event)
+    {
+        print("📥 Received text response from Azure OpenAI:");
+        print("Response: " + event.text);
+        print(event);
+    }
+    
+    on realtime.audio.response (event)
+    {
+        print("🔊 Received audio response from Azure OpenAI:");
+        print("Audio format: " + event.format);
+        print(event);
+    }
+    
+    on realtime.error (event)
+    {
+        print("❌ Realtime API error occurred:");
+        print("Error type: " + event.type);
+        print("Error message: " + event.message);
+        print(event);
+    }
+    
+    on realtime.disconnected (event)
+    {
+        print("🔌 Disconnected from Azure OpenAI Realtime API");
+        print(event);
+    }
+}
+
+// Test the Azure OpenAI Realtime API service integration
+print("=== Azure OpenAI Realtime API Service Integration Test ===");
+
+var serviceAgent = new RealtimeServiceAgent();
+serviceAgent.initiateRealtimeConnection();
+
+print("\n=== Direct Service Event Testing ===");
+
+// Test direct service events
+emit realtime.connect { source: "direct_test" };
+emit realtime.session.create { source: "direct_test", maxLatency: 100 };

@@ -19,4 +19,4 @@ class TestAgent
 
 // Create instance and test
 var agent = new TestAgent("TestBot");
-emit user.test, { message: "hello" };
+emit user.test { message: "hello" };

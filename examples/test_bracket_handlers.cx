@@ -6,7 +6,7 @@ class TestAgent
     function testWithBracketHandlers()
     {
         // AI service call with handlers using brackets
-        learn, {
+        learn {
             content: "test data",
             handlers: [
                 any.complete,

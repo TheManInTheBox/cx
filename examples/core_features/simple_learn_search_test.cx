@@ -51,13 +51,19 @@ class TestAgent
     function learnSomething() 
     {
         print("📝 Learning test content...");
-        this.Learn("The quick brown fox jumps over the lazy dog");
+        learn {
+            content: "The quick brown fox jumps over the lazy dog",
+            handlers: [ ai.learning.complete ]
+        };
     }
     
     function searchForLearned() 
     {
         print("🔍 Searching for learned content...");
-        this.Search("quick brown fox");
+        search {
+            query: "quick brown fox",
+            handlers: [ ai.search.complete ]
+        };
     }
 }
 

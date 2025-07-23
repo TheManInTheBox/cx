@@ -11,6 +11,10 @@ if (condition)
     doSomething();
 }
 
+```cx
+
+```
+
 // ✅ Console output - ALWAYS use print()
 print("Hello World");
 
@@ -36,17 +40,20 @@ CX Language is an event-driven programming language designed for AI agent orches
 **Key Features:**
 - **Advanced Event System**: Full event parameter property access with `event.property` syntax
 - **Enhanced Handlers Pattern**: Custom payload support with `handlers: [ event.name { custom: "data" } ]`
+- **Voice Processing**: Azure OpenAI Realtime API integration with `listen` and `speak` methods
 - **Automatic Object Serialization**: CX objects print as readable JSON with recursive nesting support
 - **Dictionary Iteration**: Native support for iterating over dictionaries in for-in loops
 - **Dynamic Property Access**: Runtime property resolution for flexible event handling
 - **KeyValuePair Support**: Automatic handling of dictionary entries with `.Key` and `.Value` access
 - **Fire-and-Forget AI Operations**: Non-blocking cognitive methods with event-based results
+- **Serializable Object Parameters**: Pass complex data structures to services using object literals
 - **Comma-less Syntax**: Modern clean syntax for AI services and emit statements
 
 ## Core Language Rules
 The following rules are mandatory for all CX Language code:
 
 ### Syntax Requirements
+- Do not use `\n` or escape sequences when using `print()`.
 - Always use Allman-style brackets `{ }` for code blocks
 - Use `print()` for console output - NEVER use `console.log()`
 - `print()` automatically serializes complex objects to JSON for debugging
@@ -56,12 +63,14 @@ The following rules are mandatory for all CX Language code:
 - Use `=` for default values in field declarations
 
 ### Enhanced Object Printing
-- **Automatic JSON Serialization**: All CX objects are automatically serialized to JSON when printed
+- **JSON String Output**: The `print()` function always returns values in JSON string format for consistent output formatting
+- **Automatic Object Serialization**: All CX objects are automatically serialized to JSON when printed
 - **Primitive Type Detection**: Strings, numbers, and booleans print directly without JSON formatting
 - **Nested Object Support**: CX objects containing other CX objects display full recursive structure
 - **Clean Field Filtering**: Internal fields (ServiceProvider, Logger) are automatically hidden
 - **Debugging Ready**: Perfect for inspecting complex agent states and data structures
 - **Example Output**: `{"name": "Alice", "age": 30, "data": {"title": "Sample", "active": true}}`
+- **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this with **Automatic Object Serialization**. Any Cx object, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
 
 ### Variable Declarations
 - Use `var` keyword for local variables inside methods/constructors
@@ -93,13 +102,18 @@ The following rules are mandatory for all CX Language code:
 - **KeyValuePair Properties**: Access dictionary entries with `item.Key` and `item.Value`
 
 ### Service Integration
-- Use `uses` keyword for service declarations at program scope only - NEVER in classes
-- **Service Declarations**: Use `uses` keyword at program scope only, NEVER in classes
-- **Service injection**: ILLEGAL - classes cannot declare their own service instances
-- **Service access**: ONLY via inheritance-based cognitive methods (`this.Think()`, `this.Generate()`, etc.) OR global service instances
+- **Automatic Injection**: All cognitive services are automatically injected into the program's global scope at runtime. There is no need to declare or import them.
+- **Global Availability**: Services are available as globally accessible functions throughout the application.
+- **No Class-level Injection**: It is illegal for classes to have services injected into them or to declare their own service instances.
+- **Invocation**: Services are called using their name followed by a comma-less block of parameters, e.g., `think { prompt: "Hello" }`.
+- **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
+- **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
 
 ## Syntax Basics
-- **No Public/Private Modifiers**: CX does not use access modifiers - all members are accessible within class scope
+- **Use constructors to inject data** - DO NOT ACCESS MEMBERS DIRECTLY FOR INITIALIZATION.
+- **`classes`**: Use `class` keyword for class declarations - NO `public` or `private` modifiers
+- **`classes` behavior**: Classes are blueprints for objects that encapsulate state and behavior. They do not inherit cognitive capabilities automatically.
+- **No Public/Private Modifiers**: Cx does not use access modifiers - all members are accessible within class scope
 - **No Static Members**: CX does not support static members - all members are instance-based
 - **Variable Declaration**: Use `var identifier` for new loop variables
 - **Existing Variables**: Can use existing variables without `var` keyword
@@ -108,10 +122,9 @@ The following rules are mandatory for all CX Language code:
 - **Block Syntax**: Must use Allman-style brackets `{ }` 
 - **Scope**: Loop variables follow standard CX scoping rules
 - **Type Safety**: Loop variables are dynamically typed, use `typeof()` for type checking
-- **`uses` keyword**: ONLY allowed at program scope (top-level), NEVER inside classes
+- **Service access**: Cognitive services are globally available functions. They are not methods and are not accessed with `this.`
 - **Service injection**: ILLEGAL - classes cannot declare their own service instances
 - **Event handlers**: Available at both program scope AND in classes
-- **Service access**: ONLY via inheritance-based cognitive methods (`this.Think()`, `this.Generate()`, etc.) OR global service instances
 - **Class scope**: Fields, methods, constructors, event handlers only - NO `uses` statements or service declarations
 - **Field declarations**: Use `fieldName: type;` syntax for field declarations in classes
 - **Constructor parameters**: Type annotations recommended for clarity
@@ -139,41 +152,8 @@ The following event name parts are reserved by the CX Language system and have s
 - `alerts` - System alert and notification events
 - `dev` - Development and debugging events
 
-**User Interaction Events:**
-- `user` - User input and interaction events (user.input, user.message, user.response)
-- `ai` - AI processing and cognitive events (ai.request, ai.response, ai.thinking)
-
-**Workflow Events:**
-- `async` - Asynchronous operation events (async.complete, async.error)
-- `sync` - Synchronous operation events (sync.complete, sync.ready)
-- `tasks` - Task management events (tasks.created, tasks.completed)
-- `tickets` - Ticket/issue tracking events
-- `support` - Support system events
-
-## Reserved Event Names
-The following event name parts are reserved by the CX Language system and have special meaning:
-
-**System Events:**
-- `system` - Core system lifecycle events (system.ready, system.shutdown)
-- `alerts` - System alert and notification events
-- `dev` - Development and debugging events
-
-**User Interaction Events:**
-- `user` - User input and interaction events (user.input, user.message, user.response)
-- `ai` - AI processing and cognitive events (ai.request, ai.response, ai.thinking)
-
-**Workflow Events:**
-- `async` - Asynchronous operation events (async.complete, async.error)
-- `sync` - Synchronous operation events (sync.complete, sync.ready)
-- `tasks` - Task management events (tasks.created, tasks.completed)
-- `tickets` - Ticket/issue tracking events
-- `support` - Support system events
-
 **General Events:**
 - `any` - Wildcard event matching
-- `new` - Creation/initialization events
-- `critical` - High-priority system events
-- `assigned` - Assignment and delegation events
 
 ## Code Examples
 
@@ -202,7 +182,6 @@ function processData()
 
 ```cx
 // Complete agent implementation with enhanced handlers and object printing
-uses textService from Cx.AI.TextGeneration;
 
 class AssistantAgent
 {
@@ -215,13 +194,18 @@ class AssistantAgent
         print("Agent initialized: " + this.name);
     }
     
-    function processMessage(message: string): void
+    function processMessage(message: string)
     {
         this.status = "processing";
         
         // Enhanced cognitive methods with custom payload handlers
-        this.Think { 
-            prompt: message, 
+        var promptObject = {
+            message: message,
+            context: "User interaction with an assistant agent."
+        };
+
+        think { 
+            prompt: promptObject, 
             name: "user_input_analysis",
             handlers: [ 
                 thinking.complete { option: "detailed" },
@@ -281,7 +265,7 @@ class CoordinatorAgent
     on agent.response (payload)
     {
         print("Coordinator received response from: " + payload.agent);
-        emit system.log, { message: "Response processed by coordinator" };
+        emit system.log { message: "Response processed by coordinator" };
     }
 }
 
@@ -299,10 +283,10 @@ class SpecialistAgent
         if (payload.domain == this.domain)
         {
             print("Specialist handling query in domain: " + this.domain);
-            this.Think({ 
-                handler: "specialist.result", 
+            think { 
+                handlers: [specialist.result], 
                 prompt: payload.query 
-            });
+            };
         }
     }
 }
@@ -313,7 +297,87 @@ var techSpecialist = new SpecialistAgent("technology");
 var financeSpecialist = new SpecialistAgent("finance");
 
 // Use the system
-emit user.query, { domain: "technology", query: "How do I optimize my code?" };
+emit user.query { domain: "technology", query: "How do I optimize my code?" };
+```
+
+### Voice Agent Example
+
+```cx
+// Voice-controlled agent with Azure OpenAI Realtime API integration
+class VoiceAgent
+{
+    name: string = "VoiceAssistant";
+    isListening: boolean = false;
+    
+    function startListening()
+    {
+        print("🎤 Starting voice input...");
+        this.isListening = true;
+        
+        // Start listening for voice input with enhanced handlers
+        listen { 
+            prompt: "Listen for user commands", 
+            name: "voice_command_capture",
+            handlers: [ 
+                voice.input.received { mode: "realtime" },
+                audio.processed { quality: "high" }
+            ]
+        };
+    }
+    
+    function respondWithVoice(message: string, audioData: any)
+    {
+        print("🔊 Generating voice response...");
+        
+        // Respond with voice output using Azure OpenAI Realtime API
+        speak { 
+            audio: audioData,
+            prompt: message, // optional text context
+            name: "voice_response_generation",
+            handlers: [ 
+                voice.output.complete { channel: "main" },
+                response.delivered { timestamp: "now" }
+            ]
+        };
+    }
+    
+    on voice.input.received (event)
+    {
+        print("🎯 Voice input received: " + event.transcript);
+        print("Quality: " + event.mode);
+        
+        // Process the voice command
+        think { 
+            prompt: event.transcript,
+            handlers: [voice.command.processed]
+        };
+    }
+    
+    on voice.command.processed (event)
+    {
+        print("🧠 Command processed: " + event.result);
+        
+        // Generate voice response
+        this.respondWithVoice(event.result, event.audioResponse);
+    }
+    
+    on voice.output.complete (event)
+    {
+        print("✅ Voice response delivered on channel: " + event.channel);
+        this.isListening = false;
+    }
+}
+
+// Create and use voice agent
+var voiceAgent = new VoiceAgent();
+voiceAgent.startListening();
+
+// Simulate voice interaction
+emit voice.input.received { 
+    transcript: "What is the weather today?", 
+    mode: "realtime",
+    confidence: 0.95 
+};
 ```
 
 ### **Class and Member Declaration Syntax**
@@ -340,7 +404,7 @@ class CognitiveAgent : BaseAgent
     }
     
     // ✅ Method declarations
-    function processRequest(input: string): string
+    function processRequest(input: string)
     {
         print("Processing: " + input);
         return "completed";
@@ -368,13 +432,13 @@ class MultimodalAgent : ITextToSpeech, IImageGeneration
         var tempValue = "processing";
     }
     
-    function processContent(input: string): string
+    function processContent(input: string)
     {
         // ✅ Local variables inside methods
         var result = "";
         var processed = input.toLowerCase();
         
-        this.Think(processed);
+        think(processed);
         return result;
     }
 }
@@ -383,10 +447,6 @@ class MultimodalAgent : ITextToSpeech, IImageGeneration
 var globalCounter = 0;
 var systemStatus = "initialized";
 var agentRegistry = [];
-
-// ✅ Service declarations (program scope only)
-uses textService from Cx.AI.TextGeneration;
-uses voiceService from Cx.AI.TextToSpeech;
 ```
 
 ## Loops and Iteration
@@ -428,19 +488,18 @@ on user.input (event)
 // ✅ For...in loop in methods
 class DataProcessor 
 {
-    function processArray(data: any[]): void
+    function processArray(data: any[])
     {
         for (var item in data) 
         {
             print("Processing: " + item);
             
             // Local variable inside loop
-            var processed = item.toString().toUpperCase();
             print("Processed: " + processed);
         }
     }
     
-    function processDictionary(data: object): void
+    function processDictionary(data: object)
     {
         for (var kvp in data) 
         {
@@ -488,6 +547,8 @@ class EventAgent
         print("Message: " + event.message);    // Direct property access
         print("Type: " + event.type);          // Access any property from payload
         print("User: " + event.user);          // Runtime property resolution
+
+        print(event);                           // Auto deserialize to JSON
     }
     
     on system.data (event)
@@ -554,9 +615,18 @@ class MyAgent
     on ai.request (event) { ... }    // ✅ CORRECT: Class scope event handler
 }
 
-// Event emission using reserved event names
-emit user.message, { text: "hello" };
-emit system.shutdown, { reason: "maintenance" };
+// ✅ CORRECT: Emitting system message event
+emit system.shutdown { reason: "maintenance" };
+
+// ✅ CORRECT: Signaling adaptation, handlers optional
+adapt { 
+  name: "MyAgent", 
+  reason: "maintenance", 
+  handlers [ 
+    event.bus { 
+      options: "option" }
+      ] 
+}; // ✅ CORRECT: Emitting adatation event of a class instance.
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
 on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
@@ -587,8 +657,8 @@ class ChatAgent
 ```
 
 // Event emission using reserved event names
-emit user.message, { text: "hello" };
-emit system.shutdown, { reason: "maintenance" };
+emit user.message { text: "hello" };
+emit system.shutdown { reason: "maintenance" };
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
 on name.any.other.any.final (payload) { ... }     // Joins multiple namespaced event busses
@@ -613,7 +683,7 @@ class ChatAgent
     
     on voice.any.command (payload) 
     {               // Multi-scope wildcard support
-        emit user.chat.message, { text: "Voice: " + payload.command };
+        emit user.chat.message { text: "Voice: " + payload.command };
     }
 }
 ```
@@ -657,7 +727,7 @@ on agent.any.thinking.any.complete (payload)
 // Ultra-flexible wildcards for maximum event coverage
 on any.any.critical (payload) 
 {     // Catches ALL critical events system-wide
-    print("CRITICAL EVENT: " + payload.message);
+    print("CRITICAL EVENT: " + payload);
 }
 ```
 
@@ -706,7 +776,7 @@ class DataAnalysisAgent
             if (param.Key == "complexity" && param.Value == "high")
             {
                 print("High complexity analysis detected");
-                emit analysis.complexity.high, { agent: this.name };
+                emit analysis.complexity.high { agent: this.name };
             }
         }
     }
@@ -730,6 +800,7 @@ on user.any.input (event)
 
 // Usage example
 var dataAgent = new DataAnalysisAgent();
+
 emit user.input, { 
     message: "Analyze sales data", 
     type: "analysis_request",
@@ -859,54 +930,123 @@ agent.analyzeData("Customer feedback dataset");
 - **Mixed Names**: Can mix simple names (`complete`) and dotted names (`analysis.complete`) in same array
 - **Performance**: Handlers are efficiently compiled and execute with minimal overhead
 
-## Service Integration
-```cx
-// ✅ All classes inherit cognitive capabilities automatically
-class CognitiveAgent  // No 'uses' declarations needed - intelligence is built-in!
-{
-    function processInput(userMessage)
-    {
-        // Default cognitive methods available to ALL classes - STRUCTURED PARAMETERS:
-        this.Think({ handler: "thinking.complete", prompt: userMessage, name: "user_input_analysis" });
-        this.Generate({ handler: "content.generated", prompt: userMessage, name: "response_generation" });
-        this.Chat({ handler: "chat.sent", message: "Hello!", name: "greeting" });
-        this.Communicate({ handler: "status.updated", message: "Processing...", name: "status_update" });
-        
-        // Personal memory with structured parameters
-        this.Learn({
-            handler: "knowledge.stored",
-            content: userMessage,
-            name: "user_input_learning",
-            context: "cognitive_processing"
-        });
-        
-        // Search with structured parameters
-        this.Search({ handler: "results.found", query: "similar situations", name: "knowledge_lookup" });
-        
-        // Command execution with structured parameters
-        this.Execute({ handler: "command.completed", command: "pwd", name: "directory_check" });
-        
-        // All results delivered via custom event handlers
-    }
-}
-```
-
 ### **Service Method Structured Parameters**
 ```cx
-// All service methods use comma-less structured parameters with handlers support:
+// All service methods use comma-less structured parameters with enhanced handlers pattern:
 
-search { handler: "event.handle", query: "query" };
-learn { handler: "name.of.any.event.handle", name: "another property" };
-think { handler: "name.of.any.event.handle", name: "another property" };
-execute { handler: "name.of.any.handle", name: "another property", command: "pwd" };
-communicate { handler: "name.of.any.event.handle", name: "another property" };
-generate { handler: "name.of.any.event.handle", name: "another property" };
-chat { handler: "name.of.any.event.handle", name: "another property" };
-speak { handler: "name.of.any.event.handle", name: "another property" };
-image { handler: "name.of.any.event.handle", name: "another property" };
-analyze { handler: "name.of.any.event.handle", name: "another property" };
-transcribe { handler: "name.of.any.event.handle", name: "another property" };
-audio { handler: "name.of.any.event.handle", name: "another property" };
+search { 
+    query: "search term",
+    handlers: [ 
+        results.found { option: "detailed" },
+        search.logged { level: "info" }
+    ]
+};
+
+learn { 
+    data: "content to learn",
+    handlers: [ 
+        analysis.complete { option: "detailed" },
+        storage.saved { format: "json" }
+    ]
+};
+
+think { 
+    prompt: "thinking prompt",
+    handlers: [ 
+        thinking.complete { option: "detailed" },
+        analysis.logged { level: "info" }
+    ]
+};
+
+execute { 
+    command: "pwd",
+    handlers: [ 
+        execution.complete { option: "detailed" },
+        output.logged { level: "info" }
+    ]
+};
+
+communicate { 
+    message: "communication content",
+    handlers: [ 
+        message.sent { option: "detailed" },
+        communication.logged { level: "info" }
+    ]
+};
+
+generate { 
+    prompt: "generation prompt",
+    handlers: [ 
+        content.generated { option: "detailed" },
+        generation.logged { level: "info" }
+    ]
+};
+
+chat { 
+    message: "chat message",
+    handlers: [ 
+        response.ready { option: "detailed" },
+        chat.logged { level: "info" }
+    ]
+};
+
+speak { 
+    audio: audioData,
+    prompt: "optional text context",
+    handlers: [ 
+        voice.output.complete { channel: "main" },
+        speech.logged { level: "info" }
+    ]
+};
+
+listen { 
+    prompt: "listening prompt",
+    handlers: [ 
+        voice.input.received { mode: "realtime" },
+        audio.processed { quality: "high" }
+    ]
+};
+
+image { 
+    prompt: "image generation prompt",
+    handlers: [ 
+        image.generated { option: "detailed" },
+        creation.logged { level: "info" }
+    ]
+};
+
+analyze { 
+    data: "data to analyze",
+    handlers: [ 
+        analysis.complete { option: "detailed" },
+        results.logged { level: "info" }
+    ]
+};
+
+transcribe { 
+    audio: audioData,
+    handlers: [ 
+        transcription.complete { option: "detailed" },
+        transcribe.logged { level: "info" }
+    ]
+};
+
+audio { 
+    data: audioData,
+    handlers: [ 
+        audio.processed { option: "detailed" },
+        processing.logged { level: "info" }
+    ]
+};
+
+adapt { 
+    context: "adaptation context",
+    handlers: [ 
+        adaptation.complete { option: "detailed" },
+        adapt.logged { level: "info" }
+    ]
+};
+```
 
 // Enhanced handlers with custom payloads
 learn {
@@ -916,35 +1056,26 @@ learn {
         storage.saved { format: "json" }
     ]
 };
-```
 
-```cx
-// ❌ ILLEGAL: 'uses' keyword inside class declarations
-class MyAgent 
-{
-    uses aiService from Cx.AI.TextGeneration;  // ← COMPILATION ERROR
-    
-    function doSomething() { ... }
-}
+// Voice processing with Azure OpenAI Realtime API integration
+listen { 
+    prompt: message, 
+    name: "user_input_analysis",
+    handlers: [ 
+        thinking.complete { option: "detailed" },
+        analysis.logged { level: "info" }
+    ]
+};
 
-// ✅ CORRECT: 'uses' statements at program scope only
-uses aiService from Cx.AI.TextGeneration;
-
-class MyAgent 
-{
-    function doSomething() 
-    {
-        // ✅ CORRECT: Access built-in cognitive methods via inheritance - FIRE-AND-FORGET
-        this.Think("prompt");      // ← Fire-and-forget cognitive methods
-        this.Generate("query");    // ← Results via event bus, no blocking
-        
-        // ✅ CORRECT: Can access global service instances from program scope
-        var generated = aiService.Generate("test");   // ← Global service instance
-        
-        // Immediate return, async work continues in background
-        return "Processing initiated";
-    }
-}
+speak { 
+    audio: audioFromRealTimeAPI,
+    prompt: message, // optional, does not override audio for now
+    name: "user_input_analysis",
+    handlers: [ 
+        thinking.complete { option: "detailed" },
+        analysis.logged { level: "info" }
+    ]
+};
 ```
 
 ## Asynchronous Programming
@@ -968,209 +1099,33 @@ on agent.any.thinking.any.complete (payload) { ... } // Complex wildcard pattern
 
 ### **Event-Driven Async Pattern**
 
+Cx uses a pure fire-and-forget model for all asynchronous operations, including cognitive service calls. This eliminates `async/await` and complex callback chains, promoting a clean, event-driven architecture.
 
-#### **🎯 CRITICAL LANGUAGE RULE: Async Functions Return No Values**
+-   **No `await` Keyword**: The `await` keyword is completely eliminated from the language.
+-   **No Return Values from Async Ops**: Asynchronous functions and service calls return `void`.
+-   **Event-Based Results**: All results and continuations are handled through the event bus system.
+
 ```cx
-// ❌ OLD WAY: Complex await patterns with blocking and return values
-async function processData(input) 
-{
-    var result = await this.Think(input);    // Blocking operation
-    var learned = await this.Learn(result);  // Sequential blocking
-    return { result, learned };              // Return values create complexity
-}
-
-// ✅ NEW WAY: Pure fire-and-forget with event bus coordination
+// ✅ CORRECT: Pure fire-and-forget with event bus coordination
 function processData(input) 
 {
-    // All async operations fire-and-forget - no return values, no blocking
-    this.Think(input);     // Fires cognitive processing, results via events
-    this.Learn(input);     // Fires learning process, results via events
-    this.Generate(input);  // Fires generation, results via events
+    // All async operations are fire-and-forget. No return values, no blocking.
+    think { prompt: input, handlers: [thinking.complete] };
+    learn { content: input, handlers: [learning.complete] };
     
-    // Immediate response, async results delivered via event bus
-    emit processing.started, { input: input };
+    // Immediately emit an event to signal the start of processing.
+    emit processing.started { input: input };
 }
 
-// Results flow through event system
-on ai.thought.complete (payload) 
+// Results flow through the event system.
+on thinking.complete (event) 
 {
-    print("Thinking complete: " + payload.result);
-    // Continue processing based on thought results...
+    print("Thinking complete: " + event.result);
 }
 
-on ai.learning.complete (payload) 
+on learning.complete (event) 
 {
-    print("Learning complete: " + payload.documentId);
-    // Update UI or trigger next steps...
+    print("Learning complete for document: " + event.documentId);
 }
 ```
 
-### **Specialized Capabilities via Interfaces**
-```cx
-// Optional interfaces for advanced features
-class MultimodalAgent : ITextToSpeech, IImageGeneration
-{
-    function createContent(prompt)
-    {
-        // Core cognitive methods (inherited automatically) - FIRE-AND-FORGET
-        this.Think(prompt);                    // Fire-and-forget thinking
-        this.Communicate("Creating content...");  // Fire-and-forget communication
-        
-        // Specialized methods (only with interfaces) - FIRE-AND-FORGET
-        this.Speak("Content created!");        // Requires ITextToSpeech
-        this.CreateImage(prompt);              // Requires IImageGeneration
-        
-        // Personal memory tracking - FIRE-AND-FORGET
-        this.Learn({
-            prompt: prompt,
-            context: "multimodal_creation"
-        });
-        
-        // All results delivered via event bus system
-        emit content.creation.started, { prompt: prompt };
-    }
-}
-```
-
-### **Agent Creation Patterns**
-```cx
-// ✅ REVOLUTIONARY: All classes inherit cognitive capabilities automatically!
-class CognitiveAgent  // No 'uses' declarations needed - intelligence is built-in!
-{
-    function processInput(userMessage)
-    {
-        // Default cognitive methods available to ALL classes - FIRE-AND-FORGET:
-        this.Think(userMessage);        // Fire-and-forget thinking - results via event bus
-        this.Generate(userMessage);     // Fire-and-forget generation - results via event bus
-        this.Chat("Hello!");            // Fire-and-forget conversation - results via event bus
-        this.Communicate("Processing...");  // Fire-and-forget communication - results via event bus
-        
-        // Personal memory - fire-and-forget learning
-        this.Learn({
-            input: userMessage,
-            response: "processing",
-            context: "cognitive_processing"
-        });
-        
-        // Fire-and-forget search - results delivered via events
-        this.Search("similar situations");
-        
-        // No return values needed - all results flow through event bus
-    }
-}
-
-// Event handlers automatically register as agents
-class EventAgent
-{
-    on user.input (event)
-    {
-        // Event handler presence triggers automatic agent registration
-        this.Think(event.message);  // Fire-and-forget cognition!
-        
-        // Access event properties directly
-        print("Processing message: " + event.message);
-        print("Event timestamp: " + event.timestamp);
-        
-        // Iterate over all event data
-        for (var data in event.payload)
-        {
-            print("Event data: " + data.Key + " = " + data.Value);
-        }
-        
-        emit user.response, { text: "processing..." }; // Immediate response, AI results via events
-    }
-}
-var myAgent = new EventAgent(); // ← Automatically registered as agent
-```
-
-#### **🎯 CRITICAL LANGUAGE RULE: Async Functions Return No Values**
-```cx
-// ❌ OLD WAY: Complex await patterns with blocking and return values
-async function processData(input) 
-{
-    var result = await this.Think(input);    // Blocking operation
-    var learned = await this.Learn(result);  // Sequential blocking
-    return { result, learned };              // Return values create complexity
-}
-
-// ✅ NEW WAY: Pure fire-and-forget with event bus coordination
-function processData(input) 
-{
-    // All async operations fire-and-forget - no return values, no blocking
-    this.Think(input);     // Fires cognitive processing, results via events
-    this.Learn(input);     // Fires learning process, results via events
-    this.Generate(input);  // Fires generation, results via events
-    
-    // Immediate response, async results delivered via event bus
-    emit processing.started, { input: input };
-}
-
-// Results flow through event system
-on ai.thought.complete (payload) 
-{
-    print("Thinking complete: " + payload.result);
-    // Continue processing based on thought results...
-}
-
-on ai.learning.complete (payload) 
-{
-    print("Learning complete: " + payload.documentId);
-    // Update UI or trigger next steps...
-}
-```
-
-### **Specialized Capabilities via Interfaces**
-```cx
-// Optional interfaces for advanced features
-class MultimodalAgent : ITextToSpeech, IImageGeneration
-{
-    function createContent(prompt)
-    {
-        // Core cognitive methods (inherited automatically) - FIRE-AND-FORGET
-        this.Think(prompt);                    // Fire-and-forget thinking
-        this.Communicate("Creating content...");  // Fire-and-forget communication
-        
-        // Specialized methods (only with interfaces) - FIRE-AND-FORGET
-        this.Speak("Content created!");        // Requires ITextToSpeech
-        this.CreateImage(prompt);              // Requires IImageGeneration
-        
-        // Personal memory tracking - FIRE-AND-FORGET
-        this.Learn({
-            prompt: prompt,
-            context: "multimodal_creation"
-        });
-        
-        // All results delivered via event bus system
-        emit content.creation.started, { prompt: prompt };
-    }
-}
-```
-
-```cx
-// ❌ ILLEGAL: 'uses' keyword inside class declarations
-class MyAgent 
-{
-    uses aiService from Cx.AI.TextGeneration;  // ← COMPILATION ERROR
-    
-    function doSomething() { ... }
-}
-
-// ✅ CORRECT: 'uses' statements at program scope only
-uses aiService from Cx.AI.TextGeneration;
-
-class MyAgent 
-{
-    function doSomething() 
-    {
-        // ✅ CORRECT: Access built-in cognitive methods via inheritance - FIRE-AND-FORGET
-        this.Think("prompt");      // ← Fire-and-forget cognitive methods
-        this.Generate("query");    // ← Results via event bus, no blocking
-        
-        // ✅ CORRECT: Can access global service instances from program scope
-        var generated = aiService.Generate("test");   // ← Global service instance
-        
-        // Immediate return, async work continues in background
-        return "Processing initiated";
-    }
-}
-```

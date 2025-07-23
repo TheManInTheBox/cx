@@ -6,7 +6,7 @@ class SimpleAgent
     function test()
     {
         // Basic AI service call without handlers
-        learn, {
+        learn {
             content: "test data"
         };
         

@@ -20,13 +20,8 @@ class AnalysisAgent
         };
         
         emit user.query {
-          domain: "technology", 
-          query: "How do I optimize my code?",
-          handlers: [
-                analysis.complete { option: "value" },
-                task.finished { option: "differentValue" },
-                notify.users
-            ]
+            domain: "technology", 
+            query: "How do I optimize my code?"
         };
 
         print("Analysis initiated with handlers");
@@ -40,6 +35,7 @@ on analysis.complete (event)
     print("Analysis finished for data: " + event.data);
     print("Category: " + event.category);
     print("Priority: " + event.priority);
+    print("Report option: " + event.option);
 }
 
 // Handler for task completion tracking
@@ -47,6 +43,7 @@ on task.finished (event)
 {
     print("=== TASK TRACKING ===");
     print("Task completed: " + event.data);
+    print("Task status: " + event.option);
     print("Marking as done in task system");
 }
 

@@ -17,7 +17,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\CxLanguage.Core\CxLanguage.Core.csproj" />
-    <ProjectReference Include="..\CxLanguage.Azure\CxLanguage.Azure.csproj" />
   </ItemGroup>
 
 </Project>
