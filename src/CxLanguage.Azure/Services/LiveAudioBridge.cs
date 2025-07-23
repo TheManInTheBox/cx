@@ -1,9 +1,18 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
+using NAudio.Wave;
 
 namespace CxLanguage.Azure.Services;
+
+// --- Data Structures ---
+public class MicrophoneDevice
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+}
 
 /// <summary>
 /// Live Audio Event Bridge - Connects NAudio hardware capture to CX Language event architecture.
@@ -13,7 +22,8 @@ namespace CxLanguage.Azure.Services;
 public class LiveAudioBridge : IDisposable
 {
     private readonly ILogger<LiveAudioBridge> _logger;
-    private readonly NAudioMicrophoneService _microphoneService;
+    private WaveInEvent? _waveIn;
+    private int _deviceId = 0;
     
     private bool _isActive = false;
     private bool _disposed = false;
@@ -29,12 +39,6 @@ public class LiveAudioBridge : IDisposable
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         
-        // Create microphone service with console logging
-        using var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-        _microphoneService = new NAudioMicrophoneService(
-            loggerFactory.CreateLogger<NAudioMicrophoneService>(), 
-            configuration);
-        
         SetupEventBridge();
         
         _logger.LogInformation("🌉 Live Audio Bridge initialized - Ready for hardware integration");
@@ -43,20 +47,29 @@ public class LiveAudioBridge : IDisposable
     /// <summary>
     /// Start live hardware audio processing
     /// </summary>
-    public async Task StartAsync()
+    public Task StartAsync()
     {
         if (_isActive)
         {
             _logger.LogWarning("Bridge already active");
-            return;
+            return Task.CompletedTask;
         }
-        
+
         try
         {
             _logger.LogInformation("🚀 Starting live hardware audio bridge...");
             
-            // Start microphone capture
-            await _microphoneService.StartCapturingAsync();
+            // Initialize NAudio directly
+            _waveIn = new WaveInEvent
+            {
+                DeviceNumber = _deviceId,
+                WaveFormat = new WaveFormat(16000, 16, 1), // 16kHz, 16-bit, Mono
+                BufferMilliseconds = 100
+            };
+
+            _waveIn.DataAvailable += OnDataAvailable;
+            _waveIn.RecordingStopped += OnRecordingStopped;
+            _waveIn.StartRecording();
             
             _isActive = true;
             
@@ -76,22 +89,22 @@ public class LiveAudioBridge : IDisposable
             ErrorOccurred?.Invoke(this, new Phase8ErrorEventArgs(ex));
             throw;
         }
-    }
-    
-    /// <summary>
+
+        return Task.CompletedTask;
+    }    /// <summary>
     /// Stop the live audio bridge
     /// </summary>
-    public async Task StopAsync()
+    public Task StopAsync()
     {
         if (!_isActive)
-            return;
-        
+            return Task.CompletedTask;
+
         try
         {
             _logger.LogInformation("🛑 Stopping live hardware audio bridge...");
             
-            // Stop microphone capture
-            await _microphoneService.StopCapturingAsync();
+            // Stop NAudio recording
+            _waveIn?.StopRecording();
             
             _isActive = false;
             
@@ -111,6 +124,8 @@ public class LiveAudioBridge : IDisposable
             ErrorOccurred?.Invoke(this, new Phase8ErrorEventArgs(ex));
             throw;
         }
+
+        return Task.CompletedTask;
     }
     
     /// <summary>
@@ -118,20 +133,33 @@ public class LiveAudioBridge : IDisposable
     /// </summary>
     public List<MicrophoneDevice> GetAvailableDevices()
     {
-        return _microphoneService.GetAvailableDevices();
+        var devices = new List<MicrophoneDevice>();
+        for (int i = 0; i < WaveInEvent.DeviceCount; i++)
+        {
+            var caps = WaveInEvent.GetCapabilities(i);
+            devices.Add(new MicrophoneDevice { Id = i, Name = caps.ProductName });
+        }
+        return devices;
     }
-    
+
     /// <summary>
     /// Set the active microphone device
     /// </summary>
-    public async Task SetMicrophoneDeviceAsync(int deviceId)
+    public Task SetMicrophoneDeviceAsync(int deviceId)
     {
-        await _microphoneService.SetMicrophoneDeviceAsync(deviceId);
+        if (deviceId >= WaveInEvent.DeviceCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(deviceId), "Invalid microphone device ID.");
+        }
         
-        // Emit device change event
-        var device = _microphoneService.GetCurrentDevice();
+        if (_deviceId == deviceId) return Task.CompletedTask;
+
+        _deviceId = deviceId;
+        var device = GetCurrentDevice();
         if (device != null)
         {
+            _logger.LogInformation($"Microphone device set to: {device.Name}");
+            
             StatusChanged?.Invoke(this, new Phase8StatusEventArgs
             {
                 Status = "DeviceChanged",
@@ -141,65 +169,89 @@ public class LiveAudioBridge : IDisposable
                 DeviceName = device.Name
             });
         }
-    }
-    
-    /// <summary>
-    /// Set up the event bridge between hardware capture and CX Language event architecture
-    /// </summary>
-    private void SetupEventBridge()
-    {
-        // Bridge microphone audio to live.audio events for compatibility
-        _microphoneService.AudioCaptured += (sender, args) =>
+
+        // If currently recording, restart with new device
+        if (_waveIn != null)
         {
+            StopAsync().Wait();
+            StartAsync().Wait();
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Get the current microphone device
+    /// </summary>
+    public MicrophoneDevice? GetCurrentDevice()
+    {
+        if (_deviceId < WaveInEvent.DeviceCount)
+        {
+            var caps = WaveInEvent.GetCapabilities(_deviceId);
+            return new MicrophoneDevice { Id = _deviceId, Name = caps.ProductName };
+        }
+        return null;
+    }    /// <summary>
+    /// NAudio event handler for captured audio data
+    /// </summary>
+    private void OnDataAvailable(object? sender, WaveInEventArgs e)
+    {
+        if (e.BytesRecorded > 0 && _isActive)
+        {
+            var buffer = new byte[e.BytesRecorded];
+            Array.Copy(e.Buffer, buffer, e.BytesRecorded);
+
             try
             {
-                if (_isActive && args.AudioChunk?.Data != null)
+                // Emit live audio event to maintain existing architecture compatibility
+                LiveAudioCaptured?.Invoke(this, new Phase8LiveAudioEventArgs
                 {
-                    // Emit live audio event to maintain existing architecture compatibility
-                    // This ensures existing AuraListeningAgent continues to work with real hardware
-                    LiveAudioCaptured?.Invoke(this, new Phase8LiveAudioEventArgs
-                    {
-                        Transcript = "", // Will be filled by speech recognition service
-                        Confidence = 1.0, // Hardware capture confidence
-                        Timestamp = args.AudioChunk.Timestamp,
-                        AudioLengthMs = args.AudioChunk is ProcessedAudioChunk processed ? processed.DurationMs : 100,
-                        SampleRate = args.AudioChunk.SampleRate,
-                        IsLiveCapture = true,
-                        AudioData = args.AudioChunk.Data
-                    });
-                    
-                    _logger.LogDebug($"🎤 Bridged live audio: {args.AudioChunk.Data.Length} bytes at {args.AudioChunk.SampleRate}Hz");
-                }
+                    Transcript = "", // Will be filled by speech recognition service
+                    Confidence = 1.0, // Hardware capture confidence
+                    Timestamp = DateTimeOffset.UtcNow,
+                    AudioLengthMs = (int)((double)e.BytesRecorded / (_waveIn?.WaveFormat.AverageBytesPerSecond ?? 32000) * 1000),
+                    SampleRate = _waveIn?.WaveFormat.SampleRate ?? 16000,
+                    IsLiveCapture = true,
+                    AudioData = buffer
+                });
+                
+                _logger.LogDebug($"🎤 Bridged live audio: {buffer.Length} bytes at {_waveIn?.WaveFormat.SampleRate ?? 16000}Hz");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Error bridging microphone audio to live.audio events");
                 ErrorOccurred?.Invoke(this, new Phase8ErrorEventArgs(ex));
             }
-        };
+        }
+    }
+
+    /// <summary>
+    /// NAudio event handler for recording stopped
+    /// </summary>
+    private void OnRecordingStopped(object? sender, StoppedEventArgs e)
+    {
+        _logger.LogInformation("Microphone capture stopped.");
         
-        // Bridge microphone errors
-        _microphoneService.ErrorOccurred += (sender, args) =>
+        if (_waveIn != null)
         {
-            _logger.LogError(args.Exception, "🎤 Microphone error in Phase 8.3 bridge");
-            ErrorOccurred?.Invoke(this, new Phase8ErrorEventArgs(args.Exception));
-        };
+            _waveIn.DataAvailable -= OnDataAvailable;
+            _waveIn.RecordingStopped -= OnRecordingStopped;
+            _waveIn.Dispose();
+            _waveIn = null;
+        }
         
-        // Bridge device changes
-        _microphoneService.DeviceChanged += (sender, args) =>
+        if (e.Exception != null)
         {
-            _logger.LogInformation($"🎤 Microphone device changed to: {args.DeviceName}");
-            
-            StatusChanged?.Invoke(this, new Phase8StatusEventArgs
-            {
-                Status = "DeviceChanged",
-                Message = $"Microphone device changed to: {args.DeviceName}",
-                Timestamp = DateTimeOffset.UtcNow,
-                DeviceId = args.DeviceId,
-                DeviceName = args.DeviceName
-            });
-        };
-        
+            _logger.LogError(e.Exception, "Microphone capture stopped with an error.");
+            ErrorOccurred?.Invoke(this, new Phase8ErrorEventArgs(e.Exception));
+        }
+    }
+
+    /// <summary>
+    /// Set up the event bridge between hardware capture and CX Language event architecture
+    /// </summary>
+    private void SetupEventBridge()
+    {
         _logger.LogInformation("🔗 Live audio event bridge configured successfully");
     }
     
@@ -212,8 +264,8 @@ public class LiveAudioBridge : IDisposable
             // Stop the bridge
             StopAsync().Wait(TimeSpan.FromSeconds(5));
             
-            // Dispose services
-            _microphoneService?.Dispose();
+            // Dispose NAudio components
+            _waveIn?.Dispose();
             
             _logger.LogInformation("🌉 Live Audio Bridge disposed");
         }

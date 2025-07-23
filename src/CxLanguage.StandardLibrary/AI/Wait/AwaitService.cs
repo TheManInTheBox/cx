@@ -6,7 +6,7 @@ using CxLanguage.Runtime;
 using System.Threading.Tasks;
 using System;
 using System.Collections.Generic;
-using Azure.AI.OpenAI;
+using OpenAI.Chat;
 
 namespace CxLanguage.StandardLibrary.AI.Wait;
 
@@ -30,12 +30,12 @@ public class AwaitService : ModernAiServiceBase
     /// <summary>
     /// Gets the service name
     /// </summary>
-    public string ServiceName => "Await";
+    public override string ServiceName => "Await";
     
     /// <summary>
     /// Gets the service version
     /// </summary>
-    public string Version => "1.0.0";
+    public override string Version => "1.0.0";
 
     /// <summary>
     /// Await/sleep for a specified duration with optional AI decision making
@@ -143,9 +143,9 @@ public class AwaitService : ModernAiServiceBase
                     var messages = new List<ChatMessage> { new SystemChatMessage(aiPrompt) };
                     var response = await _chatClient.CompleteChatAsync(messages);
                     var responseValue = response.Value;
-                    if (responseValue != null && responseValue.Choices.Count > 0)
+                    if (responseValue != null && responseValue.Content.Count > 0)
                     {
-                        aiDurationText = responseValue.Choices[0].Message.Content;
+                        aiDurationText = responseValue.Content[0].Text;
                     }
                     _logger.LogInformation("🤖 AI response: {Response}", aiDurationText);
                 }

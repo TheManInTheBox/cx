@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Threading;
 using Azure;
 using Azure.AI.OpenAI;
+using OpenAI.Chat;
+using OpenAI.Embeddings;
 using CxLanguage.Runtime;
 
 namespace CxLanguage.StandardLibrary.Core;
@@ -32,6 +34,16 @@ public abstract class ModernAiServiceBase
     /// Decentralized event hub for this service instance.
     /// </summary>
     public EventHub Hub { get; }
+
+    /// <summary>
+    /// Service name - can be overridden by derived classes
+    /// </summary>
+    public virtual string ServiceName => GetType().Name;
+
+    /// <summary>
+    /// Service version - can be overridden by derived classes
+    /// </summary>
+    public virtual string Version => "1.0.0";
 
     /// <summary>
     /// Chat client for direct AI operations - lightweight replacement for Semantic Kernel
