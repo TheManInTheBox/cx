@@ -74,14 +74,14 @@ class VoiceAPIAgent
         }
     }
     
-    // Handle Azure audio responses (actual voice synthesis)
+    // ✅ FIXED: Handle Azure audio responses with proper type safety
     on realtime.audio.response (event)
     {
         if (event.audioData != null)
         {
-            var audioBytes = event.audioData;
             print("🎵 VOICE SYNTHESIS COMPLETE! Audio data received:");
             print("Audio data available: true");
+            print("Audio data type: " + typeof(event.audioData));
         }
         else
         {

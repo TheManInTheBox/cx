@@ -1,0 +1,45 @@
+// Test that 'self' is no longer a reserved keyword and can be used as a regular identifier
+// Also test the learn { self: this } meta-pattern for self-learning
+
+class SelfLearningAgent 
+{
+    constructor() 
+    {
+        print("SelfLearningAgent created");
+    }
+    
+    function testSelfLearning() 
+    {
+        // Test that 'self' is now a regular identifier, not a reserved keyword
+        var self = "I am a regular variable named self";
+        
+        print("Testing self as regular identifier:");
+        print(self);
+        
+        // Test the learn { self: this } meta-pattern for self-learning
+        print("Testing learn { self: this } meta-pattern:");
+        
+        // This should serialize 'this' object and store it in memory for self-learning
+        learn 
+        {
+            self: this,
+            context: "Testing self-learning capabilities with object serialization"
+        };
+        
+        print("Self-learning pattern executed successfully!");
+        
+        // Test that we can also use 'self' in other contexts since it's not reserved
+        var selfReference = self;
+        var selfData = 
+        {
+            selfIdentity: self,
+            selfObject: this
+        };
+        
+        print("Additional self usage tests passed!");
+    }
+}
+
+// Test the new pattern
+var agent = new SelfLearningAgent();
+agent.testSelfLearning();

@@ -113,18 +113,6 @@ class Program
                 aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
                 aiFunctions = host.Services.GetRequiredService<CxLanguage.Compiler.Modules.SemanticKernelAiFunctions>();
                 
-                // Debug: Check if TextGenerationService is registered
-                try
-                {
-                    var textGenService = host.Services.GetRequiredService<CxLanguage.StandardLibrary.AI.TextGeneration.TextGenerationService>();
-                    Console.WriteLine($"✅ DEBUG: TextGenerationService is registered and available: {textGenService.ServiceName}");
-                }
-                catch (Exception texGenEx)
-                {
-                    Console.WriteLine($"❌ DEBUG: TextGenerationService not registered: {texGenEx.Message}");
-                    Console.WriteLine($"    Exception type: {texGenEx.GetType()}");
-                }
-                
                 // Activate Azure Realtime Event Handler to ensure events are subscribed
                 try
                 {

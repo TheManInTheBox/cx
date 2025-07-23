@@ -19,7 +19,7 @@ public class AstBuilder : CxBaseVisitor<AstNode>
     {
         "class", "interface", "extends", "import", "uses", "constructor",
         "public", "private", "protected", "try", "catch", "throw", "new",
-        "null", "true", "false", "on", "emit", "self", "function",
+        "null", "true", "false", "on", "emit", "function",
         "var", "if", "else", "while", "for", "return", "in", "async", "await"
     };
 

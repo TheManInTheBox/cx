@@ -77,13 +77,23 @@ on ai.speak.request (event)
 
 on realtime.audio.response (event)
 {
+    // ✅ FIXED: Safe audio data handling without casting errors
     if (event.audioData != null)
     {
         print("🔊 Streaming audio...");
         emit audio.stream.direct { 
             audioData: event.audioData,
             format: "24kHz_16bit_mono_PCM",
-            autoPlay: true
+            autoPlay: true,
+            hasData: true
+        };
+    }
+    else
+    {
+        print("🔊 Audio response - no data available");
+        emit audio.stream.direct { 
+            hasData: false,
+            reason: "no_audio_data"
         };
     }
     

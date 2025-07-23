@@ -171,19 +171,26 @@ public class RealtimeService : CxAiServiceBase
 
     private void OnAudioReceived(object? sender, RealtimeAudioEventArgs e)
     {
-        _logger.LogDebug("Received audio chunk: {Size} bytes (Complete: {IsComplete})", e.AudioData.Length, e.IsComplete);
+        _logger.LogDebug("Enhanced audio processing: {Size} bytes (Complete: {IsComplete}) Format: {Format} SampleRate: {SampleRate}", 
+            e.AudioData.Length, e.IsComplete, e.AudioFormat, e.SampleRate);
         
-        // ✅ REAL FUNCTIONALITY: Emit CX events for Azure OpenAI audio
+        // ✅ ENHANCED: Real-time audio processing with advanced metadata
         var eventData = new Dictionary<string, object>
         {
             ["audioData"] = e.AudioData,
             ["isComplete"] = e.IsComplete,
+            ["audioFormat"] = e.AudioFormat ?? "pcm16",
+            ["sampleRate"] = e.SampleRate,
+            ["audioSize"] = e.AudioData.Length,
             ["timestamp"] = DateTimeOffset.UtcNow,
-            ["source"] = "azure_openai_realtime"
+            ["source"] = "azure_openai_realtime",
+            ["metadata"] = e.Metadata ?? new Dictionary<string, object>()
         };
         
+        // ✅ ENHANCED: Emit enhanced real-time audio event
         CxRuntimeHelper.EmitEvent("realtime.audio.response", eventData);
-        _logger.LogInformation("Emitted realtime.audio.response event with {Size} bytes", e.AudioData.Length);
+        _logger.LogInformation("Enhanced realtime.audio.response: {Size} bytes, {Format}, {SampleRate}Hz, Complete: {IsComplete}", 
+            e.AudioData.Length, e.AudioFormat, e.SampleRate, e.IsComplete);
     }
 
     private void OnErrorReceived(object? sender, RealtimeErrorEventArgs e)

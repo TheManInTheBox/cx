@@ -72,7 +72,16 @@ class VoiceAgent
     
     on realtime.audio.received (payload)
     {
-        print("🔊 Received audio response - " + payload.audioData.length + " bytes");
+        // ✅ FIXED: Safe audio data handling without .length property access
+        if (payload.audioData != null)
+        {
+            print("🔊 Received audio response - data available");
+            print("Audio data type: " + typeof(payload.audioData));
+        }
+        else
+        {
+            print("🔊 Received audio response - no data");
+        }
         
         if (payload.isComplete)
         {
