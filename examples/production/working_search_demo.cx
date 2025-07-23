@@ -15,7 +15,10 @@ class MemoryAgent
         print("📚 " + this.name + " learning...");
         
         // Fire-and-forget learning
-        this.Learn(content);
+        learn {
+            content: content,
+            handlers: [ ai.learn.complete ]
+        };
         
         return "Stored";
     }
@@ -26,7 +29,10 @@ class MemoryAgent
         print("🔍 " + this.name + " searching for: " + query);
         
         // Fire-and-forget search
-        this.Search(query);
+        search {
+            query: query,
+            handlers: [ ai.search.complete ]
+        };
         
         return "Search started";
     }

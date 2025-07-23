@@ -6,7 +6,7 @@ class TestAgent
     function testBasicObject()
     {
         // Basic object literal without handlers
-        learn, {
+        learn {
             content: "test data",
             type: "learning"
         };

@@ -46,10 +46,9 @@ class FixedTestAgent
             }
         }
         
-        emit test.complete, { 
+        emit test.complete { 
             agent: this.agentName, 
-            processed: this.processedCount + 1,
-            handlers: { any.complete, agent.task.done, search.for.work }
+            processed: this.processedCount + 1
         };
     }
     
@@ -67,7 +66,7 @@ var defaultAgent = new FixedTestAgent("DefaultTester");
 var customAgent = new FixedTestAgent("CustomTester");
 
 // Emit comprehensive test event
-emit test.event, {
+emit test.event {
     message: "Testing all fixes",
     priority: "high",
     count: 42,

@@ -1,8 +1,10 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using CxLanguage.StandardLibrary.AI.Realtime;
 using CxLanguage.Runtime;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace CxLanguage.StandardLibrary.Extensions
@@ -23,8 +25,24 @@ namespace CxLanguage.StandardLibrary.Extensions
             // Register Azure OpenAI Realtime service
             services.AddScoped<RealtimeService>();
             
-            // Register event handlers for CX integration
-            services.AddSingleton<RealtimeEventHandler>();
+            // Register event handlers for CX integration as singleton for immediate activation
+            services.AddSingleton<RealtimeEventHandler>(provider =>
+            {
+                // Force instantiation and activation when requested
+                var realtimeService = provider.GetRequiredService<RealtimeService>();
+                var eventBus = provider.GetRequiredService<ICxEventBus>();
+                var logger = provider.GetRequiredService<ILogger<RealtimeEventHandler>>();
+                var handler = new RealtimeEventHandler(realtimeService, eventBus, logger);
+                
+                // Log activation
+                try
+                {
+                    logger?.LogInformation("✅ Azure Realtime Event Handler activated via factory");
+                }
+                catch { /* Ignore logging errors */ }
+                
+                return handler;
+            });
             
             return services;
         }
@@ -37,13 +55,16 @@ namespace CxLanguage.StandardLibrary.Extensions
     {
         private readonly RealtimeService _realtimeService;
         private readonly ICxEventBus _eventBus;
+        private readonly ILogger<RealtimeEventHandler> _logger;
         
         public RealtimeEventHandler(
             RealtimeService realtimeService,
-            ICxEventBus eventBus)
+            ICxEventBus eventBus,
+            ILogger<RealtimeEventHandler> logger)
         {
             _realtimeService = realtimeService;
             _eventBus = eventBus;
+            _logger = logger;
             
             // Subscribe to CX events
             RegisterEventHandlers();
@@ -85,16 +106,33 @@ namespace CxLanguage.StandardLibrary.Extensions
             // Handle text message events
             _eventBus.Subscribe("realtime.text.send", (cxEvent) =>
             {
-                if (cxEvent.payload is System.Text.Json.JsonElement json)
+                string? text = null;
+                
+                // Handle Dictionary payload (from CX events)
+                if (cxEvent.payload is Dictionary<string, object> dict)
+                {
+                    if (dict.TryGetValue("text", out var textValue))
+                    {
+                        text = textValue?.ToString();
+                    }
+                }
+                // Handle JsonElement payload (legacy support)
+                else if (cxEvent.payload is System.Text.Json.JsonElement json)
                 {
                     if (json.TryGetProperty("text", out var textProperty))
                     {
-                        var text = textProperty.GetString();
-                        if (!string.IsNullOrEmpty(text))
-                        {
-                            Task.Run(async () => await _realtimeService.SendTextAsync(text));
-                        }
+                        text = textProperty.GetString();
                     }
+                }
+                
+                if (!string.IsNullOrEmpty(text))
+                {
+                    _logger.LogInformation("🎯 CX EVENT RECEIVED: realtime.text.send with text: {Text}", text);
+                    Task.Run(async () => await _realtimeService.SendTextAsync(text));
+                }
+                else
+                {
+                    _logger.LogWarning("❌ realtime.text.send event received but no text found in payload");
                 }
             });
 

@@ -1,4 +1,5 @@
 using CxLanguage.StandardLibrary.Core;
+using CxLanguage.Runtime;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.SemanticKernel;
@@ -78,6 +79,21 @@ public class RealtimeService : CxAiServiceBase
             
             await _apiClient.ConfigureSessionAsync(config, cancellationToken);
             _logger.LogInformation("Azure OpenAI Realtime API connected and configured successfully");
+            
+            // ✅ REAL FUNCTIONALITY: Emit CX events for session creation
+            var sessionEventData = new Dictionary<string, object>
+            {
+                ["status"] = "session_created",
+                ["modalities"] = config.Modalities,
+                ["instructions"] = config.Instructions,
+                ["voice"] = config.Voice,
+                ["temperature"] = config.Temperature,
+                ["timestamp"] = DateTimeOffset.UtcNow,
+                ["source"] = "azure_openai_realtime"
+            };
+            
+            CxRuntimeHelper.EmitEvent("realtime.session.created", sessionEventData);
+            _logger.LogInformation("Emitted realtime.session.created event");
         }
         
         return connected;
@@ -140,30 +156,81 @@ public class RealtimeService : CxAiServiceBase
     {
         _logger.LogDebug("Received message: {Content} (Complete: {IsComplete})", e.Content, e.IsComplete);
         
-        // Here you can emit CX events or handle the message as needed
-        // For now, just log the received content
+        // ✅ REAL FUNCTIONALITY: Emit CX events for Azure OpenAI responses
+        var eventData = new Dictionary<string, object>
+        {
+            ["content"] = e.Content,
+            ["isComplete"] = e.IsComplete,
+            ["timestamp"] = DateTimeOffset.UtcNow,
+            ["source"] = "azure_openai_realtime"
+        };
+        
+        CxRuntimeHelper.EmitEvent("realtime.text.response", eventData);
+        _logger.LogInformation("Emitted realtime.text.response event with content: {Content}", e.Content);
     }
 
     private void OnAudioReceived(object? sender, RealtimeAudioEventArgs e)
     {
         _logger.LogDebug("Received audio chunk: {Size} bytes (Complete: {IsComplete})", e.AudioData.Length, e.IsComplete);
         
-        // Here you can handle audio playback or emit CX audio events
+        // ✅ REAL FUNCTIONALITY: Emit CX events for Azure OpenAI audio
+        var eventData = new Dictionary<string, object>
+        {
+            ["audioData"] = e.AudioData,
+            ["isComplete"] = e.IsComplete,
+            ["timestamp"] = DateTimeOffset.UtcNow,
+            ["source"] = "azure_openai_realtime"
+        };
+        
+        CxRuntimeHelper.EmitEvent("realtime.audio.response", eventData);
+        _logger.LogInformation("Emitted realtime.audio.response event with {Size} bytes", e.AudioData.Length);
     }
 
     private void OnErrorReceived(object? sender, RealtimeErrorEventArgs e)
     {
         _logger.LogError("Azure OpenAI Realtime API error: {Error}", e.Error);
+        
+        // ✅ REAL FUNCTIONALITY: Emit CX events for Azure OpenAI errors
+        var eventData = new Dictionary<string, object>
+        {
+            ["error"] = e.Error,
+            ["timestamp"] = DateTimeOffset.UtcNow,
+            ["source"] = "azure_openai_realtime"
+        };
+        
+        CxRuntimeHelper.EmitEvent("realtime.error", eventData);
     }
 
     private void OnConnected(object? sender, EventArgs e)
     {
         _logger.LogInformation("Connected to Azure OpenAI Realtime API");
+        
+        // ✅ REAL FUNCTIONALITY: Emit CX events for Azure OpenAI connection
+        var eventData = new Dictionary<string, object>
+        {
+            ["status"] = "connected",
+            ["timestamp"] = DateTimeOffset.UtcNow,
+            ["source"] = "azure_openai_realtime"
+        };
+        
+        CxRuntimeHelper.EmitEvent("realtime.connected", eventData);
+        _logger.LogInformation("Emitted realtime.connected event");
     }
 
     private void OnDisconnected(object? sender, EventArgs e)
     {
         _logger.LogInformation("Disconnected from Azure OpenAI Realtime API");
+        
+        // ✅ REAL FUNCTIONALITY: Emit CX events for Azure OpenAI disconnection
+        var eventData = new Dictionary<string, object>
+        {
+            ["status"] = "disconnected",
+            ["timestamp"] = DateTimeOffset.UtcNow,
+            ["source"] = "azure_openai_realtime"
+        };
+        
+        CxRuntimeHelper.EmitEvent("realtime.disconnected", eventData);
+        _logger.LogInformation("Emitted realtime.disconnected event");
     }
 
     /// <summary>

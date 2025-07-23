@@ -1,0 +1,53 @@
+// 🎯 PROOF OF REAL AZURE OPENAI RESPONSES - Direct Test
+// This test proves actual AI text generation from Azure OpenAI Realtime API
+
+class DirectResponseTest
+{
+    name: string = "DirectTest";
+    
+    on realtime.connected (event)
+    {
+        print("🎯 REAL: Azure connected - creating session");
+        emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview", test: "direct" };
+    }
+    
+    on realtime.session.created (event)
+    {
+        print("🎯 REAL: Session ready - sending direct question");
+        emit realtime.text.send { 
+            text: "What is 2+2? Please give a simple answer.", 
+            deployment: "gpt-4o-mini-realtime-preview" 
+        };
+    }
+    
+    on realtime.text.response (event)
+    {
+        print("🎯 REAL AI RESPONSE RECEIVED:");
+        print("Content: " + event.content);
+        print("Complete: " + event.isComplete);
+        print("Source: " + event.source);
+        print("🎯 This proves Azure OpenAI is generating REAL responses!");
+        
+        if (event.isComplete)
+        {
+            emit test.success { message: "Real AI response confirmed", content: event.content };
+        }
+    }
+    
+    on realtime.error (event)
+    {
+        print("❌ Azure OpenAI Error: " + event.error);
+    }
+}
+
+on test.success (event)
+{
+    print("✅ SUCCESS: Real Azure OpenAI functionality proven!");
+    print("✅ AI Generated: " + event.content);
+}
+
+// Start the test
+var test = new DirectResponseTest();
+print("🎯 Starting direct Azure OpenAI response test...");
+emit realtime.connect { test: "direct", deployment: "gpt-4o-mini-realtime-preview" };
+print("⏳ Waiting for real AI response to '2+2' question...");

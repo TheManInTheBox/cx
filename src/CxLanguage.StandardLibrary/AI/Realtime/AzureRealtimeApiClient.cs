@@ -164,10 +164,10 @@ public class AzureRealtimeApiClient : IDisposable
                     prefix_padding_ms = config.TurnDetection.PrefixPaddingMs,
                     silence_duration_ms = config.TurnDetection.SilenceDurationMs
                 } : null,
-                tools = config.Tools,
-                tool_choice = config.ToolChoice,
+                tools = config.Tools ?? new object[0],
+                tool_choice = config.ToolChoice ?? "auto",
                 temperature = config.Temperature,
-                max_response_output_tokens = config.MaxResponseOutputTokens
+                max_response_output_tokens = config.MaxResponseOutputTokens ?? 4096
             }
         };
 
@@ -206,6 +206,8 @@ public class AzureRealtimeApiClient : IDisposable
     /// </summary>
     public async Task<bool> SendTextAsync(string text, CancellationToken cancellationToken = default)
     {
+        _logger.LogInformation("🎯 SENDING TEXT TO AZURE: {Text}", text);
+        
         var textMessage = new
         {
             type = "conversation.item.create",
@@ -220,6 +222,7 @@ public class AzureRealtimeApiClient : IDisposable
             }
         };
 
+        _logger.LogInformation("🎯 SENDING conversation.item.create MESSAGE");
         var success = await SendMessageAsync(textMessage, cancellationToken);
         if (success)
         {
@@ -229,9 +232,11 @@ public class AzureRealtimeApiClient : IDisposable
                 type = "response.create"
             };
             
+            _logger.LogInformation("🎯 SENDING response.create MESSAGE TO TRIGGER AI RESPONSE");
             return await SendMessageAsync(responseMessage, cancellationToken);
         }
 
+        _logger.LogError("❌ FAILED TO SEND conversation.item.create MESSAGE");
         return false;
     }
 
@@ -376,10 +381,10 @@ public class AzureRealtimeApiClient : IDisposable
                     });
                     break;
 
-                case "response.text.delta":
-                    if (root.TryGetProperty("delta", out var textDeltaProperty))
+                case "response.audio_transcript.delta":
+                    if (root.TryGetProperty("delta", out var transcriptDeltaProperty))
                     {
-                        var text = textDeltaProperty.GetString();
+                        var text = transcriptDeltaProperty.GetString();
                         if (!string.IsNullOrEmpty(text))
                         {
                             MessageReceived?.Invoke(this, new RealtimeMessageEventArgs
@@ -392,13 +397,17 @@ public class AzureRealtimeApiClient : IDisposable
                     }
                     break;
 
-                case "response.text.done":
-                    MessageReceived?.Invoke(this, new RealtimeMessageEventArgs
+                case "response.audio_transcript.done":
+                    if (root.TryGetProperty("transcript", out var transcriptProperty))
                     {
-                        Content = "",
-                        IsComplete = true,
-                        MessageType = "text"
-                    });
+                        var fullTranscript = transcriptProperty.GetString();
+                        MessageReceived?.Invoke(this, new RealtimeMessageEventArgs
+                        {
+                            Content = fullTranscript ?? "",
+                            IsComplete = true,
+                            MessageType = "text"
+                        });
+                    }
                     break;
 
                 case "error":
@@ -426,19 +435,20 @@ public class AzureRealtimeApiClient : IDisposable
                     break;
 
                 case "conversation.item.created":
-                    _logger.LogDebug("Conversation item created");
+                    _logger.LogInformation("🎯 AZURE CONFIRMED: Conversation item created");
                     break;
 
                 case "response.created":
-                    _logger.LogDebug("Response generation started");
+                    _logger.LogInformation("🎯 AZURE CONFIRMED: Response generation started");
                     break;
 
                 case "response.done":
-                    _logger.LogDebug("Response generation completed");
+                    _logger.LogInformation("🎯 AZURE CONFIRMED: Response generation completed");
                     break;
 
                 default:
-                    _logger.LogDebug("Unhandled message type: {MessageType}", messageType);
+                    _logger.LogWarning("🔍 UNHANDLED MESSAGE TYPE: {MessageType}", messageType);
+                    _logger.LogWarning("🔍 FULL MESSAGE: {Message}", messageJson);
                     break;
             }
         }

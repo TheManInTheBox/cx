@@ -1,0 +1,46 @@
+// Azure OpenAI Realtime API Phase 1 Demo
+// Tests the existing scaffolding and establishes WebSocket foundation
+
+class RealtimeTestAgent
+{
+    name: string = "RealtimeAgent";
+    
+    function testRealtimeConnection()
+    {
+        print("Testing Azure OpenAI Realtime API scaffolding...");
+        
+        // Test the existing realtime services that are already scaffolded
+        communicate { 
+            message: "Testing realtime communication", 
+            handlers: [ realtime.connected, realtime.response ]
+        };
+        
+        print("Realtime test initiated");
+    }
+    
+    on realtime.connected (event)
+    {
+        print("✅ Realtime connection established!");
+        print("Connection details:");
+        print(event);
+    }
+    
+    on realtime.response (event)
+    {
+        print("✅ Realtime response received!");
+        print("Response: " + event.message);
+        print(event);
+    }
+    
+    on realtime.error (event)
+    {
+        print("❌ Realtime error occurred:");
+        print(event);
+    }
+}
+
+// Create test agent and test the connection
+var realtimeAgent = new RealtimeTestAgent();
+realtimeAgent.testRealtimeConnection();
+
+emit user.input { message: "Test realtime scaffolding", type: "realtime_test" };

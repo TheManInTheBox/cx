@@ -6,12 +6,12 @@ class TestAgent
     function testWithHandlers()
     {
         // AI service call with handlers
-        learn, {
+        learn {
             content: "test data",
-            handlers: {
+            handlers: [
                 any.complete,
                 agent.task.done
-            }
+            ]
         };
         
         print("Test with handlers completed");

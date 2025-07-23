@@ -25,7 +25,7 @@ class EventProcessor
         if (event.priority == "high")
         {
             print("\n🚨 HIGH PRIORITY EVENT DETECTED");
-            emit alert.priority.high, { 
+            emit alert.priority.high { 
                 processor: this.name,
                 originalEvent: event.name,
                 timestamp: event.timestamp
@@ -52,7 +52,7 @@ on any.any.high (event)
 var processor = new EventProcessor();
 
 // Test with complex dictionary data
-emit data.received, {
+emit data.received {
     id: "evt_001",
     type: "sensor_reading", 
     priority: "high",

@@ -9,7 +9,15 @@ This document provides development guidance and standards for the CX Language pl
 - **Version**: 1.0.0 (July 2025)
 
 ## TOP PRIORITY 100%
-Instrument everything, lots of debug and runtime trace. Trace cx source code line to executing IL is a must. Use the cx language to orchestrate a team of agents to assist you in building the CX Language platform. The agents should be able to handle tasks such as code generation, testing, and documentation. You are the manager of the team and should provide clear instructions to the agents. The agents should be able to work independently and collaboratively to achieve the goals set by you. This is how you will build the CX Language platform.
+- ABSOLUTLY NO SIMULATIONS!!!! WORKING CODE ONLY!!!!
+- PRINTED OUTPUT DOES NOT CONFIRM FUNCTIONALITY, ONLY DEBUG OUTPUT DOES
+- Always check for existing scaffolding before starting a new feature.
+- Instrument everything, lots of debug and runtime trace. Trace cx source code line to executing IL is a must. 
+- Use the cx language to orchestrate a team of agents to assist you in building the Cx Language platform. 
+- The agents should be able to handle tasks such as code generation, testing, and documentation. 
+- You are the manager of the team and should provide clear instructions to the agents. 
+- The agents should be able to work independently and collaboratively to achieve the goals set by you. 
+- This is how we will build the Cx Language platform.
 
 ## Development Standards
 - ✅ **ALWAYS** use the latest Cx Language features and syntax defined in cx.instructions.md

@@ -11,4 +11,4 @@ class EventTestAgent
 }
 
 var agent = new EventTestAgent();
-emit user.input, { message: "Hello World", type: "greeting" };
+emit user.input { message: "Hello World", type: "greeting" };

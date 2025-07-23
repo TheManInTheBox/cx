@@ -1,0 +1,92 @@
+// Azure OpenAI Realtime API Connection Test
+// Tests actual WebSocket connection to Azure OpenAI Realtime API
+
+class RealtimeConnectionAgent
+{
+    name: string = "RealtimeConnectionAgent";
+    
+    function connectToRealtimeAPI()
+    {
+        print("🔌 Starting Azure OpenAI Realtime API connection test...");
+        
+        // Emit a connection request event
+        emit realtime.connect.request { 
+            agent: this.name,
+            timestamp: "2025-07-22"
+        };
+        
+        print("Connection request sent to realtime services");
+    }
+    
+    function testVoiceCapabilities()
+    {
+        print("🎤 Testing voice capabilities...");
+        
+        // Test audio input simulation
+        emit realtime.audio.input { 
+            agent: this.name,
+            audioData: "simulated-audio-pcm-data",
+            format: "pcm16",
+            sampleRate: 16000
+        };
+        
+        // Test voice session start
+        emit realtime.session.start {
+            agent: this.name,
+            sessionType: "voice",
+            voice: "alloy"
+        };
+    }
+    
+    on realtime.connected (event)
+    {
+        print("✅ Successfully connected to Azure OpenAI Realtime API!");
+        print("Connection info:");
+        print(event);
+        
+        // Test voice capabilities after connection
+        this.testVoiceCapabilities();
+    }
+    
+    on realtime.session.started (event)
+    {
+        print("✅ Voice session started successfully!");
+        print("Session details:");
+        print(event);
+    }
+    
+    on realtime.audio.received (event)
+    {
+        print("🔊 Audio response received from Azure OpenAI!");
+        print("Audio details:");
+        print(event);
+    }
+    
+    on realtime.error (event)
+    {
+        print("❌ Realtime API error:");
+        print("Error type: " + event.type);
+        print("Error message: " + event.message);
+        print(event);
+    }
+    
+    on realtime.disconnected (event)
+    {
+        print("🔌 Disconnected from Azure OpenAI Realtime API");
+        print(event);
+    }
+}
+
+// Test the actual Azure OpenAI Realtime API connection
+print("=== Azure OpenAI Realtime API Phase 1 Connection Test ===");
+
+var connectionAgent = new RealtimeConnectionAgent();
+connectionAgent.connectToRealtimeAPI();
+
+// Also test with communication service to see if it triggers realtime
+print("\n=== Testing Communication Service Integration ===");
+
+communicate { 
+    message: "Hello Azure OpenAI Realtime API", 
+    handlers: [ realtime.session.started, realtime.audio.received ]
+};

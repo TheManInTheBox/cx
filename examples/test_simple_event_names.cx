@@ -3,7 +3,7 @@ class TestAgent
 {
     function test()
     {
-        learn, {
+        learn {
             data: "test data",
             handlers: [ complete, done, finished ]
         };

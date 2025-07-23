@@ -124,6 +124,18 @@ class Program
                     Console.WriteLine($"❌ DEBUG: TextGenerationService not registered: {texGenEx.Message}");
                     Console.WriteLine($"    Exception type: {texGenEx.GetType()}");
                 }
+                
+                // Activate Azure Realtime Event Handler to ensure events are subscribed
+                try
+                {
+                    var realtimeHandler = host.Services.GetRequiredService<CxLanguage.StandardLibrary.Extensions.RealtimeEventHandler>();
+                    Console.WriteLine($"✅ DEBUG: Azure Realtime Event Handler activated successfully");
+                }
+                catch (Exception realtimeEx)
+                {
+                    Console.WriteLine($"❌ DEBUG: Azure Realtime Event Handler not available: {realtimeEx.Message}");
+                    Console.WriteLine($"    Exception type: {realtimeEx.GetType()}");
+                }
             }
             catch (Exception ex)
             {
