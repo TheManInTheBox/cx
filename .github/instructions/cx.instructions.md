@@ -6,7 +6,7 @@
 
 ### Formatting Rules
 ```cx
-// ❌ NEVER use K&R brackets in CX
+// ❌ NEVER use traditional if statements in CX
 if (condition) {
     doSomething();
 }
@@ -14,27 +14,31 @@ if (condition) {
 // ✅ Console output - ALWAYS use print()
 print("Hello World");
 
-// ✅ Allman-style brackets - MANDATORY in CX Language
-if (condition)
-{
-    doSomething();
-}
+// ✅ Cognitive boolean logic with Allman-style brackets - MANDATORY in CX Language
+is { 
+    context: "Decision context description",
+    evaluate: "What is being evaluated",
+    data: { condition: true },
+    handlers: [ decision.ready ]
+};  // ✅ Semicolon ends the decision - triggers events only
 ```
 
 ## Class and Member Declaration
 3. [Syntax Basics](#syntax-basics)
-4. [Class and Member Declaration](#class-and-member-declaration)
-5. [Event System](#event-system)
-6. [Service Integration](#service-integration)
-7. [Asynchronous Programming](#asynchronous-programming)
-8. [Loops and Iteration](#loops-and-iteration)
-9. [Reserved Event Names](#reserved-event-names)
-10. [Code Examples](#code-examples)
+4. [Cognitive Boolean Logic](#cognitive-boolean-logic)
+5. [Class and Member Declaration](#class-and-member-declaration)
+6. [Event System](#event-system)
+7. [Service Integration](#service-integration)
+8. [Asynchronous Programming](#asynchronous-programming)
+9. [Loops and Iteration](#loops-and-iteration)
+10. [Reserved Event Names](#reserved-event-names)
+11. [Code Examples](#code-examples)
 
 ## Introduction
 CX Language is an event-driven programming language designed for AI agent orchestration with built-in cognitive capabilities. This document provides the official syntax rules and coding patterns for CX Language development.
 
 **Key Features:**
+- **Cognitive Boolean Logic**: `is { }` syntax for AI-driven decision-making with contextual evaluation
 - **Advanced Event System**: Full event parameter property access with `event.property` syntax
 - **Enhanced Handlers Pattern**: Custom payload support with `handlers: [ event.name { custom: "data" } ]`
 - **Voice Processing**: Azure OpenAI Realtime API integration via event system (`emit realtime.connect`, `realtime.text.send`, `realtime.audio.response`)
@@ -67,7 +71,7 @@ The following rules are mandatory for all CX Language code:
 - **Clean Field Filtering**: Internal fields (ServiceProvider, Logger) are automatically hidden
 - **Debugging Ready**: Perfect for inspecting complex agent states and data structures
 - **Example Output**: `{"name": "Alice", "age": 30, "data": {"title": "Sample", "active": true}}`
-- **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this with **Automatic Object Serialization**. Any Cx object, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
+- **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this - **Automatic Object Serialization**. Any Cx object, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
 
 ### Variable Declarations
 - Use `var` keyword for local variables inside methods/constructors
@@ -158,12 +162,13 @@ The following event name parts are reserved by the CX Language system and have s
 ### Basic Syntax Examples
 
 ```cx
-// Basic formatting and syntax
-if (condition)
-{
-    print("Hello World");
-    doSomething();
-}
+// Basic formatting and syntax - using cognitive boolean logic
+is { 
+    context: "Should the system proceed with operation?",
+    evaluate: "System readiness check",
+    data: { condition: true },
+    handlers: [ system.decision.ready ]
+};  // ✅ Semicolon ends the decision - triggers events only
 
 // Variable declarations
 var globalCounter = 0;
@@ -515,6 +520,172 @@ on powershell.results (payload)
 - **Event Payloads**: Event data is stored as dictionaries, making `for (var item in event.payload)` possible
 - **Runtime Detection**: Compiler automatically detects dictionary vs array and uses appropriate iteration strategy
 - **Type Safety**: Loop variables are dynamically typed, use `typeof()` for type checking
+
+## Cognitive Boolean Logic
+
+CX Language features intelligent decision-making through cognitive boolean logic using the `is { }` syntax. This replaces traditional `if (condition)` statements with AI-driven contextual evaluation.
+
+### Cognitive Boolean Syntax
+```cx
+// ❌ Traditional boolean logic (avoid in CX)
+if (event.reason.indexOf(this.name) >= 0)
+{
+    doSomething();
+}
+
+// ✅ Cognitive boolean logic - AI-driven decision making
+is { 
+    context: "Cognitive decision: Should agent proceed?",
+    evaluate: event.reason + " contains agent name " + this.name,
+    data: { eventReason: event.reason, agentName: this.name },
+    handlers: [ decision.ready ]
+};  // ✅ Semicolon ends the decision - triggers events only
+```
+
+### Cognitive Boolean Features
+- **Contextual Evaluation**: Each `is { }` block includes descriptive context for the decision
+- **Natural Language Logic**: Uses descriptive evaluation criteria instead of low-level operations
+- **Rich Data Context**: Provides structured information for cognitive evaluation
+- **Event-Driven Results**: Can emit events via `handlers` for further processing
+- **AI-Native Decision Making**: Decisions can learn and adapt over time
+
+### Cognitive Boolean Pattern Structure
+
+The cognitive boolean pattern follows a structured format for AI-driven decision making:
+
+```cx
+is { 
+    context: "Clear description of the decision being made",
+    evaluate: "Natural language evaluation criteria",
+    data: { key: value, contextData: data },
+    handlers: [ event.name, another.event { custom: "payload" } ]
+};  // ✅ Semicolon ends the decision - triggers handlers only
+```
+
+#### Pattern Components
+- **`context`**: Descriptive text explaining the decision context
+- **`evaluate`**: Natural language evaluation criteria
+- **`data`**: Structured data object providing context for the decision
+- **`handlers`**: Array of events to trigger when evaluation is true
+
+### Cognitive Boolean Examples
+
+```cx
+class SmartAgent
+{
+    name: string = "Alice";
+    
+    on user.message (event)
+    {
+        // ✅ Cognitive decision about message relevance
+        is { 
+            context: "Should this agent respond to the user message?",
+            evaluate: "Message relevance check for " + this.name,
+            data: { message: event.text, agent: this.name, priority: event.priority },
+            handlers: [ response.decision.made, message.evaluated { urgency: "high" } ]
+        };  // ✅ Event-only execution - no code block
+    }
+    
+    // ✅ Event handler for processing the decision result
+    on response.decision.made (event)
+    {
+        print("Processing relevant message for " + this.name);
+        print("Message: " + event.message);
+        print("Priority: " + event.priority);
+    }
+    
+    on audio.response (event)
+    {
+        // ✅ Cognitive decision about audio data processing
+        is { 
+            context: "Is audio data available for processing?",
+            evaluate: "Audio data presence check for " + this.name,
+            data: { audioData: event.audioData, agent: this.name },
+            handlers: [ audio.data.evaluated ]
+        };  // ✅ Event-only execution
+        
+        // ✅ Cognitive decision about completion status
+        is { 
+            context: "Is the audio processing complete?",
+            evaluate: "Completion status evaluation for " + this.name,
+            data: { isComplete: event.isComplete, agent: this.name },
+            handlers: [ completion.evaluated ]
+        };  // ✅ Event-only execution
+    }
+    
+    // ✅ Event handlers for processing cognitive decisions
+    on audio.data.evaluated (event)
+    {
+        print("Processing audio data for " + this.name);
+        emit audio.process { data: event.audioData, agent: this.name };
+    }
+    
+    on completion.evaluated (event)
+    {
+        print("Audio processing complete for " + this.name);
+        emit task.finished { agent: this.name, task: "audio_processing" };
+    }
+}
+```
+
+### Cognitive Boolean Rules
+- **Replace Traditional If**: Use `is { }` instead of `if (condition)` for all decision logic
+- **Context Required**: Always provide meaningful context describing the decision being made
+- **Descriptive Evaluation**: Use natural language descriptions instead of technical operations
+- **Data Structure**: Include relevant data for the cognitive evaluation
+- **Event Integration**: Use `handlers` to emit events based on cognitive decisions
+- **AI-First Logic**: Design decisions that can evolve and improve over time
+
+### Cognitive Boolean Behavior
+- **When Evaluation is True**: The `handlers` are called
+- **When Evaluation is False**: The `handlers` are NOT called
+- **Event-Only Execution**: Unlike traditional `if` statements, cognitive boolean logic only triggers events, not code blocks
+- **Pure Event-Driven**: All logic flows through the event system for maximum flexibility and AI integration
+
+### Example Behavior Pattern
+```cx
+on preparation.complete (event)
+{
+    is { 
+        context: "Cognitive decision: Should " + this.name + " proceed to speech phase?",
+        evaluate: event.reason + " contains agent name " + this.name,
+        data: { eventReason: event.reason, agentName: this.name, timing: event.actualDurationMs },
+        handlers: [ agent.decision.ready ]  // ✅ Called ONLY if evaluation is true
+    };  // ✅ Note: semicolon ends the cognitive decision - no code block
+}
+```
+
+### Cognitive Boolean Logic Pattern
+
+The cognitive boolean logic pattern is a fundamental CX Language feature that replaces traditional `if` statements with AI-driven decision making:
+
+```cx
+is { 
+    context: "Clear description of the decision being made",
+    evaluate: "Natural language evaluation criteria",
+    data: { key: value, contextData: data },
+    handlers: [ event.name, another.event { custom: "payload" } ]
+};  // ✅ Semicolon ends the decision - triggers handlers only
+```
+
+#### Pattern Behavior
+- **When Evaluation is True**: The `handlers` are called
+- **When Evaluation is False**: The `handlers` are NOT called
+- **Event-Only Execution**: Unlike traditional `if` statements, cognitive boolean logic only triggers events, not code blocks
+- **Pure Event-Driven**: All logic flows through the event system for maximum flexibility and AI integration
+
+#### Example Behavior Pattern
+```cx
+on preparation.complete (event)
+{
+    is { 
+        context: "Cognitive decision: Should " + this.name + " proceed to speech phase?",
+        evaluate: event.reason + " contains agent name " + this.name,
+        data: { eventReason: event.reason, agentName: this.name, timing: event.actualDurationMs },
+        handlers: [ agent.decision.ready ]  // ✅ Called ONLY if evaluation is true
+    };  // ✅ Note: semicolon ends the cognitive decision - no code block
+}
+```
 
 ## Event System
 
