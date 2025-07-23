@@ -1,9 +1,12 @@
 using CxLanguage.StandardLibrary.Core;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.SemanticKernel;
-using Microsoft.KernelMemory;
 using System.ComponentModel;
+using CxLanguage.Runtime;
+using System.Threading.Tasks;
+using System;
+using System.Collections.Generic;
+using Azure.AI.OpenAI;
 
 namespace CxLanguage.StandardLibrary.AI.Wait;
 
@@ -11,29 +14,17 @@ namespace CxLanguage.StandardLibrary.AI.Wait;
 /// Await service for CX standard library
 /// Provides thread sleep/delay capabilities for proper waiting behavior
 /// </summary>
-public class AwaitService : AiServiceBase
+public class AwaitService : ModernAiServiceBase
 {
-    private readonly IKernelMemory? _memory;
-
     /// <summary>
     /// Initializes a new instance of the AwaitService
     /// </summary>
-    /// <param name="serviceProvider">Service provider for dependency injection</param>
     /// <param name="logger">Logger instance</param>
+    /// <param name="serviceProvider">Service provider for dependency injection</param>
     public AwaitService(IServiceProvider serviceProvider, ILogger<AwaitService> logger) 
         : base(serviceProvider, logger)
     {
-        // Try to get Kernel Memory service for vector database operations
-        _memory = serviceProvider.GetService<IKernelMemory>();
-        
-        if (_memory != null)
-        {
-            _logger.LogInformation("✅ AwaitService initialized with Kernel Memory support");
-        }
-        else
-        {
-            _logger.LogWarning("⚠️ AwaitService initialized without Kernel Memory - vector learning disabled");
-        }
+        _logger.LogInformation("✅ Modern AwaitService initialized with Microsoft.Extensions.AI architecture");
     }
 
     /// <summary>
@@ -53,7 +44,6 @@ public class AwaitService : AiServiceBase
     /// <param name="context">Context information for the wait</param>
     /// <param name="durationMs">Duration in milliseconds (default: 2000ms)</param>
     /// <returns>Await result with timing information</returns>
-    [KernelFunction]
     [Description("Await/sleep for a specified duration with optional AI decision making")]
     public async Task<AwaitResult> AwaitAsync(
         [Description("Reason for waiting")] string reason,
@@ -73,16 +63,12 @@ public class AwaitService : AiServiceBase
             result.StartTime = startTime;
 
             // Emit waiting started event to prevent audio streaming
-            var eventBus = GetEventBus();
-            if (eventBus != null)
-            {
-                await eventBus.EmitAsync("agent.waiting.started", new { 
-                    reason = reason, 
-                    context = context, 
-                    durationMs = durationMs,
-                    startTime = startTime
-                });
-            }
+            await Hub.EmitAsync("agent.waiting.started", new { 
+                reason = reason, 
+                context = context, 
+                durationMs = durationMs,
+                startTime = startTime
+            });
 
             // Actual thread sleep/delay
             await Task.Delay(durationMs);
@@ -96,16 +82,10 @@ public class AwaitService : AiServiceBase
             _logger.LogInformation("✅ AWAIT: Completed wait - Actual duration: {ActualDuration}ms", result.ActualDurationMs);
 
             // Emit waiting completed event to re-enable audio streaming
-            if (eventBus != null)
-            {
-                await eventBus.EmitAsync("agent.waiting.completed", result);
-            }
+            await Hub.EmitAsync("agent.waiting.completed", result);
 
             // Emit completion event via event bus
-            if (eventBus != null)
-            {
-                await eventBus.EmitAsync("await.completed", result);
-            }
+            await Hub.EmitAsync("await.completed", result);
         }
         catch (Exception ex)
         {
@@ -119,17 +99,10 @@ public class AwaitService : AiServiceBase
             _logger.LogError(ex, "❌ AWAIT: Wait failed - {Error}", ex.Message);
 
             // Emit waiting failed event to re-enable audio streaming
-            var eventBus = GetEventBus();
-            if (eventBus != null)
-            {
-                await eventBus.EmitAsync("agent.waiting.failed", result);
-            }
+            await Hub.EmitAsync("agent.waiting.failed", result);
 
             // Emit error event via event bus
-            if (eventBus != null)
-            {
-                await eventBus.EmitAsync("await.error", result);
-            }
+            await Hub.EmitAsync("await.error", result);
         }
 
         return result;
@@ -143,7 +116,6 @@ public class AwaitService : AiServiceBase
     /// <param name="minDurationMs">Minimum duration in milliseconds</param>
     /// <param name="maxDurationMs">Maximum duration in milliseconds</param>
     /// <returns>Await result with AI-determined timing</returns>
-    [KernelFunction]
     [Description("Smart await that uses AI to determine optimal wait duration")]
     public async Task<AwaitResult> SmartAwaitAsync(
         [Description("Reason for waiting")] string reason,
@@ -158,53 +130,23 @@ public class AwaitService : AiServiceBase
         {
             _logger.LogInformation("🧠 SMART AWAIT: Determining optimal wait duration - Reason: {Reason}", reason);
 
-            // First, query vector memory for similar wait patterns if available
-            string contextualInfo = "";
-            if (_memory != null)
-            {
-                try
-                {
-                    _logger.LogInformation("🔍 Querying vector memory for similar wait patterns");
-                    var memoryQuery = $"await wait duration pattern reason: {reason} context: {context}";
-                    var searchResult = await _memory.SearchAsync(memoryQuery, limit: 3, minRelevance: 0.7);
-                    
-                    if (searchResult.Results.Any())
-                    {
-                        var patterns = searchResult.Results.Select(r => 
-                            r.Partitions.FirstOrDefault()?.Text ?? "").Where(t => !string.IsNullOrEmpty(t));
-                        contextualInfo = string.Join("; ", patterns);
-                        _logger.LogInformation("✅ Found {Count} similar wait patterns in memory", searchResult.Results.Count());
-                    }
-                    else
-                    {
-                        _logger.LogInformation("ℹ️ No similar wait patterns found in memory");
-                    }
-                }
-                catch (Exception memEx)
-                {
-                    _logger.LogWarning(memEx, "⚠️ Failed to query vector memory for wait patterns");
-                }
-            }
-
             // Use AI to determine optimal wait time with memory context
             var aiPrompt = $"Given the reason '{reason}' and context '{context}', " +
-                          $"determine an optimal wait duration between {minDurationMs} and {maxDurationMs} milliseconds. ";
-            
-            if (!string.IsNullOrEmpty(contextualInfo))
-            {
-                aiPrompt += $"Consider these similar patterns from memory: {contextualInfo}. ";
-            }
-            
-            aiPrompt += "Respond with just a number representing milliseconds.";
+                          $"determine an optimal wait duration between {minDurationMs} and {maxDurationMs} milliseconds. " +
+                          "Respond with just a number representing milliseconds.";
 
-            // Use Kernel Memory AskAsync for AI request
             string aiDurationText = "";
-            if (_memory != null)
+            if (_chatClient != null)
             {
                 try
                 {
-                    var aiResponse = await _memory.AskAsync(aiPrompt);
-                    aiDurationText = aiResponse.Result?.Trim() ?? "";
+                    var messages = new List<ChatMessage> { new SystemChatMessage(aiPrompt) };
+                    var response = await _chatClient.CompleteChatAsync(messages);
+                    var responseValue = response.Value;
+                    if (responseValue != null && responseValue.Choices.Count > 0)
+                    {
+                        aiDurationText = responseValue.Choices[0].Message.Content;
+                    }
                     _logger.LogInformation("🤖 AI response: {Response}", aiDurationText);
                 }
                 catch (Exception aiEx)
@@ -216,7 +158,7 @@ public class AwaitService : AiServiceBase
             }
             else
             {
-                _logger.LogWarning("🤖 Kernel Memory not available, using fallback duration");
+                _logger.LogWarning("🤖 ChatClient not available, using fallback duration");
                 var fallbackDuration = (minDurationMs + maxDurationMs) / 2;
                 return await AwaitAsync(reason, context, fallbackDuration);
             }
@@ -233,25 +175,6 @@ public class AwaitService : AiServiceBase
             var finalDuration = Math.Max(minDurationMs, Math.Min(maxDurationMs, aiDuration));
 
             _logger.LogInformation("🎯 SMART AWAIT: AI determined duration: {Duration}ms", finalDuration);
-
-            // Store this wait pattern in vector memory for future learning
-            if (_memory != null)
-            {
-                try
-                {
-                    var waitPattern = $"Await pattern: reason='{reason}', context='{context}', " +
-                                    $"duration={finalDuration}ms, range={minDurationMs}-{maxDurationMs}ms, " +
-                                    $"timestamp={DateTimeOffset.UtcNow:yyyy-MM-dd HH:mm:ss}";
-                    
-                    var documentId = $"await_pattern_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
-                    await _memory.ImportTextAsync(waitPattern, documentId);
-                    _logger.LogInformation("📝 Stored wait pattern in vector memory: {DocumentId}", documentId);
-                }
-                catch (Exception storeEx)
-                {
-                    _logger.LogWarning(storeEx, "⚠️ Failed to store wait pattern in vector memory");
-                }
-            }
 
             // Perform the actual await
             return await AwaitAsync(reason, context, finalDuration);

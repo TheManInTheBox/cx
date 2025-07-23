@@ -2,33 +2,10 @@
 
 ## Table of Contents
 1. [Introduction](#introduction)
-2. [Core Language Rules](#co## Syntax Basics
-
-### Formatting Rules
-```cx
-// ❌ NEVER use traditional if statements in CX
-if (condition) {
-    doSomething();
-}
-
-// ❌ NEVER use \n or escape sequences when using print().
-
-// ✅ Console output - ALWAYS use print()
-print("Hello World");
-
-// ✅ Cognitive boolean logic with Allman-style brackets - MANDATORY in CX Language
-is { 
-    context: "Decision context description",
-    evaluate: "What is being evaluated",
-    data: { condition: true },
-    handlers: [ decision.ready ]
-};  // ✅ Semicolon ends the decision - triggers events only
-```
-
-## Class and Member Declaration
+2. [Core Language Rules](#core-language-rules)
 3. [Syntax Basics](#syntax-basics)
 4. [Cognitive Boolean Logic](#cognitive-boolean-logic)
-5. [Class and Member Declaration](#class-and-member-declaration)
+5. [Object and Member Declaration](#object-and-member-declaration)
 6. [Event System](#event-system)
 7. [Service Integration](#service-integration)
 8. [Asynchronous Programming](#asynchronous-programming)
@@ -44,6 +21,7 @@ CX Language is an event-driven programming language designed for AI agent orches
 - **Negative Cognitive Logic**: `not { }` syntax for AI-driven false/negative decision-making
 - **Advanced Event System**: Full event parameter property access with `event.property` syntax
 - **Enhanced Handlers Pattern**: Custom payload support with `handlers: [ event.name { custom: "data" } ]`
+- **Aura Cognitive Framework**: A decentralized eventing model where each agent possesses a local `EventHub` (a personal nervous system) for internal processing, all orchestrated by a global `EventBus` that manages inter-agent communication.
 - **Voice Processing**: Azure OpenAI Realtime API integration via event system (`emit realtime.connect`, `realtime.text.send`, `realtime.audio.response`)
 - **Automatic Object Serialization**: CX objects print as readable JSON with recursive nesting support
 - **Dictionary Iteration**: Native support for iterating over dictionaries in for-in loops
@@ -59,11 +37,13 @@ The following rules are mandatory for all CX Language code:
 ### Syntax Requirements
 - Always use Allman-style brackets `{ }` for code blocks
 - Use `print()` for console output - NEVER use `console.log()`
+- **NO `if` statements**: Use cognitive `is { }` and `not { }` patterns for all decision logic
+- **NO `function` declarations**: Use only cognitive functions (`learn`, `think`, `is`, `not`, `await`, `adapt`)
 - `print()` automatically serializes complex objects to JSON for debugging
 - `print()` displays primitive types (strings, numbers, booleans) directly
 - `print()` provides nested object visualization for CX classes
-- Use `:` for type annotations in field and method declarations
-- Use `=` for default values in field declarations
+- Use `:` for type annotations in realize constructor parameters
+- Use `=` for default values in variable declarations
 
 ### Enhanced Object Printing
 - **JSON String Output**: The `print()` function always returns values in JSON string format for consistent output formatting
@@ -76,21 +56,22 @@ The following rules are mandatory for all CX Language code:
 - **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this - **Automatic Object Serialization**. Any Cx object, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
 
 ### Variable Declarations
-- Use `var` keyword for local variables inside methods/constructors
+- Use `var` keyword for local variables inside event handlers and realize constructors
 - Use `var` keyword for global variables at program scope
-- **Local Variables**: Use `var` keyword for variables inside constructors and event handlers
-- **Global Variables**: Use `var` keyword for variables declared at program scope
-- **Type Annotations**: Use `fieldName: type` for fields, `parameterName: type` for method parameters
+- **No Member Fields**: CX Language eliminates instance variables for pure stateless architecture
+- **Event-Driven State**: All state management through AI services and event payloads
+- **Type Annotations**: Use `parameterName: type` for realize constructor parameters
 
-### Class Structure
-- Use `class` keyword for class declarations - NO `public` or `private` modifiers
-- Use event handlers (`on eventName`) for all behavioral logic inside classes
-- **Pure Event-Driven**: Classes contain only fields, constructors, and event handlers - NO functions/methods
-- Use `this` keyword to access class members (fields, event handlers)
-- **No Public/Private Modifiers**: CX does not use access modifiers - all members are accessible within class scope
-- **No Static Members**: CX does not support static members - all members are instance-based
-- **Field declarations**: Use `fieldName: type;` syntax for field declarations in classes
-- **Constructor parameters**: Type annotations recommended for clarity
+### Object Structure
+- Use `object` keyword for object declarations - NO `public` or `private` modifiers
+- Use event handlers (`on eventName`) for all behavioral logic inside objects
+- **Pure Event-Driven**: Objects contain only `realize()` constructors and event handlers - NO member fields or methods
+- **NO `this` keyword**: CX Language eliminates instance references for pure stateless programming
+- **NO `function` declarations**: Traditional functions eliminated - use only cognitive functions for all behavior
+- **No Member Fields**: All state is managed through AI services and event payloads - no instance variables
+- **No Public/Private Modifiers**: CX does not use access modifiers - pure event-driven architecture
+- **No Static Members**: CX does not support static members - all behavior is event-based
+- **Realize Constructor**: Use `realize(self: object)` for cognitive object initialization
 - **Event handler parameters**: Type annotations recommended for clarity
 
 ### Event System
@@ -109,16 +90,17 @@ The following rules are mandatory for all CX Language code:
 ### Service Integration
 - **Automatic Injection**: All cognitive services are automatically injected into the program's global scope at runtime. There is no need to declare or import them.
 - **Global Availability**: Services are available as globally accessible functions throughout the application.
-- **No Class-level Injection**: It is illegal for classes to have services injected into them or to declare their own service instances.
+- **No Class-level Injection**: Classes cannot have services injected into them or declare their own service instances.
 - **Invocation**: Services are called using their name followed by a comma-less block of parameters, e.g., `think { prompt: "Hello" }`.
 - **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
 - **Core Cognitive Services**: `is` (cognitive boolean logic), `not` (negative boolean logic), `learn` (knowledge acquisition), `think` (reasoning), `await` (smart timing), `adapt` (behavioral evolution)
+- **Pure Event-Driven State**: All state management occurs through AI services and event payloads, eliminating the need for instance variables
 
 ## Syntax Basics
 - **Use constructors to inject data** - DO NOT ACCESS MEMBERS DIRECTLY FOR INITIALIZATION.
-- **`classes`**: Use `class` keyword for class declarations - NO `public` or `private` modifiers
-- **`classes` behavior**: Classes are blueprints for objects that encapsulate state and behavior. They do not inherit cognitive capabilities automatically.
-- **No Public/Private Modifiers**: Cx does not use access modifiers - all members are accessible within class scope
+- **`objects`**: Use `object` keyword for object declarations - NO `public` or `private` modifiers
+- **`objects` behavior**: Objects are blueprints for pure event-driven entities that encapsulate behavior through event handlers. They do not have instance state.
+- **No Public/Private Modifiers**: Cx does not use access modifiers - all members are accessible within object scope
 - **No Static Members**: CX does not support static members - all members are instance-based
 - **Variable Declaration**: Use `var identifier` for new loop variables
 - **Existing Variables**: Can use existing variables without `var` keyword
@@ -130,13 +112,12 @@ The following rules are mandatory for all CX Language code:
 - **Service access**: Cognitive services are globally available. They are not methods and are not accessed with `this.`
 - **Service injection**: ILLEGAL - classes cannot declare their own service instances
 - **Event handlers**: Available at both program scope AND in classes
-- **Class scope**: Fields, constructors, event handlers only - NO service declarations or methods
-- **Field declarations**: Use `fieldName: type;` syntax for field declarations in classes
+- **Object scope**: Event handlers and realize constructors only - NO fields, methods, or service declarations
 - **Constructor parameters**: Type annotations recommended for clarity
 - **Event handler parameters**: Type annotations recommended for clarity
 - **Local variables**: Use `var` keyword for variables inside constructors and event handlers
 - **Global variables**: Use `var` keyword for variables declared at program scope
-- **Event-driven behavior**: All class behavior is implemented through event handlers, not methods
+- **Event-driven behavior**: All object behavior is implemented through event handlers, not methods
 - **Event communication**: Use `emit` statements to trigger behavior across objects
 - **Pure Fire-and-Forget**: All cognitive operations non-blocking by default
 - **Event handlers**: Cannot return values, execute asynchronously
@@ -179,10 +160,6 @@ not {
     handlers: [ system.decision.negative ]
 };  // ✅ Semicolon ends the decision - triggers events only
 
-// Variable declarations
-var globalCounter = 0;
-var systemStatus = "initialized";
-
 // Global event handler
 on system.start (event)
 {
@@ -195,23 +172,20 @@ on system.start (event)
 ### Complete Agent Example
 
 ```cx
-// Complete agent implementation with enhanced handlers and object printing
+// Complete agent implementation with pure event-driven architecture
 
-class AssistantAgent
+object AssistantAgent
 {
-    name: string;
-    status: string = "idle";
-    
-    constructor(agentName: string)
+    realize(self: object)
     {
-        this.name = agentName;
-        print("Agent initialized: " + this.name);
-        emit agent.initialized { name: this.name };
+        print("Agent initialized: " + self.name);
+        learn self;
+        emit agent.initialized { name: self.name };
     }
     
     on user.message (event)
     {
-        this.status = "processing";
+        print("Processing message: " + event.text);
         
         // Enhanced cognitive methods with custom payload handlers
         var promptObject = {
@@ -228,18 +202,15 @@ class AssistantAgent
             ]
         };
         
-        emit agent.processing { agent: this.name, message: event.text };
+        emit agent.processing { message: event.text };
     }
     
     on thinking.complete (event)
     {
         print("Analysis complete with option: " + event.option);
-        this.status = "ready";
-        print("Agent state:");
-        print(this);  // Automatic JSON serialization of agent object
+        print("Agent state updated through events");
         
         emit agent.response { 
-            agent: this.name, 
             response: event.result,
             originalMessage: event.prompt,
             analysisType: event.option
@@ -252,12 +223,8 @@ class AssistantAgent
     }
 }
 
-// Create and use the enhanced agent
-var assistant = new AssistantAgent("Helpful Assistant");
-
-// Demonstrate object printing
-print("Creating agent with enhanced features:");
-print(assistant);  // Shows JSON: {"name": "Helpful Assistant", "status": "idle"}
+// Create and use the pure event-driven agent
+var assistant = new AssistantAgent({ name: "Helpful Assistant" });
 
 // Send a message to trigger enhanced handlers
 emit user.message { text: "Can you help me with my project?", user: "Alice", priority: "high" };
@@ -266,42 +233,45 @@ emit user.message { text: "Can you help me with my project?", user: "Alice", pri
 ### Multi-Agent System Example
 
 ```cx
-// System with multiple coordinating agents
-class CoordinatorAgent
+// System with multiple coordinating agents - pure event-driven
+object CoordinatorAgent
 {
+    realize(self: object)
+    {
+        learn self;
+        emit coordinator.ready { name: self.name };
+    }
+    
     on agent.response (payload)
     {
-        print("Coordinator received response from: " + payload.agent);
+        print("Coordinator received response");
         emit system.log { message: "Response processed by coordinator" };
     }
 }
 
-class SpecialistAgent
+object SpecialistAgent
 {
-    domain: string;
-    
-    constructor(specialistDomain: string)
+    realize(self: object)
     {
-        this.domain = specialistDomain;
+        learn self;
+        emit specialist.ready { domain: self.domain };
     }
     
     on user.query (payload)
     {
-        if (payload.domain == this.domain)
-        {
-            print("Specialist handling query in domain: " + this.domain);
-            think { 
-                handlers: [specialist.result], 
-                prompt: payload.query 
-            };
-        }
+        // Check domain compatibility through event data
+        print("Specialist processing query in domain: " + payload.domain);
+        think { 
+            handlers: [specialist.result], 
+            prompt: payload.query 
+        };
     }
 }
 
 // Create the agent system
-var coordinator = new CoordinatorAgent();
-var techSpecialist = new SpecialistAgent("technology");
-var financeSpecialist = new SpecialistAgent("finance");
+var coordinator = new CoordinatorAgent({ name: "MainCoordinator" });
+var techSpecialist = new SpecialistAgent({ domain: "technology" });
+var financeSpecialist = new SpecialistAgent({ domain: "finance" });
 
 // Use the system
 emit user.query { domain: "technology", query: "How do I optimize my code?" };
@@ -312,11 +282,15 @@ emit user.query { domain: "technology", query: "How do I optimize my code?" };
 ```cx
 // PRODUCTION-READY: Voice agent with Azure OpenAI Realtime API integration
 // Uses actual Azure WebSocket endpoints for real-time voice processing
-class VoiceAgent
+object VoiceAgent
 {
-    name: string = "VoiceAgent";
+    realize(self: object)
+    {
+        learn self;
+        emit voice.agent.ready { name: self.name };
+    }
     
-    function startVoiceSession()
+    on voice.session.start (event)
     {
         print("� Starting voice session...");
         
@@ -324,13 +298,13 @@ class VoiceAgent
         emit realtime.connect { demo: "voice_agent" };
     }
     
-    function sendVoiceMessage(text: string)
+    on voice.message.send (event)
     {
-        print("🔊 Sending voice message: " + text);
+        print("🔊 Sending voice message: " + event.text);
         
         // ✅ PROVEN WORKING: Send text to Azure for voice synthesis
         emit realtime.text.send { 
-            text: text,
+            text: event.text,
             deployment: "gpt-4o-mini-realtime-preview"
         };
     }
@@ -387,45 +361,35 @@ class VoiceAgent
 }
 
 // ✅ PRODUCTION USAGE: Create and start voice agent
-var voiceAgent = new VoiceAgent();
-voiceAgent.startVoiceSession();
+var voiceAgent = new VoiceAgent({ name: "VoiceAgent" });
+emit voice.session.start;
 
 // Example response: "Hello! How can I assist you today?" with 88,800 bytes of audio
 ```
 
-### **Class and Member Declaration Syntax**
+### **Object and Member Declaration Syntax**
 ```
-// ✅ Class declaration with optional inheritance
-class BasicClass 
+// ✅ Object declaration with optional inheritance
+object BasicObject 
 {
-    // Class members - fields, methods, constructors, event handlers only
+    // Object members - realize constructors and event handlers only
 }
 
-// ✅ Class with inheritance
-class CognitiveAgent : BaseAgent
+// ✅ Object with inheritance
+object CognitiveAgent : BaseAgent
 {
-    // ✅ Field declarations (instance variables)
-    name: string;              // Basic field declaration with type
-    status: string = "active"; // Field with default value
-    count: number = 0;         // Numeric field with default
-    
-    // ✅ Constructor with parameters
-    constructor(agentName: string, initialStatus: string)
+    // ✅ Realize constructor with parameters
+    realize(self: object)
     {
-        this.name = agentName;
-        this.status = initialStatus;
+        // Pure cognitive initialization without instance fields
+        learn self;
+        emit agent.ready { name: self.name };
     }
     
-    // ✅ Method declarations
-    function processRequest(input: string)
-    {
-        print("Processing: " + input);
-    }
-    
-    // ✅ Event handlers within class scope
+    // ✅ Event handlers within object scope
     on user.message (payload) 
     {
-        this.processRequest(payload.text);
+        print("Processing: " + payload.text);
     }
 }
 
@@ -460,8 +424,8 @@ for (result in searchResults)
     print("Content: " + result.content);
 }
 
-// ✅ For...in loop for dictionary iteration (event payloads) - in class scope
-class EventProcessor
+// ✅ For...in loop for dictionary iteration (event payloads) - in object scope
+object EventProcessor
 {
     on user.input (event)
     {
@@ -474,23 +438,24 @@ class EventProcessor
     }
 }
 
-// ✅ For...in loop in methods
-class DataProcessor 
+// ✅ For...in loop in event handlers
+object DataProcessor 
 {
-    function processArray(data: any[])
+    on data.process.array (event)
     {
-        for (var item in data) 
+        for (var item in event.data) 
         {
             print("Processing: " + item);
             
             // Local variable inside loop
+            var processed = "item_" + item;
             print("Processed: " + processed);
         }
     }
     
-    function processDictionary(data: object)
+    on data.process.dictionary (event)
     {
-        for (var kvp in data) 
+        for (var kvp in event.data) 
         {
             print("Processing key: " + kvp.Key);
             print("Processing value: " + kvp.Value);
@@ -526,11 +491,11 @@ on powershell.results (payload)
 
 ## Cognitive Boolean Logic
 
-CX Language features intelligent decision-making through cognitive boolean logic using the `is { }` syntax. This replaces traditional `if (condition)` statements with AI-driven contextual evaluation.
+CX Language features intelligent decision-making through cognitive boolean logic using the `is { }` syntax. This **completely replaces** traditional `if (condition)` statements with AI-driven contextual evaluation.
 
 ### Cognitive Boolean Syntax
 ```cx
-// ❌ Traditional boolean logic (avoid in CX)
+// ❌ Traditional boolean logic (COMPLETELY ELIMINATED from CX)
 if (event.reason.indexOf(this.name) >= 0)
 {
     doSomething();
@@ -539,16 +504,16 @@ if (event.reason.indexOf(this.name) >= 0)
 // ✅ Cognitive boolean logic - AI-driven decision making
 is { 
     context: "Cognitive decision: Should agent proceed?",
-    evaluate: event.reason + " contains agent name " + this.name,
-    data: { eventReason: event.reason, agentName: this.name },
+    evaluate: event.reason + " contains agent name " + agentName,
+    data: { eventReason: event.reason, agentName: agentName },
     handlers: [ decision.ready ]
 };  // ✅ Semicolon ends the decision - triggers events only
 
 // ✅ Negative cognitive boolean logic - AI-driven false/negative decision making
 not { 
     context: "Cognitive decision: Should agent NOT proceed?",
-    evaluate: event.reason + " excludes agent name " + this.name,
-    data: { eventReason: event.reason, agentName: this.name },
+    evaluate: event.reason + " excludes agent name " + agentName,
+    data: { eventReason: event.reason, agentName: agentName },
     handlers: [ decision.negative ]
 };  // ✅ Semicolon ends the decision - triggers events only
 ```
@@ -582,17 +547,21 @@ is {
 ### Cognitive Boolean Examples
 
 ```cx
-class SmartAgent
+object SmartAgent
 {
-    name: string = "Alice";
+    realize(self: object)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
     
     on user.message (event)
     {
         // ✅ Cognitive decision about message relevance
         is { 
             context: "Should this agent respond to the user message?",
-            evaluate: "Message relevance check for " + this.name,
-            data: { message: event.text, agent: this.name, priority: event.priority },
+            evaluate: "Message relevance check for agent",
+            data: { message: event.text, priority: event.priority },
             handlers: [ response.decision.made, message.evaluated { urgency: "high" } ]
         };  // ✅ Event-only execution - no code block
     }
@@ -600,7 +569,7 @@ class SmartAgent
     // ✅ Event handler for processing the decision result
     on response.decision.made (event)
     {
-        print("Processing relevant message for " + this.name);
+        print("Processing relevant message");
         print("Message: " + event.message);
         print("Priority: " + event.priority);
     }
@@ -610,16 +579,16 @@ class SmartAgent
         // ✅ Cognitive decision about audio data processing
         is { 
             context: "Is audio data available for processing?",
-            evaluate: "Audio data presence check for " + this.name,
-            data: { audioData: event.audioData, agent: this.name },
+            evaluate: "Audio data presence check",
+            data: { audioData: event.audioData },
             handlers: [ audio.data.evaluated ]
         };  // ✅ Event-only execution
         
         // ✅ Cognitive decision about completion status
         is { 
             context: "Is the audio processing complete?",
-            evaluate: "Completion status evaluation for " + this.name,
-            data: { isComplete: event.isComplete, agent: this.name },
+            evaluate: "Completion status evaluation",
+            data: { isComplete: event.isComplete },
             handlers: [ completion.evaluated ]
         };  // ✅ Event-only execution
     }
@@ -627,14 +596,14 @@ class SmartAgent
     // ✅ Event handlers for processing cognitive decisions
     on audio.data.evaluated (event)
     {
-        print("Processing audio data for " + this.name);
-        emit audio.process { data: event.audioData, agent: this.name };
+        print("Processing audio data");
+        emit audio.process { data: event.audioData };
     }
     
     on completion.evaluated (event)
     {
-        print("Audio processing complete for " + this.name);
-        emit task.finished { agent: this.name, task: "audio_processing" };
+        print("Audio processing complete");
+        emit task.finished { task: "audio_processing" };
     }
 }
 ```
@@ -647,6 +616,7 @@ class SmartAgent
 - **Event Integration**: Use `handlers` to emit events based on cognitive decisions
 - **AI-First Logic**: Design decisions that can evolve and improve over time
 - **Positive vs Negative**: Use `is { }` for positive decisions, `not { }` for negative decisions
+- **Complete Elimination**: Traditional `if` statements are completely removed from CX Language
 
 ### Cognitive Boolean Behavior
 - **`is { }` - When Evaluation is True**: The `handlers` are called
@@ -704,9 +674,9 @@ not {
 on preparation.complete (event)
 {
     is { 
-        context: "Cognitive decision: Should " + this.name + " proceed to speech phase?",
-        evaluate: event.reason + " contains agent name " + this.name,
-        data: { eventReason: event.reason, agentName: this.name, timing: event.actualDurationMs },
+        context: "Cognitive decision: Should agent proceed to speech phase?",
+        evaluate: event.reason + " contains agent readiness",
+        data: { eventReason: event.reason, timing: event.actualDurationMs },
         handlers: [ agent.decision.ready ]  // ✅ Called ONLY if evaluation is true
     };  // ✅ Note: semicolon ends the cognitive decision - no code block
 }
@@ -714,10 +684,10 @@ on preparation.complete (event)
 
 ## Event System
 
-### Event Parameter Property Access
+### **Event Parameter Property Access**
 ```
-// ✅ Direct property access on event parameters
-class EventAgent
+// ✅ CORRECT: Event handlers in object scope
+object EventAgent
 {
     on user.input (event)
     {
@@ -737,7 +707,7 @@ class EventAgent
 }
 
 // ✅ Dictionary iteration over event payload
-class DataProcessor
+object DataProcessor
 {
     on data.received (event)
     {
@@ -754,7 +724,7 @@ class DataProcessor
 }
 
 // ✅ Nested property access
-class ComplexEventHandler
+object ComplexEventHandler
 {
     on api.response (event)
     {
@@ -780,18 +750,18 @@ class ComplexEventHandler
 - **Runtime Resolution**: Properties are resolved at runtime using reflection-based property access
 - **Payload Dictionary**: `event.payload` contains the full dictionary of event data
 - **Metadata Access**: Built-in properties like `event.name`, `event.timestamp` are always available
-- **Class Instance Access**: In class-based event handlers, use `this.fieldName` to access instance variables for proper scope resolution
+- **Pure Event-Driven State**: All data access through event parameters, no instance variables
 ### Event Handler Declaration and Emission
 ```
 // ✅ Event handlers - Only `on system` handlers allowed at program scope
 on system.ready (event) { ... }      // ✅ CORRECT: Program scope event handler
 on system.shutdown (event) { ... }   // ✅ CORRECT: Program scope event handler
 
-class MyAgent 
+object MyAgent 
 {
-    on user.message (event) { ... }  // ✅ CORRECT: Class scope event handler
-    on ai.request (event) { ... }    // ✅ CORRECT: Class scope event handler
-    on user.input (event) { ... }    // ✅ CORRECT: Class scope event handler
+    on user.message (event) { ... }  // ✅ CORRECT: Object scope event handler
+    on ai.request (event) { ... }    // ✅ CORRECT: Object scope event handler
+    on user.input (event) { ... }    // ✅ CORRECT: Object scope event handler
 }
 
 // ✅ CORRECT: Emitting system message event
@@ -804,7 +774,7 @@ adapt {
   handlers [ 
     event.bus { options: "option" }
   ] 
-}; // ✅ CORRECT: Emitting adatation event of a class instance.
+}; // ✅ CORRECT: Emitting adaptation event of an object instance.
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
 // ❌ INCORRECT: Non-system handlers at program scope not allowed
@@ -841,28 +811,28 @@ emit system.shutdown { reason: "maintenance" };
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
 // ❌ INCORRECT: Non-system handlers at program scope not allowed
-// on name.any.other.any.final (payload) { ... }     // Must be in class scope
-// on user.any.response (payload) { ... }             // Must be in class scope
+// on name.any.other.any.final (payload) { ... }     // Must be in object scope
+// on user.any.response (payload) { ... }             // Must be in object scope
 on system.any.ready (payload) { ... }              // ✅ CORRECT: System handlers allowed at program scope
-// on agent.any.thinking.any.complete (payload) { ... } // Must be in class scope
+// on agent.any.thinking.any.complete (payload) { ... } // Must be in object scope
 
 // ❌ INCORRECT: Advanced wildcard patterns at program scope
-// on user.any.input (payload) { ... }                // Must be in class scope
-// on ai.any.response (payload) { ... }               // Must be in class scope
-// on voice.any.command (payload) { ... }             // Must be in class scope
-// on any.any.critical (payload) { ... }              // Must be in class scope
-// on any.any.any.complete (payload) { ... }          // Must be in class scope
+// on user.any.input (payload) { ... }                // Must be in object scope
+// on ai.any.response (payload) { ... }               // Must be in object scope
+// on voice.any.command (payload) { ... }             // Must be in object scope
+// on any.any.critical (payload) { ... }              // Must be in object scope
+// on any.any.any.complete (payload) { ... }          // Must be in object scope
 
-// ✅ CORRECT: Class-level wildcards - ALL patterns supported in class scope
-class ChatAgent 
+// ✅ CORRECT: Object-level wildcards - ALL patterns supported in object scope
+object ChatAgent 
 {
     on user.any.input (payload) 
-    {                  // ✅ CORRECT: Class-scoped wildcard handler
+    {                  // ✅ CORRECT: Object-scoped wildcard handler
         print("Chat agent received: " + payload.message);
     }
     
     on voice.any.command (payload) 
-    {               // ✅ CORRECT: Multi-scope wildcard support in class
+    {               // ✅ CORRECT: Multi-scope wildcard support in object
         emit user.chat.message { text: "Voice: " + payload.command };
     }
 }
@@ -883,13 +853,13 @@ class MyAgent
     }
     
     on ai.any.response (payload) 
-    {  // Class-scoped AI wildcard
+    {  // Object-scoped AI wildcard
         print("MyAgent processing AI response: " + payload.response);
     }
     
-    function runCommand() 
+    on command.execute (event)
     {
-        this.Execute("some command");  // Emits to Global scope
+        emit command.executed { data: event.command };
     }
 }
 
@@ -992,45 +962,46 @@ emit user.input, {
 
 The CX Language features a powerful **handlers** system that allows single operations to trigger multiple event listeners automatically, enabling sophisticated event orchestration patterns.
 
-### Class-Based Event Handler Patterns
+### Object-Based Event Handler Patterns
 
-**Critical Finding**: Class-based event handlers provide superior variable scope resolution compared to global handlers when accessing instance state.
+**Core Architecture**: CX Language uses pure event-driven patterns without instance state, eliminating traditional object-oriented concepts.
 
-#### Class Instance Variable Access
+#### Pure Event-Driven Variable Access
 ```cx
-// ✅ RECOMMENDED: Class-based event handlers with proper instance variable access
-class SmartAwaitAgent
+// ✅ RECOMMENDED: Object-based event handlers with pure event-driven architecture
+object SmartAwaitAgent
 {
-    name: string = "SmartAgent";
-    currentPhase: string = "initialization";
-    speechSpeed: number = 0.9;  // 10% slower than normal for better comprehension
-    
-    function startPhase(phaseName: string)
+    realize(self: object)
     {
-        this.currentPhase = phaseName;
-        print("Starting phase: " + this.currentPhase);
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on phase.start (event)
+    {
+        print("Starting phase: " + event.phaseName);
         
-        // Smart await with instance context
+        // Smart await with event context
         await { 
-            reason: "phase_transition_" + this.name,
-            context: "Moving to " + this.currentPhase + " phase",
+            reason: "phase_transition_" + event.agentName,
+            context: "Moving to " + event.phaseName + " phase",
             minDurationMs: 1000,
             maxDurationMs: 3000,
             handlers: [ phase.started ]
         };
     }
     
-    // ✅ CORRECT: Class-based event handler accessing instance variables
+    // ✅ CORRECT: Object-based event handler accessing event parameters
     on phase.started (event)
     {
-        print("Phase started for agent: " + this.name);  // ✅ Instance access works
-        print("Current phase: " + this.currentPhase);    // ✅ Instance access works
+        print("Phase started for agent: " + event.agentName);
+        print("Current phase: " + event.phaseName);
         
         // Voice synthesis with controlled speech speed
         emit realtime.text.send {
-            text: "Phase " + this.currentPhase + " is now active for " + this.name,
+            text: "Phase " + event.phaseName + " is now active for " + event.agentName,
             deployment: "gpt-4o-mini-realtime-preview",
-            speechSpeed: this.speechSpeed  // ✅ Instance variable access
+            speechSpeed: 0.9  // Controlled speech speed
         };
     }
     
@@ -1038,8 +1009,7 @@ class SmartAwaitAgent
     {
         if (event.isComplete)
         {
-            print("Audio complete for agent: " + this.name);  // ✅ Instance access
-            this.currentPhase = "ready";  // ✅ Can modify instance state
+            print("Audio complete for phase transition");
         }
     }
 }
@@ -1052,37 +1022,30 @@ on phase.started (event)
 }
 ```
 
-#### Class-Based Pattern Benefits
-- **Instance Variable Access**: Direct access to `this.fieldName` variables in event handlers
-- **State Management**: Can modify instance state (`this.currentPhase = "new_value"`)
-- **Contextual Logic**: Event handlers can use instance context for decision making
-- **Scope Isolation**: Each class instance has its own event handler scope
-- **Better Debugging**: Instance variables provide context for debugging and logging
+#### Object-Based Pattern Benefits
+- **Event Parameter Access**: Direct access to `event.propertyName` variables in event handlers
+- **State Management**: Event handlers can modify state through AI services and event payloads
+- **Contextual Logic**: Event handlers can use event context for decision making
+- **Scope Isolation**: Each object instance has its own event handler scope
+- **Better Debugging**: Event parameters provide context for debugging and logging
 
 #### Smart Await Integration Patterns
 ```cx
-// ✅ PRODUCTION PATTERN: Smart await with class-based handlers
-class DebateAgent
+// ✅ PRODUCTION PATTERN: Smart await with object-based handlers
+object DebateAgent
 {
-    name: string;
-    role: string;
-    speechSpeed: number = 0.9;  // Slower speech for clarity
-    turnComplete: boolean = false;
-    
-    constructor(agentName: string, agentRole: string)
+    realize(self: object)
     {
-        this.name = agentName;
-        this.role = agentRole;
+        learn self;
+        emit agent.ready { name: self.name, role: self.role };
     }
     
-    function takeTurn(topic: string)
+    on debate.turn.start (event)
     {
-        this.turnComplete = false;
-        
         // AI-determined optimal timing before speaking
         await { 
-            reason: "pre_speech_pause_" + this.name,
-            context: "Preparing " + this.role + " response on " + topic,
+            reason: "pre_speech_pause_" + event.agentName,
+            context: "Preparing " + event.role + " response on " + event.topic,
             minDurationMs: 1000,
             maxDurationMs: 2000,
             handlers: [ turn.ready ]
@@ -1091,11 +1054,11 @@ class DebateAgent
     
     on turn.ready (event)
     {
-        print("Agent " + this.name + " (" + this.role + ") taking turn");
+        print("Agent " + event.agentName + " (" + event.role + ") taking turn");
         
         // Generate response with context
         think {
-            prompt: "As a " + this.role + ", respond to: " + event.context,
+            prompt: "As a " + event.role + ", respond to: " + event.context,
             handlers: [ response.generated ]
         };
     }
@@ -1106,7 +1069,7 @@ class DebateAgent
         emit realtime.text.send {
             text: event.result,
             deployment: "gpt-4o-mini-realtime-preview",
-            speechSpeed: this.speechSpeed
+            speechSpeed: 0.9
         };
     }
     
@@ -1114,12 +1077,10 @@ class DebateAgent
     {
         if (event.isComplete)
         {
-            this.turnComplete = true;
-            
             // Smart await for natural pause after speaking
             await { 
-                reason: "post_turn_pause_" + this.name,
-                context: "Natural pause after " + this.name + " completes turn",
+                reason: "post_turn_pause_" + event.agentName,
+                context: "Natural pause after " + event.agentName + " completes turn",
                 minDurationMs: 1500,
                 maxDurationMs: 2500,
                 handlers: [ turn.complete ]
@@ -1129,8 +1090,8 @@ class DebateAgent
     
     on turn.complete (event)
     {
-        print("Turn complete for: " + this.name);
-        emit debate.turn.finished { agent: this.name, role: this.role };
+        print("Turn complete for: " + event.agentName);
+        emit debate.turn.finished { agent: event.agentName, role: event.role };
     }
 }
 ```
@@ -1138,32 +1099,36 @@ class DebateAgent
 #### Voice Speed Control Patterns
 ```cx
 // ✅ Voice speed control for improved comprehension
-class VoiceControlAgent
+object VoiceControlAgent
 {
-    speechSpeed: number = 0.9;  // 10% slower than normal (1.0)
+    realize(self: object)
+    {
+        learn self;
+        emit agent.ready { name: self.name, speechSpeed: self.speechSpeed };
+    }
     
-    function speakSlowly(message: string)
+    on voice.speak.slow (event)
     {
         emit realtime.text.send {
-            text: message,
+            text: event.message,
             deployment: "gpt-4o-mini-realtime-preview",
-            speechSpeed: this.speechSpeed  // Slows speech by 10%
+            speechSpeed: 0.9  // Slows speech by 10%
         };
     }
     
-    function speakNormally(message: string)
+    on voice.speak.normal (event)
     {
         emit realtime.text.send {
-            text: message,
+            text: event.message,
             deployment: "gpt-4o-mini-realtime-preview",
             speechSpeed: 1.0  // Normal speed
         };
     }
     
-    function speakQuickly(message: string)
+    on voice.speak.fast (event)
     {
         emit realtime.text.send {
-            text: message,
+            text: event.message,
             deployment: "gpt-4o-mini-realtime-preview",
             speechSpeed: 1.2  // 20% faster than normal
         };
@@ -1171,14 +1136,14 @@ class VoiceControlAgent
 }
 ```
 
-#### Class-Based Event Handler Rules
-- **Prefer Class Handlers**: Use class-based event handlers when accessing instance variables
-- **Instance Context**: Always use `this.fieldName` for instance variable access
-- **State Modification**: Event handlers can modify instance state directly
-- **Scope Isolation**: Each class instance maintains separate event handler scope
+#### Object-Based Event Handler Rules
+- **Prefer Object Handlers**: Use object-based event handlers when accessing event parameters
+- **Event Context**: Always use `event.propertyName` for event parameter access
+- **State Management**: Event handlers can modify state through AI services and event payloads
+- **Scope Isolation**: Each object instance maintains separate event handler scope
 - **Global Fallback**: Use global handlers only for system-wide coordination
-- **Variable Scope**: Class handlers resolve variable scope more reliably than global handlers
-- **Debugging Context**: Instance variables provide better debugging information
+- **Variable Scope**: Object handlers resolve variable scope more reliably than global handlers
+- **Debugging Context**: Event parameters provide better debugging information
 
 ### Multi-Event Handlers System
 
@@ -1228,17 +1193,21 @@ search {
 #### Complete Enhanced Handlers Example
 ```cx
 // Production-ready enhanced handlers demonstration
-class AnalysisAgent
+object AnalysisAgent
 {
-    name: string = "AnalysisAgent";
-    
-    function analyzeData(inputData: string): void
+    realize(self: object)
     {
-        print("Starting analysis of: " + inputData);
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on data.analyze (event)
+    {
+        print("Starting analysis of: " + event.inputData);
         
         // Enhanced AI service with custom payload handlers
         learn {
-            data: inputData,
+            data: event.inputData,
             category: "analysis", 
             priority: "high",
             handlers: [ 
@@ -1252,8 +1221,8 @@ class AnalysisAgent
     }
 }
 
-// ✅ CORRECT: Handler events in class scope - receive BOTH original payload AND custom handler payload
-class HandlerDemoClass
+// ✅ CORRECT: Handler events in object scope - receive BOTH original payload AND custom handler payload
+object HandlerDemoObject
 {
     on analysis.complete (event)
     {
@@ -1291,9 +1260,9 @@ class HandlerDemoClass
 }
 
 // Usage
-var agent = new AnalysisAgent();
-var handlerDemo = new HandlerDemoClass();
-agent.analyzeData("Customer feedback dataset");
+var agent = new AnalysisAgent({ name: "AnalysisAgent" });
+var handlerDemo = new HandlerDemoObject({ name: "HandlerDemo" });
+emit data.analyze { inputData: "Customer feedback dataset" };
 ```
 
 #### Handlers Rules
@@ -1394,16 +1363,22 @@ Cx uses a pure fire-and-forget model for all asynchronous operations, including 
 
 ```cx
 // ✅ CORRECT: Pure fire-and-forget with event bus coordination
-class AsyncProcessor 
+object AsyncProcessor 
 {
-    function processData(input) 
+    realize(self: object)
+    {
+        learn self;
+        emit processor.ready { name: self.name };
+    }
+    
+    on data.process (event) 
     {
         // All async operations are fire-and-forget. No return values, no blocking.
-        think { prompt: { input }, handlers: [thinking.complete] };
-        learn { content:{ input }, handlers: [learning.complete] };
+        think { prompt: { input: event.input }, handlers: [thinking.complete] };
+        learn { content: { input: event.input }, handlers: [learning.complete] };
         
         // Immediately emit an event to signal the start of processing.
-        emit processing.started { input: input };
+        emit processing.started { input: event.input };
     }
     
     // Results flow through the event system.
@@ -1496,9 +1471,15 @@ class AzureRealtimeHandler
 #### **Complete Working Example**
 ```cx
 // Proven working voice integration
-class VoiceDemo
+object VoiceDemo
 {
-    function startDemo()
+    realize(self: object)
+    {
+        learn self;
+        emit demo.ready { name: self.name };
+    }
+    
+    on demo.start (event)
     {
         emit realtime.connect { demo: "voice_demo" };
     }
@@ -1547,7 +1528,7 @@ class VoiceDemo
 }
 
 var demo = new VoiceDemo();
-demo.startDemo();
+emit demo.start;
 ```
 
 ### **Azure Realtime API Rules**

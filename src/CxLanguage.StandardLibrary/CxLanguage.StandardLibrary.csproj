@@ -18,18 +18,17 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.SemanticKernel" Version="1.28.0" />
-    <PackageReference Include="Microsoft.SemanticKernel.Connectors.AzureOpenAI" Version="1.28.0" />
+    <!-- Modern Microsoft.Extensions.AI ecosystem - lightweight and performant -->
+    <PackageReference Include="Microsoft.Extensions.AI" Version="9.7.1" />
+    <PackageReference Include="Microsoft.Extensions.AI.AzureAIInference" Version="9.7.1-preview.1.25365.4" />
+    <!-- Core Microsoft Extensions -->
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.4" />
+    <!-- Audio and Speech -->
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.40.0" />
-    <!-- Kernel Memory for enterprise RAG and vector database -->
-    <PackageReference Include="Microsoft.KernelMemory.Core" Version="0.98.250508.3" />
-    <PackageReference Include="Microsoft.KernelMemory.DataFormats.AzureAIDocIntel" Version="0.98.250508.3" />
-    <PackageReference Include="Microsoft.KernelMemory.WebClient" Version="0.98.250508.3" />
     <!-- PowerShell for command execution -->
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
   </ItemGroup>

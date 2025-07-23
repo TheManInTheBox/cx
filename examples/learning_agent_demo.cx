@@ -1,0 +1,98 @@
+// 🧠 LEARNING AGENT DEMO - Pure Event-Driven Knowledge Reporting
+
+print("✅ Pure event-driven agent with cognitive realization and knowledge reporting");
+print("");
+
+object LearningAgent
+{   
+    realize(self: object)
+    {     
+        // Learn about self on realization - pure cognitive pattern
+        learn self;
+        
+        emit agent.ready { name: self.name };
+    }
+    
+    // Handle self-awareness knowledge storage
+    on self.knowledge.stored (event)
+    {
+        print("🧠 Agent gained self-awareness");
+        print("💭 Self-knowledge: " + event.data);
+        emit agent.initialized { selfAware: true };
+    }
+    
+    // Learn from user input
+    on user.teaches (event)
+    {
+        print("📚 Agent is learning: " + event.lesson);
+        
+        // Store the knowledge without instance state
+        learn {
+            data: "Knowledge: " + event.lesson,
+            context: "Direct teaching from user",
+            handlers: [ knowledge.stored ]
+        };
+    }
+    
+    // Respond when knowledge is stored
+    on knowledge.stored (event)
+    {
+        print("💾 Agent stored knowledge successfully");
+        print("� Stored data: " + event.data);
+        
+        emit learning.complete { 
+            stored: true,
+            knowledge: event.data
+        };
+    }
+    
+    // Tell us what they've learned
+    on user.asks.knowledge (event)
+    {
+        print("🤔 Agent is thinking about what they've learned...");
+        print("❓ Question: " + event.question);
+        
+        // Use think to recall and summarize knowledge
+        think {
+            prompt: "What have I learned? Summarize all the knowledge I've gained.",
+            context: "Knowledge recall request from user",
+            handlers: [ knowledge.recalled ]
+        };
+    }
+    
+    // Share the recalled knowledge
+    on knowledge.recalled (event)
+    {
+        print("💡 Agent recalls their knowledge:");
+        print("📖 " + event.result);
+        print("🧠 Thinking result: " + event.result);
+        
+        emit knowledge.shared { 
+            knowledge: event.result,
+            source: "cognitive_recall"
+        };
+    }
+    
+    // Celebrate knowledge sharing
+    on knowledge.shared (event)
+    {
+        print("🎉 " + this.name + " successfully shared their knowledge!");
+        print("✨ Knowledge sharing complete");
+        print("� Shared knowledge: " + event.knowledge);
+        print("🔢 Session count: " + event.sessionCount);
+    }
+}
+
+// Create the learning agent via cognitive realization
+var teacher = new LearningAgent({ name: "Professor" });
+
+// Teach the agent some things
+print("📚 Teaching the agent some lessons...");
+emit user.teaches { lesson: "The sky is blue because of light scattering" };
+emit user.teaches { lesson: "CX Language uses pure event-driven programming" };
+emit user.teaches { lesson: "AI agents can learn and remember information" };
+
+// Wait a moment then ask what they learned
+print("");
+print("❓ Now asking the agent what they've learned...");
+emit user.asks.knowledge { question: "What have you learned so far?" };

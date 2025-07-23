@@ -5,7 +5,6 @@ using CxLanguage.Core.AI;
 using CxLanguage.Core.Telemetry;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Microsoft.SemanticKernel;
 using System.Text.Json;
 using System.ClientModel;
 using System.Diagnostics;

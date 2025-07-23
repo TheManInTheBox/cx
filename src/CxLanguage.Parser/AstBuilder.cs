@@ -543,45 +543,41 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return newExpr;
     }
 
-    // Class system visitors
-    public override AstNode VisitClassDeclaration(ClassDeclarationContext context)
+    // Object system visitors
+    public override AstNode VisitObjectDeclaration(ObjectDeclarationContext context)
     {
-        var classDecl = new ClassDeclarationNode();
-        SetLocation(classDecl, context);
+        var objectDecl = new ClassDeclarationNode(); // Reusing ClassDeclarationNode internally
+        SetLocation(objectDecl, context);
 
-        var className = context.IDENTIFIER(0).GetText();
-        ValidateIdentifierNotKeyword(className, context, "class name");
-        classDecl.Name = className;
+        var objectName = context.IDENTIFIER(0).GetText();
+        ValidateIdentifierNotKeyword(objectName, context, "object name");
+        objectDecl.Name = objectName;
         
         // Parse base class if present (extends keyword)
         if (context.IDENTIFIER().Length > 1)
         {
-            classDecl.BaseClass = context.IDENTIFIER(1).GetText();
+            objectDecl.BaseClass = context.IDENTIFIER(1).GetText();
         }
 
-        // Parse class body
-        if (context.classBody() != null)
+        // Parse object body (no fields, only realize and event handlers)
+        if (context.objectBody() != null)
         {
-            foreach (var memberContext in context.classBody().classMember())
+            foreach (var memberContext in context.objectBody().objectMember())
             {
-                if (memberContext.fieldDeclaration() != null)
+                if (memberContext.realizeDeclaration() != null)
                 {
-                    classDecl.Fields.Add((FieldDeclarationNode)Visit(memberContext.fieldDeclaration()));
-                }
-                else if (memberContext.constructorDeclaration() != null)
-                {
-                    classDecl.Constructors.Add((ConstructorDeclarationNode)Visit(memberContext.constructorDeclaration()));
+                    objectDecl.RealizeDeclarations.Add((RealizeDeclarationNode)Visit(memberContext.realizeDeclaration()));
                 }
                 else if (memberContext.onStatement() != null)
                 {
-                    // Handle event handlers inside classes
+                    // Handle event handlers inside objects
                     var eventHandler = (OnStatementNode)Visit(memberContext.onStatement());
-                    classDecl.EventHandlers.Add(eventHandler);
+                    objectDecl.EventHandlers.Add(eventHandler);
                 }
             }
         }
 
-        return classDecl;
+        return objectDecl;
     }
 
     public override AstNode VisitDecorator(DecoratorContext context)
@@ -594,27 +590,10 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return decorator;
     }
 
-    public override AstNode VisitFieldDeclaration(FieldDeclarationContext context)
+    public override AstNode VisitRealizeDeclaration(RealizeDeclarationContext context)
     {
-        var fieldDecl = new FieldDeclarationNode();
-        SetLocation(fieldDecl, context);
-
-        fieldDecl.Name = context.IDENTIFIER().GetText();
-        fieldDecl.Type = ParseType(context.type());
-        
-        // Parse initializer if present
-        if (context.expression() != null)
-        {
-            fieldDecl.Initializer = (ExpressionNode)Visit(context.expression());
-        }
-
-        return fieldDecl;
-    }
-
-    public override AstNode VisitConstructorDeclaration(ConstructorDeclarationContext context)
-    {
-        var ctorDecl = new ConstructorDeclarationNode();
-        SetLocation(ctorDecl, context);
+        var realizeDecl = new RealizeDeclarationNode();
+        SetLocation(realizeDecl, context);
 
         // Parameters
         if (context.parameterList() != null)
@@ -627,14 +606,14 @@ public class AstBuilder : CxBaseVisitor<AstNode>
                     Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
                 };
                 SetLocation(param, paramContext);
-                ctorDecl.Parameters.Add(param);
+                realizeDecl.Parameters.Add(param);
             }
         }
 
         // Body
-        ctorDecl.Body = (BlockStatementNode)Visit(context.blockStatement());
+        realizeDecl.Body = (BlockStatementNode)Visit(context.blockStatement());
 
-        return ctorDecl;
+        return realizeDecl;
     }
 
     public override AstNode VisitEventName(EventNameContext context)

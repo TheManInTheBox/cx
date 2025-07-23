@@ -60,7 +60,7 @@ public interface IAstVisitor<T>
     T VisitClassDeclaration(ClassDeclarationNode node);
     T VisitFieldDeclaration(FieldDeclarationNode node);
     T VisitMethodDeclaration(MethodDeclarationNode node);
-    T VisitConstructorDeclaration(ConstructorDeclarationNode node);
+    T VisitRealizeDeclaration(RealizeDeclarationNode node);
     T VisitInterfaceDeclaration(InterfaceDeclarationNode node);
     T VisitInterfaceMethodSignature(InterfaceMethodSignatureNode node);
     T VisitInterfacePropertySignature(InterfacePropertySignatureNode node);
@@ -554,7 +554,7 @@ public class ClassDeclarationNode : StatementNode
     public List<UsesStatementNode> UsesStatements { get; set; } = new();
     public List<FieldDeclarationNode> Fields { get; set; } = new();
     public List<MethodDeclarationNode> Methods { get; set; } = new();
-    public List<ConstructorDeclarationNode> Constructors { get; set; } = new();
+    public List<RealizeDeclarationNode> RealizeDeclarations { get; set; } = new();
     public List<OnStatementNode> EventHandlers { get; set; } = new();
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitClassDeclaration(this);
@@ -589,15 +589,14 @@ public class MethodDeclarationNode : AstNode
 }
 
 /// <summary>
-/// Constructor declaration within a class
+/// Cognitive realize declaration within a class - replaces traditional constructors
 /// </summary>
-public class ConstructorDeclarationNode : AstNode
+public class RealizeDeclarationNode : AstNode
 {
-    public AccessModifier AccessModifier { get; set; } = AccessModifier.Public;
     public List<ParameterNode> Parameters { get; set; } = new();
     public BlockStatementNode Body { get; set; } = new();
 
-    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitConstructorDeclaration(this);
+    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitRealizeDeclaration(this);
 }
 
 /// <summary>

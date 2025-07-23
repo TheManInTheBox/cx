@@ -5,7 +5,7 @@ program: statement* EOF;
 
 // Statements
 statement
-    : classDeclaration
+    : objectDeclaration
     | variableDeclaration
     | expressionStatement
     | forStatement
@@ -17,27 +17,24 @@ statement
 
 dottedIdentifier: IDENTIFIER ('.' IDENTIFIER)*;
 
-// Class declarations with inheritance support (use : instead of implements)
-classDeclaration
-    : 'class' IDENTIFIER ('extends' IDENTIFIER)? classBody
+// Object declarations with inheritance support (use : instead of implements)
+objectDeclaration
+    : 'object' IDENTIFIER ('extends' IDENTIFIER)? objectBody
     ;
 
-// Decorator support for classes
+// Decorator support for objects
 decorator
     : '@' IDENTIFIER
     ;
 
-classBody: '{' classMember* '}';
+objectBody: '{' objectMember* '}';
 
-classMember
-    : fieldDeclaration
-    | constructorDeclaration
+objectMember
+    : realizeDeclaration
     | onStatement
     ;
 
-fieldDeclaration: IDENTIFIER ':' type ('=' expression)? ';';
-
-constructorDeclaration: 'constructor' '(' parameterList? ')' blockStatement;
+realizeDeclaration: 'realize' '(' parameterList? ')' blockStatement;
 
 parameterList: parameter (',' parameter)*;
 parameter: IDENTIFIER (':' type)?;  // Make type optional
@@ -49,7 +46,7 @@ variableDeclaration: 'var' IDENTIFIER '=' expression ';';
 forStatement: 'for' '(' ('var' IDENTIFIER | IDENTIFIER) 'in' expression ')' statement;
 
 // Cognitive Event-driven statements
-eventNamePart: IDENTIFIER | 'any' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'user' | 'ai' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await' | 'completed' | 'ready' | 'activation' | 'timing' | 'decision' | 'work' | 'new';
+eventNamePart: IDENTIFIER | 'any' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'ai' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await' | 'completed' | 'ready' | 'activation' | 'timing' | 'decision' | 'work' | 'new';
 eventName: eventNamePart ('.' eventNamePart)*;
 onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
@@ -106,12 +103,11 @@ type
     | 'array' '<' type '>'
     | 'object'
     | 'any'
-    | IDENTIFIER  // Custom types including classes and interfaces
+    | IDENTIFIER  // Custom types including objects and interfaces
     ;
 
-CLASS: 'class';
+OBJECT: 'object';
 EXTENDS: 'extends';
-CONSTRUCTOR: 'constructor';
 NEW: 'new';
 NULL: 'null';
 TRUE: 'true';
@@ -125,6 +121,7 @@ THINK: 'think';
 AWAIT: 'await';
 ADAPT: 'adapt';
 NOT: 'not';
+REALIZE: 'realize';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';
