@@ -93,11 +93,23 @@ gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 - **Comma-less Syntax**: Clean, modern syntax for AI services and emit statements
 - **Payload Propagation**: Handler events receive both original payload AND custom handler data
 
+### **Class-Based Event Handler Patterns (v1.0)**
+- **Instance Variable Access**: Class-based event handlers provide superior scope resolution with `this.fieldName` pattern
+- **State Management**: Event handlers can modify instance state directly (`this.currentPhase = "new_value"`)
+- **Variable Scope**: Class handlers resolve variable scope more reliably than global handlers
+- **Smart Await Integration**: AI-determined optimal timing with `await { reason: "context", minDurationMs: 1000, maxDurationMs: 3000 }`
+
 ### **Automatic Object Serialization (v1.0)**
 - **CX Object Detection**: Automatically detects CX objects inheriting from AiServiceBase
 - **Recursive JSON Display**: Nested CX objects display with full structure and proper indentation
 - **Clean Field Filtering**: Internal fields (ServiceProvider, Logger) automatically hidden
 - **Primitive Type Handling**: Strings, numbers, booleans print directly without JSON formatting
+- **Debug-Ready Output**: Perfect for inspecting complex agent states and data structures
+
+### **Voice Speed Control (v1.0)**
+- **Speech Speed Parameter**: Use `speechSpeed: 0.9` to slow speech by 10% for better comprehension
+- **Flexible Speed Control**: Range from 0.8 (slow) to 1.2 (fast) for different interaction needs
+- **Instance-Based Control**: Each agent can have its own speech speed via `this.speechSpeed`
 - **Debug-Ready Output**: Perfect for inspecting complex agent states and data structures
 
 ### **Modern Syntax Standards**
