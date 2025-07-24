@@ -22,5 +22,10 @@ namespace CxLanguage.Runtime
         /// Emit an event with a payload that will be wrapped in a CxEvent object.
         /// </summary>
         void Emit(string eventName, object payload);
+
+        /// <summary>
+        /// Asynchronously emit an event with a payload that will be wrapped in a CxEvent object.
+        /// </summary>
+        Task EmitAsync(string eventName, object payload);
     }
 }

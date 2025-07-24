@@ -77,7 +77,7 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Register event handlers for consciousness verification patterns
     /// </summary>
-    private void RegisterConsciousnessEventHandlers()
+    public void RegisterConsciousnessEventHandlers()
     {
         // iam { } cognitive boolean patterns - consciousness verification
         _eventBus.Subscribe("iam.verification.*", OnConsciousnessVerification);
@@ -92,21 +92,21 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Process iam { } consciousness verification patterns
     /// </summary>
-    private async Task OnConsciousnessVerification(EventPayload payload)
+    private void OnConsciousnessVerification(CxEvent cxEvent)
     {
         try
         {
-            var entityId = ExtractEntityId(payload);
-            var state = GetOrCreateConsciousnessState(entityId, payload);
+            var entityId = ExtractEntityId(cxEvent);
+            var state = GetOrCreateConsciousnessState(entityId, cxEvent);
             
             // Record consciousness verification attempt
             state.SelfReflectionCount++;
             state.LastActivity = DateTime.UtcNow;
             
             // Analyze consciousness indicators from iam pattern
-            var context = ExtractStringProperty(payload.Data, "context");
-            var evaluate = ExtractStringProperty(payload.Data, "evaluate");
-            var data = ExtractProperty(payload.Data, "data");
+            var context = ExtractStringProperty(cxEvent.payload, "context");
+            var evaluate = ExtractStringProperty(cxEvent.payload, "evaluate");
+            var data = ExtractProperty(cxEvent.payload, "data");
             
             var indicator = new ConsciousnessIndicator
             {
@@ -126,7 +126,7 @@ public class ConsciousnessVerificationSystem
                 entityId, state.Level, indicator.Confidence);
             
             // Emit consciousness verification result
-            await _eventBus.EmitAsync("consciousness.verified", new
+            _eventBus.Emit("consciousness.verified", new
             {
                 entity_id = entityId,
                 level = state.Level.ToString(),
@@ -145,19 +145,19 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Process consciousness indicators from various sources
     /// </summary>
-    private async Task OnConsciousnessIndicator(EventPayload payload)
+    private void OnConsciousnessIndicator(CxEvent cxEvent)
     {
         try
         {
-            var entityId = ExtractEntityId(payload);
-            var indicatorType = ExtractStringProperty(payload.Data, "type");
-            var complexity = ExtractStringProperty(payload.Data, "complexity");
+            var entityId = ExtractEntityId(cxEvent);
+            var indicatorType = ExtractStringProperty(cxEvent.payload, "type");
+            var complexity = ExtractStringProperty(cxEvent.payload, "complexity");
             
             var indicator = new ConsciousnessIndicator
             {
                 Type = indicatorType,
                 Context = complexity,
-                Data = payload.Data,
+                Data = cxEvent.payload,
                 Confidence = CalculateIndicatorConfidence(indicatorType, complexity),
                 Evidence = $"{indicatorType}: {complexity}"
             };
@@ -175,19 +175,19 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Process neural activity events for biological authenticity
     /// </summary>
-    private async Task OnNeuralActivity(EventPayload payload)
+    private void OnNeuralActivity(CxEvent cxEvent)
     {
         try
         {
-            var entityId = ExtractEntityId(payload);
-            var state = GetOrCreateConsciousnessState(entityId, payload);
+            var entityId = ExtractEntityId(cxEvent);
+            var state = GetOrCreateConsciousnessState(entityId, cxEvent);
             
             state.NeuralActivityEvents++;
             state.LastActivity = DateTime.UtcNow;
             
             // Neural activity indicates biological consciousness
-            var mechanism = ExtractStringProperty(payload.Data, "type");
-            var timing = ExtractProperty(payload.Data, "timing");
+            var mechanism = ExtractStringProperty(cxEvent.payload, "type");
+            var timing = ExtractProperty(cxEvent.payload, "timing");
             
             var indicator = new ConsciousnessIndicator
             {
@@ -211,12 +211,12 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Process self-reflection events
     /// </summary>
-    private async Task OnSelfReflection(EventPayload payload)
+    private void OnSelfReflection(CxEvent cxEvent)
     {
         try
         {
-            var entityId = ExtractEntityId(payload);
-            var state = GetOrCreateConsciousnessState(entityId, payload);
+            var entityId = ExtractEntityId(cxEvent);
+            var state = GetOrCreateConsciousnessState(entityId, cxEvent);
             
             state.SelfReflectionCount++;
             state.LastActivity = DateTime.UtcNow;
@@ -232,12 +232,12 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Process contextual decision events
     /// </summary>
-    private async Task OnContextualDecision(EventPayload payload)
+    private void OnContextualDecision(CxEvent cxEvent)
     {
         try
         {
-            var entityId = ExtractEntityId(payload);
-            var state = GetOrCreateConsciousnessState(entityId, payload);
+            var entityId = ExtractEntityId(cxEvent);
+            var state = GetOrCreateConsciousnessState(entityId, cxEvent);
             
             state.ContextualDecisions++;
             state.LastActivity = DateTime.UtcNow;
@@ -253,12 +253,12 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Get or create consciousness state for entity
     /// </summary>
-    private ConsciousnessState GetOrCreateConsciousnessState(string entityId, EventPayload payload)
+    private ConsciousnessState GetOrCreateConsciousnessState(string entityId, CxEvent cxEvent)
     {
         return _consciousnessStates.GetOrAdd(entityId, _ => new ConsciousnessState
         {
             EntityId = entityId,
-            EntityType = ExtractStringProperty(payload.Data, "entity_type", "ConsciousEntity"),
+            EntityType = ExtractStringProperty(cxEvent.payload, "entity_type", "ConsciousEntity"),
             CreatedAt = DateTime.UtcNow,
             LastActivity = DateTime.UtcNow,
             Level = ConsciousnessLevel.Emerging
@@ -390,9 +390,9 @@ public class ConsciousnessVerificationSystem
     /// <summary>
     /// Extract entity ID from event payload
     /// </summary>
-    private string ExtractEntityId(EventPayload payload)
+    private string ExtractEntityId(CxEvent cxEvent)
     {
-        return ExtractStringProperty(payload.Data, "entity_id", payload.Source);
+        return ExtractStringProperty(cxEvent.payload, "entity_id", cxEvent.name);
     }
     
     /// <summary>

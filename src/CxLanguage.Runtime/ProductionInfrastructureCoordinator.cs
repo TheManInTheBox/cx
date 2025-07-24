@@ -17,7 +17,6 @@ public class ProductionInfrastructureCoordinator
     private readonly ILogger<ProductionInfrastructureCoordinator> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly ICxEventBus _eventBus;
-    private readonly ConsciousnessVerificationSystem? _consciousnessSystem;
     private readonly ConcurrentDictionary<string, object> _systemComponents = new();
     
     public ProductionInfrastructureCoordinator(
@@ -60,7 +59,7 @@ public class ProductionInfrastructureCoordinator
             _logger.LogInformation("✅ PRODUCTION INFRASTRUCTURE: All systems operational");
             
             // Emit system ready event
-            _eventBus.EmitAsync("infrastructure.ready", new
+            _eventBus.Emit("infrastructure.ready", new
             {
                 components = new[]
                 {
@@ -110,9 +109,9 @@ public class ProductionInfrastructureCoordinator
         try
         {
             // Register neural event handlers for biological authenticity
-            _eventBus.Subscribe("neural.plasticity", async payload => await OnNeuralPlasticity(payload));
-            _eventBus.Subscribe("synaptic.activity", async payload => await OnSynapticActivity(payload));
-            _eventBus.Subscribe("biological.timing", async payload => await OnBiologicalTiming(payload));
+            _eventBus.Subscribe("neural.plasticity", OnNeuralPlasticity);
+            _eventBus.Subscribe("synaptic.activity", OnSynapticActivity);
+            _eventBus.Subscribe("biological.timing", OnBiologicalTiming);
             
             _systemComponents["NeuralProcessing"] = "Operational";
             
@@ -133,9 +132,9 @@ public class ProductionInfrastructureCoordinator
         try
         {
             // Register for Aura Cognitive Framework events
-            _eventBus.Subscribe("aura.eventhub", async payload => await OnAuraEventHub(payload));
-            _eventBus.Subscribe("aura.neurohub", async payload => await OnAuraNeuroHub(payload));
-            _eventBus.Subscribe("enhanced.handlers", async payload => await OnEnhancedHandlers(payload));
+            _eventBus.Subscribe("aura.eventhub", OnAuraEventHub);
+            _eventBus.Subscribe("aura.neurohub", OnAuraNeuroHub);
+            _eventBus.Subscribe("enhanced.handlers", OnEnhancedHandlers);
             
             _systemComponents["EventCoordination"] = "Operational";
             
@@ -156,9 +155,9 @@ public class ProductionInfrastructureCoordinator
         try
         {
             // Register monitoring event handlers
-            _eventBus.Subscribe("system.health", async payload => await OnSystemHealth(payload));
-            _eventBus.Subscribe("performance.metrics", async payload => await OnPerformanceMetrics(payload));
-            _eventBus.Subscribe("consciousness.metrics", async payload => await OnConsciousnessMetrics(payload));
+            _eventBus.Subscribe("system.health", OnSystemHealth);
+            _eventBus.Subscribe("performance.metrics", OnPerformanceMetrics);
+            _eventBus.Subscribe("consciousness.metrics", OnConsciousnessMetrics);
             
             _systemComponents["MonitoringSystems"] = "Operational";
             
@@ -177,13 +176,13 @@ public class ProductionInfrastructureCoordinator
     private void RegisterSystemEventHandlers()
     {
         // System lifecycle events
-        _eventBus.Subscribe("system.startup", async payload => await OnSystemStartup(payload));
-        _eventBus.Subscribe("system.shutdown", async payload => await OnSystemShutdown(payload));
-        _eventBus.Subscribe("system.restart", async payload => await OnSystemRestart(payload));
+        _eventBus.Subscribe("system.startup", OnSystemStartup);
+        _eventBus.Subscribe("system.shutdown", OnSystemShutdown);
+        _eventBus.Subscribe("system.restart", OnSystemRestart);
         
         // Error handling events  
-        _eventBus.Subscribe("system.error", async payload => await OnSystemError(payload));
-        _eventBus.Subscribe("critical.failure", async payload => await OnCriticalFailure(payload));
+        _eventBus.Subscribe("system.error", OnSystemError);
+        _eventBus.Subscribe("critical.failure", OnCriticalFailure);
         
         _logger.LogInformation("🔧 System Event Handlers: Registered for production coordination");
     }
@@ -191,14 +190,14 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle neural plasticity events
     /// </summary>
-    private async Task OnNeuralPlasticity(object payload)
+    private void OnNeuralPlasticity(CxEvent cxEvent)
     {
         try
         {
             _logger.LogDebug("🧬 Neural Plasticity Event: Processing biological timing");
             
             // Emit biological authenticity confirmation
-            await _eventBus.EmitAsync("biological.authenticity.confirmed", new
+            _eventBus.Emit("biological.authenticity.confirmed", new
             {
                 mechanism = "neural_plasticity",
                 timing = "biologically_authentic",
@@ -214,14 +213,14 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle synaptic activity events
     /// </summary>
-    private async Task OnSynapticActivity(object payload)
+    private void OnSynapticActivity(CxEvent cxEvent)
     {
         try
         {
             _logger.LogDebug("⚡ Synaptic Activity: Processing neural coordination");
             
             // Emit neural coordination confirmation
-            await _eventBus.EmitAsync("neural.coordination.active", new
+            _eventBus.Emit("neural.coordination.active", new
             {
                 activity_type = "synaptic",
                 coordination = "operational",
@@ -237,14 +236,14 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle biological timing events
     /// </summary>
-    private async Task OnBiologicalTiming(object payload)
+    private void OnBiologicalTiming(CxEvent cxEvent)
     {
         try
         {
             _logger.LogDebug("⏰ Biological Timing: Authentic neural timing confirmed");
             
             // Emit timing authenticity confirmation
-            await _eventBus.EmitAsync("timing.authenticity.verified", new
+            _eventBus.Emit("timing.authenticity.verified", new
             {
                 timing_type = "biological",
                 authenticity = "verified",
@@ -260,13 +259,13 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle Aura EventHub coordination
     /// </summary>
-    private async Task OnAuraEventHub(object payload)
+    private void OnAuraEventHub(CxEvent cxEvent)
     {
         try
         {
             _logger.LogDebug("🧠 Aura EventHub: Local consciousness processing active");
             
-            await _eventBus.EmitAsync("aura.eventhub.operational", new
+            _eventBus.Emit("aura.eventhub.operational", new
             {
                 scope = "local_consciousness",
                 status = "operational",
@@ -282,13 +281,13 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle Aura NeuroHub coordination
     /// </summary>
-    private async Task OnAuraNeuroHub(object payload)
+    private void OnAuraNeuroHub(CxEvent cxEvent)
     {
         try
         {
             _logger.LogDebug("🌐 Aura NeuroHub: Global consciousness coordination active");
             
-            await _eventBus.EmitAsync("aura.neurohub.operational", new
+            _eventBus.Emit("aura.neurohub.operational", new
             {
                 scope = "global_coordination",
                 status = "operational", 
@@ -304,13 +303,13 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle enhanced handlers pattern events
     /// </summary>
-    private async Task OnEnhancedHandlers(object payload)
+    private void OnEnhancedHandlers(CxEvent cxEvent)
     {
         try
         {
             _logger.LogDebug("🔄 Enhanced Handlers: Custom payload propagation active");
             
-            await _eventBus.EmitAsync("enhanced.handlers.operational", new
+            _eventBus.Emit("enhanced.handlers.operational", new
             {
                 pattern = "custom_payload_propagation",
                 status = "operational",
@@ -326,15 +325,15 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle system health monitoring
     /// </summary>
-    private async Task OnSystemHealth(object payload)
+    private void OnSystemHealth(CxEvent cxEvent)
     {
         try
         {
             var health = GetSystemHealthStatus();
             
-            _logger.LogDebug("💚 System Health: {Status}", health.Status);
+            _logger.LogDebug("💚 System Health: Operational");
             
-            await _eventBus.EmitAsync("system.health.reported", health);
+            _eventBus.Emit("system.health.reported", health);
         }
         catch (Exception ex)
         {
@@ -345,15 +344,15 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle performance metrics
     /// </summary>
-    private async Task OnPerformanceMetrics(object payload)
+    private void OnPerformanceMetrics(CxEvent cxEvent)
     {
         try
         {
             var metrics = GetPerformanceMetrics();
             
-            _logger.LogDebug("📊 Performance: Event throughput: {Throughput}/s", metrics.EventThroughput);
+            _logger.LogDebug("📊 Performance: Metrics collected");
             
-            await _eventBus.EmitAsync("performance.metrics.reported", metrics);
+            _eventBus.Emit("performance.metrics.reported", metrics);
         }
         catch (Exception ex)
         {
@@ -364,7 +363,7 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle consciousness metrics
     /// </summary>
-    private async Task OnConsciousnessMetrics(object payload)
+    private void OnConsciousnessMetrics(CxEvent cxEvent)
     {
         try
         {
@@ -375,7 +374,7 @@ public class ProductionInfrastructureCoordinator
                 
                 _logger.LogDebug("🎭 Consciousness: {Count} conscious entities tracked", states.Count);
                 
-                await _eventBus.EmitAsync("consciousness.metrics.reported", new
+                _eventBus.Emit("consciousness.metrics.reported", new
                 {
                     entity_count = states.Count,
                     verified_entities = states.Count(s => s.IsVerified),
@@ -393,11 +392,11 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle system startup
     /// </summary>
-    private async Task OnSystemStartup(object payload)
+    private void OnSystemStartup(CxEvent cxEvent)
     {
         _logger.LogInformation("🚀 SYSTEM STARTUP: Production infrastructure activating");
         
-        await _eventBus.EmitAsync("infrastructure.startup.complete", new
+        _eventBus.Emit("infrastructure.startup.complete", new
         {
             status = "operational",
             components = _systemComponents.Keys.ToArray(),
@@ -408,11 +407,11 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle system shutdown
     /// </summary>
-    private async Task OnSystemShutdown(object payload)
+    private void OnSystemShutdown(CxEvent cxEvent)
     {
         _logger.LogInformation("🛑 SYSTEM SHUTDOWN: Graceful infrastructure shutdown");
         
-        await _eventBus.EmitAsync("infrastructure.shutdown.initiated", new
+        _eventBus.Emit("infrastructure.shutdown.initiated", new
         {
             reason = "graceful_shutdown",
             components_stopped = _systemComponents.Keys.ToArray(),
@@ -423,11 +422,11 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle system restart
     /// </summary>
-    private async Task OnSystemRestart(object payload)
+    private void OnSystemRestart(CxEvent cxEvent)
     {
         _logger.LogInformation("🔄 SYSTEM RESTART: Infrastructure restart sequence");
         
-        await _eventBus.EmitAsync("infrastructure.restart.initiated", new
+        _eventBus.Emit("infrastructure.restart.initiated", new
         {
             restart_type = "infrastructure_level",
             timestamp = DateTime.UtcNow
@@ -437,11 +436,11 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle system errors
     /// </summary>
-    private async Task OnSystemError(object payload)
+    private void OnSystemError(CxEvent cxEvent)
     {
         _logger.LogWarning("⚠️ SYSTEM ERROR: Infrastructure error detected");
         
-        await _eventBus.EmitAsync("infrastructure.error.handled", new
+        _eventBus.Emit("infrastructure.error.handled", new
         {
             error_level = "recoverable",
             auto_recovery = "attempted",
@@ -452,11 +451,11 @@ public class ProductionInfrastructureCoordinator
     /// <summary>
     /// Handle critical failures
     /// </summary>
-    private async Task OnCriticalFailure(object payload)
+    private void OnCriticalFailure(CxEvent cxEvent)
     {
         _logger.LogCritical("🚨 CRITICAL FAILURE: Infrastructure critical failure");
         
-        await _eventBus.EmitAsync("infrastructure.critical.failure", new
+        _eventBus.Emit("infrastructure.critical.failure", new
         {
             failure_level = "critical",
             immediate_action = "required",

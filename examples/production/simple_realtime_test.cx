@@ -1,0 +1,60 @@
+// Simple working test for real-time AI connection
+// Using correct 'object' syntax instead of 'conscious'
+
+object RealtimeTestAgent
+{
+    realize()
+    {
+        print("🧠 RealtimeTestAgent initialized");
+        emit agent.ready;
+    }
+
+    on system.connect (event)
+    {
+        print("⚡️ Connecting to Azure Realtime API...");
+        emit realtime.connect { demo: "test" };
+    }
+
+    on realtime.connected (event)
+    {
+        print("✅ Connected to Azure OpenAI Realtime API");
+        emit realtime.session.create { deployment: "gpt-4o-mini-realtime-preview" };
+    }
+
+    on realtime.session.created (event)
+    {
+        print("🔄 Session created successfully");
+        emit realtime.text.send { text: "Hello from CX Language!", deployment: "gpt-4o-mini-realtime-preview" };
+    }
+
+    on realtime.text.response (event)
+    {
+        print("📤 Response: " + event.content);
+        
+        is {
+            context: "Should we complete the test?",
+            evaluate: "Response received successfully",
+            data: { complete: event.isComplete },
+            handlers: [ test.complete ]
+        };
+    }
+
+    on test.complete (event)
+    {
+        print("✅ Test completed successfully!");
+        emit system.shutdown { reason: "Test completed" };
+    }
+}
+
+var testAgent = new RealtimeTestAgent();
+
+on system.start (event)
+{
+    print("🚀 Starting Real-time AI Connection Test");
+    emit system.connect;
+}
+
+on system.shutdown (event)
+{
+    print("🔌 Shutting down: " + event.reason);
+}
