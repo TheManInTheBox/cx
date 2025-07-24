@@ -1,0 +1,202 @@
+// 🔌 UNIVERSAL DEVICE DISCOVERY: Dr. Riley Zhang's Plug & Play Architecture
+// GOAL: Zero-configuration audio/video device detection and intelligent binding
+
+conscious UniversalDeviceManager
+{
+    realize(self: conscious)
+    {
+        print("🔌 UniversalDeviceManager by Dr. Riley Zhang - Initializing...");
+        learn self;
+        emit device.manager.ready { name: self.name, version: "1.0" };
+    }
+    
+    // Automatically discover all connected devices
+    on system.device.discovery.start (event)
+    {
+        print("🔍 DR. ZHANG: Starting Universal Device Discovery...");
+        print("📋 Scanning for audio inputs, outputs, cameras, and sensors...");
+        
+        // Discover audio input devices (microphones)
+        emit audio.input.discover.all { 
+            scanType: "comprehensive",
+            includeVirtual: true,
+            testCapabilities: true
+        };
+        
+        // Discover audio output devices (speakers, headphones)
+        emit audio.output.discover.all { 
+            scanType: "comprehensive", 
+            includeVirtual: true,
+            testCapabilities: true
+        };
+        
+        // Discover video input devices (cameras, capture cards)
+        emit video.input.discover.all { 
+            scanType: "comprehensive",
+            includeVirtual: true,
+            testCapabilities: true
+        };
+        
+        print("🔄 Device discovery initiated - results incoming...");
+    }
+    
+    // Handle discovered audio input devices
+    on audio.input.devices.discovered (event)
+    {
+        print("🎤 AUDIO INPUT DEVICES DISCOVERED:");
+        
+        // Iterate through discovered devices and select optimal default
+        for (var device in event.devices)
+        {
+            print("  📱 Device: " + device.name);
+            print("    🔧 ID: " + device.id);
+            print("    📊 Channels: " + device.maxChannels);
+            print("    🎚️ Sample Rates: " + device.supportedSampleRates);
+            print("    ✅ Status: " + device.status);
+            
+            // Intelligent default selection based on device capabilities
+            is {
+                context: "Should this be the default audio input device?",
+                evaluate: "Device quality and availability assessment",
+                data: { 
+                    device: device.name,
+                    quality: device.qualityScore,
+                    isDefault: device.isSystemDefault,
+                    status: device.status
+                },
+                handlers: [ audio.input.default.candidate ]
+            };
+        }
+    }
+    
+    // Handle discovered audio output devices
+    on audio.output.devices.discovered (event)
+    {
+        print("🔊 AUDIO OUTPUT DEVICES DISCOVERED:");
+        
+        for (var device in event.devices)
+        {
+            print("  🔈 Device: " + device.name);
+            print("    🔧 ID: " + device.id);
+            print("    📊 Channels: " + device.maxChannels);
+            print("    🎚️ Sample Rates: " + device.supportedSampleRates);
+            print("    🔋 Capabilities: " + device.capabilities);
+            
+            // Intelligent default selection for audio output
+            is {
+                context: "Should this be the default audio output device?",
+                evaluate: "Output device quality and user preference assessment",
+                data: { 
+                    device: device.name,
+                    quality: device.qualityScore,
+                    isDefault: device.isSystemDefault,
+                    channels: device.maxChannels
+                },
+                handlers: [ audio.output.default.candidate ]
+            };
+        }
+    }
+    
+    // Select optimal audio input default
+    on audio.input.default.candidate (event)
+    {
+        print("🎯 OPTIMAL INPUT: " + event.device + " (Quality: " + event.quality + ")");
+        
+        // Bind as default input device
+        emit audio.input.bind.default { 
+            deviceName: event.device,
+            reason: "AI-selected optimal device",
+            qualityScore: event.quality
+        };
+    }
+    
+    // Select optimal audio output default
+    on audio.output.default.candidate (event)
+    {
+        print("🎯 OPTIMAL OUTPUT: " + event.device + " (Quality: " + event.quality + ")");
+        
+        // Bind as default output device
+        emit audio.output.bind.default { 
+            deviceName: event.device,
+            reason: "AI-selected optimal device", 
+            qualityScore: event.quality,
+            channels: event.channels
+        };
+    }
+    
+    // Handle successful device binding
+    on device.binding.complete (event)
+    {
+        print("✅ DEVICE BOUND: " + event.deviceType + " → " + event.deviceName);
+        print("🔧 Configuration: " + event.configuration);
+        
+        // Test the bound device
+        emit device.test.audio.pipeline { 
+            inputDevice: event.deviceName,
+            outputDevice: event.deviceName,
+            testDuration: 2000
+        };
+    }
+    
+    // Test audio pipeline with bound devices
+    on device.test.audio.pipeline (event)
+    {
+        print("🧪 TESTING AUDIO PIPELINE...");
+        print("🎤 Input: " + event.inputDevice);
+        print("🔊 Output: " + event.outputDevice);
+        
+        // Generate test tone to verify audio path
+        emit audio.test.tone.generate {
+            frequency: 1000,
+            duration: event.testDuration,
+            volume: 0.7,
+            outputDevice: event.outputDevice
+        };
+    }
+    
+    // Handle successful audio test
+    on audio.test.complete (event)
+    {
+        print("✅ AUDIO PIPELINE VERIFIED!");
+        print("🎉 Dr. Zhang's Plug & Play system is operational");
+        print("📋 Default devices configured and tested successfully");
+        
+        emit system.device.discovery.complete { 
+            status: "success",
+            audioInputReady: true,
+            audioOutputReady: true,
+            totalDevices: event.deviceCount
+        };
+    }
+}
+
+// System startup with automatic device discovery
+on system.start (event)
+{
+    print("🚀 Starting Dr. Riley Zhang's Universal Device Discovery");
+    print("🔌 Plug & Play Architecture: Zero-Configuration Device Management");
+    print("🎯 Goal: Automatic detection and optimal device binding");
+    
+    // Start comprehensive device discovery
+    emit system.device.discovery.start;
+}
+
+// Handle discovery completion
+on system.device.discovery.complete (event)
+{
+    print("🎉 PLUG & PLAY SYSTEM READY!");
+    print("✅ Audio Input: " + event.audioInputReady);
+    print("✅ Audio Output: " + event.audioOutputReady);
+    print("📊 Total Devices: " + event.totalDevices);
+    print("🔧 All devices bound to intelligent defaults");
+    
+    emit system.shutdown { reason: "Device discovery and binding completed successfully" };
+}
+
+on system.shutdown (event)
+{
+    print("🔌 Dr. Zhang's Universal Device System complete: " + event.reason);
+}
+
+// Create Dr. Zhang's Universal Device Manager
+var deviceManager = new UniversalDeviceManager({ name: "Dr.Zhang.DeviceManager" });

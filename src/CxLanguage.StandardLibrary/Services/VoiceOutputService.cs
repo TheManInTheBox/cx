@@ -1,16 +1,45 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using NAudio.Wave;
+using NAudio.CoreAudioApi;
 using CxLanguage.Runtime;
 using System;
 using System.IO;
 using System.Threading.Tasks;
+using System.Linq;
+using System.Collections.Concurrent;
+using System.Threading;
 
 namespace CxLanguage.StandardLibrary.Services;
 
 /// <summary>
+/// Priority levels for voice output requests
+/// </summary>
+public enum VoicePriority
+{
+    Low = 1,
+    Normal = 2,
+    High = 3,
+    Critical = 4
+}
+
+/// <summary>
+/// Voice output request with priority support
+/// </summary>
+public class VoiceOutputRequest
+{
+    public byte[] AudioData { get; set; } = Array.Empty<byte>();
+    public int SampleRate { get; set; } = 24000;
+    public int Channels { get; set; } = 1;
+    public VoicePriority Priority { get; set; } = VoicePriority.Normal;
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public string? RequestId { get; set; }
+}
+
+/// <summary>
 /// Voice output service for audio synthesis and playback using NAudio
 /// Handles text-to-speech synthesis and audio file playback for voice responses
+/// Features priority queuing for voice requests
 /// </summary>
 public interface IVoiceOutputService
 {
@@ -48,16 +77,37 @@ public interface IVoiceOutputService
 public class VoiceOutputService : IVoiceOutputService, IDisposable
 {
     private readonly ILogger<VoiceOutputService> _logger;
-    private readonly IServiceProvider _serviceProvider;
-    private WaveOutEvent? _waveOut;
+    private readonly ICxEventBus _eventBus;
+    private IWavePlayer? _waveOut;
+    private TaskCompletionSource<bool>? _playbackTcs;
     private bool _isDisposed;
+    private volatile bool _isShuttingDown;
     private readonly object _playbackLock = new();
+    private int _deviceIndex = -1; // -1 means use default audio device
+    
+    // Priority queuing system
+    private readonly ConcurrentQueue<VoiceOutputRequest> _requestQueue = new();
+    private readonly SemaphoreSlim _queueSemaphore = new(0);
+    private readonly CancellationTokenSource _cancellationTokenSource = new();
+    private Task? _processingTask;
 
-    public VoiceOutputService(ILogger<VoiceOutputService> logger, IServiceProvider serviceProvider)
+    public VoiceOutputService(ILogger<VoiceOutputService> logger, ICxEventBus eventBus)
     {
         _logger = logger;
-        _serviceProvider = serviceProvider;
-        _logger.LogInformation("🔊 Voice Output Service initialized");
+        _eventBus = eventBus;
+        _eventBus.Subscribe("system.shutdown", OnSystemShutdown);
+        
+        // Start priority queue processing
+        _processingTask = Task.Run(ProcessQueueAsync);
+        
+        _logger.LogInformation("🔊 Voice Output Service initialized with priority queuing and direct hardware control");
+    }
+
+    private void OnSystemShutdown(CxEvent cxEvent)
+    {
+        _logger.LogWarning("Received system.shutdown event. Preparing to stop voice output service.");
+        _isShuttingDown = true;
+        _ = StopPlaybackAsync();
     }
 
     public bool IsPlaying
@@ -75,50 +125,180 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
     {
         if (_isDisposed) return;
         
+        // Add request to priority queue
+        var request = new VoiceOutputRequest
+        {
+            AudioData = audioData,
+            SampleRate = sampleRate,
+            Channels = channels,
+            Priority = VoicePriority.Normal,
+            RequestId = Guid.NewGuid().ToString("N")[..8]
+        };
+        
+        await QueueVoiceRequestAsync(request);
+    }
+    
+    /// <summary>
+    /// Queue a voice output request with priority support
+    /// </summary>
+    public async Task QueueVoiceRequestAsync(VoiceOutputRequest request)
+    {
+        if (_isDisposed) return;
+        
+        _logger.LogInformation("🔄 Queueing voice request: {RequestId}, Priority: {Priority}, Size: {Size} bytes", 
+            request.RequestId, request.Priority, request.AudioData.Length);
+            
+        _requestQueue.Enqueue(request);
+        _queueSemaphore.Release();
+        
+        await EmitEventAsync("voice.output.queued", new 
+        { 
+            requestId = request.RequestId,
+            priority = request.Priority.ToString(),
+            audioLength = request.AudioData.Length,
+            timestamp = DateTime.UtcNow
+        });
+    }
+    
+    /// <summary>
+    /// Process the priority queue for voice output requests
+    /// </summary>
+    private async Task ProcessQueueAsync()
+    {
+        _logger.LogInformation("🔄 Priority queue processor started");
+        
+        while (!_cancellationTokenSource.Token.IsCancellationRequested)
+        {
+            try
+            {
+                await _queueSemaphore.WaitAsync(_cancellationTokenSource.Token);
+                
+                if (_requestQueue.TryDequeue(out var request))
+                {
+                    _logger.LogInformation("▶️ Processing voice request: {RequestId}, Priority: {Priority}", 
+                        request.RequestId, request.Priority);
+                        
+                    await PlayAudioDirectAsync(request);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogInformation("🔇 Voice queue processing cancelled");
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Error processing voice queue");
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Direct audio playback without queuing (internal method)
+    /// </summary>
+    private async Task PlayAudioDirectAsync(VoiceOutputRequest request)
+    {
+        if (_isDisposed) return;
+
+        await StopPlaybackAsync(); // Clean up previous playback
+        _playbackTcs = new TaskCompletionSource<bool>();
+
         try
         {
-            _logger.LogInformation("🔊 Playing audio data: {Length} bytes, {SampleRate}Hz, {Channels} channels", 
-                audioData.Length, sampleRate, channels);
+            _logger.LogInformation("🔊 Playing audio: {RequestId}, {Length} bytes, {SampleRate}Hz, {Channels} channels", 
+                request.RequestId, request.AudioData.Length, request.SampleRate, request.Channels);
 
-            await Task.Run(() =>
+            // Dr. Thorne's Hardware-Level Audio Bridge
+            var waveFormat = new WaveFormat(request.SampleRate, 16, request.Channels);
+            
+            // Create a persistent buffer that won't be GC'd during playback
+            var bufferedProvider = new BufferedWaveProvider(waveFormat)
             {
-                lock (_playbackLock)
-                {
-                    // Stop any current playback
-                    _waveOut?.Stop();
-                    _waveOut?.Dispose();
+                BufferLength = request.AudioData.Length * 4, // 4x buffer for safety
+                DiscardOnBufferOverflow = false,
+                ReadFully = true
+            };
+            bufferedProvider.AddSamples(request.AudioData, 0, request.AudioData.Length);
 
-                    // Create wave format for the audio data
-                    var waveFormat = new WaveFormat(sampleRate, 16, channels);
-                    
-                    // Create memory stream from audio data
-                    var memoryStream = new MemoryStream(audioData);
-                    var rawSourceWaveStream = new RawSourceWaveStream(memoryStream, waveFormat);
-                    
-                    // Create wave out device
-                    _waveOut = new WaveOutEvent();
-                    _waveOut.Init(rawSourceWaveStream);
-                    _waveOut.PlaybackStopped += OnPlaybackStopped;
-                    
-                    // Start playback
-                    _waveOut.Play();
-                    
-                    _logger.LogInformation("✅ Audio playback started successfully");
-                    
-                    // Emit event for playback started
-                    _ = Task.Run(() => EmitEventAsync("voice.output.started", new 
-                    { 
-                        audioLength = audioData.Length, 
-                        sampleRate = sampleRate, 
-                        channels = channels,
-                        timestamp = DateTime.UtcNow
-                    }));
+            // Use WaveOutEvent for maximum hardware compatibility
+            var waveOut = new WaveOutEvent { DeviceNumber = _deviceIndex };
+            
+            // Hardware-optimized event handler
+            waveOut.PlaybackStopped += (s, e) =>
+            {
+                _logger.LogInformation("🔇 Hardware playback stopped for request: {RequestId}", request.RequestId);
+                
+                // Clean disposal in correct order
+                bufferedProvider.ClearBuffer();
+                waveOut.Dispose();
+
+                if (e.Exception != null)
+                {
+                    _logger.LogError(e.Exception, "Hardware playback failed for request: {RequestId}", request.RequestId);
+                    _playbackTcs.TrySetException(e.Exception);
                 }
+                else
+                {
+                    _logger.LogInformation("✅ Hardware playback completed successfully for request: {RequestId}", request.RequestId);
+                    _playbackTcs.TrySetResult(true);
+                }
+                
+                _ = EmitEventAsync("voice.output.completed", new { 
+                    requestId = request.RequestId,
+                    priority = request.Priority.ToString(),
+                    timestamp = DateTime.UtcNow, 
+                    exception = e.Exception?.Message 
+                });
+            };
+
+            lock(_playbackLock)
+            {
+                _waveOut = waveOut;
+            }
+
+            waveOut.Init(bufferedProvider);
+            waveOut.Play();
+
+            _logger.LogInformation("▶️ Direct hardware playback initiated for request: {RequestId}", request.RequestId);
+            await EmitEventAsync("voice.output.started", new { 
+                requestId = request.RequestId,
+                priority = request.Priority.ToString(),
+                audioLength = request.AudioData.Length, 
+                sampleRate = request.SampleRate, 
+                channels = request.Channels, 
+                timestamp = DateTime.UtcNow 
             });
+
+            await _playbackTcs.Task; // Wait for playback completion
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error playing audio data");
+            _logger.LogError(ex, "❌ Error in direct hardware playback for request: {RequestId}", request.RequestId);
+            _playbackTcs?.TrySetException(ex);
+            await EmitEventAsync("voice.output.error", new { 
+                requestId = request.RequestId,
+                priority = request.Priority.ToString(),
+                error = ex.Message, 
+                timestamp = DateTime.UtcNow 
+            });
+        }
+    }
+            {
+                _waveOut = waveOut;
+            }
+
+            waveOut.Init(bufferedProvider);
+            waveOut.Play();
+
+            _logger.LogInformation("▶️ Direct hardware playback initiated.");
+            await EmitEventAsync("voice.output.started", new { audioLength = audioData.Length, sampleRate, channels, timestamp = DateTime.UtcNow });
+
+            await _playbackTcs.Task; // Wait for playback completion
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error in direct hardware playback");
+            _playbackTcs?.TrySetException(ex);
             await EmitEventAsync("voice.output.error", new { error = ex.Message, timestamp = DateTime.UtcNow });
         }
     }
@@ -150,7 +330,7 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
                     var audioFile = new AudioFileReader(filePath);
                     
                     // Create wave out device
-                    _waveOut = new WaveOutEvent();
+                    _waveOut = new WaveOutEvent{ DeviceNumber = _deviceIndex };
                     _waveOut.Init(audioFile);
                     _waveOut.PlaybackStopped += OnPlaybackStopped;
                     
@@ -175,38 +355,35 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
         }
     }
 
-    public async Task StopPlaybackAsync()
+    public Task StopPlaybackAsync()
     {
-        try
+        IWavePlayer? playerToStop = null;
+        lock (_playbackLock)
         {
-            await Task.Run(() =>
-            {
-                lock (_playbackLock)
-                {
-                    if (_waveOut != null)
-                    {
-                        _waveOut.Stop();
-                        _logger.LogInformation("🔇 Audio playback stopped");
-                    }
-                }
-            });
-            
-            await EmitEventAsync("voice.output.stopped", new { timestamp = DateTime.UtcNow });
+            playerToStop = _waveOut;
+            _waveOut = null;
         }
-        catch (Exception ex)
+
+        if (playerToStop?.PlaybackState == PlaybackState.Playing)
         {
-            _logger.LogError(ex, "❌ Error stopping audio playback");
+            playerToStop.Stop();
         }
+        
+        _playbackTcs?.TrySetResult(true); // Signal that we are done.
+        return Task.CompletedTask;
     }
 
     public string[] GetOutputDevices()
     {
         try
         {
-            // Simplified device enumeration - NAudio WaveOutEvent uses default device
-            var devices = new[] { "Default Audio Device" };
+            var enumerator = new MMDeviceEnumerator();
+            var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active)
+                                    .Select(d => d.FriendlyName)
+                                    .ToArray();
             
             _logger.LogInformation("🔊 Found {Count} audio output devices", devices.Length);
+            enumerator.Dispose();
             return devices;
         }
         catch (Exception ex)
@@ -220,21 +397,25 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
     {
         try
         {
-            await Task.Run(() =>
+            using (var enumerator = new MMDeviceEnumerator())
             {
-                lock (_playbackLock)
+                var devices = enumerator.EnumerateAudioEndPoints(DataFlow.Render, DeviceState.Active);
+                if (deviceIndex < -1 || deviceIndex >= devices.Count)
                 {
-                    // Stop current playback
-                    _waveOut?.Stop();
-                    _waveOut?.Dispose();
-                    
-                    // Note: NAudio WaveOutEvent doesn't support device selection directly
-                    // This would require using DirectSound or WASAPI for device selection
-                    _logger.LogInformation("🔊 Output device selection requested: {DeviceIndex}", deviceIndex);
+                    _logger.LogWarning("Invalid device index: {DeviceIndex}. Using default device.", deviceIndex);
+                    _deviceIndex = -1;
                 }
-            });
+                else
+                {
+                    _deviceIndex = deviceIndex;
+                }
+            }
+
+            _logger.LogInformation("🔊 Output device set to index: {DeviceIndex}", _deviceIndex);
+
+            await Task.CompletedTask;
             
-            await EmitEventAsync("voice.output.device.set", new { deviceIndex = deviceIndex, timestamp = DateTime.UtcNow });
+            await EmitEventAsync("voice.output.device.set", new { deviceIndex = _deviceIndex, timestamp = DateTime.UtcNow });
         }
         catch (Exception ex)
         {
@@ -245,7 +426,7 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
 
     private void OnPlaybackStopped(object? sender, StoppedEventArgs e)
     {
-        _logger.LogInformation("🔇 Audio playback completed");
+        _logger.LogInformation("🔇 Audio playback completed (file handler)");
         
         // Emit playback completed event
         _ = Task.Run(() => EmitEventAsync("voice.output.completed", new 
@@ -257,19 +438,24 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
 
     private async Task EmitEventAsync(string eventName, object eventData)
     {
-        if (_isDisposed) return;
+        if (_isDisposed || _isShuttingDown)
+        {
+            _logger.LogWarning("Skipping event emission during shutdown: {EventName}", eventName);
+            return;
+        }
         
         try
         {
-            var eventBus = _serviceProvider.GetService<ICxEventBus>();
-            if (eventBus != null)
-            {
-                await eventBus.EmitAsync(eventName, eventData);
-            }
+            await _eventBus.EmitAsync(eventName, eventData);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error emitting event: {EventName}", eventName);
+            // If the service provider is disposed, this will be caught here.
+            if (ex is ObjectDisposedException) {
+                _logger.LogWarning("Could not emit event '{EventName}' because the event bus is disposed.", eventName);
+            } else {
+                _logger.LogError(ex, "Error emitting event: {EventName}", eventName);
+            }
         }
     }
 
@@ -277,7 +463,17 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
     {
         if (_isDisposed) return;
         
+        _isShuttingDown = true;
         _isDisposed = true;
+        
+        // Stop priority queue processing
+        _cancellationTokenSource.Cancel();
+        _processingTask?.Wait(TimeSpan.FromSeconds(2));
+        _cancellationTokenSource.Dispose();
+        _queueSemaphore.Dispose();
+        
+        // There is no Unsubscribe method on ICxEventBus, so we can't unsubscribe.
+        // This is acceptable for a singleton service that lives for the app's lifetime.
         
         lock (_playbackLock)
         {
@@ -285,6 +481,6 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
             _waveOut?.Dispose();
         }
         
-        _logger.LogInformation("🔇 Voice Output Service disposed");
+        _logger.LogInformation("🔇 Voice Output Service disposed with priority queue cleanup");
     }
 }

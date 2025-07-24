@@ -1,0 +1,152 @@
+// Hardware Audio Control Demo - Program Scope as Conscious Entity
+// Demonstrates proper separation: Service emits requests, Program scope controls hardware
+
+var audioPlayer = null;
+var currentDevice = -1;
+
+// Program scope handles all hardware control requests
+on system.start (event)
+{
+    print("🎵 Hardware Audio Control System Initialized");
+    print("Program scope will manage all audio hardware operations");
+    emit system.ready;
+}
+
+on hardware.audio.play.request (event)
+{
+    print("🔊 Program scope received audio playback request");
+    print("Audio data size: " + event.audioData.length + " bytes");
+    print("Sample rate: " + event.sampleRate + "Hz");
+    print("Channels: " + event.channels);
+    print("Device index: " + event.deviceIndex);
+    
+    // Program scope makes the hardware decision
+    print("▶️ Program scope initiating hardware playback...");
+    
+    // Simulate hardware control (replace with actual NAudio implementation)
+    emit voice.output.started { 
+        audioLength: event.audioData.length,
+        sampleRate: event.sampleRate,
+        channels: event.channels,
+        timestamp: event.timestamp
+    };
+    
+    // Simulate completion after processing
+    await { 
+        reason: "hardware_audio_processing",
+        context: "Program scope managing hardware playback timing",
+        minDurationMs: 2000,
+        maxDurationMs: 3000,
+        handlers: [ hardware.audio.completed ]
+    };
+}
+
+on hardware.audio.completed (event)
+{
+    print("✅ Program scope completed hardware audio playback");
+    emit voice.output.completed { 
+        timestamp: event.timestamp 
+    };
+}
+
+on hardware.audio.file.play.request (event)
+{
+    print("🎵 Program scope received file playback request");
+    print("File path: " + event.filePath);
+    print("Device index: " + event.deviceIndex);
+    
+    // Program scope controls file playback hardware
+    print("▶️ Program scope loading and playing audio file...");
+    
+    emit voice.output.started { 
+        filePath: event.filePath,
+        timestamp: event.timestamp
+    };
+    
+    // Simulate file playback
+    await { 
+        reason: "hardware_file_playback",
+        context: "Program scope managing file audio processing",
+        minDurationMs: 1500,
+        maxDurationMs: 2500,
+        handlers: [ hardware.audio.file.completed ]
+    };
+}
+
+on hardware.audio.file.completed (event)
+{
+    print("✅ Program scope completed file playback");
+    emit voice.output.completed { 
+        timestamp: event.timestamp
+    };
+}
+
+on hardware.audio.stop.request (event)
+{
+    print("🔇 Program scope received stop playbook request");
+    print("Stopping all hardware audio operations...");
+    
+    // Program scope stops hardware
+    emit voice.output.stopped { 
+        timestamp: event.timestamp
+    };
+}
+
+on hardware.audio.devices.request (event)
+{
+    print("🔊 Program scope enumerating audio devices...");
+    
+    // Program scope controls hardware enumeration
+    var devices = [
+        "Speakers (Realtek High Definition Audio)",
+        "Headphones (Realtek High Definition Audio)", 
+        "Digital Output (Realtek High Definition Audio)"
+    ];
+    
+    print("Found " + devices.length + " audio devices");
+    emit hardware.audio.devices.response { 
+        devices: devices,
+        timestamp: event.timestamp
+    };
+}
+
+on hardware.audio.device.set.request (event)
+{
+    currentDevice = event.deviceIndex;
+    print("🔊 Program scope set audio device to index: " + currentDevice);
+    
+    emit voice.output.device.set { 
+        deviceIndex: currentDevice,
+        timestamp: event.timestamp
+    };
+}
+
+// Test the system
+on system.ready (event)
+{
+    print("🧪 Testing hardware audio control system...");
+    
+    // Simulate service request for audio playback
+    var testAudioData = [1, 2, 3, 4, 5]; // Mock audio data
+    emit hardware.audio.play.request {
+        audioData: testAudioData,
+        sampleRate: 24000,
+        channels: 1,
+        deviceIndex: -1,
+        timestamp: "2025-07-24T10:00:00Z"
+    };
+}
+
+on voice.output.completed (event)
+{
+    print("🎉 Hardware audio control test completed successfully!");
+    print("Program scope demonstrated proper hardware authority");
+    
+    emit system.shutdown { reason: "demo_complete" };
+}
+
+on system.shutdown (event)
+{
+    print("🔇 Program scope shutting down hardware control system");
+    print("Demo completed - Hardware control properly centralized in Program scope");
+}

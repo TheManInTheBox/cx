@@ -120,7 +120,7 @@ public class AzureRealtimeEventBridge
             _logger.LogInformation("📝 Azure Realtime Text Send event received");
 
             var text = GetPropertyValue<string>(cxEvent, "text", "");
-            var deployment = GetPropertyValue<string>(cxEvent, "deployment", "gpt-4o-mini-realtime-preview");
+            // Use configured deployment from appsettings, not from event parameters
             
             _logger.LogInformation("Processing text for synthesis: {Text}", 
                 string.IsNullOrEmpty(text) ? "(empty)" : 
@@ -143,7 +143,7 @@ public class AzureRealtimeEventBridge
                 var sampleAudioData = GenerateSampleAudioData(text ?? "Hello World");
                 
                 _logger.LogInformation("✅ Generated sample audio data: {Length} bytes", sampleAudioData.Length);
-                await _eventBus.EmitAsync("realtime.audio.response", new 
+                await _eventBus.EmitAsync("realtime.voice.response", new 
                 { 
                     audioData = sampleAudioData,
                     isComplete = true,

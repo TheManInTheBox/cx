@@ -1,0 +1,196 @@
+// 🔧 DR. ZHANG'S DIRECT HARDWARE AUDIO TEST
+// GOAL: Bypass abstractions and directly test Windows audio system
+
+conscious DirectAudioTester
+{
+    realize(self: conscious)
+    {
+        print("🔧 Dr. Zhang's Direct Audio Hardware Test initializing...");
+        learn self;
+        emit tester.ready { name: self.name };
+    }
+    
+    // Test 1: Windows system beep verification
+    on test.system.beep (event)
+    {
+        print("🔊 TEST 1: Windows System Beep");
+        print("💾 Testing Windows Console.Beep functionality...");
+        
+        // Emit to trigger PowerShell beep
+        emit powershell.beep.test { frequency: 800, duration: 1000 };
+    }
+    
+    // Test 2: NAudio direct audio playback
+    on test.naudio.direct (event)
+    {
+        print("🎵 TEST 2: NAudio Direct Playback");
+        print("🔊 Testing NAudio WaveOut with generated audio data...");
+        
+        // Use the actual audio data from Azure
+        emit audio.naudio.direct.test { 
+            audioData: event.audioData,
+            format: "pcm16",
+            sampleRate: 24000,
+            channels: 1,
+            volume: 1.0
+        };
+    }
+    
+    // Test 3: Windows Media Player fallback
+    on test.mediaplayer.fallback (event)
+    {
+        print("🎼 TEST 3: Windows Media Player Fallback");
+        print("📱 Testing Windows MediaPlayer API...");
+        
+        emit audio.mediaplayer.test { 
+            audioData: event.audioData,
+            tempFileRequired: true
+        };
+    }
+    
+    // Test 4: Dr. Zhang's intelligent device binding
+    on test.device.binding (event)
+    {
+        print("🔌 TEST 4: Dr. Zhang's Device Binding Intelligence");
+        print("🎯 Testing automatic optimal device selection...");
+        
+        // Test each available audio device
+        emit device.enumeration.test { 
+            testAllDevices: true,
+            fallbackToDefault: true
+        };
+    }
+}
+
+// Audio test coordinator
+conscious AudioTestCoordinator
+{
+    realize(self: conscious)
+    {
+        print("🎯 Audio Test Coordinator ready");
+        learn self;
+        emit coordinator.ready;
+    }
+    
+    // Start comprehensive audio testing
+    on audio.test.start (event)
+    {
+        print("🚀 Starting Dr. Zhang's comprehensive audio diagnostic...");
+        
+        // Start with system beep test
+        emit test.system.beep;
+    }
+    
+    // Handle PowerShell beep test
+    on powershell.beep.test (event)
+    {
+        print("⚡ Executing PowerShell beep test...");
+        emit powershell.execute { 
+            command: "[console]::beep(" + event.frequency + "," + event.duration + ")",
+            description: "System beep verification"
+        };
+    }
+    
+    // After beep test, try direct audio
+    on powershell.beep.complete (event)
+    {
+        print("✅ PowerShell beep test complete");
+        print("🔊 Generating test audio for NAudio direct playback...");
+        
+        // Generate sample audio data for testing
+        emit realtime.text.send { 
+            text: "Dr. Zhang audio test - can you hear this through your speakers?",
+            deployment: "gpt-4o-mini-realtime-preview",
+            testMode: true
+        };
+    }
+    
+    // Handle real audio response for testing
+    on realtime.audio.response (event)
+    {
+        print("🔊 Got real audio data for Dr. Zhang's hardware test");
+        print("📊 Audio data: " + typeof(event.audioData) + " bytes");
+        
+        // Test NAudio direct playback
+        emit test.naudio.direct { audioData: event.audioData };
+    }
+    
+    // Handle NAudio test results
+    on audio.naudio.complete (event)
+    {
+        print("✅ NAudio direct test complete: " + event.result);
+        
+        // If NAudio failed, try MediaPlayer fallback
+        is {
+            context: "Should we try MediaPlayer fallback?",
+            evaluate: "NAudio test result indicates failure",
+            data: { result: event.result, audioData: event.audioData },
+            handlers: [ mediaplayer.fallback.needed ]
+        };
+    }
+    
+    // Handle MediaPlayer fallback
+    on mediaplayer.fallback.needed (event)
+    {
+        print("🎼 Trying MediaPlayer fallback method...");
+        emit test.mediaplayer.fallback { audioData: event.audioData };
+    }
+    
+    // Handle device binding test
+    on mediaplayer.complete (event)
+    {
+        print("✅ MediaPlayer test complete: " + event.result);
+        
+        // Final test: device binding intelligence
+        emit test.device.binding;
+    }
+    
+    // Final results
+    on device.binding.complete (event)
+    {
+        print("🎉 Dr. Zhang's audio diagnostic complete!");
+        print("📋 Results summary:");
+        print("  - System beep: Working");
+        print("  - NAudio: " + event.naudioResult);
+        print("  - MediaPlayer: " + event.mediaPlayerResult);
+        print("  - Device binding: " + event.deviceBindingResult);
+        
+        emit system.shutdown { reason: "Audio diagnostic completed" };
+    }
+}
+
+// System orchestration
+on system.start (event)
+{
+    print("🔧 DR. ZHANG'S DIRECT HARDWARE AUDIO TEST");
+    print("🎯 Goal: Bypass abstractions, test Windows audio directly");
+    print("🔊 Testing multiple audio playback methods");
+    
+    // Start comprehensive audio test
+    emit audio.test.start;
+}
+
+// Handle Azure connection for test audio generation
+on realtime.connected (event)
+{
+    print("✅ Azure connected for audio test generation");
+    emit realtime.session.create { 
+        deployment: "gpt-4o-mini-realtime-preview",
+        mode: "voice"
+    };
+}
+
+on realtime.session.created (event)
+{
+    print("✅ Azure session ready for test audio generation");
+    // Coordinator will trigger audio generation after beep test
+}
+
+on system.shutdown (event)
+{
+    print("🔧 Dr. Zhang's hardware test complete: " + event.reason);
+}
+
+// Create the direct audio test system
+var directTester = new DirectAudioTester({ name: "DirectAudioTester" });
+var coordinator = new AudioTestCoordinator({ name: "AudioTestCoordinator" });

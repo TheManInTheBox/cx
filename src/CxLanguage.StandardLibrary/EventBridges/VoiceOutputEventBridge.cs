@@ -38,6 +38,7 @@ public class VoiceOutputEventBridge
             _eventBus.Subscribe("voice.output.play.file", OnVoiceOutputPlayFile);
             _eventBus.Subscribe("voice.output.stop", OnVoiceOutputStop);
             _eventBus.Subscribe("voice.output.device.set", OnVoiceOutputDeviceSet);
+            _eventBus.Subscribe("audio.output.discover.all", OnDiscoverOutputDevices);
 
             _logger.LogInformation("✅ Voice Output Event Bridge handlers registered");
             
@@ -135,6 +136,25 @@ public class VoiceOutputEventBridge
         {
             _logger.LogError(ex, "❌ Error handling voice output device set event");
             _ = Task.Run(async () => await _eventBus.EmitAsync("voice.output.error", new { error = ex.Message }));
+        }
+    }
+
+    private void OnDiscoverOutputDevices(CxEvent cxEvent)
+    {
+        try
+        {
+            _logger.LogInformation("🔊 Discover Output Devices event received");
+
+            var devices = _voiceOutputService.GetOutputDevices();
+            
+            _ = Task.Run(async () => await _eventBus.EmitAsync("audio.output.discovered", new { devices = devices }));
+            
+            _logger.LogInformation("✅ Discovered {Count} audio output devices", devices.Length);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error handling discover output devices event");
+            _ = Task.Run(async () => await _eventBus.EmitAsync("audio.output.error", new { error = ex.Message }));
         }
     }
 

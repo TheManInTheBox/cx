@@ -1,0 +1,69 @@
+// 🔊 AUDIO TEST: Generate loud beep to test speaker output
+// GOAL: Confirm speakers are working with simple beep sound
+
+conscious AudioTestAgent
+{
+    realize(self: conscious)
+    {
+        print("🔊 AudioTestAgent ready to test speakers");
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on test.audio.beep (event)
+    {
+        print("🔊 GENERATING LOUD TEST BEEP...");
+        print("📢 Listen for a clear beep sound!");
+        
+        // Generate a simple 1000Hz beep for 2 seconds
+        emit voice.output.beep {
+            frequency: 1000,      // 1000 Hz tone
+            duration: 2000,       // 2 seconds
+            volume: 1.0,          // Maximum volume
+            waveform: "sine"      // Clear sine wave
+        };
+    }
+    
+    on voice.output.beep.complete (event)
+    {
+        print("✅ Beep test completed");
+        print("❓ Did you hear the beep? Y/N");
+        
+        // Try alternative audio test with different frequency
+        print("🔊 Trying different frequency...");
+        emit voice.output.beep {
+            frequency: 440,       // 440 Hz (musical note A)
+            duration: 1500,       // 1.5 seconds
+            volume: 1.0,          // Maximum volume
+            waveform: "square"    // Different waveform
+        };
+    }
+    
+    on voice.output.beep.second.complete (event)
+    {
+        print("✅ All audio tests completed");
+        print("🔊 If you didn't hear anything, check your:");
+        print("   1. Speaker volume settings");
+        print("   2. Default audio device");
+        print("   3. Audio drivers");
+        
+        emit system.shutdown { reason: "Audio tests completed" };
+    }
+}
+
+on system.start (event)
+{
+    print("🎵 Starting Audio Output Test");
+    print("🔊 Testing if speakers are working...");
+    
+    // Start audio test immediately
+    emit test.audio.beep;
+}
+
+on system.shutdown (event)
+{
+    print("🔌 Audio test complete: " + event.reason);
+}
+
+// Create audio test agent
+var audioTester = new AudioTestAgent({ name: "AudioTester" });
