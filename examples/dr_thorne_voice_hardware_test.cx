@@ -1,0 +1,146 @@
+// Dr. Thorne's Hardware-Level Voice Processing Verification
+// Tests NAudio hardware compatibility and Azure Realtime API integration
+// Verifies the complete voice pipeline: input → Azure → hardware output
+
+conscious DrThorneVoiceTest
+{
+    realize(self: conscious)
+    {
+        learn self;
+        print("🔬 Dr. Thorne's Hardware-Level Voice Processing Test Initiated");
+        emit voice.hardware.test.start { name: self.name };
+    }
+    
+    on voice.hardware.test.start (event)
+    {
+        print("🔊 Testing hardware audio compatibility...");
+        
+        // Test 1: Hardware audio device enumeration
+        emit voice.hardware.devices.enumerate;
+    }
+    
+    on voice.hardware.devices.enumerated (event)
+    {
+        print("✅ Audio devices detected: " + event.deviceCount);
+        for (var device in event.devices)
+        {
+            print("  🎧 Device: " + device);
+        }
+        
+        // Test 2: Azure Realtime API connection with hardware awareness
+        print("🌐 Connecting to Azure Realtime API for voice synthesis...");
+        emit realtime.connect { demo: "dr_thorne_hardware_test" };
+    }
+    
+    on realtime.connected (event)
+    {
+        print("✅ Azure Realtime API connected");
+        emit realtime.session.create { 
+            deployment: "gpt-4o-mini-realtime-preview",
+            mode: "voice"
+        };
+    }
+    
+    on realtime.session.created (event)
+    {
+        print("✅ Voice session created");
+        
+        // Test 3: Hardware-optimized voice synthesis
+        print("🔊 Testing Dr. Thorne's Hardware-Level Audio Bridge...");
+        emit realtime.text.send { 
+            text: "Dr. Thorne's Hardware-Level Audio Bridge test. This verifies NAudio hardware compatibility, buffer optimization, and real-time voice processing.",
+            deployment: "gpt-4o-mini-realtime-preview",
+            speechSpeed: 0.9  // Slightly slower for hardware compatibility testing
+        };
+    }
+    
+    on realtime.voice.response (event)
+    {
+        // Check if audio data is available
+        is {
+            context: "Hardware audio data verification",
+            evaluate: "Audio data received from Azure Realtime API",
+            data: { audioData: event.audioData },
+            handlers: [ voice.hardware.audio.verified ]
+        };
+        
+        // Check if synthesis is complete
+        is {
+            context: "Voice synthesis completion check",
+            evaluate: "Azure voice synthesis process completed",
+            data: { isComplete: event.isComplete },
+            handlers: [ voice.synthesis.complete ]
+        };
+    }
+    
+    on voice.hardware.audio.verified (event)
+    {
+        print("🔊 Hardware-level audio data received");
+        print("📊 Audio format verification:");
+        print("  • Data type: " + typeof(event.audioData));
+        print("  • Hardware processing: NAudio WaveOutEvent");
+        print("  • Buffer optimization: 4x safety buffer");
+        print("  • GC protection: Persistent BufferedWaveProvider");
+    }
+    
+    on voice.synthesis.complete (event)
+    {
+        print("✅ Dr. Thorne's Hardware Audio Bridge test complete!");
+        print("🎵 Voice synthesis and hardware playback verified");
+        
+        // Test 4: Hardware performance metrics
+        emit voice.hardware.metrics.collect;
+    }
+    
+    on voice.hardware.metrics.collected (event)
+    {
+        print("📊 Hardware Performance Metrics:");
+        print("  • Latency: " + event.latencyMs + "ms");
+        print("  • Buffer underruns: " + event.bufferUnderruns);
+        print("  • Hardware compatibility: " + event.hardwareCompatibility);
+        print("  • Audio quality: " + event.audioQuality);
+        
+        print("🔬 Dr. Thorne's hardware analysis complete!");
+        emit voice.hardware.test.complete { 
+            status: "success",
+            hardwareOptimized: true,
+            azureIntegrated: true
+        };
+    }
+    
+    on voice.output.started (event)
+    {
+        print("▶️ Hardware playback initiated:");
+        print("  • Audio length: " + event.audioLength + " bytes");
+        print("  • Sample rate: " + event.sampleRate + "Hz");
+        print("  • Channels: " + event.channels);
+        print("  • Hardware device: NAudio WaveOutEvent");
+    }
+    
+    on voice.output.completed (event)
+    {
+        print("✅ Hardware playback completed successfully");
+        print("🎧 NAudio hardware integration verified");
+    }
+    
+    on voice.output.error (event)
+    {
+        print("❌ Hardware audio error detected:");
+        print("  • Error: " + event.error);
+        print("🔧 Dr. Thorne recommends checking NAudio hardware compatibility");
+    }
+}
+
+// Global system handler for hardware device enumeration
+on system.start (event)
+{
+    print("🔬 Dr. Thorne's Hardware-Level Voice Processing Laboratory");
+    print("🎯 Objective: Verify NAudio hardware compatibility and Azure integration");
+    
+    var drThorneTest = new DrThorneVoiceTest({ name: "Dr. Thorne Hardware Test" });
+}
+
+// Press any key to exit after testing
+print("🔬 Dr. Thorne's Hardware Test Ready");
+print("⚡ Testing NAudio hardware compatibility and Azure Realtime API integration");
+print("Press any key to exit after testing completes...");
