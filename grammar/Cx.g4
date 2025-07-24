@@ -6,6 +6,7 @@ program: statement* EOF;
 // Statements
 statement
     : objectDeclaration
+    | consciousDeclaration
     | variableDeclaration
     | expressionStatement
     | forStatement
@@ -22,6 +23,11 @@ objectDeclaration
     : 'object' IDENTIFIER ('extends' IDENTIFIER)? objectBody
     ;
 
+// Conscious entity declarations - intelligent, self-aware entities
+consciousDeclaration
+    : 'conscious' IDENTIFIER (':' IDENTIFIER)? consciousBody
+    ;
+
 // Decorator support for objects
 decorator
     : '@' IDENTIFIER
@@ -29,7 +35,14 @@ decorator
 
 objectBody: '{' objectMember* '}';
 
+consciousBody: '{' consciousMember* '}';
+
 objectMember
+    : realizeDeclaration
+    | onStatement
+    ;
+
+consciousMember
     : realizeDeclaration
     | onStatement
     ;
@@ -102,11 +115,13 @@ type
     | 'boolean'
     | 'array' '<' type '>'
     | 'object'
+    | 'conscious'
     | 'any'
     | IDENTIFIER  // Custom types including objects and interfaces
     ;
 
 OBJECT: 'object';
+CONSCIOUS: 'conscious';
 EXTENDS: 'extends';
 NEW: 'new';
 NULL: 'null';

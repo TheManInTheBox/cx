@@ -1,0 +1,62 @@
+// Voice Input Debug Test - Simplified testing for event bridge
+// Testing Issue #160: Voice Input Capture System
+
+conscious VoiceDebugAgent
+{
+    realize(self: conscious)
+    {
+        print("Voice Debug Agent initialized: " + self.name);
+        learn self;
+        emit voice.debug.ready;
+    }
+    
+    on voice.debug.start (event)
+    {
+        print("🔍 DEBUG: Testing voice.input.start emission");
+        emit voice.input.start { debug: true, test: "manual" };
+    }
+    
+    on voice.input.started (event)
+    {
+        print("✅ SUCCESS: voice.input.started event received!");
+        print("Event success: " + event.success);
+        emit voice.debug.stop;
+    }
+    
+    on voice.debug.stop (event)
+    {
+        print("🛑 DEBUG: Testing voice.input.stop emission");
+        emit voice.input.stop { debug: true, test: "manual" };
+    }
+    
+    on voice.input.stopped (event)
+    {
+        print("✅ SUCCESS: voice.input.stopped event received!");
+        print("Event success: " + event.success);
+        print("🎉 Event bridge test COMPLETE!");
+    }
+    
+    on voice.input.error (event)
+    {
+        print("❌ ERROR: Voice input error occurred");
+        print("Error: " + event.error);
+        print("Message: " + event.message);
+    }
+}
+
+on system.start (event)
+{
+    print("🚀 Voice Input Debug Test Starting...");
+    print("Testing Event Bridge Connection");
+    print("====================================");
+    
+    var debugAgent = new VoiceDebugAgent({ name: "DebugAgent" });
+    
+    await { 
+        reason: "startup_delay",
+        context: "System initialization", 
+        minDurationMs: 1000,
+        maxDurationMs: 1000,
+        handlers: [ voice.debug.start ]
+    };
+}

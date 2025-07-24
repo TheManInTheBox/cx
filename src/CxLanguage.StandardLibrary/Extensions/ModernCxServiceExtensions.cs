@@ -33,6 +33,18 @@ namespace CxLanguage.StandardLibrary.Extensions
             // Add CX-specific AI services
             services.AddScoped<global::CxLanguage.StandardLibrary.AI.Wait.AwaitService>();
             services.AddScoped<global::CxLanguage.StandardLibrary.AI.Realtime.ModernRealtimeService>();
+            
+            // Add Voice Processing Services
+            services.AddSingleton<global::CxLanguage.StandardLibrary.Services.IVoiceInputService, global::CxLanguage.StandardLibrary.Services.VoiceInputService>();
+            services.AddSingleton<global::CxLanguage.StandardLibrary.Services.IVoiceOutputService, global::CxLanguage.StandardLibrary.Services.VoiceOutputService>();
+            
+            // Add Event Bridges for Service Integration
+            services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.VoiceInputEventBridge>();
+            services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.VoiceOutputEventBridge>();
+            services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.AzureRealtimeEventBridge>();
+            
+            // Add Voice Service Initialization
+            services.AddHostedService<global::CxLanguage.StandardLibrary.Services.VoiceServiceInitializer>();
 
             return services;
         }
@@ -67,10 +79,75 @@ namespace CxLanguage.StandardLibrary.Extensions
         public static void ValidateAzureOpenAiConfiguration(IConfiguration configuration)
         {
             var azureConfig = configuration.GetSection("AzureOpenAI");
-            if (string.IsNullOrEmpty(azureConfig["Endpoint"]) || string.IsNullOrEmpty(azureConfig["ApiKey"]))
+            
+            // Check for new per-service configuration structure
+            var chatConfig = azureConfig.GetSection("Chat");
+            var legacyConfig = azureConfig.GetSection("Legacy");
+            
+            bool hasNewConfig = !string.IsNullOrEmpty(chatConfig["Endpoint"]) && !string.IsNullOrEmpty(chatConfig["ApiKey"]);
+            bool hasLegacyConfig = !string.IsNullOrEmpty(azureConfig["Endpoint"]) && !string.IsNullOrEmpty(azureConfig["ApiKey"]);
+            bool hasLegacySection = !string.IsNullOrEmpty(legacyConfig["Endpoint"]) && !string.IsNullOrEmpty(legacyConfig["ApiKey"]);
+            
+            if (!hasNewConfig && !hasLegacyConfig && !hasLegacySection)
             {
-                throw new InvalidOperationException("Azure OpenAI configuration is missing. Please set Endpoint and ApiKey in AzureOpenAI section.");
+                throw new InvalidOperationException("Azure OpenAI configuration is missing. Please set Endpoint and ApiKey in AzureOpenAI section or use the new per-service configuration structure.");
             }
+        }
+
+        /// <summary>
+        /// Get Azure OpenAI configuration for a specific service type
+        /// </summary>
+        public static (string endpoint, string apiKey, string deploymentName) GetAzureOpenAIConfig(
+            IConfiguration configuration, string serviceType, string defaultDeployment = "")
+        {
+            var azureConfig = configuration.GetSection("AzureOpenAI");
+            
+            // Try new per-service configuration first
+            var serviceConfig = azureConfig.GetSection(serviceType);
+            if (!string.IsNullOrEmpty(serviceConfig["Endpoint"]) && !string.IsNullOrEmpty(serviceConfig["ApiKey"]))
+            {
+                return (
+                    serviceConfig["Endpoint"] ?? "",
+                    serviceConfig["ApiKey"] ?? "",
+                    serviceConfig["DeploymentName"] ?? defaultDeployment
+                );
+            }
+            
+            // Fall back to legacy configuration
+            var legacyConfig = azureConfig.GetSection("Legacy");
+            if (!string.IsNullOrEmpty(legacyConfig["Endpoint"]) && !string.IsNullOrEmpty(legacyConfig["ApiKey"]))
+            {
+                var deploymentKey = serviceType switch
+                {
+                    "Chat" => "DeploymentName",
+                    "Embedding" => "EmbeddingDeploymentName", 
+                    "Image" => "ImageDeploymentName",
+                    "Realtime" => "RealtimeDeploymentName",
+                    _ => "DeploymentName"
+                };
+                
+                return (
+                    legacyConfig["Endpoint"] ?? "",
+                    legacyConfig["ApiKey"] ?? "",
+                    legacyConfig[deploymentKey] ?? defaultDeployment
+                );
+            }
+            
+            // Final fallback to root-level legacy configuration
+            var deploymentKey2 = serviceType switch
+            {
+                "Chat" => "DeploymentName",
+                "Embedding" => "EmbeddingDeploymentName",
+                "Image" => "ImageDeploymentName", 
+                "Realtime" => "RealtimeDeploymentName",
+                _ => "DeploymentName"
+            };
+            
+            return (
+                azureConfig["Endpoint"] ?? "",
+                azureConfig["ApiKey"] ?? "",
+                azureConfig[deploymentKey2] ?? defaultDeployment
+            );
         }
 
         /// <summary>
@@ -78,19 +155,18 @@ namespace CxLanguage.StandardLibrary.Extensions
         /// </summary>
         public static IServiceCollection AddModernAiServices(this IServiceCollection services, IConfiguration configuration)
         {
-            // Get Azure OpenAI configuration
-            var azureConfig = configuration.GetSection("AzureOpenAI");
-            var endpoint = azureConfig["Endpoint"];
-            var apiKey = azureConfig["ApiKey"];
-            var chatDeploymentName = azureConfig["DeploymentName"] ?? "gpt-4";
-            var embeddingDeploymentName = azureConfig["EmbeddingDeploymentName"] ?? "text-embedding-ada-002";
+            // Get Azure OpenAI configuration for chat service
+            var (chatEndpoint, chatApiKey, chatDeploymentName) = GetAzureOpenAIConfig(configuration, "Chat", "gpt-4");
+            var (embeddingEndpoint, embeddingApiKey, embeddingDeploymentName) = GetAzureOpenAIConfig(configuration, "Embedding", "text-embedding-ada-002");
 
             // Register IChatClient using our custom implementation
             services.AddSingleton<IChatClient>(serviceProvider =>
             {
                 var logger = serviceProvider.GetRequiredService<ILogger<CustomChatClient>>();
                 logger.LogInformation("🚀 Initializing CustomChatClient with Azure OpenAI");
-                var client = new AzureOpenAIClient(new Uri(endpoint!), new AzureKeyCredential(apiKey!));
+                logger.LogInformation("🔗 Chat Endpoint: {Endpoint}", chatEndpoint);
+                logger.LogInformation("📦 Chat Deployment: {Deployment}", chatDeploymentName);
+                var client = new AzureOpenAIClient(new Uri(chatEndpoint), new AzureKeyCredential(chatApiKey));
                 return new CustomChatClient(client, chatDeploymentName, logger);
             });
 
@@ -99,7 +175,9 @@ namespace CxLanguage.StandardLibrary.Extensions
             {
                 var logger = serviceProvider.GetRequiredService<ILogger<CustomEmbeddingGenerator>>();
                 logger.LogInformation("🚀 Initializing CustomEmbeddingGenerator with Azure OpenAI");
-                var client = new AzureOpenAIClient(new Uri(endpoint!), new AzureKeyCredential(apiKey!));
+                logger.LogInformation("🔗 Embedding Endpoint: {Endpoint}", embeddingEndpoint);
+                logger.LogInformation("📦 Embedding Deployment: {Deployment}", embeddingDeploymentName);
+                var client = new AzureOpenAIClient(new Uri(embeddingEndpoint), new AzureKeyCredential(embeddingApiKey));
                 return new CustomEmbeddingGenerator(client, embeddingDeploymentName, logger);
             });
 

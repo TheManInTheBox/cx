@@ -39,12 +39,57 @@ namespace CxLanguage.StandardLibrary.Services
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             
-            // Load configuration
-            _endpoint = _configuration["AzureOpenAI:RealtimeEndpoint"] ?? throw new InvalidOperationException("RealtimeEndpoint not configured");
-            _apiKey = _configuration["AzureOpenAI:ApiKey"] ?? throw new InvalidOperationException("ApiKey not configured");
-            _deploymentName = _configuration["AzureOpenAI:RealtimeDeploymentName"] ?? "gpt-4o-realtime-preview";
+            // Load configuration using new helper method
+            var (endpoint, apiKey, deploymentName) = GetRealtimeConfig(configuration);
+            _endpoint = endpoint;
+            _apiKey = apiKey;
+            _deploymentName = deploymentName;
+            
+            if (string.IsNullOrEmpty(_endpoint) || string.IsNullOrEmpty(_apiKey))
+            {
+                throw new InvalidOperationException("Azure OpenAI Realtime configuration is missing. Please configure Realtime endpoint and API key.");
+            }
             
             _logger.LogInformation("Azure OpenAI Realtime Service initialized");
+            _logger.LogInformation("🔗 Realtime Endpoint: {Endpoint}", _endpoint);
+            _logger.LogInformation("📦 Realtime Deployment: {Deployment}", _deploymentName);
+        }
+        
+        /// <summary>
+        /// Get Azure OpenAI Realtime configuration with fallback logic
+        /// </summary>
+        private static (string endpoint, string apiKey, string deploymentName) GetRealtimeConfig(IConfiguration configuration)
+        {
+            var azureConfig = configuration.GetSection("AzureOpenAI");
+            
+            // Try new per-service configuration first
+            var realtimeConfig = azureConfig.GetSection("Realtime");
+            if (!string.IsNullOrEmpty(realtimeConfig["Endpoint"]) && !string.IsNullOrEmpty(realtimeConfig["ApiKey"]))
+            {
+                return (
+                    realtimeConfig["Endpoint"] ?? "",
+                    realtimeConfig["ApiKey"] ?? "",
+                    realtimeConfig["DeploymentName"] ?? "gpt-4o-mini-realtime-preview"
+                );
+            }
+            
+            // Fall back to legacy configuration section
+            var legacyConfig = azureConfig.GetSection("Legacy");
+            if (!string.IsNullOrEmpty(legacyConfig["RealtimeEndpoint"]) && !string.IsNullOrEmpty(legacyConfig["ApiKey"]))
+            {
+                return (
+                    legacyConfig["RealtimeEndpoint"] ?? "",
+                    legacyConfig["ApiKey"] ?? "",
+                    legacyConfig["RealtimeDeploymentName"] ?? "gpt-4o-mini-realtime-preview"
+                );
+            }
+            
+            // Final fallback to root-level legacy configuration
+            return (
+                azureConfig["RealtimeEndpoint"] ?? "",
+                azureConfig["ApiKey"] ?? "",
+                azureConfig["RealtimeDeploymentName"] ?? "gpt-4o-mini-realtime-preview"
+            );
         }
         
         /// <summary>
