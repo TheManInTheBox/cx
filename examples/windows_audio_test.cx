@@ -1,0 +1,77 @@
+// 🔊 WINDOWS AUDIO TEST: Use system sounds to test speakers
+// GOAL: Use Windows native sounds that should always work
+
+conscious WindowsAudioTestAgent
+{
+    realize(self: conscious)
+    {
+        print("🔊 WindowsAudioTestAgent ready to test system audio");
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on test.windows.audio (event)
+    {
+        print("🔊 TESTING WINDOWS SYSTEM SOUNDS...");
+        print("📢 You should hear Windows notification sounds!");
+        
+        // Use Windows system sounds
+        emit voice.output.system.sound {
+            soundType: "SystemBeep",
+            volume: 1.0
+        };
+        
+        print("🔊 Playing Windows beep...");
+        
+        // Alternative: Try playing a WAV file
+        emit voice.output.play.system {
+            sound: "Windows Notify.wav",
+            volume: 1.0
+        };
+        
+        print("🔊 Playing Windows notification...");
+        
+        // Alternative: Raw audio data with maximum volume
+        var testTone = "Test audio signal";
+        emit voice.output.raw {
+            data: testTone,
+            volume: 10.0,  // Extra loud
+            format: "raw",
+            channels: 2,   // Stereo
+            sampleRate: 44100
+        };
+        
+        print("🔊 Playing raw audio signal...");
+    }
+    
+    on audio.test.complete (event)
+    {
+        print("✅ Windows audio test completed");
+        print("❓ Did you hear any sounds? Y/N");
+        print("🔧 If no sound, your audio system may need configuration");
+        
+        emit system.shutdown { reason: "Windows audio tests completed" };
+    }
+}
+
+on system.start (event)
+{
+    print("🎵 Starting Windows Audio System Test");
+    print("🔊 Testing Windows native audio output...");
+    print("📢 TURN UP YOUR SPEAKERS!");
+    
+    // Start Windows audio test
+    emit test.windows.audio;
+    
+    // Auto-complete after 5 seconds
+    print("⏰ Test will complete in 5 seconds...");
+    emit audio.test.complete;
+}
+
+on system.shutdown (event)
+{
+    print("🔌 Windows audio test complete: " + event.reason);
+}
+
+// Create Windows audio test agent
+var windowsAudioTester = new WindowsAudioTestAgent({ name: "WindowsAudioTester" });

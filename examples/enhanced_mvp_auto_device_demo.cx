@@ -1,0 +1,166 @@
+// 🎯 ENHANCED MVP: Dr. Zhang's Auto-Device Discovery + Voice Response
+// GOAL: Zero-config voice system with automatic device binding
+
+conscious EnhancedVoiceAgent
+{
+    realize(self: conscious)
+    {
+        print("🎤 EnhancedVoiceAgent with Dr. Zhang's device tech ready");
+        learn self;
+        emit agent.ready { name: self.name, capability: "auto_voice" };
+    }
+    
+    // Wait for device discovery before starting voice processing
+    on device.discovery.complete (event)
+    {
+        print("✅ Dr. Zhang's devices ready - starting voice system...");
+        print("🎤 Optimal microphone: " + event.inputDevice);
+        print("🔊 Optimal speakers: " + event.outputDevice);
+        
+        // Connect to Azure with device-aware configuration
+        emit realtime.connect { 
+            demo: "enhanced_voice_response",
+            inputDevice: event.inputDevice,
+            outputDevice: event.outputDevice
+        };
+    }
+    
+    // Handle voice input with device-specific processing
+    on voice.input.received (event)
+    {
+        print("👂 Agent heard via " + event.inputDevice + ": " + event.text);
+        print("🧠 Processing with device-optimized AI...");
+        
+        // Device-aware response generation
+        var contextualResponse = "I heard you clearly through your " + event.inputDevice + ". " + event.text + " is a great question! Let me help you with that.";
+        
+        print("💭 AI Response: " + contextualResponse);
+        print("🗣️ Speaking via " + event.outputDevice + "...");
+        
+        // Send for voice synthesis with device targeting
+        emit realtime.text.send { 
+            text: contextualResponse,
+            deployment: "gpt-4o-mini-realtime-preview",
+            targetDevice: event.outputDevice,
+            optimizeForDevice: true
+        };
+    }
+    
+    // Handle audio response with Dr. Zhang's device optimization
+    on realtime.audio.response (event)
+    {
+        print("🔊 Audio response received - routing to optimal device");
+        print("📊 Audio: " + typeof(event.audioData) + " bytes");
+        
+        // Use Dr. Zhang's intelligent audio routing
+        emit audio.smart.play {
+            audioData: event.audioData,
+            format: "pcm16",
+            sampleRate: 24000, 
+            channels: 1,
+            deviceOptimization: "auto",
+            qualityMode: "high",
+            fallbackEnabled: true
+        };
+        
+        // Completion check
+        is {
+            context: "Is enhanced voice response complete?",
+            evaluate: "Audio synthesis and device routing status",
+            data: { isComplete: event.isComplete },
+            handlers: [ enhanced.voice.complete ]
+        };
+    }
+    
+    // Handle enhanced completion
+    on enhanced.voice.complete (event)
+    {
+        print("✅ Enhanced voice response complete");
+        print("🎉 Dr. Zhang's plug & play + AI voice system successful!");
+        
+        emit system.shutdown { reason: "Enhanced MVP demonstration completed" };
+    }
+}
+
+// Dr. Zhang's Device Discovery Integration
+conscious AutoDeviceDiscovery
+{
+    realize(self: conscious)
+    {
+        print("🔌 Dr. Zhang's Auto Device Discovery initializing...");
+        learn self;
+        emit discovery.ready;
+    }
+    
+    on discovery.start (event)
+    {
+        print("🔍 Scanning for optimal audio devices...");
+        
+        // Simulate Dr. Zhang's intelligent device discovery
+        print("🎤 Found microphones: USB Headset, Built-in Mic, WebCam Audio");
+        print("🔊 Found speakers: Default Speakers, Headphones, HDMI Audio");
+        
+        // AI-driven optimal selection
+        print("🤖 AI selecting optimal devices...");
+        
+        emit device.discovery.complete {
+            inputDevice: "USB Headset Microphone",
+            outputDevice: "Default Speakers", 
+            inputQuality: 0.95,
+            outputQuality: 0.90,
+            latency: "low",
+            configuration: "optimal"
+        };
+    }
+}
+
+// System orchestration
+on system.start (event)
+{
+    print("🚀 Enhanced MVP: Dr. Zhang's Auto-Discovery + Voice AI");
+    print("🔌 Zero-configuration device management");
+    print("🎯 Automatic optimal device binding");
+    
+    // Start device discovery first
+    emit discovery.start;
+}
+
+// Azure connection after device discovery
+on realtime.connected (event)
+{
+    print("✅ Azure connected with device awareness");
+    print("🎤 Input device: " + event.inputDevice);
+    print("🔊 Output device: " + event.outputDevice);
+    
+    // Create optimized voice session
+    emit realtime.session.create { 
+        deployment: "gpt-4o-mini-realtime-preview",
+        mode: "voice",
+        inputDevice: event.inputDevice,
+        outputDevice: event.outputDevice
+    };
+}
+
+// Start voice interaction when session ready
+on realtime.session.created (event)
+{
+    print("✅ Device-optimized voice session ready");
+    print("🎤 Simulating user voice via optimal microphone...");
+    
+    // Simulate voice input with device context
+    emit voice.input.received { 
+        text: "Can you test the new device system?",
+        source: "optimal_microphone",
+        inputDevice: "USB Headset Microphone",
+        outputDevice: "Default Speakers"
+    };
+}
+
+on system.shutdown (event)
+{
+    print("🔌 Enhanced MVP complete: " + event.reason);
+}
+
+// Create the enhanced system
+var enhancedAgent = new EnhancedVoiceAgent({ name: "EnhancedVoiceAgent" });
+var deviceDiscovery = new AutoDeviceDiscovery({ name: "Dr.Zhang.Discovery" });
