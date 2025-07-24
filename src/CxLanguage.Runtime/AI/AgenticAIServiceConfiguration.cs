@@ -84,10 +84,36 @@ public class AgenticAIOptions
 /// </summary>
 public class AzureOpenAIConfiguration
 {
+    // Legacy single-service configuration for backward compatibility
     public string Endpoint { get; set; } = string.Empty;
     public string DeploymentName { get; set; } = "gpt-4";
     public string EmbeddingDeploymentName { get; set; } = "text-embedding-3-small";
     public string ImageDeploymentName { get; set; } = "dall-e-3";
+    public string RealtimeEndpoint { get; set; } = string.Empty;
+    public string RealtimeDeploymentName { get; set; } = "gpt-4o-mini-realtime-preview";
+    public string ApiKey { get; set; } = string.Empty;
+    public string ApiVersion { get; set; } = "2024-12-17";
+    public int MaxTokens { get; set; } = 4000;
+    public double Temperature { get; set; } = 0.7;
+    public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromMinutes(2);
+
+    // New per-service configuration structure
+    public AzureOpenAIServiceConfiguration Chat { get; set; } = new();
+    public AzureOpenAIServiceConfiguration Embedding { get; set; } = new();
+    public AzureOpenAIServiceConfiguration Image { get; set; } = new();
+    public AzureOpenAIServiceConfiguration Realtime { get; set; } = new();
+    public AzureOpenAIServiceConfiguration Legacy { get; set; } = new();
+}
+
+/// <summary>
+/// Individual Azure OpenAI service configuration
+/// </summary>
+public class AzureOpenAIServiceConfiguration
+{
+    public string Endpoint { get; set; } = string.Empty;
+    public string DeploymentName { get; set; } = string.Empty;
+    public string ApiKey { get; set; } = string.Empty;
+    public string ApiVersion { get; set; } = "2024-12-17";
     public int MaxTokens { get; set; } = 4000;
     public double Temperature { get; set; } = 0.7;
     public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromMinutes(2);

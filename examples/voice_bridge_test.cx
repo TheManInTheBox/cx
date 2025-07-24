@@ -1,0 +1,35 @@
+// Simple test to check if event bridge is working
+on system.start (event)
+{
+    print("🔍 Testing Voice Event Bridge Registration");
+    print("Emitting voice.input.start to test bridge...");
+    emit voice.input.start { test: true };
+    
+    print("Waiting 2 seconds for response...");
+    await { 
+        reason: "wait_for_bridge_response",
+        context: "Testing event bridge",
+        minDurationMs: 2000,
+        maxDurationMs: 2000,
+        handlers: [ test.complete ]
+    };
+}
+
+on voice.input.started (event)
+{
+    print("✅ SUCCESS: Voice bridge responded to voice.input.start");
+    print("Event data: " + event.success);
+}
+
+on voice.input.error (event)
+{
+    print("❌ ERROR: Voice bridge error");
+    print("Error: " + event.error);
+    print("Message: " + event.message);
+}
+
+on test.complete (event)
+{
+    print("🔍 Test complete - checking for voice service logs");
+    print("If no voice.input.started event received, bridge is not working");
+}

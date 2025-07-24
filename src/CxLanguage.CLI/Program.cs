@@ -86,6 +86,10 @@ class Program
         {
             // Setup services
             host = CreateHost();
+            
+            // Start hosted services (including VoiceInputEventBridge via VoiceServiceInitializer)
+            await host.StartAsync();
+            
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             var telemetryService = host.Services.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
 
@@ -176,12 +180,42 @@ class Program
                     
                     Console.WriteLine($"[DEBUG] RUNTIME: Run method completed successfully");
                     
+                    // Emit system.start event to trigger CX program execution
+                    try
+                    {
+                        var eventBus = host.Services.GetService<CxLanguage.Runtime.ICxEventBus>();
+                        if (eventBus != null)
+                        {
+                            Console.WriteLine($"[DEBUG] RUNTIME: Emitting system.start event");
+                            await eventBus.EmitAsync("system.start", new { timestamp = DateTime.UtcNow });
+                            Console.WriteLine($"[DEBUG] RUNTIME: system.start event emitted successfully");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[DEBUG] RUNTIME: No event bus available for system.start");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"[DEBUG] RUNTIME: Error emitting system.start: {ex.Message}");
+                    }
+                    
                     // Track successful execution
                     telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
                     
                     // Wait for events to complete - give user control to exit when ready
                     Console.WriteLine("\n🔑 Press any key to exit (waiting for background events to complete)...");
-                    Console.ReadKey(true);
+                    
+                    try
+                    {
+                        Console.ReadKey(true);
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Handle redirected input by waiting a short time for events to process
+                        Console.WriteLine("Input redirected - waiting 3 seconds for events to complete...");
+                        await Task.Delay(3000);
+                    }
                 }
                 catch (System.Reflection.TargetInvocationException ex)
                 {
@@ -239,7 +273,11 @@ class Program
         }
         finally
         {
-            host?.Dispose();
+            if (host != null)
+            {
+                await host.StopAsync();
+                host.Dispose();
+            }
         }
     }
 

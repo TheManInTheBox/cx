@@ -552,6 +552,7 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         var objectName = context.IDENTIFIER(0).GetText();
         ValidateIdentifierNotKeyword(objectName, context, "object name");
         objectDecl.Name = objectName;
+        objectDecl.IsConsciousEntity = false; // Mark as simple object
         
         // Parse base class if present (extends keyword)
         if (context.IDENTIFIER().Length > 1)
@@ -578,6 +579,44 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
 
         return objectDecl;
+    }
+
+    // Conscious entity system visitors
+    public override AstNode VisitConsciousDeclaration(ConsciousDeclarationContext context)
+    {
+        var consciousDecl = new ClassDeclarationNode(); // Reusing ClassDeclarationNode internally
+        SetLocation(consciousDecl, context);
+
+        var consciousName = context.IDENTIFIER(0).GetText();
+        ValidateIdentifierNotKeyword(consciousName, context, "conscious entity name");
+        consciousDecl.Name = consciousName;
+        consciousDecl.IsConsciousEntity = true; // Mark as intelligent conscious entity
+        
+        // Parse base class if present (inheritance with : syntax)
+        if (context.IDENTIFIER().Length > 1)
+        {
+            consciousDecl.BaseClass = context.IDENTIFIER(1).GetText();
+        }
+
+        // Parse conscious body (no fields, only realize and event handlers)
+        if (context.consciousBody() != null)
+        {
+            foreach (var memberContext in context.consciousBody().consciousMember())
+            {
+                if (memberContext.realizeDeclaration() != null)
+                {
+                    consciousDecl.RealizeDeclarations.Add((RealizeDeclarationNode)Visit(memberContext.realizeDeclaration()));
+                }
+                else if (memberContext.onStatement() != null)
+                {
+                    // Handle event handlers inside conscious entities
+                    var eventHandler = (OnStatementNode)Visit(memberContext.onStatement());
+                    consciousDecl.EventHandlers.Add(eventHandler);
+                }
+            }
+        }
+
+        return consciousDecl;
     }
 
     public override AstNode VisitDecorator(DecoratorContext context)

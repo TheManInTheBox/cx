@@ -1,0 +1,82 @@
+// PRODUCTION DEMO: Voice Input Capture System Test
+// Tests Issue #160 implementation with VoiceInputService
+
+object VoiceTestAgent
+{
+    realize(self)
+    {
+        learn { self: self };
+        print("Voice Test Agent initialized: " + self.name);
+        emit voice.test.ready;
+    }
+    
+    on voice.test.start (event)
+    {
+        print("🎤 Starting voice input capture test...");
+        
+        // This will test our new VoiceInputService
+        emit voice.input.start { testMode: true };
+    }
+    
+    on voice.input.started (event)
+    {
+        print("✅ Voice input capture started successfully!");
+        print("📊 Sample Rate: " + event.sampleRate + "Hz");
+        print("📊 Channels: " + event.channels);
+        print("🎤 Device: " + event.deviceName);
+        
+        emit voice.test.listening;
+    }
+    
+    on voice.input.captured (event)
+    {
+        print("🎵 Audio captured!");
+        print("⏱️  Duration: " + event.durationMs + "ms");
+        print("📏 Size: " + event.bytesLength + " bytes");
+    }
+    
+    on voice.test.listening (event)
+    {
+        print("🗣️  Voice capture is active - audio events will display");
+        print("🔄 Test will run for 5 seconds...");
+        
+        // Run test for 5 seconds
+        await { 
+            reason: "voice_test_duration",
+            context: "Running voice capture test",
+            minDurationMs: 5000,
+            maxDurationMs: 5000,
+            handlers: [ voice.test.timeout ]
+        };
+    }
+    
+    on voice.test.timeout (event)
+    {
+        print("⏰ Test complete - stopping voice capture");
+        emit voice.input.stop;
+    }
+    
+    on voice.input.stopped (event)
+    {
+        print("🔇 Voice input capture stopped");
+        print("✅ Issue #160 Voice Input Capture System: TESTED");
+    }
+}
+
+// System startup
+on system.start (event)
+{
+    print("🚀 Voice Input Demo Starting...");
+    print("Testing Issue #160: Voice Input Capture System");
+    print("====================================================");
+    
+    var voiceAgent = new VoiceTestAgent({ name: "VoiceAgent" });
+    
+    await { 
+        reason: "startup_delay",
+        context: "System initialization",
+        minDurationMs: 1000,
+        maxDurationMs: 1000,
+        handlers: [ voice.test.start ]
+    };
+}

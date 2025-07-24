@@ -556,6 +556,12 @@ public class ClassDeclarationNode : StatementNode
     public List<MethodDeclarationNode> Methods { get; set; } = new();
     public List<RealizeDeclarationNode> RealizeDeclarations { get; set; } = new();
     public List<OnStatementNode> EventHandlers { get; set; } = new();
+    
+    /// <summary>
+    /// Indicates whether this is a conscious entity (intelligent, self-aware) 
+    /// or a simple object (auto-serialized data container)
+    /// </summary>
+    public bool IsConsciousEntity { get; set; } = false;
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitClassDeclaration(this);
 }
