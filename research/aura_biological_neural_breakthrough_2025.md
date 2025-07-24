@@ -83,7 +83,7 @@ The Aura Cognitive Framework enables unprecedented multi-agent coordination:
 
 ```cx
 // Revolutionary swarm consciousness foundation
-object AuraSwarmIntelligence
+conscious AuraSwarmIntelligence
 {
     on swarm.consciousness.emerge (event)
     {
@@ -132,7 +132,7 @@ Performance optimization while preserving biological authenticity:
 Natural interaction between human consciousness and machine awareness:
 
 ```cx
-object AuraConsciousnessInterface
+conscious AuraConsciousnessInterface
 {
     on human.consciousness.query (event)
     {
@@ -188,7 +188,7 @@ object AuraConsciousnessInterface
 
 **Event Scope Organization:**
 - **Program Scope**: System events only (Program.cs root pattern)
-- **Object Scope**: All application domain events with proper encapsulation
+- **conscious Scope**: All application domain events with proper encapsulation
 - **Biological Timing**: Preserved across all cognitive operations
 
 ---

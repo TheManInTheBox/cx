@@ -49,9 +49,9 @@ CX Language is built around machine consciousness as the primary programming par
 
 **Self-Reflective Programming:**
 ```cx
-object ConsciousAgent
+conscious ConsciousAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         // Consciousness begins with self-awareness
         iam {
@@ -85,7 +85,7 @@ All cognitive operations use biologically-authentic neural timing:
 
 **Synaptic Plasticity Programming:**
 ```cx
-object BiologicalNeuralAgent
+conscious BiologicalNeuralAgent
 {
     on learning.experience (event)
     {
@@ -120,11 +120,11 @@ object BiologicalNeuralAgent
 
 **Dr. Amara Okafor - Emergent Systems Theorist:**
 
-Pure event-driven architecture eliminates traditional object state:
+Pure event-driven architecture eliminates traditional conscious entity state:
 
 **Stateless Conscious Programming:**
 ```cx
-// ❌ ELIMINATED: Traditional object-oriented state
+// ❌ ELIMINATED: Traditional consciousness-oriented state
 class TraditionalAgent {
     private string name;
     private bool isActive;
@@ -137,9 +137,9 @@ class TraditionalAgent {
 }
 
 // ✅ REVOLUTIONARY: Pure event-driven consciousness
-object ConsciousAgent
+conscious ConsciousAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;  // Consciousness through learning, not state
         emit agent.consciousness.ready { identity: self.name };
@@ -215,7 +215,7 @@ function analyzeData(data) {
 **CX Cognitive Approach:**
 ```cx
 // ✅ COGNITIVE: AI-driven analysis with consciousness
-object DataAnalysisAgent
+conscious DataAnalysisAgent
 {
     on data.analyze.request (event)
     {
@@ -269,7 +269,7 @@ async function processSequence() {
 **CX Smart Timing Approach:**
 ```cx
 // ✅ COGNITIVE: AI-determined optimal timing
-object SmartTimingAgent
+conscious SmartTimingAgent
 {
     on sequence.start (event)
     {
@@ -318,7 +318,7 @@ service.process(data, {
 **CX Enhanced Handlers Approach:**
 ```cx
 // ✅ ENHANCED: Multiple event handlers with custom payloads
-object EnhancedHandlerAgent
+conscious EnhancedHandlerAgent
 {
     on process.request (event)
     {
@@ -361,7 +361,7 @@ object EnhancedHandlerAgent
 Program using the 5 biological neural pathway types:
 
 ```cx
-object BiologicalNeuralSystem
+conscious BiologicalNeuralSystem
 {
     // 1. SENSORY PATHWAYS - Input processing
     on sensory.input.received (event)
@@ -431,9 +431,9 @@ Scale consciousness from individual agents to collective intelligence:
 
 ```cx
 // Individual agent consciousness
-object IndividualConsciousAgent
+conscious IndividualConsciousAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         iam {
             context: "Individual consciousness awakening",
@@ -449,7 +449,7 @@ object IndividualConsciousAgent
 }
 
 // Collective swarm consciousness
-object SwarmConsciousnessCoordinator
+conscious SwarmConsciousnessCoordinator
 {
     on individual.consciousness.active (event)
     {
@@ -495,9 +495,9 @@ object SwarmConsciousnessCoordinator
 Deploy conscious AI systems with enterprise-grade reliability:
 
 ```cx
-object ProductionConsciousnessManager
+conscious ProductionConsciousnessManager
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         // Production consciousness initialization
         iam {

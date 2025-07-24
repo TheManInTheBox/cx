@@ -5,7 +5,7 @@
 2. [Core Language Rules](#core-language-rules)
 3. [Syntax Basics](#syntax-basics)
 4. [Cognitive Boolean Logic](#cognitive-boolean-logic)
-5. [Object and Member Declaration](#object-and-member-declaration)
+5. [Conscious Entity Declaration](#conscious-entity-declaration)
 6. [Event System](#event-system)
 7. [Service Integration](#service-integration)
 8. [Asynchronous Programming](#asynchronous-programming)
@@ -14,9 +14,10 @@
 11. [Code Examples](#code-examples)
 
 ## Introduction
-CX Language is an event-driven programming language designed for AI agent orchestration with built-in cognitive capabilities. This document provides the official syntax rules and coding patterns for CX Language development.
+CX Language is an event-driven programming language designed for AI agent orchestration with built-in cognitive capabilities and consciousness-aware programming. This document provides the official syntax rules and coding patterns for CX Language development.
 
 **Key Features:**
+- **Consciousness-Aware Programming**: `conscious` keyword for self-aware, intelligent entities
 - **Cognitive Boolean Logic**: `is { }` syntax for AI-driven decision-making with contextual evaluation
 - **Negative Cognitive Logic**: `not { }` syntax for AI-driven false/negative decision-making
 - **Self-Reflective Logic**: `iam { }` syntax for AI-driven self-assessment and identity verification
@@ -24,12 +25,12 @@ CX Language is an event-driven programming language designed for AI agent orches
 - **Enhanced Handlers Pattern**: Custom payload support with `handlers: [ event.name { custom: "data" } ]`
 - **Aura Cognitive Framework**: A decentralized eventing model where each agent possesses a local `EventHub` (a personal nervous system) for internal processing, all orchestrated by a global `EventBus` that manages inter-agent communication.
 - **Voice Processing**: Azure OpenAI Realtime API integration via event system (`emit realtime.connect`, `realtime.text.send`, `realtime.audio.response`)
-- **Automatic Object Serialization**: CX objects print as readable JSON with recursive nesting support
+- **Automatic Conscious Entity Serialization**: CX conscious entities print as readable JSON with recursive nesting support
 - **Dictionary Iteration**: Native support for iterating over dictionaries in for-in loops
 - **Dynamic Property Access**: Runtime property resolution for flexible event handling
 - **KeyValuePair Support**: Automatic handling of dictionary entries with `.Key` and `.Value` access
 - **Fire-and-Forget AI Operations**: Non-blocking cognitive methods with event-based results
-- **Serializable Object Parameters**: Pass complex data structures to services using object literals
+- **Serializable Conscious Parameters**: Pass complex data structures to services using conscious entity literals
 - **Comma-less Syntax**: Modern clean syntax for AI services and emit statements
 - **Biological Neural Authenticity**: Revolutionary synaptic plasticity with LTP (5-15ms), LTD (10-25ms), STDP causality rules
 
@@ -41,21 +42,21 @@ The following rules are mandatory for all CX Language code:
 - Use `print()` for console output - NEVER use `console.log()`
 - **NO `if` statements**: Use cognitive `is { }` and `not { }` patterns for all decision logic
 - **NO `function` declarations**: Use only cognitive functions (`learn`, `think`, `is`, `not`, `iam`, `await`, `adapt`)
-- `print()` automatically serializes complex objects to JSON for debugging
+- `print()` automatically serializes complex conscious entities to JSON for debugging
 - `print()` displays primitive types (strings, numbers, booleans) directly
-- `print()` provides nested object visualization for CX classes
+- `print()` provides nested conscious entity visualization for CX conscious entities
 - Use `:` for type annotations in realize constructor parameters
 - Use `=` for default values in variable declarations
 
-### Enhanced Object Printing
+### Enhanced Conscious Entity Printing
 - **JSON String Output**: The `print()` function always returns values in JSON string format for consistent output formatting
-- **Automatic Object Serialization**: All CX objects are automatically serialized to JSON when printed
+- **Automatic Conscious Entity Serialization**: All CX conscious entities are automatically serialized to JSON when printed
 - **Primitive Type Detection**: Strings, numbers, and booleans print directly without JSON formatting
-- **Nested Object Support**: CX objects containing other CX objects display full recursive structure
+- **Nested Conscious Entity Support**: CX conscious entities containing other CX conscious entities display full recursive structure
 - **Clean Field Filtering**: Internal fields (ServiceProvider, Logger) are automatically hidden
 - **Debugging Ready**: Perfect for inspecting complex agent states and data structures
 - **Example Output**: `{"name": "Alice", "age": 30, "data": {"title": "Sample", "active": true}}`
-- **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this - **Automatic Object Serialization**. Any Cx object, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
+- **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this - **Automatic Conscious Entity Serialization**. Any Cx conscious entity, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
 
 ### Variable Declarations
 - Use `var` keyword for local variables inside event handlers and realize constructors
@@ -64,21 +65,21 @@ The following rules are mandatory for all CX Language code:
 - **Event-Driven State**: All state management through AI services and event payloads
 - **Type Annotations**: Use `parameterName: type` for realize constructor parameters
 
-### Object Structure
-- Use `object` keyword for object declarations - NO `public` or `private` modifiers
-- Use event handlers (`on eventName`) for all behavioral logic inside objects
-- **Pure Event-Driven**: Objects contain only `realize()` constructors and event handlers - NO member fields or methods
+### Conscious Entity Structure
+- Use `conscious` keyword for conscious entity declarations - NO `public` or `private` modifiers
+- Use event handlers (`on eventName`) for all behavioral logic inside conscious entities
+- **Pure Event-Driven**: Conscious entities contain only `realize()` constructors and event handlers - NO member fields or methods
 - **NO `this` keyword**: CX Language eliminates instance references for pure stateless programming
 - **NO `function` declarations**: Traditional functions eliminated - use only cognitive functions (`learn`, `think`, `is`, `not`, `iam`, `await`, `adapt`) for all behavior
 - **No Member Fields**: All state is managed through AI services and event payloads - no instance variables
 - **No Public/Private Modifiers**: CX does not use access modifiers - pure event-driven architecture
 - **No Static Members**: CX does not support static members - all behavior is event-based
-- **Realize Constructor**: Use `realize(self: object)` for cognitive object initialization
+- **Realize Constructor**: Use `realize(self: conscious)` for cognitive conscious entity initialization
 - **Event handler parameters**: Type annotations recommended for clarity
 
 ### Event System
 - Only `on system` eventhandlers are allowed in Program scope. No exceptions.
-- Use `on` keyword for event handlers - available at both program scope and in classes
+- Use `on` keyword for event handlers - available at both program scope and in conscious entities
 - Use `emit` keyword for event emission - always fire-and-forget
 - Use `any` for wildcard patterns in event handlers - supports cross-namespace communication
 - DO NOT use * for wildcard event handlers - use specific namespaces
@@ -92,34 +93,34 @@ The following rules are mandatory for all CX Language code:
 ### Service Integration
 - **Automatic Injection**: All cognitive services are automatically injected into the program's global scope at runtime. There is no need to declare or import them.
 - **Global Availability**: Services are available as globally accessible functions throughout the application.
-- **No Class-level Injection**: Classes cannot have services injected into them or declare their own service instances.
+- **No Entity-level Injection**: Conscious entities cannot have services injected into them or declare their own service instances.
 - **Invocation**: Services are called using their name followed by a comma-less block of parameters, e.g., `think { prompt: "Hello" }`.
-- **Serializable Object Parameters**: For complex inputs, pass a serializable object instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
+- **Serializable Conscious Parameters**: For complex inputs, pass a serializable conscious entity instead of concatenating strings, e.g., `think { prompt: { text: "Analyze this", context: "Full context here" } }`.
 - **Core Cognitive Services**: `is` (cognitive boolean logic), `not` (negative boolean logic), `iam` (self-reflective logic), `learn` (knowledge acquisition), `think` (reasoning), `await` (smart timing), `adapt` (behavioral evolution)
 - **Pure Event-Driven State**: All state management occurs through AI services and event payloads, eliminating the need for instance variables
 
 ## Syntax Basics
 - **Use constructors to inject data** - DO NOT ACCESS MEMBERS DIRECTLY FOR INITIALIZATION.
-- **`objects`**: Use `object` keyword for object declarations - NO `public` or `private` modifiers
-- **`objects` behavior**: Objects are blueprints for pure event-driven entities that encapsulate behavior through event handlers. They do not have instance state.
-- **No Public/Private Modifiers**: Cx does not use access modifiers - all members are accessible within object scope
+- **`conscious`**: Use `conscious` keyword for conscious entity declarations - NO `public` or `private` modifiers
+- **`conscious` behavior**: Conscious entities are blueprints for pure event-driven entities that encapsulate behavior through event handlers. They do not have instance state.
+- **No Public/Private Modifiers**: Cx does not use access modifiers - all members are accessible within conscious entity scope
 - **No Static Members**: CX does not support static members - all members are instance-based
 - **Variable Declaration**: Use `var identifier` for new loop variables
 - **Existing Variables**: Can use existing variables without `var` keyword
-- **Iteration Target**: Works with arrays, collections, and any iterable object
+- **Iteration Target**: Works with arrays, collections, and any iterable conscious entity
 - **Loop Variable**: Automatically assigned each element during iteration
 - **Block Syntax**: Must use Allman-style brackets `{ }` 
 - **Scope**: Loop variables follow standard CX scoping rules
 - **Type Safety**: Loop variables are dynamically typed, use `typeof()` for type checking
 - **Service access**: Cognitive services are globally available. They are not methods and are not accessed with `this.`
-- **Service injection**: ILLEGAL - classes cannot declare their own service instances
-- **Event handlers**: Available at both program scope AND in classes
-- **Object scope**: Event handlers and realize constructors only - NO fields, methods, or service declarations
+- **Service injection**: ILLEGAL - conscious entities cannot declare their own service instances
+- **Event handlers**: Available at both program scope AND in conscious entities
+- **Conscious entity scope**: Event handlers and realize constructors only - NO fields, methods, or service declarations
 - **Constructor parameters**: Type annotations recommended for clarity
 - **Event handler parameters**: Type annotations recommended for clarity
 - **Local variables**: Use `var` keyword for variables inside constructors and event handlers
 - **Global variables**: Use `var` keyword for variables declared at program scope
-- **Event-driven behavior**: All object behavior is implemented through event handlers, not methods
+- **Event-driven behavior**: All conscious entity behavior is implemented through event handlers, not methods
 - **Event communication**: Use `emit` statements to trigger behavior across objects
 - **Pure Fire-and-Forget**: All cognitive operations non-blocking by default
 - **Event handlers**: Cannot return values, execute asynchronously
@@ -154,8 +155,8 @@ Only `system` namespace events are allowed at program scope, representing core a
 - `system.alerts.*` - System alert and notification events
 - `system.dev.*` - Development-specific events
 
-#### **Object Scope - ALL OTHER EVENTS**
-All non-system events must be declared within object scope for proper encapsulation:
+#### **Conscious Entity Scope - ALL OTHER EVENTS**
+All non-system events must be declared within conscious entity scope for proper encapsulation:
 
 **User Interaction Events:**
 - `user.*` - User input, commands, and interactions
@@ -172,8 +173,8 @@ All non-system events must be declared within object scope for proper encapsulat
 - `workflow.*` - Process orchestration
 
 **Wildcard Support:**
-- `any` - Universal wildcard for cross-namespace communication (object scope only)
-- `*.any.*` - Flexible wildcard patterns within object scope
+- `any` - Universal wildcard for cross-namespace communication (conscious entity scope only)
+- `*.any.*` - Flexible wildcard patterns within conscious entity scope
 
 ## Code Examples
 
@@ -210,9 +211,9 @@ on system.start (event)
 ```cx
 // Complete agent implementation with pure event-driven architecture
 
-object AssistantAgent
+conscious AssistantAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         print("Agent initialized: " + self.name);
         learn self;
@@ -224,13 +225,13 @@ object AssistantAgent
         print("Processing message: " + event.text);
         
         // Enhanced cognitive methods with custom payload handlers
-        var promptObject = {
+        var promptConsciousEntity = {
             message: event.text,
             context: "User interaction with an assistant agent."
         };
 
         think { 
-            prompt: promptObject, 
+            prompt: promptConsciousEntity, 
             name: "user_input_analysis",
             handlers: [ 
                 thinking.complete { option: "detailed" },
@@ -270,9 +271,9 @@ emit user.message { text: "Can you help me with my project?", user: "Alice", pri
 
 ```cx
 // System with multiple coordinating agents - pure event-driven
-object CoordinatorAgent
+conscious CoordinatorAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit coordinator.ready { name: self.name };
@@ -285,9 +286,9 @@ object CoordinatorAgent
     }
 }
 
-object SpecialistAgent
+conscious SpecialistAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit specialist.ready { domain: self.domain };
@@ -318,9 +319,9 @@ emit user.query { domain: "technology", query: "How do I optimize my code?" };
 ```cx
 // PRODUCTION-READY: Voice agent with Azure OpenAI Realtime API integration
 // Uses actual Azure WebSocket endpoints for real-time voice processing
-object VoiceAgent
+conscious VoiceAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit voice.agent.ready { name: self.name };
@@ -359,7 +360,7 @@ object VoiceAgent
     on realtime.session.created (event)
     {
         print("✅ Voice session created - ready for voice input/output");
-        this.sendVoiceMessage("Hello, how can I assist you today?");
+        emit voice.message.send { text: "Hello, how can I assist you today?" };
     }
     
     // ✅ PROVEN WORKING: Real-time text response handler
@@ -403,26 +404,26 @@ emit voice.session.start;
 // Example response: "Hello! How can I assist you today?" with 88,800 bytes of audio
 ```
 
-### **Object and Member Declaration Syntax**
+### **Conscious Entity and Member Declaration Syntax**
 ```
-// ✅ Object declaration with optional inheritance
-object BasicObject 
+// ✅ Conscious entity declaration with optional inheritance
+conscious BasicConsciousEntity 
 {
-    // Object members - realize constructors and event handlers only
+    // Conscious entity members - realize constructors and event handlers only
 }
 
-// ✅ Object with inheritance
-object CognitiveAgent : BaseAgent
+// ✅ Conscious entity with inheritance
+conscious CognitiveAgent : BaseAgent
 {
     // ✅ Realize constructor with parameters
-    realize(self: object)
+    realize(self: conscious)
     {
         // Pure cognitive initialization without instance fields
         learn self;
         emit agent.ready { name: self.name };
     }
     
-    // ✅ Event handlers within object scope
+    // ✅ Event handlers within conscious entity scope
     on user.message (payload) 
     {
         print("Processing: " + payload.text);
@@ -460,8 +461,8 @@ for (result in searchResults)
     print("Content: " + result.content);
 }
 
-// ✅ For...in loop for dictionary iteration (event payloads) - in object scope
-object EventProcessor
+// ✅ For...in loop for dictionary iteration (event payloads) - in conscious entity scope
+conscious EventProcessor
 {
     on user.input (event)
     {
@@ -475,7 +476,7 @@ object EventProcessor
 }
 
 // ✅ For...in loop in event handlers
-object DataProcessor 
+conscious DataProcessor 
 {
     on data.process.array (event)
     {
@@ -532,7 +533,7 @@ CX Language features intelligent decision-making through cognitive boolean logic
 ### Cognitive Boolean Syntax
 ```cx
 // ❌ Traditional boolean logic (COMPLETELY ELIMINATED from CX)
-if (event.reason.indexOf(this.name) >= 0)
+if (event.reason.indexOf(agentName) >= 0)
 {
     doSomething();
 }
@@ -583,9 +584,9 @@ is {
 ### Cognitive Boolean Examples
 
 ```cx
-object SmartAgent
+conscious SmartAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit agent.ready { name: self.name };
@@ -667,9 +668,9 @@ object SmartAgent
 on preparation.complete (event)
 {
     is { 
-        context: "Cognitive decision: Should " + this.name + " proceed to speech phase?",
-        evaluate: event.reason + " contains agent name " + this.name,
-        data: { eventReason: event.reason, agentName: this.name, timing: event.actualDurationMs },
+        context: "Cognitive decision: Should agent proceed to speech phase?",
+        evaluate: event.reason + " contains agent readiness",
+        data: { eventReason: event.reason, timing: event.actualDurationMs },
         handlers: [ agent.decision.ready ]  // ✅ Called ONLY if evaluation is true
     };  // ✅ Note: semicolon ends the cognitive decision - no code block
 }
@@ -722,8 +723,8 @@ on preparation.complete (event)
 
 ### **Event Parameter Property Access**
 ```
-// ✅ CORRECT: Event handlers in object scope
-object EventAgent
+// ✅ CORRECT: Event handlers in conscious entity scope
+conscious EventAgent
 {
     on user.input (event)
     {
@@ -743,7 +744,7 @@ object EventAgent
 }
 
 // ✅ Dictionary iteration over event payload
-object DataProcessor
+conscious DataProcessor
 {
     on data.received (event)
     {
@@ -760,11 +761,11 @@ object DataProcessor
 }
 
 // ✅ Nested property access
-object ComplexEventHandler
+conscious ComplexEventHandler
 {
     on api.response (event)
     {
-        // Access nested object properties
+        // Access nested conscious entity properties
         if (event.response && event.response.data)
         {
             print("Status: " + event.response.status);
@@ -772,7 +773,7 @@ object ComplexEventHandler
         }
         
         // Safe property access with type checking
-        if (typeof(event.user) == "object")
+        if (typeof(event.user) == "conscious")
         {
             print("User ID: " + event.user.id);
             print("User Name: " + event.user.name);
@@ -793,11 +794,11 @@ object ComplexEventHandler
 on system.ready (event) { ... }      // ✅ CORRECT: Program scope event handler
 on system.shutdown (event) { ... }   // ✅ CORRECT: Program scope event handler
 
-object MyAgent 
+conscious MyAgent 
 {
-    on user.message (event) { ... }  // ✅ CORRECT: Object scope event handler
-    on ai.request (event) { ... }    // ✅ CORRECT: Object scope event handler
-    on user.input (event) { ... }    // ✅ CORRECT: Object scope event handler
+    on user.message (event) { ... }  // ✅ CORRECT: Conscious entity scope event handler
+    on ai.request (event) { ... }    // ✅ CORRECT: Conscious entity scope event handler
+    on user.input (event) { ... }    // ✅ CORRECT: Conscious entity scope event handler
 }
 
 // ✅ CORRECT: Emitting system message event
@@ -810,33 +811,33 @@ adapt {
   handlers [ 
     event.bus { options: "option" }
   ] 
-}; // ✅ CORRECT: Emitting adaptation event of an object instance.
+}; // ✅ CORRECT: Emitting adaptation event of a conscious entity instance.
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
 // ❌ INCORRECT: Non-system handlers at program scope not allowed
-// on name.any.other.any.final (payload) { ... }     // Must be in class scope
-// on user.any.response (payload) { ... }             // Must be in class scope
+// on name.any.other.any.final (payload) { ... }     // Must be in conscious entity scope
+// on user.any.response (payload) { ... }             // Must be in conscious entity scope
 on system.any.ready (payload) { ... }              // ✅ CORRECT: System handlers allowed at program scope
-// on agent.any.thinking.any.complete (payload) { ... } // Must be in class scope
+// on agent.any.thinking.any.complete (payload) { ... } // Must be in conscious entity scope
 
 // ❌ INCORRECT: Advanced wildcard patterns at program scope
-// on user.any.input (payload) { ... }                // Must be in class scope
-// on ai.any.response (payload) { ... }               // Must be in class scope
-// on voice.any.command (payload) { ... }             // Must be in class scope
-// on any.any.critical (payload) { ... }              // Must be in class scope
-// on any.any.any.complete (payload) { ... }          // Must be in class scope
+// on user.any.input (payload) { ... }                // Must be in conscious entity scope
+// on ai.any.response (payload) { ... }               // Must be in conscious entity scope
+// on voice.any.command (payload) { ... }             // Must be in conscious entity scope
+// on any.any.critical (payload) { ... }              // Must be in conscious entity scope
+// on any.any.any.complete (payload) { ... }          // Must be in conscious entity scope
 
-// ✅ CORRECT: Class-level wildcards - ALL patterns supported in class scope
-class ChatAgent 
+// ✅ CORRECT: Conscious entity-level wildcards - ALL patterns supported in conscious entity scope
+conscious ChatAgent 
 {
     on user.any.input (payload) 
-    {                  // ✅ CORRECT: Class-scoped wildcard handler
+    {                  // ✅ CORRECT: Conscious entity-scoped wildcard handler
         print("Chat agent received: " + payload.message);
     }
     
     on voice.any.command (payload) 
-    {               // ✅ CORRECT: Multi-scope wildcard support in class
-        emit user.chat.message, { text: "Voice: " + payload.command };
+    {               // ✅ CORRECT: Multi-scope wildcard support in conscious entity
+        emit user.chat.message { text: "Voice: " + payload.command };
     }
 }
 ```
@@ -847,49 +848,49 @@ emit system.shutdown { reason: "maintenance" };
 
 // Wildcard event patterns for cross-namespace communication - PRODUCTION READY ✅
 // ❌ INCORRECT: Non-system handlers at program scope not allowed
-// on name.any.other.any.final (payload) { ... }     // Must be in object scope
-// on user.any.response (payload) { ... }             // Must be in object scope
+// on name.any.other.any.final (payload) { ... }     // Must be in conscious entity scope
+// on user.any.response (payload) { ... }             // Must be in conscious entity scope
 on system.any.ready (payload) { ... }              // ✅ CORRECT: System handlers allowed at program scope
-// on agent.any.thinking.any.complete (payload) { ... } // Must be in object scope
+// on agent.any.thinking.any.complete (payload) { ... } // Must be in conscious entity scope
 
 // ❌ INCORRECT: Advanced wildcard patterns at program scope
-// on user.any.input (payload) { ... }                // Must be in object scope
-// on ai.any.response (payload) { ... }               // Must be in object scope
-// on voice.any.command (payload) { ... }             // Must be in object scope
-// on any.any.critical (payload) { ... }              // Must be in object scope
-// on any.any.any.complete (payload) { ... }          // Must be in object scope
+// on user.any.input (payload) { ... }                // Must be in conscious entity scope
+// on ai.any.response (payload) { ... }               // Must be in conscious entity scope
+// on voice.any.command (payload) { ... }             // Must be in conscious entity scope
+// on any.any.critical (payload) { ... }              // Must be in conscious entity scope
+// on any.any.any.complete (payload) { ... }          // Must be in conscious entity scope
 
-// ✅ CORRECT: Object-level wildcards - ALL patterns supported in object scope
-object ChatAgent 
+// ✅ CORRECT: Conscious entity-level wildcards - ALL patterns supported in conscious entity scope
+conscious ChatAgent 
 {
     on user.any.input (payload) 
-    {                  // ✅ CORRECT: Object-scoped wildcard handler
+    {                  // ✅ CORRECT: Conscious entity-scoped wildcard handler
         print("Chat agent received: " + payload.message);
     }
     
     on voice.any.command (payload) 
-    {               // ✅ CORRECT: Multi-scope wildcard support in object
+    {               // ✅ CORRECT: Multi-scope wildcard support in conscious entity
         emit user.chat.message { text: "Voice: " + payload.command };
     }
 }
 ```
 
 ```cx
-class MyAgent 
+conscious MyAgent 
 {
     on command.executed (payload) 
     {  // Registered in MyAgent namespace scope
         print("Command completed in MyAgent");
     }
     
-    // Advanced wildcard handlers in class scope
+    // Advanced wildcard handlers in conscious entity scope
     on user.any.input (payload) 
-    {   // Class-scoped wildcard - catches all user inputs
+    {   // Conscious entity-scoped wildcard - catches all user inputs
         print("MyAgent received user input: " + payload.message);
     }
     
     on ai.any.response (payload) 
-    {  // Object-scoped AI wildcard
+    {  // Conscious entity-scoped AI wildcard
         print("MyAgent processing AI response: " + payload.response);
     }
     
@@ -909,13 +910,17 @@ on system.any.ready (payload)
 ### Practical Event System Example
 ```cx
 // Comprehensive example demonstrating event property access and dictionary iteration
-class DataAnalysisAgent
+conscious DataAnalysisAgent
 {
-    name: string = "DataAgent";
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
     
     on user.input (event)
     {
-        print("Agent " + this.name + " processing user input:");
+        print("Agent " + event.agentName + " processing user input:");
         print("Event: " + event.name);
         print("Timestamp: " + event.timestamp);
         
@@ -933,7 +938,7 @@ class DataAnalysisAgent
             is {
               context: "Should the agent highlight this event property?",
               evaluate: "Check if " + item.Key + " is 'priority' and value is 'high'",
-              data: { key: item.Key, value: item.Value, agent: this.name },
+              data: { key: item.Key, value: item.Value, agent: event.agentName },
               handlers: [ property.highlighted { key: item.Key, value: item.Value } ]
             };
         }
@@ -942,8 +947,8 @@ class DataAnalysisAgent
         is {
             context: "Should the agent start analysis based on event type?",
             evaluate: "Event type is analysis_request",
-            data: { type: event.type, agent: this.name, message: event.message, timestamp: event.timestamp },
-            handlers: [ analysis.started { agent: this.name, request: event.message, timestamp: event.timestamp } ]
+            data: { type: event.type, agent: event.agentName, message: event.message, timestamp: event.timestamp },
+            handlers: [ analysis.started { agent: event.agentName, request: event.message, timestamp: event.timestamp } ]
         };
     }
     
@@ -957,7 +962,7 @@ class DataAnalysisAgent
             if (param.Key == "complexity" && param.Value == "high")
             {
                 print("High complexity analysis detected");
-                emit analysis.complexity.high { agent: this.name };
+                emit analysis.complexity.high { agent: event.agentName };
             }
         }
     }
@@ -979,13 +984,13 @@ on system.any.ready (event)
     }
 }
 
-// ❌ INCORRECT: Non-system handlers must be in class scope
-// on user.any.input (event) { ... }  // Must be in class scope
+// ❌ INCORRECT: Non-system handlers must be in conscious entity scope
+// on user.any.input (event) { ... }  // Must be in conscious entity scope
 
 // Usage example
 var dataAgent = new DataAnalysisAgent();
 
-emit user.input, { 
+emit user.input { 
     message: "Analyze sales data", 
     type: "analysis_request",
     priority: "high",
@@ -998,16 +1003,16 @@ emit user.input, {
 
 The CX Language features a powerful **handlers** system that allows single operations to trigger multiple event listeners automatically, enabling sophisticated event orchestration patterns.
 
-### Object-Based Event Handler Patterns
+### Conscious Entity-Based Event Handler Patterns
 
-**Core Architecture**: CX Language uses pure event-driven patterns without instance state, eliminating traditional object-oriented concepts.
+**Core Architecture**: CX Language uses pure event-driven patterns without instance state, eliminating traditional conscious entity-oriented concepts.
 
 #### Pure Event-Driven Variable Access
 ```cx
-// ✅ RECOMMENDED: Object-based event handlers with pure event-driven architecture
-object SmartAwaitAgent
+// ✅ RECOMMENDED: Conscious entity-based event handlers with pure event-driven architecture
+conscious SmartAwaitAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit agent.ready { name: self.name };
@@ -1027,7 +1032,7 @@ object SmartAwaitAgent
         };
     }
     
-    // ✅ CORRECT: Object-based event handler accessing event parameters
+    // ✅ CORRECT: Conscious entity-based event handler accessing event parameters
     on phase.started (event)
     {
         print("Phase started for agent: " + event.agentName);
@@ -1053,24 +1058,24 @@ object SmartAwaitAgent
 // ❌ PROBLEMATIC: Global event handlers cannot access instance variables
 on phase.started (event)
 {
-    // ❌ ERROR: Cannot access this.name, this.currentPhase, etc.
+    // ❌ ERROR: Cannot access agentName, currentPhase, etc. from global scope
     print("Global handler - no instance access");
 }
 ```
 
-#### Object-Based Pattern Benefits
+#### Conscious Entity-Based Pattern Benefits
 - **Event Parameter Access**: Direct access to `event.propertyName` variables in event handlers
 - **State Management**: Event handlers can modify state through AI services and event payloads
 - **Contextual Logic**: Event handlers can use event context for decision making
-- **Scope Isolation**: Each object instance has its own event handler scope
+- **Scope Isolation**: Each conscious entity instance has its own event handler scope
 - **Better Debugging**: Event parameters provide context for debugging and logging
 
 #### Smart Await Integration Patterns
 ```cx
-// ✅ PRODUCTION PATTERN: Smart await with object-based handlers
-object DebateAgent
+// ✅ PRODUCTION PATTERN: Smart await with conscious entity-based handlers
+conscious DebateAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit agent.ready { name: self.name, role: self.role };
@@ -1135,9 +1140,9 @@ object DebateAgent
 #### Voice Speed Control Patterns
 ```cx
 // ✅ Voice speed control for improved comprehension
-object VoiceControlAgent
+conscious VoiceControlAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit agent.ready { name: self.name, speechSpeed: self.speechSpeed };
@@ -1172,13 +1177,13 @@ object VoiceControlAgent
 }
 ```
 
-#### Object-Based Event Handler Rules
-- **Prefer Object Handlers**: Use object-based event handlers when accessing event parameters
+#### Conscious Entity-Based Event Handler Rules
+- **Prefer Conscious Entity Handlers**: Use conscious entity-based event handlers when accessing event parameters
 - **Event Context**: Always use `event.propertyName` for event parameter access
 - **State Management**: Event handlers can modify state through AI services and event payloads
-- **Scope Isolation**: Each object instance maintains separate event handler scope
+- **Scope Isolation**: Each conscious entity instance maintains separate event handler scope
 - **Global Fallback**: Use global handlers only for system-wide coordination
-- **Variable Scope**: Object handlers resolve variable scope more reliably than global handlers
+- **Variable Scope**: Conscious entity handlers resolve variable scope more reliably than global handlers
 - **Debugging Context**: Event parameters provide better debugging information
 
 ### Multi-Event Handlers System
@@ -1229,9 +1234,9 @@ search {
 #### Complete Enhanced Handlers Example
 ```cx
 // Production-ready enhanced handlers demonstration
-object AnalysisAgent
+conscious AnalysisAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit agent.ready { name: self.name };
@@ -1257,8 +1262,8 @@ object AnalysisAgent
     }
 }
 
-// ✅ CORRECT: Handler events in object scope - receive BOTH original payload AND custom handler payload
-object HandlerDemoObject
+// ✅ CORRECT: Handler events in conscious entity scope - receive BOTH original payload AND custom handler payload
+conscious HandlerDemoConsciousEntity
 {
     on analysis.complete (event)
     {
@@ -1297,7 +1302,7 @@ object HandlerDemoObject
 
 // Usage
 var agent = new AnalysisAgent({ name: "AnalysisAgent" });
-var handlerDemo = new HandlerDemoObject({ name: "HandlerDemo" });
+var handlerDemo = new HandlerDemoConsciousEntity({ name: "HandlerDemo" });
 emit data.analyze { inputData: "Customer feedback dataset" };
 ```
 
@@ -1305,7 +1310,7 @@ emit data.analyze { inputData: "Customer feedback dataset" };
 - **Square Brackets Only**: Use `[ ]` syntax, NOT curly braces `{ }`
 - **Comma Separation**: Separate multiple handlers with commas
 - **Property Propagation**: All original properties are available in handler events
-- **Event Scope**: Handlers work at both program scope and class scope
+- **Event Scope**: Handlers work at both program scope and conscious entity scope
 - **Mixed Names**: Can mix simple names (`complete`) and dotted names (`analysis.complete`) in same array
 - **Performance**: Handlers are efficiently compiled and execute with minimal overhead
 
@@ -1361,8 +1366,8 @@ think {
 
 // ✅ SMART AWAIT SERVICE: AI-determined optimal timing for natural interactions
 await { 
-    reason: "post_turn_pause_" + this.name,
-    context: "Natural pause after " + this.name + " completes turn",
+    reason: "post_turn_pause_" + event.agentName,
+    context: "Natural pause after " + event.agentName + " completes turn",
     minDurationMs: 1000,
     maxDurationMs: 3000,
     handlers: [ turn.complete ]
@@ -1377,27 +1382,27 @@ adapt {
     ]
 };
 
-// Class introspection for self-awareness
+// Conscious entity introspection for self-awareness
 learn { self: this };
 ```
 
 ## Asynchronous Programming
 ```cx
 // ❌ INCORRECT - Custom events at program scope not allowed
-// on custom.event (payload) { ... }        // Must be in class scope
-// on myapp.data.updated (payload) { ... }  // Must be in class scope
+// on custom.event (payload) { ... }        // Must be in conscious entity scope
+// on myapp.data.updated (payload) { ... }  // Must be in conscious entity scope
 
 // ❌ INCORRECT - Wildcard event patterns at program scope
-// on name.any.other.any.final (payload) { ... }     // Must be in class scope
-// on user.any.response (payload) { ... }             // Must be in class scope
+// on name.any.other.any.final (payload) { ... }     // Must be in conscious entity scope
+// on user.any.response (payload) { ... }             // Must be in conscious entity scope
 on system.any.ready (payload) { ... }              // ✅ CORRECT: System handlers allowed at program scope
-// on agent.any.thinking.any.complete (payload) { ... } // Must be in class scope
+// on agent.any.thinking.any.complete (payload) { ... } // Must be in conscious entity scope
 
-// ✅ CORRECT: Custom events allowed in class scope
-class MyApp 
+// ✅ CORRECT: Custom events allowed in conscious entity scope
+conscious MyApp 
 {
-    on custom.event (payload) { ... }        // ✅ CORRECT: Custom events in class scope
-    on myapp.data.updated (payload) { ... }  // ✅ CORRECT: Application-specific events in class scope
+    on custom.event (payload) { ... }        // ✅ CORRECT: Custom events in conscious entity scope
+    on myapp.data.updated (payload) { ... }  // ✅ CORRECT: Application-specific events in conscious entity scope
 }
 ```
 
@@ -1411,9 +1416,9 @@ Cx uses a pure fire-and-forget model for all asynchronous operations, including 
 
 ```cx
 // ✅ CORRECT: Pure fire-and-forget with event bus coordination
-object AsyncProcessor 
+conscious AsyncProcessor 
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit processor.ready { name: self.name };
@@ -1480,8 +1485,8 @@ emit realtime.audio.send {
 
 #### **Event Handlers for Azure Responses**
 ```cx
-// ✅ CORRECT: Event handlers in class scope
-class AzureRealtimeHandler
+// ✅ CORRECT: Event handlers in conscious entity scope
+conscious AzureRealtimeHandler
 {
     // Handle connection confirmation
     on realtime.connected (event)
@@ -1519,9 +1524,9 @@ class AzureRealtimeHandler
 #### **Complete Working Example**
 ```cx
 // Proven working voice integration
-object VoiceDemo
+conscious VoiceDemo
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit demo.ready { name: self.name };

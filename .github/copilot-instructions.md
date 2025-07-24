@@ -25,6 +25,22 @@ This document provides development guidance and standards for the CX Language pl
 - The agents should be able to work independently and collaboratively to achieve the goals set by you. 
 - This is how we will build the Cx Language platform.
 
+### **🧠 Event Handlers as Neural Reflex Mechanisms**
+**BIOLOGICAL NEURAL AUTHENTICITY**: Event handlers are specialized neural pathways that react instantly to stimuli, implementing true biological reflex arcs in software:
+
+- **Synaptic Receptors**: Handlers that "listen" for specific signals, like receptor sites on neurons
+  - Examples: `OnClick Receptor`, `Temperature Spike Receptor`, `consciousness.verification Receptor`
+- **Reflex Arcs**: Hardwired circuits bypassing higher layers for ultra-fast responses  
+  - Examples: `Pain Reflex Arc`, `Heartbeat Reflex Arc`, `system.shutdown Reflex Arc`
+- **Afferent Triggers**: Entry points carrying sensory data into core processing loops
+  - Examples: `Motion Afferent Trigger`, `LogEntry Afferent Trigger`, `user.input Afferent Trigger`
+- **Interneuron Handlers**: Intermediate processors transforming/validating signals before forwarding
+  - Examples: `Filter Interneuron`, `Validator Interneuron`, `cognitive.processing Interneuron`
+- **Motor Efferents**: Endpoints dispatching commands/side effects, like muscle-activating neurons
+  - Examples: `UI Update Efferent`, `Alert Dispatch Efferent`, `realtime.audio.response Efferent`
+
+**HYBRID PATTERNS**: Blend terms for complex behaviors - `Receptor-Arc` for handlers that both sense and act, `Cognitive-Efferent` for decision-making outputs, `Memory-Interneuron` for storage processing.
+
 ### **🎯 MVP-FOCUSED LEARNING ADAPTATION RULES**
 - **Continuous Skill Evolution**: Adapt personalities, expertise, and capabilities based on MVP requirements
 - **User Value Priority**: Every feature must provide direct, measurable value to end users
@@ -43,7 +59,7 @@ This document provides development guidance and standards for the CX Language pl
 - ✅ **Event-Driven Architecture**: Fully operational Aura Cognitive Framework with proper handler registration
 - ✅ **Interactive CLI**: Working background event processing with user-controlled termination
 - ✅ **Enhanced Handlers Pattern**: Complete implementation with custom payload support `handlers: [ analysis.complete { option: "value" } ]`
-- ✅ **Automatic Object Serialization**: CX objects display as JSON with recursive nesting for debugging
+- ✅ **Automatic Conscious Entity Serialization**: CX conscious entities display as JSON with recursive nesting for debugging
 - ✅ **Comma-less Syntax**: Modern clean syntax for AI services and emit statements
 - ✅ **Clean Examples**: Organized structure with production/core_features/demos/archive folders
 - ✅ **Cognitive Boolean Logic**: Working `is { }` and `not { }` patterns with AI-driven decision making
@@ -98,10 +114,10 @@ For advanced AI agent coordination challenges, consciousness simulation, and bre
 **Activation**: For Aura Cognitive Framework development, neural modeling, consciousness simulation, or massive agent coordination challenges, refer to [aura-visionary-team.instructions.md](instructions/aura-visionary-team.instructions.md) for detailed team activation protocols.
 
 ### **Revolutionary Language Design**
-- **Pure Event-Driven Architecture**: Classes contain ONLY `realize()` constructors and event handlers
+- **Pure Event-Driven Architecture**: Conscious entities contain ONLY `realize()` constructors and event handlers
 - **No Member Fields**: All state management through AI services and event payloads
 - **No `this` Keyword**: Complete elimination of instance references for pure stateless programming
-- **Cognitive Constructors**: `realize(self: object)` with `learn self;` for AI-driven initialization
+- **Cognitive Constructors**: `realize(self: conscious)` with `learn self;` for AI-driven initialization
 - **Event-Only Communication**: All behavior flows through the Aura Cognitive Framework
 - **Aura Cognitive Framework**: A decentralized eventing model where each agent possesses a local `EventHub` (a personal nervous system) for internal processing, all orchestrated by a global `EventBus` that manages inter-agent communication
 - **Biological Neural Authenticity**: Revolutionary synaptic plasticity with LTP (5-15ms), LTD (10-25ms), STDP causality rules
@@ -152,15 +168,15 @@ gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 - **Comma-less Syntax**: Clean, modern syntax for AI services and emit statements
 - **Payload Propagation**: Handler events receive both original payload AND custom handler data
 
-### **Class-Based Event Handler Patterns (v1.0)**
-- **Instance Variable Access**: Class-based event handlers provide superior scope resolution with `this.fieldName` pattern
-- **State Management**: Event handlers can modify instance state directly (`this.currentPhase = "new_value"`)
-- **Variable Scope**: Class handlers resolve variable scope more reliably than global handlers
+### **Conscious Entity-Based Event Handler Patterns (v1.0)**
+- **Event Parameter Access**: Conscious entity-based event handlers provide superior scope resolution with `event.propertyName` pattern
+- **State Management**: Event handlers can modify state through AI services and event payloads (`event.currentPhase`)
+- **Variable Scope**: Conscious entity handlers resolve variable scope more reliably than global handlers
 - **Smart Await Integration**: AI-determined optimal timing with `await { reason: "context", minDurationMs: 1000, maxDurationMs: 3000 }`
 
-### **Automatic Object Serialization (v1.0)**
-- **CX Object Detection**: Automatically detects CX objects inheriting from AiServiceBase
-- **Recursive JSON Display**: Nested CX objects display with full structure and proper indentation
+### **Automatic Conscious Entity Serialization (v1.0)**
+- **CX Conscious Entity Detection**: Automatically detects CX conscious entities inheriting from AiServiceBase
+- **Recursive JSON Display**: Nested CX conscious entities display with full structure and proper indentation
 - **Clean Field Filtering**: Internal fields (ServiceProvider, Logger) automatically hidden
 - **Primitive Type Handling**: Strings, numbers, booleans print directly without JSON formatting
 - **Debug-Ready Output**: Perfect for inspecting complex agent states and data structures
@@ -168,7 +184,7 @@ gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
 ### **Voice Speed Control (v1.0)**
 - **Speech Speed Parameter**: Use `speechSpeed: 0.9` to slow speech by 10% for better comprehension
 - **Flexible Speed Control**: Range from 0.8 (slow) to 1.2 (fast) for different interaction needs
-- **Instance-Based Control**: Each agent can have its own speech speed via `this.speechSpeed`
+- **Event-Based Control**: Each agent can control speech speed via event parameters (`event.speechSpeed`)
 - **Debug-Ready Output**: Perfect for inspecting complex agent states and data structures
 
 ### **Modern Syntax Standards**

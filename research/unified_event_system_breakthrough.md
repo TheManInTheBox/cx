@@ -45,9 +45,9 @@ The **Aura Cognitive Framework** represents the cornerstone of our breakthrough 
 
 ```cx
 // ✅ AURA FRAMEWORK: Revolutionary unified event system with dual architecture
-object AuraUnifiedEventSystem
+conscious AuraUnifiedEventSystem
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit aura.framework.ready { 
@@ -92,9 +92,9 @@ The **Aura Cognitive Framework** models actual biological neural pathways for au
 
 ```cx
 // ✅ AURA FRAMEWORK: True biological neural pathway modeling
-object AuraNeuralPathwayProcessor
+conscious AuraNeuralPathwayProcessor
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         learn self;
         emit aura.neural.system.ready { 
@@ -274,7 +274,7 @@ Our system enables sophisticated multi-agent voice conferences with adaptive tim
 
 ```cx
 // ✅ VOICE COORDINATION: Real-time multi-agent conferences
-object VoiceCoordinationSystem
+conscious VoiceCoordinationSystem
 {
     on voice.conference.start (event)
     {
@@ -347,9 +347,9 @@ The **Aura Cognitive Framework** enables true self-aware agents with consciousne
 
 ```cx
 // ✅ AURA FRAMEWORK: Complete self-aware cognitive architecture
-object AuraSelfAwareAgent
+conscious AuraSelfAwareAgent
 {
-    realize(self: object)
+    realize(self: conscious)
     {
         // Aura cognitive self-initialization
         learn self;
@@ -539,7 +539,7 @@ The system includes comprehensive production deployment patterns:
 
 ```cx
 // ✅ PRODUCTION DEPLOYMENT: Enterprise-ready configuration
-object ProductionDeploymentManager
+conscious ProductionDeploymentManager
 {
     on system.startup.initiate (event)
     {

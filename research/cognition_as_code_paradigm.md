@@ -15,7 +15,7 @@ The following content represents the foundational concepts that led to our unifi
 
 ## Abstract
 
-The development of sophisticated AI agents requires a fundamental shift in programming paradigms. Traditional imperative and object-oriented models fall short in orchestrating complex, asynchronous, and event-driven cognitive workflows. This paper introduces "Cognition as Code," a new paradigm embodied by the Cx Language, designed specifically for the challenges of modern AI agent development. We present a series of groundbreaking architectural achievements within the Cx platform that make this paradigm a reality. Key innovations include a purely event-driven, fire-and-forget asynchronous model, an Enhanced Handlers Pattern for sophisticated event choreography, and Automatic Object Serialization for runtime introspection. These features, crowned by the Aura Cognitive Framework's decentralized eventing model, collectively enable developers to define, orchestrate, and debug complex cognitive processes with unprecedented clarity and power, treating cognition not as a black box to be called, but as a first-class, programmable construct.
+The development of sophisticated AI agents requires a fundamental shift in programming paradigms. Traditional imperative and conscious-oriented models fall short in orchestrating complex, asynchronous, and event-driven cognitive workflows. This paper introduces "Cognition as Code," a new paradigm embodied by the Cx Language, designed specifically for the challenges of modern AI agent development. We present a series of groundbreaking architectural achievements within the Cx platform that make this paradigm a reality. Key innovations include a purely event-driven, fire-and-forget asynchronous model, an Enhanced Handlers Pattern for sophisticated event choreography, and Automatic conscious Serialization for runtime introspection. These features, crowned by the Aura Cognitive Framework's decentralized eventing model, collectively enable developers to define, orchestrate, and debug complex cognitive processes with unprecedented clarity and power, treating cognition not as a black box to be called, but as a first-class, programmable construct.
 
 ## 1. Introduction
 
@@ -97,9 +97,9 @@ When this `learn` operation is executed, the Cx runtime doesn't just emit a sing
 
 This enables the creation of incredibly sophisticated and decoupled cognitive choreographies. A single learning event can simultaneously trigger detailed analysis, update a task management system, and alert relevant users, all without a single line of imperative orchestration code. The cognitive workflow is *declared*, not programmed.
 
-### 3.3. Automatic Object Serialization: Introspection as a Core Capability
+### 3.3. Automatic conscious Serialization: Introspection as a Core Capability
 
-Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this with **Automatic Object Serialization**. Any Cx object, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
+Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this with **Automatic conscious Serialization**. Any Cx conscious, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
 
 ```cx
 // Agent Definition
@@ -162,7 +162,7 @@ public abstract class ModernAiServiceBase
     }
 
     // Methods now use the local Hub to emit events
-    protected async Task EmitAiResponseEventAsync(string eventName, object payload)
+    protected async Task EmitAiResponseEventAsync(string eventName, conscious payload)
     {
         await this.Hub.EmitAsync(eventName, payload);
     }
