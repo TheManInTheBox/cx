@@ -19,26 +19,22 @@ The CX Language platform now supports **separate Azure OpenAI endpoints and API 
     "Chat": {
       "Endpoint": "https://my-chat-resource.openai.azure.com/",
       "DeploymentName": "gpt-4.1-mini",
-      "ApiKey": "YOUR_CHAT_API_KEY",
-      "ApiVersion": "2024-12-17"
+      "ApiKey": "YOUR_CHAT_API_KEY"
     },
     "Embedding": {
       "Endpoint": "https://my-embedding-resource.openai.azure.com/",
       "DeploymentName": "text-embedding-3-small",
-      "ApiKey": "YOUR_EMBEDDING_API_KEY",
-      "ApiVersion": "2024-12-17"
+      "ApiKey": "YOUR_EMBEDDING_API_KEY"
     },
     "Image": {
       "Endpoint": "https://my-image-resource.openai.azure.com/",
       "DeploymentName": "dall-e-3",
-      "ApiKey": "YOUR_IMAGE_API_KEY",
-      "ApiVersion": "2024-12-17"
+      "ApiKey": "YOUR_IMAGE_API_KEY"
     },
     "Realtime": {
       "Endpoint": "wss://my-realtime-resource.openai.azure.com",
       "DeploymentName": "gpt-4o-mini-realtime-preview",
-      "ApiKey": "YOUR_REALTIME_API_KEY",
-      "ApiVersion": "2024-12-17"
+      "ApiKey": "YOUR_REALTIME_API_KEY"
     }
   }
 }
@@ -63,8 +59,7 @@ The system supports **three configuration levels** with automatic fallback:
       "ImageDeploymentName": "dall-e-3",
       "RealtimeEndpoint": "wss://my-resource.openai.azure.com",
       "RealtimeDeploymentName": "gpt-4o-mini-realtime-preview",
-      "ApiKey": "YOUR_API_KEY",
-      "ApiVersion": "2024-12-17"
+      "ApiKey": "YOUR_API_KEY"
     }
   }
 }
@@ -80,8 +75,7 @@ The system supports **three configuration levels** with automatic fallback:
     "ImageDeploymentName": "dall-e-3",
     "RealtimeEndpoint": "wss://my-resource.openai.azure.com",
     "RealtimeDeploymentName": "gpt-4o-mini-realtime-preview",
-    "ApiKey": "YOUR_API_KEY",
-    "ApiVersion": "2024-12-17"
+    "ApiKey": "YOUR_API_KEY"
   }
 }
 ```

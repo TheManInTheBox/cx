@@ -1,0 +1,67 @@
+// Comprehensive shutdown test - Multiple agents coordinating shutdown
+// Tests: Agent communication, event orchestration, proper shutdown timing
+
+conscious CoordinatorAgent
+{
+    realize(self: conscious)
+    {
+        print("🧠 CoordinatorAgent initialized");
+        learn self;
+        emit coordinator.ready { name: self.name };
+    }
+    
+    on coordinator.ready (event)
+    {
+        print("✅ Coordinator ready - starting multi-agent demo");
+        emit worker.start { coordinator: event.name };
+    }
+    
+    on all.workers.complete (event)
+    {
+        print("🏁 All workers complete - initiating shutdown");
+        emit system.shutdown { reason: "Multi-agent coordination demo completed successfully" };
+    }
+}
+
+conscious WorkerAgent
+{
+    realize(self: conscious)
+    {
+        print("🧠 WorkerAgent initialized");
+        learn self;
+        emit worker.ready { name: self.name };
+    }
+    
+    on worker.start (event)
+    {
+        print("🔧 Worker starting tasks for coordinator: " + event.coordinator);
+        emit task.processing { worker: "WorkerAgent", task: "data_analysis" };
+    }
+    
+    on task.processing (event)
+    {
+        print("📊 Processing task: " + event.task + " by worker: " + event.worker);
+        emit task.complete { worker: event.worker, task: event.task, result: "success" };
+    }
+    
+    on task.complete (event)
+    {
+        print("✅ Task completed: " + event.task + " with result: " + event.result);
+        emit all.workers.complete { summary: "All tasks finished successfully" };
+    }
+}
+
+// Global system event handlers
+on system.start (event)
+{
+    print("🚀 Starting comprehensive multi-agent shutdown test");
+}
+
+on system.shutdown (event)
+{
+    print("🔌 System shutting down: " + event.reason);
+}
+
+// Create agent instances and start the demo
+var coordinator = new CoordinatorAgent({ name: "MainCoordinator" });
+var worker = new WorkerAgent({ name: "DataWorker" });

@@ -92,7 +92,6 @@ public class AzureOpenAIConfiguration
     public string RealtimeEndpoint { get; set; } = string.Empty;
     public string RealtimeDeploymentName { get; set; } = "gpt-4o-mini-realtime-preview";
     public string ApiKey { get; set; } = string.Empty;
-    public string ApiVersion { get; set; } = "2024-12-17";
     public int MaxTokens { get; set; } = 4000;
     public double Temperature { get; set; } = 0.7;
     public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromMinutes(2);
@@ -113,7 +112,6 @@ public class AzureOpenAIServiceConfiguration
     public string Endpoint { get; set; } = string.Empty;
     public string DeploymentName { get; set; } = string.Empty;
     public string ApiKey { get; set; } = string.Empty;
-    public string ApiVersion { get; set; } = "2024-12-17";
     public int MaxTokens { get; set; } = 4000;
     public double Temperature { get; set; } = 0.7;
     public TimeSpan RequestTimeout { get; set; } = TimeSpan.FromMinutes(2);
