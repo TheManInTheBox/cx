@@ -180,41 +180,58 @@ class Program
                     
                     Console.WriteLine($"[DEBUG] RUNTIME: Run method completed successfully");
                     
-                    // Emit system.start event to trigger CX program execution
-                    try
+                    // Track successful execution
+                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
+                    
+                    // Set up shutdown event handling BEFORE emitting system.start
+                    Console.WriteLine("\n🔗 Setting up system.shutdown event listener...");
+                    
+                    var shutdownCompletionSource = new TaskCompletionSource<bool>();
+                    var eventBus = host.Services.GetService<CxLanguage.Runtime.ICxEventBus>();
+                    
+                    if (eventBus != null)
                     {
-                        var eventBus = host.Services.GetService<CxLanguage.Runtime.ICxEventBus>();
-                        if (eventBus != null)
+                        // Subscribe to system.shutdown event BEFORE emitting system.start
+                        eventBus.Subscribe("system.shutdown", (cxEvent) =>
+                        {
+                            var reason = "unknown";
+                            if (cxEvent.payload is Dictionary<string, object> dict && dict.ContainsKey("reason"))
+                            {
+                                reason = dict["reason"]?.ToString() ?? "unknown";
+                            }
+                            Console.WriteLine($"✅ Received system.shutdown event - Reason: {reason}");
+                            shutdownCompletionSource.SetResult(true);
+                        });
+                        
+                        Console.WriteLine("🔗 Shutdown event listener registered");
+                        
+                        // Now emit system.start event to trigger CX program execution
+                        try
                         {
                             Console.WriteLine($"[DEBUG] RUNTIME: Emitting system.start event");
                             await eventBus.EmitAsync("system.start", new { timestamp = DateTime.UtcNow });
                             Console.WriteLine($"[DEBUG] RUNTIME: system.start event emitted successfully");
                         }
-                        else
+                        catch (Exception ex)
                         {
-                            Console.WriteLine($"[DEBUG] RUNTIME: No event bus available for system.start");
+                            Console.WriteLine($"[DEBUG] RUNTIME: Error emitting system.start: {ex.Message}");
+                        }
+                        
+                        // Wait for the shutdown event (with timeout as safety measure)
+                        Console.WriteLine("⏳ Waiting for system.shutdown event to exit...");
+                        try
+                        {
+                            await shutdownCompletionSource.Task.WaitAsync(TimeSpan.FromMinutes(10));
+                            Console.WriteLine("🏁 Program completed successfully via system.shutdown event");
+                        }
+                        catch (TimeoutException)
+                        {
+                            Console.WriteLine("⚠️ Timeout waiting for system.shutdown event - exiting after 10 minutes");
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Console.WriteLine($"[DEBUG] RUNTIME: Error emitting system.start: {ex.Message}");
-                    }
-                    
-                    // Track successful execution
-                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
-                    
-                    // Wait for events to complete - give user control to exit when ready
-                    Console.WriteLine("\n🔑 Press any key to exit (waiting for background events to complete)...");
-                    
-                    try
-                    {
-                        Console.ReadKey(true);
-                    }
-                    catch (InvalidOperationException)
-                    {
-                        // Handle redirected input by waiting a short time for events to process
-                        Console.WriteLine("Input redirected - waiting 3 seconds for events to complete...");
-                        await Task.Delay(3000);
+                        Console.WriteLine("⚠️ No event bus available - exiting immediately");
                     }
                 }
                 catch (System.Reflection.TargetInvocationException ex)
