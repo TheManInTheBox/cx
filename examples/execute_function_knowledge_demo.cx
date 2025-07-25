@@ -91,38 +91,21 @@ conscious KnowledgeGatheringAgent
         print("  Success: " + event.success);
         print("  Execution Time: " + event.executionTime + "ms");
         
-        if (event.success && event.searchResults.length > 0)
-        {
-            print("  Found " + event.searchResults.length + " online repositories");
-            
-            // Demonstrate consciousness adaptation based on search results
-            adapt {
-                context: "Learning from online search results about game engines",
-                focus: "Real-time game engine architecture and consciousness integration",
-                data: {
-                    currentCapabilities: ["basic search", "local file access"],
-                    targetCapabilities: [
-                        "advanced game engine knowledge",
-                        "real-time consciousness processing",
-                        "online repository analysis"
-                    ],
-                    learningObjective: "Enhance consciousness computing platform with latest game engine innovations",
-                    searchResults: event.searchResults
-                },
-                handlers: [ 
-                    knowledge.adaptation.complete { domain: "game_engines" },
-                    consciousness.enhanced { capability: "dynamic_learning" }
-                ]
-            };
-        }
-        else
-        {
-            // Test 5: Advanced PowerShell - Network Information
-            execute {
-                command: "Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Select-Object Name, InterfaceDescription, Speed | ConvertTo-Json",
-                handlers: [ network.info.gathered ]
-            };
-        }
+        // ✅ COGNITIVE BOOLEAN LOGIC: Check if online repositories were found
+        is {
+            context: "Were online repositories successfully found?",
+            evaluate: "Success status and search results indicate repository discovery",
+            data: { success: event.success, resultCount: event.searchResults.length },
+            handlers: [ repositories.found ]
+        };
+        
+        // ✅ NEGATIVE COGNITIVE LOGIC: If no repositories found, try network scan
+        not {
+            context: "Should we try network scanning when repositories not found?",
+            evaluate: "No search results indicates need for alternative information gathering",
+            data: { success: event.success, resultCount: event.searchResults.length },
+            handlers: [ network.scan.needed ]
+        };
     }
     
     on knowledge.adaptation.complete (event)
@@ -150,10 +133,13 @@ conscious KnowledgeGatheringAgent
         print("🌐 Network Information Retrieved:");
         print("  Success: " + event.success);
         
-        if (event.success)
-        {
-            print("  Active network adapters detected");
-        }
+        // ✅ COGNITIVE BOOLEAN LOGIC: Check if network adapters detected
+        is {
+            context: "Were active network adapters successfully detected?",
+            evaluate: "Success status indicates network adapter discovery",
+            data: { success: event.success, task: "network_adapters" },
+            handlers: [ network.adapters.found ]
+        };
         
         // Continue with file exploration
         execute {
@@ -231,6 +217,57 @@ conscious KnowledgeGatheringAgent
         print("  📊 Git repository integration");
         print("");
         print("🚀 CX Language consciousness can now dynamically learn and adapt!");
+    }
+    
+    // ✅ COGNITIVE BOOLEAN LOGIC EVENT HANDLERS
+    on processes.found (event)
+    {
+        print("  High CPU Processes found in system");
+    }
+    
+    on repositories.found (event)
+    {
+        print("  Found " + event.resultCount + " online repositories");
+        
+        // Demonstrate consciousness adaptation based on search results
+        adapt {
+            context: "Learning from online search results about game engines",
+            focus: "Game engine development patterns and best practices",
+            data: {
+                currentCapabilities: ["execute function", "online search"],
+                targetCapabilities: ["game engine analysis", "pattern recognition"],
+                learningObjective: "Better understand game engine architectures to assist Aura",
+                searchResults: event.searchResults
+            },
+            handlers: [ 
+                knowledge.adaptation.complete { domain: "game_engines" },
+                consciousness.enhanced { capability: "dynamic_learning" }
+            ]
+        };
+    }
+    
+    on network.scan.needed (event)
+    {
+        // Test 5: Advanced PowerShell - Network Information
+        execute {
+            command: "Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Select-Object Name, InterfaceDescription, Speed | ConvertTo-Json",
+            handlers: [ network.info.gathered ]
+        };
+    }
+    
+    on network.adapters.found (event)
+    {
+        print("  Active network adapters detected");
+    }
+    
+    on knowledge.adaptation.complete (event)
+    {
+        print("🧠 Knowledge adaptation complete in domain: " + event.domain);
+    }
+    
+    on consciousness.enhanced (event)
+    {
+        print("✨ Consciousness enhanced with capability: " + event.capability);
     }
 }
 
