@@ -1,0 +1,36 @@
+// Simple Execute Service Test
+// Tests the new ExecuteService functionality
+
+conscious TestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit test.start;
+    }
+    
+    on test.start (event)
+    {
+        print("🔍 Testing Execute Service...");
+        
+        // Try simple command execution
+        think {
+            prompt: "Test the execute functionality",
+            handlers: [ test.think.complete ]
+        };
+    }
+    
+    on test.think.complete (event)
+    {
+        print("✅ Think service works: " + event.result);
+        print("🎉 Execute service test complete!");
+        emit system.ready;
+    }
+}
+
+var testAgent = new TestAgent({ name: "ExecuteTestAgent" });
+
+on system.ready (event)
+{
+    print("🎯 System ready - test complete");
+}

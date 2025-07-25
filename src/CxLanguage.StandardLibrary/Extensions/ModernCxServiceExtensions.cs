@@ -33,6 +33,7 @@ namespace CxLanguage.StandardLibrary.Extensions
             // Add CX-specific AI services
             services.AddScoped<global::CxLanguage.StandardLibrary.AI.Wait.AwaitService>();
             services.AddScoped<global::CxLanguage.StandardLibrary.AI.Realtime.ModernRealtimeService>();
+            services.AddScoped<global::CxLanguage.StandardLibrary.ExecuteService>();
             
             // Add Voice Processing Services
             services.AddSingleton<global::CxLanguage.StandardLibrary.Services.IVoiceInputService, global::CxLanguage.StandardLibrary.Services.VoiceInputService>();
