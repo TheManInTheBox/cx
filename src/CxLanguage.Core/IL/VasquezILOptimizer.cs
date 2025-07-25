@@ -13,8 +13,8 @@ namespace CxLanguage.Core.IL
     {
         public class ConsciousnessEventInfo
         {
-            public string EventName { get; set; }
-            public Type[] ParameterTypes { get; set; }
+            public string EventName { get; set; } = string.Empty;
+            public Type[] ParameterTypes { get; set; } = Array.Empty<Type>();
             public bool IsHardwareAccelerated { get; set; }
             public int ConsciousnessLevel { get; set; }
         }
@@ -55,7 +55,18 @@ namespace CxLanguage.Core.IL
             
             // Consciousness-aware field access patterns
             ilGen.Emit(OpCodes.Ldstr, "consciousness_optimized_access");
-            ilGen.Emit(OpCodes.Call, typeof(VasquezOptimizedAccess).GetMethod("GetEventProperty"));
+            
+            var getEventPropertyMethod = typeof(VasquezOptimizedAccess).GetMethod("GetEventProperty");
+            if (getEventPropertyMethod != null)
+            {
+                ilGen.Emit(OpCodes.Call, getEventPropertyMethod);
+            }
+            else
+            {
+                // Fallback: emit simple property access
+                ilGen.Emit(OpCodes.Pop);
+                ilGen.Emit(OpCodes.Ldnull);
+            }
             
             Console.WriteLine("🎯 Zero-allocation event access IL generated");
         }
@@ -92,11 +103,20 @@ namespace CxLanguage.Core.IL
             {
                 // Emit hardware acceleration metadata
                 ilGen.Emit(OpCodes.Ldstr, "hardware_accelerated");
-                ilGen.Emit(OpCodes.Call, typeof(HardwareAcceleration).GetMethod("EnableAcceleration"));
+                
+                var enableAccelerationMethod = typeof(HardwareAcceleration).GetMethod("EnableAcceleration");
+                if (enableAccelerationMethod != null)
+                {
+                    ilGen.Emit(OpCodes.Call, enableAccelerationMethod);
+                }
                 
                 // GPU compute dispatch hints
                 ilGen.Emit(OpCodes.Ldarg_0);
-                ilGen.Emit(OpCodes.Call, typeof(GPUCompute).GetMethod("DispatchConsciousnessKernel"));
+                var dispatchKernelMethod = typeof(GPUCompute).GetMethod("DispatchConsciousnessKernel");
+                if (dispatchKernelMethod != null)
+                {
+                    ilGen.Emit(OpCodes.Call, dispatchKernelMethod);
+                }
                 
                 Console.WriteLine("⚡ Hardware acceleration hints emitted to IL");
             }
@@ -108,11 +128,19 @@ namespace CxLanguage.Core.IL
             
             // Hot path optimization
             ilGen.Emit(OpCodes.Ldstr, "jit_hot_path");
-            ilGen.Emit(OpCodes.Call, typeof(JITOptimizer).GetMethod("MarkHotPath"));
+            var markHotPathMethod = typeof(JITOptimizer).GetMethod("MarkHotPath");
+            if (markHotPathMethod != null)
+            {
+                ilGen.Emit(OpCodes.Call, markHotPathMethod);
+            }
             
             // Inlining hints for small consciousness methods
             ilGen.Emit(OpCodes.Ldstr, "force_inline");
-            ilGen.Emit(OpCodes.Call, typeof(JITOptimizer).GetMethod("ForceInlining"));
+            var forceInliningMethod = typeof(JITOptimizer).GetMethod("ForceInlining");
+            if (forceInliningMethod != null)
+            {
+                ilGen.Emit(OpCodes.Call, forceInliningMethod);
+            }
             
             Console.WriteLine("🚀 JIT optimization directives emitted");
         }
@@ -121,21 +149,29 @@ namespace CxLanguage.Core.IL
         {
             // Fast path for low consciousness events
             ilGen.Emit(OpCodes.Ldstr, "fast_processing");
-            ilGen.Emit(OpCodes.Call, typeof(FastProcessor).GetMethod("ProcessEvent"));
+            var processEventMethod = typeof(FastProcessor).GetMethod("ProcessEvent");
+            if (processEventMethod != null)
+            {
+                ilGen.Emit(OpCodes.Call, processEventMethod);
+            }
         }
         
         private void EmitHighConsciousnessPath(ILGenerator ilGen)
         {
             // Detailed path for high consciousness events
             ilGen.Emit(OpCodes.Ldstr, "high_consciousness_processing");
-            ilGen.Emit(OpCodes.Call, typeof(HighConsciousnessProcessor).GetMethod("ProcessEvent"));
+            var highConsciousnessMethod = typeof(HighConsciousnessProcessor).GetMethod("ProcessEvent");
+            if (highConsciousnessMethod != null)
+            {
+                ilGen.Emit(OpCodes.Call, highConsciousnessMethod);
+            }
         }
     }
     
     // Supporting classes for IL optimization
     public static class VasquezOptimizedAccess
     {
-        public static object GetEventProperty(Dictionary<string, object> eventData, string key)
+        public static object? GetEventProperty(Dictionary<string, object> eventData, string key)
         {
             // Ultra-fast property access with consciousness awareness
             return eventData.TryGetValue(key, out var value) ? value : null;

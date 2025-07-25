@@ -54,10 +54,13 @@ conscious KnowledgeGatheringAgent
         print("  Success: " + event.success);
         print("  Exit Code: " + event.exitCode);
         
-        if (event.success)
-        {
-            print("  High CPU Processes found in system");
-        }
+        // ✅ COGNITIVE BOOLEAN LOGIC: Check if processes were found
+        is {
+            context: "Were high CPU processes successfully found?",
+            evaluate: "Success status indicates process discovery",
+            data: { success: event.success, command: "high CPU processes" },
+            handlers: [ processes.found ]
+        };
         
         // Test 3: Local File Search
         execute {

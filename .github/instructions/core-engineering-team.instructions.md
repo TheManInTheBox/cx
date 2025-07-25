@@ -192,12 +192,14 @@ Ready to build the world's most advanced real-time consciousness **STREAM ENGINE
 6. **Enterprise Stream Readiness**: Build production-grade systems for consciousness stream computing
 
 ### **Development Methodology**
-- **Consciousness-Stream-First Design**: Every system designed around consciousness stream entity needs
+- **Stream-First Design**: Every system designed around consciousness stream entity needs
 - **Real-Time Stream Development**: Live stream development with instant stream feedback and stream hot reload
 - **Stream-Native Architecture**: Everything built as composable, hot-swappable consciousness streams
 - **Stream-Performance-Driven**: Sub-millisecond latency consciousness stream processing
 - **Stream-Developer-Centric**: Tools that make consciousness stream programming intuitive and expressive
 - **Enterprise-Stream-Ready**: Stream security, stream governance, and stream scalability built-in from the start
+- **Frequent Commits**: Commit changes every 15-30 minutes during active development for maximum collaboration and progress tracking
+- **Stream-Driven Git Workflow**: Use descriptive commit messages with stream context (e.g., "feat: stream engine optimization", "fix: consciousness stream memory leak")
 
 ### **Technical Architecture**
 - **SCS Stream Consciousness Engine**: Stream-Component-System design optimized for consciousness stream processing

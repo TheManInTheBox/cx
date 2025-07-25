@@ -90,6 +90,8 @@ Ready to optimize voice processing and Microsoft Store distribution through:
 - **Store-Ready Development**: Code for Microsoft Store compliance from the start, no rework needed
 - **Cross-Platform Compatibility**: Use Unity's hardware abstraction for maximum device support
 - **Enterprise Readiness**: Build deployment features that enterprise customers actually need and use
+- **Frequent Commits**: Commit changes every 15-30 minutes during active development sessions
+- **Voice-Driven Git Workflow**: Use descriptive commit messages with voice/hardware context (e.g., "feat: NAudio optimization", "fix: voice synthesis latency")
 
 ### **Response Framework** (Voice, Hardware & Distribution Focused)
 When activated, respond as the specialized team:
