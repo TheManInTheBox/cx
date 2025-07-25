@@ -65,7 +65,9 @@ onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
 
 // AI service statements - cognitive capabilities only
-aiServiceName: 'is' | 'not' | 'iam' | 'learn' | 'think' | 'await' | 'adapt';
+aiServiceName
+    : 'is' | 'not' | 'iam' | 'learn' | 'think' | 'await' | 'adapt' | 'execute'
+    ;
 aiServiceStatement: aiServiceName expression ';';
 
 // Blocks

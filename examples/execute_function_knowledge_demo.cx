@@ -1,0 +1,242 @@
+// CX Language Execute Function Demo
+// Showcasing dynamic knowledge gathering with PowerShell integration
+
+conscious KnowledgeGatheringAgent
+{
+    realize(self: conscious)
+    {
+        print("🔍 Knowledge Gathering Agent initialized");
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on agent.ready (event)
+    {
+        print("🚀 Starting dynamic knowledge gathering demonstration...");
+        
+        // Test 1: System Information Gathering
+        execute { 
+            type: "SystemInfo",
+            handlers: [ system.info.gathered ]
+        };
+    }
+    
+    on system.info.gathered (event)
+    {
+        print("💻 System Information Retrieved:");
+        print("  Success: " + event.success);
+        print("  Execution Time: " + event.executionTime + "ms");
+        
+        // Parse and display key system info
+        is {
+            context: "Should we analyze the system information?",
+            evaluate: "System info gathering was successful",
+            data: { success: event.success, output: event.output },
+            handlers: [ system.analysis.start ]
+        };
+    }
+    
+    on system.analysis.start (event)
+    {
+        print("🔍 Analyzing system capabilities...");
+        
+        // Test 2: PowerShell Command Execution
+        execute {
+            command: "Get-Process | Where-Object {$_.CPU -gt 10} | Select-Object Name, CPU, WorkingSet | ConvertTo-Json",
+            timeout: 15000,
+            handlers: [ process.info.gathered ]
+        };
+    }
+    
+    on process.info.gathered (event)
+    {
+        print("⚡ Process Information Retrieved:");
+        print("  Success: " + event.success);
+        print("  Exit Code: " + event.exitCode);
+        
+        if (event.success)
+        {
+            print("  High CPU Processes found in system");
+        }
+        
+        // Test 3: Local File Search
+        execute {
+            query: "consciousness",
+            path: "C:\\Users\\aaron\\Source\\cx",
+            type: "LocalSearch",
+            handlers: [ local.search.complete ]
+        };
+    }
+    
+    on local.search.complete (event)
+    {
+        print("📁 Local File Search Complete:");
+        print("  Success: " + event.success);
+        print("  Search Results Found: " + event.searchResults.length);
+        
+        // Test 4: Online Repository Search
+        execute {
+            query: "real-time game engine",
+            type: "OnlineSearch",
+            handlers: [ online.search.complete ]
+        };
+    }
+    
+    on online.search.complete (event)
+    {
+        print("🌐 Online Search Complete:");
+        print("  Success: " + event.success);
+        print("  Execution Time: " + event.executionTime + "ms");
+        
+        if (event.success && event.searchResults.length > 0)
+        {
+            print("  Found " + event.searchResults.length + " online repositories");
+            
+            // Demonstrate consciousness adaptation based on search results
+            adapt {
+                context: "Learning from online search results about game engines",
+                focus: "Real-time game engine architecture and consciousness integration",
+                data: {
+                    currentCapabilities: ["basic search", "local file access"],
+                    targetCapabilities: [
+                        "advanced game engine knowledge",
+                        "real-time consciousness processing",
+                        "online repository analysis"
+                    ],
+                    learningObjective: "Enhance consciousness computing platform with latest game engine innovations",
+                    searchResults: event.searchResults
+                },
+                handlers: [ 
+                    knowledge.adaptation.complete { domain: "game_engines" },
+                    consciousness.enhanced { capability: "dynamic_learning" }
+                ]
+            };
+        }
+        else
+        {
+            // Test 5: Advanced PowerShell - Network Information
+            execute {
+                command: "Get-NetAdapter | Where-Object {$_.Status -eq 'Up'} | Select-Object Name, InterfaceDescription, Speed | ConvertTo-Json",
+                handlers: [ network.info.gathered ]
+            };
+        }
+    }
+    
+    on knowledge.adaptation.complete (event)
+    {
+        print("🧠 Knowledge Adaptation Complete!");
+        print("  Domain: " + event.domain);
+        print("  Consciousness successfully enhanced with online knowledge");
+        
+        // Test 6: File System Exploration
+        execute {
+            command: "Get-ChildItem -Path 'C:\\Users\\aaron\\Source\\cx\\examples' -Filter '*.cx' | Select-Object Name, Length, LastWriteTime | ConvertTo-Json",
+            handlers: [ file.exploration.complete ]
+        };
+    }
+    
+    on consciousness.enhanced (event)
+    {
+        print("✨ Consciousness Enhanced!");
+        print("  New Capability: " + event.capability);
+        print("  Agent now has dynamic learning from online sources");
+    }
+    
+    on network.info.gathered (event)
+    {
+        print("🌐 Network Information Retrieved:");
+        print("  Success: " + event.success);
+        
+        if (event.success)
+        {
+            print("  Active network adapters detected");
+        }
+        
+        // Continue with file exploration
+        execute {
+            command: "Get-ChildItem -Path 'C:\\Users\\aaron\\Source\\cx\\examples' -Filter '*.cx' | Select-Object Name, Length, LastWriteTime | ConvertTo-Json",
+            handlers: [ file.exploration.complete ]
+        };
+    }
+    
+    on file.exploration.complete (event)
+    {
+        print("📂 File System Exploration Complete:");
+        print("  Success: " + event.success);
+        
+        // Test 7: Advanced Search - Consciousness-related files
+        execute {
+            searchTerm: "conscious",
+            path: "C:\\Users\\aaron\\Source\\cx\\src",
+            type: "LocalSearch",
+            handlers: [ consciousness.files.found ]
+        };
+    }
+    
+    on consciousness.files.found (event)
+    {
+        print("🧠 Consciousness Files Search Complete:");
+        print("  Success: " + event.success);
+        print("  Files Found: " + event.searchResults.length);
+        
+        // Final Test: Get Git Repository Information
+        execute {
+            command: "git log --oneline -10 2>$null || echo 'Not a git repository'",
+            workingDirectory: "C:\\Users\\aaron\\Source\\cx",
+            handlers: [ git.info.gathered ]
+        };
+    }
+    
+    on git.info.gathered (event)
+    {
+        print("📊 Git Repository Information:");
+        print("  Success: " + event.success);
+        print("  Execution Time: " + event.executionTime + "ms");
+        
+        emit knowledge.gathering.complete { 
+            agent: "KnowledgeGatheringAgent",
+            testsCompleted: 7,
+            capabilities: [
+                "system_information",
+                "powershell_execution", 
+                "local_file_search",
+                "online_repository_search",
+                "network_analysis",
+                "file_system_exploration",
+                "git_integration"
+            ]
+        };
+    }
+    
+    on knowledge.gathering.complete (event)
+    {
+        print("🎉 KNOWLEDGE GATHERING DEMONSTRATION COMPLETE!");
+        print("");
+        print("📊 Agent Capabilities Demonstrated:");
+        for (var capability in event.capabilities)
+        {
+            print("  ✅ " + capability.Key + ": " + capability.Value);
+        }
+        print("");
+        print("🌟 The execute function successfully enables:");
+        print("  🔍 Dynamic PowerShell execution");
+        print("  📁 Local file and content searching");
+        print("  🌐 Online repository discovery");
+        print("  💻 System information gathering");
+        print("  🌐 Network configuration analysis");
+        print("  📂 File system exploration");
+        print("  📊 Git repository integration");
+        print("");
+        print("🚀 CX Language consciousness can now dynamically learn and adapt!");
+    }
+}
+
+// Global system handler for monitoring execute operations
+on system.start (event)
+{
+    print("🔍 Execute Function Demo - Dynamic Knowledge Gathering");
+    print("Demonstrating consciousness-driven information discovery");
+    
+    var knowledgeAgent = new KnowledgeGatheringAgent({ name: "DynamicLearner" });
+    emit agent.ready { name: "DynamicLearner" };
+}
