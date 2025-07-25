@@ -50,6 +50,8 @@ This document provides development guidance and standards for the CX Language pl
 - **Learning from Execution**: Analyze runtime behavior, user feedback, and system performance to drive improvements
 - **Cross-Functional Growth**: Team members expand expertise into adjacent domains as needed for MVP success
 - **Rapid Iteration Cycles**: Implement → Test → Learn → Adapt → Repeat with 24-48 hour cycles
+- **Frequent Commits**: Commit changes every 15-30 minutes during active development for maximum collaboration and progress tracking
+- **Descriptive Git Messages**: Use clear commit messages with context (e.g., "feat: consciousness stream optimization", "fix: voice synthesis latency", "docs: update team instructions")
 
 ## Development Standards
 - ✅ **ALWAYS** use the latest Cx Language features and syntax defined in cx.instructions.md
