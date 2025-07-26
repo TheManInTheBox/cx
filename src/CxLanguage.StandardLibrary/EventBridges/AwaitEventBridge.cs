@@ -36,17 +36,16 @@ public class AwaitEventBridge
             _logger.LogInformation("🔗 Initializing AwaitEventBridge...");
 
             // Subscribe to await request events from CX runtime
-            _eventBus.Subscribe("ai.await.request", async (sender, args) =>
-            {
-                try
-                {
-                    await ProcessAwaitRequestAsync(args);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "❌ Error processing await request: {Error}", ex.Message);
-                }
-            });
+            _eventBus.Subscribe("ai.await.request", OnAwaitRequest);
+
+            _logger.LogInformation("✅ AwaitEventBridge initialized successfully");
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ Error initializing AwaitEventBridge: {Error}", ex.Message);
+        }
+    }
 
             _logger.LogInformation("✅ AwaitEventBridge initialized successfully");
         }
