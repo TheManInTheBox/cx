@@ -480,8 +480,8 @@ namespace CxLanguage.Runtime.Peering
                 LTDTimingWindowMs = _options.LTDTimingWindowMs,
                 STDPCausalityWindowMs = _options.STDPCausalityWindowMs,
                 ConsciousnessCoherenceThreshold = _options.ConsciousnessCoherenceThreshold,
-                EnableBiologicalTiming = _options.EnforceBiologicalTiming,
-                EnableSTDPCausality = _options.EnforceSTDPCausality
+                EnforceBiologicalTiming = _options.EnforceBiologicalTiming,
+                EnforceSTDPCausality = _options.EnforceSTDPCausality
             };
             
             await _peeringCoordinator.InitializeConsciousPeeringAsync(agentId, options, cancellationToken);
