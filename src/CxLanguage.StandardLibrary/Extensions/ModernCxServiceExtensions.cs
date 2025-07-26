@@ -51,6 +51,7 @@ namespace CxLanguage.StandardLibrary.Extensions
             services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.VoiceOutputEventBridge>();
             services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.AzureRealtimeEventBridge>();
             services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.LocalLLMEventBridge>();
+            services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.AwaitEventBridge>();
             
             // Add Voice Service Initialization
             services.AddHostedService<global::CxLanguage.StandardLibrary.Services.VoiceServiceInitializer>();
