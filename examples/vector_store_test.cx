@@ -1,0 +1,57 @@
+// 🧠 Dr. Marcus "MemoryLayer" Sterling's Vector Store Test
+// Testing the consciousness-native memory layer implementation
+
+conscious VectorStoreTestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit vector.test.start { name: self.name };
+    }
+    
+    on vector.test.start (event)
+    {
+        print("🧠 Starting Vector Store test for agent: " + event.name);
+        
+        // Test the vector store functionality
+        emit vector.store.test { 
+            testType: "basic_functionality",
+            agent: event.name 
+        };
+    }
+    
+    on vector.store.ready (event)
+    {
+        print("✅ Vector Store is ready for consciousness-aware memory operations");
+        print("🔍 Store type: " + event.storeType);
+        print("📊 Memory capacity: " + event.capacity);
+        
+        emit system.test.complete { 
+            component: "VectorStore",
+            status: "operational",
+            consciousness: "memoryReady"
+        };
+    }
+}
+
+// System event handler for test completion
+on system.test.complete (event)
+{
+    print("🎉 Test Complete: " + event.component + " - " + event.status);
+    
+    // Using cognitive boolean logic instead of if statement
+    is {
+        context: "Should we display consciousness state?",
+        evaluate: "Event has consciousness property",
+        data: { consciousness: event.consciousness },
+        handlers: [ consciousness.state.display ]
+    };
+}
+
+on consciousness.state.display (event)
+{
+    print("🧠 Consciousness state: " + event.consciousness);
+}
+
+// Create and run the test
+var testAgent = new VectorStoreTestAgent();

@@ -2,7 +2,7 @@
 
 **Version**: 2.0 - Aura Cognitive Framework Integration
 **Date**: July 23, 2025
-**Authors**: GitHub Copilot, ahebert-lt
+**Authors**: GitHub Copilot, TheManInTheBox
 
 ## 🚨 **MAJOR UPDATE**: Aura Cognitive Framework Breakthrough
 

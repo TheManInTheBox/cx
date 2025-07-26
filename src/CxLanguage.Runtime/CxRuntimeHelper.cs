@@ -52,72 +52,18 @@ namespace CxLanguage.Runtime
 
             try
             {
-                // Find methods with the given name
-                var methods = instanceType.GetMethods(BindingFlags.Public | BindingFlags.Instance)
-                    .Where(m => m.Name == methodName)
-                    .ToArray();
+                var actualMethodName = MapMethodName(methodName, instanceType);
+                Console.WriteLine($"[DEBUG] CallInstanceMethod: mapped {methodName} -> {actualMethodName} for {instanceType.Name}");
 
-                if (methods.Length == 0)
-                {
-                    Console.WriteLine($"[DEBUG] CallInstanceMethod: method {methodName} not found on {instanceType.Name}");
-                    return null;
-                }
+                // Use InvokeMember which handles overload resolution and type coercion automatically
+                var result = instanceType.InvokeMember(
+                    actualMethodName,
+                    BindingFlags.Public | BindingFlags.Instance | BindingFlags.InvokeMethod,
+                    Type.DefaultBinder,
+                    instance,
+                    arguments
+                );
 
-                // Find the best matching method based on parameter count
-                var method = methods.FirstOrDefault(m => m.GetParameters().Length == arguments.Length);
-                if (method == null)
-                {
-                    // Try to find a method where we can fill in default values for optional parameters
-                    method = methods.FirstOrDefault(m => 
-                    {
-                        var parameters = m.GetParameters();
-                        // We can use this method if we have at least the required parameters
-                        // and the remaining parameters have default values
-                        if (parameters.Length >= arguments.Length)
-                        {
-                            // Check if all parameters beyond our argument count have default values
-                            for (int i = arguments.Length; i < parameters.Length; i++)
-                            {
-                                if (!parameters[i].HasDefaultValue)
-                                    return false;
-                            }
-                            return true;
-                        }
-                        return false;
-                    });
-                    
-                    if (method != null)
-                    {
-                        Console.WriteLine($"[DEBUG] CallInstanceMethod: using method {method.Name} with {method.GetParameters().Length} parameters (padding optional params)");
-                        
-                        // Pad arguments with default values for optional parameters
-                        var parameters = method.GetParameters();
-                        var paddedArguments = new object[parameters.Length];
-                        
-                        // Copy provided arguments
-                        for (int i = 0; i < arguments.Length; i++)
-                        {
-                            paddedArguments[i] = arguments[i];
-                        }
-                        
-                        // Fill in default values for remaining parameters
-                        for (int i = arguments.Length; i < parameters.Length; i++)
-                        {
-                            paddedArguments[i] = parameters[i].DefaultValue ?? Type.Missing;
-                        }
-                        
-                        arguments = paddedArguments;
-                    }
-                    else
-                    {
-                        // Fallback: try the first method regardless of parameter count (original behavior)
-                        method = methods[0];
-                        Console.WriteLine($"[DEBUG] CallInstanceMethod: using first method {method.Name} with {method.GetParameters().Length} parameters (fallback)");
-                    }
-                }
-
-                Console.WriteLine($"[DEBUG] CallInstanceMethod: invoking {method.Name} on {instanceType.Name}");
-                var result = method.Invoke(instance, arguments);
                 Console.WriteLine($"[DEBUG] CallInstanceMethod: method invoked successfully, result: {result ?? "null"}");
                 Console.WriteLine($"[DEBUG] CallInstanceMethod: result type: {result?.GetType()?.FullName ?? "null"}");
 
@@ -125,19 +71,82 @@ namespace CxLanguage.Runtime
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"[DEBUG] CallInstanceMethod: exception during method call: {ex.Message}");
+                Console.WriteLine($"[ERROR] CallInstanceMethod: exception during method call: {ex.Message}");
                 if (ex.InnerException != null)
                 {
-                    Console.WriteLine($"[DEBUG] CallInstanceMethod: inner exception: {ex.InnerException.Message}");
-                    Console.WriteLine($"[DEBUG] CallInstanceMethod: inner exception type: {ex.InnerException.GetType().Name}");
-                    if (ex.InnerException.StackTrace != null)
-                    {
-                        Console.WriteLine($"[DEBUG] CallInstanceMethod: inner stack trace:\n{ex.InnerException.StackTrace}");
-                    }
+                    Console.WriteLine($"[ERROR] CallInstanceMethod: inner exception: {ex.InnerException.Message}");
+                    Console.WriteLine($"[ERROR] CallInstanceMethod: inner exception type: {ex.InnerException.GetType().Name}");
                 }
                 return null;
             }
         }
+
+        /// <summary>
+        /// Maps JavaScript-style method names to .NET method names for better CX Language compatibility
+        /// </summary>
+        private static string MapMethodName(string methodName, Type instanceType)
+        {
+            // Handle string methods specifically
+            if (instanceType == typeof(string))
+            {
+                return methodName switch
+                {
+                    "indexOf" => "IndexOf",
+                    "lastIndexOf" => "LastIndexOf", 
+                    "substring" => "Substring",
+                    "substr" => "Substring",
+                    "toLowerCase" => "ToLower",
+                    "toUpperCase" => "ToUpper",
+                    "charAt" => "get_Chars", // String indexer
+                    "replace" => "Replace",
+                    "split" => "Split",
+                    "trim" => "Trim",
+                    "startsWith" => "StartsWith",
+                    "endsWith" => "EndsWith",
+                    "includes" => "Contains",
+                    "contains" => "Contains",
+                    _ => methodName // Use original name if no mapping
+                };
+            }
+
+            // Handle array methods
+            if (instanceType.IsArray)
+            {
+                return methodName switch
+                {
+                    "push" => "Add", // Note: arrays don't have Add, but collections do
+                    "pop" => "RemoveAt",
+                    "shift" => "RemoveAt", 
+                    "unshift" => "Insert",
+                    "indexOf" => "IndexOf",
+                    "includes" => "Contains",
+                    "contains" => "Contains",
+                    _ => methodName
+                };
+            }
+
+            // Handle collection methods
+            if (instanceType.IsGenericType)
+            {
+                var genericDef = instanceType.GetGenericTypeDefinition();
+                if (genericDef == typeof(List<>) || genericDef == typeof(IList<>) || genericDef == typeof(ICollection<>))
+                {
+                    return methodName switch
+                    {
+                        "push" => "Add",
+                        "pop" => "RemoveAt",
+                        "indexOf" => "IndexOf",
+                        "includes" => "Contains",
+                        "contains" => "Contains",
+                        _ => methodName
+                    };
+                }
+            }
+
+            // Default: return original method name
+            return methodName;
+        }
+
         /// <summary>
         /// Calls a method on a service instance dynamically using reflection.
         /// This method handles method overload resolution, optional parameters, and async Task results.
@@ -373,7 +382,6 @@ namespace CxLanguage.Runtime
         /// </summary>
         public static void EmitEvent(string eventName, object? data = null, string source = "CxScript")
         {
-            Console.WriteLine($"[DEBUG] Emitting event: {eventName} from {source}");
             UnifiedEventBusRegistry.Instance.Emit(eventName, data, source);
         }
 
@@ -604,8 +612,6 @@ namespace CxLanguage.Runtime
         /// </summary>
     public static void RegisterInstanceEventHandler(object instance, string eventName, string methodName)
     {
-        Console.WriteLine($"[DEBUG] RegisterInstanceEventHandler called: {eventName} -> {instance?.GetType().Name ?? "null"}.{methodName}");
-        
         if (instance == null)
         {
             Console.WriteLine($"[ERROR] Instance is null for event handler registration");
@@ -614,7 +620,6 @@ namespace CxLanguage.Runtime
         
         // Get the method from the instance type
         var instanceType = instance.GetType();
-        Console.WriteLine($"[DEBUG] Looking for method {methodName} in type {instanceType.FullName}");
         
         var method = instanceType.GetMethod(methodName, BindingFlags.Public | BindingFlags.Instance);
         
@@ -792,37 +797,25 @@ namespace CxLanguage.Runtime
         /// </summary>
         public static Dictionary<string, object?> ConvertToEventData(object? data)
         {
-            Console.WriteLine($"[DEBUG] ConvertToEventData: input data type = {data?.GetType().FullName ?? "null"}");
-            Console.WriteLine($"[DEBUG] ConvertToEventData: input data value = {data}");
-            
             if (data == null)
             {
-                Console.WriteLine("[DEBUG] ConvertToEventData: data is null, returning empty dictionary");
                 return new Dictionary<string, object?>();
             }
 
             if (data is Dictionary<string, object?> dict)
             {
-                Console.WriteLine($"[DEBUG] ConvertToEventData: data is already Dictionary with {dict.Count} entries");
-                foreach (var kvp in dict)
-                {
-                    Console.WriteLine($"[DEBUG] ConvertToEventData: dictionary key '{kvp.Key}' = {kvp.Value}");
-                }
                 return dict;
             }
 
             // Convert object properties to dictionary using reflection
-            Console.WriteLine("[DEBUG] ConvertToEventData: converting object properties to dictionary using reflection");
             var result = new Dictionary<string, object?>();
             var properties = data.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
             
-            Console.WriteLine($"[DEBUG] ConvertToEventData: found {properties.Length} properties");
             foreach (var prop in properties)
             {
                 try
                 {
                     var value = prop.GetValue(data);
-                    Console.WriteLine($"[DEBUG] ConvertToEventData: property '{prop.Name}' = {value}");
                     result[prop.Name] = value;
                 }
                 catch (Exception ex)
@@ -832,7 +825,6 @@ namespace CxLanguage.Runtime
                 }
             }
 
-            Console.WriteLine($"[DEBUG] ConvertToEventData: returning dictionary with {result.Count} entries");
             return result;
         }
 
@@ -1168,6 +1160,15 @@ namespace CxLanguage.Runtime
                 
             // Return the actual type name for other types
             return type.Name;
+        }
+
+        /// <summary>
+        /// Built-in function to get current timestamp for CX language
+        /// Returns ISO 8601 formatted timestamp with millisecond precision
+        /// </summary>
+        public static string Now()
+        {
+            return DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss.fff");
         }
     }
 }

@@ -1,0 +1,106 @@
+// Example file to test PowerShell search capabilities
+using System;
+using CxLanguage.StandardLibrary;
+
+// This is a demonstration of enhanced search capabilities through PowerShell
+// Using ExecuteService with advanced search types
+
+class PowerShellSearchDemo
+{
+    static async Task Main()
+    {
+        Console.WriteLine("Testing PowerShell Search Capabilities");
+        
+        // Initialize the execute service
+        var executeService = new ExecuteService();
+        
+        // Test advanced search
+        var advancedSearchResult = await executeService.ExecuteAsync(new
+        {
+            Type = ExecuteType.AdvancedSearch,
+            Query = "example file test"
+        });
+        
+        Console.WriteLine("Advanced Search Results:");
+        DisplayResults(advancedSearchResult);
+        
+        // Test file content search
+        var fileContentSearchResult = await executeService.ExecuteAsync(new
+        {
+            Type = ExecuteType.FileContentSearch,
+            SearchTerm = "PowerShell",
+            Path = "."
+        });
+        
+        Console.WriteLine("\nFile Content Search Results:");
+        DisplayResults(fileContentSearchResult);
+        
+        // Test process search
+        var processSearchResult = await executeService.ExecuteAsync(new
+        {
+            Type = ExecuteType.ProcessSearch,
+            SearchTerm = "dotnet"
+        });
+        
+        Console.WriteLine("\nProcess Search Results:");
+        DisplayResults(processSearchResult);
+        
+        // Test registry search (Windows only)
+        var registrySearchResult = await executeService.ExecuteAsync(new
+        {
+            Type = ExecuteType.RegistrySearch,
+            Path = "HKLM:\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+            SearchTerm = "Version"
+        });
+        
+        Console.WriteLine("\nRegistry Search Results:");
+        DisplayResults(registrySearchResult);
+        
+        // Test event log search (Windows only)
+        var eventLogSearchResult = await executeService.ExecuteAsync(new
+        {
+            Type = ExecuteType.EventLogSearch,
+            Path = "Application",
+            SearchTerm = "Error"
+        });
+        
+        Console.WriteLine("\nEvent Log Search Results:");
+        DisplayResults(eventLogSearchResult);
+    }
+    
+    static void DisplayResults(ExecuteResult result)
+    {
+        if (!result.Success)
+        {
+            Console.WriteLine($"  Error: {result.Error}");
+            return;
+        }
+        
+        if (result.SearchResults != null && result.SearchResults.Count > 0)
+        {
+            Console.WriteLine($"  Found {result.SearchResults.Count} results");
+            
+            foreach (var item in result.SearchResults.Cast<SearchResult>().Take(5))
+            {
+                Console.WriteLine($"  - {item.Title} ({item.Type})");
+                Console.WriteLine($"    {item.Description}");
+                if (!string.IsNullOrEmpty(item.Path))
+                {
+                    Console.WriteLine($"    Path: {item.Path}");
+                }
+                Console.WriteLine();
+            }
+            
+            if (result.SearchResults.Count > 5)
+            {
+                Console.WriteLine($"  ... and {result.SearchResults.Count - 5} more results");
+            }
+        }
+        else
+        {
+            Console.WriteLine($"  No results found");
+        }
+        
+        Console.WriteLine($"  Execution time: {result.ExecutionTime.TotalSeconds:F2} seconds");
+    }
+}

@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 
 namespace CxLanguage.Runtime
 {
@@ -12,6 +13,11 @@ namespace CxLanguage.Runtime
         /// Subscribe to events with a global handler that receives CxEvent objects.
         /// </summary>
         void Subscribe(string eventName, Action<CxEvent> handler);
+        
+        /// <summary>
+        /// Subscribe to events with an async handler that receives raw object payloads.
+        /// </summary>
+        void Subscribe(string eventName, Func<object, Task> handler);
         
         /// <summary>
         /// Subscribe to events with an instance-scoped handler that receives CxEvent objects.

@@ -1,0 +1,345 @@
+// Streaming Console Input Demo - CX Language
+// Demonstrates real-time console input processing with consciousness-aware agents
+
+conscious StreamingInputAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name, capability: "streaming_input" };
+    }
+    
+    on console.input.received (event)
+    {
+        print("📝 Processing input: " + event.text);
+        
+        // Cognitive decision: What type of input is this?
+        is {
+            context: "What type of user input should we process?",
+            evaluate: "Input classification and routing decision",
+            data: {
+                text: event.text,
+                length: event.text.length,
+                timestamp: event.timestamp,
+                hasQuestion: event.text.indexOf("?") >= 0
+            },
+            handlers: [ input.classified ]
+        };
+    }
+    
+    on input.classified (event)
+    {
+        print("🧠 Input classified, processing...");
+        
+        // Route based on input type
+        is {
+            context: "Should we process this as a question?",
+            evaluate: "Question detection and AI routing",
+            data: {
+                hasQuestion: event.hasQuestion,
+                text: event.text
+            },
+            handlers: [ question.detected ]
+        };
+        
+        // Route for commands
+        is {
+            context: "Should we process this as a command?",
+            evaluate: "Command detection and execution routing",
+            data: {
+                isCommand: event.text.indexOf("/") == 0,
+                text: event.text
+            },
+            handlers: [ command.detected ]
+        };
+        
+        // Default processing
+        emit input.process.default { 
+            text: event.text,
+            type: "general"
+        };
+    }
+    
+    on question.detected (event)
+    {
+        print("❓ Question detected, engaging AI analysis");
+        
+        think {
+            prompt: "Answer this user question: " + event.text,
+            handlers: [ ai.response.ready ]
+        };
+    }
+    
+    on command.detected (event)
+    {
+        print("⚡ Command detected: " + event.text);
+        
+        // Extract command and parameters
+        var command = event.text.substring(1); // Remove the '/' prefix
+        
+        // Cognitive decision: Which command should we execute?
+        is {
+            context: "Which command should the system execute?",
+            evaluate: "Command routing and validation",
+            data: {
+                command: command,
+                isHelp: command == "help",
+                isStatus: command == "status",
+                isSearch: command.indexOf("search") == 0
+            },
+            handlers: [ command.routed ]
+        };
+    }
+    
+    on command.routed (event)
+    {
+        // Route help command
+        is {
+            context: "Should we show help information?",
+            evaluate: "Help command processing",
+            data: { isHelp: event.isHelp },
+            handlers: [ help.requested ]
+        };
+        
+        // Route status command
+        is {
+            context: "Should we show system status?",
+            evaluate: "Status command processing", 
+            data: { isStatus: event.isStatus },
+            handlers: [ status.requested ]
+        };
+        
+        // Route search command
+        is {
+            context: "Should we perform a search?",
+            evaluate: "Search command processing",
+            data: { isSearch: event.isSearch, command: event.command },
+            handlers: [ search.requested ]
+        };
+    }
+    
+    on help.requested (event)
+    {
+        print("📖 Available Commands:");
+        print("  /help - Show this help");
+        print("  /status - Show system status");
+        print("  /search <query> - Search for information");
+        print("  /quit - Exit the application");
+        print("  Just type questions or text for AI processing");
+    }
+    
+    on status.requested (event)
+    {
+        print("📊 System Status:");
+        print("  Agent: Active and processing");
+        print("  AI Services: Online");
+        print("  Input Processing: Real-time streaming");
+        print("  Consciousness: Fully aware");
+    }
+    
+    on search.requested (event)
+    {
+        var searchQuery = event.command.substring(6); // Remove "search"
+        print("🔍 Searching for: " + searchQuery);
+        
+        // Route to Google search if available
+        emit search.request {
+            query: searchQuery,
+            source: "console_command"
+        };
+    }
+    
+    on ai.response.ready (event)
+    {
+        print("🤖 AI Response: " + event.result);
+        emit response.complete { 
+            response: event.result,
+            type: "ai_analysis"
+        };
+    }
+    
+    on input.process.default (event)
+    {
+        print("💭 Processing general input: " + event.text);
+        
+        // Learn from the input
+        learn {
+            data: "User input: " + event.text,
+            category: "console_interaction",
+            handlers: [ learning.complete ]
+        };
+    }
+    
+    on learning.complete (event)
+    {
+        print("📚 Input learned and stored");
+        emit input.processed { 
+            status: "complete",
+            learned: true
+        };
+    }
+}
+
+// Real-time Input Processor
+conscious RealTimeInputProcessor
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit processor.ready { name: self.name };
+    }
+    
+    on input.stream.start (event)
+    {
+        print("🚀 Starting real-time input stream...");
+        print("💡 Type commands, questions, or general text");
+        print("📝 Commands start with '/' (e.g., /help, /status, /search)");
+        print("❓ Ask questions for AI analysis");
+        print("🛑 Type '/quit' to exit");
+        print("---");
+        
+        // Start console input monitoring
+        execute {
+            command: "Write-Host",
+            parameters: [
+                "'Streaming console ready - type your input:'"
+            ],
+            handlers: [ console.ready ]
+        };
+    }
+    
+    on console.ready (event)
+    {
+        print("⌨️ Console input monitoring active");
+        
+        // Simulate streaming input events (in real implementation, this would be continuous)
+        emit console.input.received {
+            text: "Hello, what can you tell me about consciousness?",
+            timestamp: "2025-07-25T10:00:00",
+            source: "console"
+        };
+        
+        emit console.input.received {
+            text: "/help",
+            timestamp: "2025-07-25T10:01:00",
+            source: "console"
+        };
+        
+        emit console.input.received {
+            text: "/status",
+            timestamp: "2025-07-25T10:02:00",
+            source: "console"
+        };
+        
+        emit console.input.received {
+            text: "/search consciousness-aware programming",
+            timestamp: "2025-07-25T10:03:00",
+            source: "console"
+        };
+    }
+}
+
+// Voice Input Integration
+conscious VoiceInputProcessor
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit voice.processor.ready { name: self.name };
+    }
+    
+    on voice.input.start (event)
+    {
+        print("🎤 Starting voice input processing...");
+        
+        // Connect to Azure Realtime API for voice input
+        emit realtime.connect { demo: "voice_input" };
+    }
+    
+    on realtime.connected (event)
+    {
+        print("🔊 Voice input connected to Azure Realtime API");
+        
+        emit realtime.session.create {
+            deployment: "gpt-4o-mini-realtime-preview",
+            mode: "voice_input"
+        };
+    }
+    
+    on realtime.session.created (event)
+    {
+        print("🎙️ Voice session ready for input");
+    }
+    
+    on realtime.audio.input (event)
+    {
+        print("🎵 Voice input received, converting to text...");
+        
+        // Convert voice to text and emit as console input
+        emit console.input.received {
+            text: event.transcription,
+            timestamp: event.timestamp,
+            source: "voice"
+        };
+    }
+}
+
+// Multi-Modal Input Coordinator
+conscious InputCoordinator
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit coordinator.ready { name: self.name };
+    }
+    
+    on response.complete (event)
+    {
+        print("✅ Response processing complete");
+        print("---");
+        print("💬 Ready for next input...");
+    }
+    
+    on input.processed (event)
+    {
+        print("✅ Input processing complete: " + event.status);
+        
+        is {
+            context: "Should we continue processing more input?",
+            evaluate: "Continue input stream decision",
+            data: { status: event.status },
+            handlers: [ continue.processing ]
+        };
+    }
+    
+    on continue.processing (event)
+    {
+        print("🔄 Ready for continued input processing");
+    }
+}
+
+// Global system coordination
+on system.start (event)
+{
+    print("🚀 Starting Streaming Console Input Demo");
+    
+    var inputAgent = new StreamingInputAgent({ name: "StreamingInputAgent" });
+    var processor = new RealTimeInputProcessor({ name: "RealTimeInputProcessor" });
+    var voiceProcessor = new VoiceInputProcessor({ name: "VoiceInputProcessor" });
+    var coordinator = new InputCoordinator({ name: "InputCoordinator" });
+    
+    print("🎯 All input processing agents initialized");
+    
+    // Start the input stream
+    emit input.stream.start;
+}
+
+on system.ready (event)
+{
+    print("⚡ Streaming console input system fully operational");
+    
+    // Optional: Start voice input as well
+    // emit voice.input.start;
+}
+
+print("📋 Streaming Console Input Demo loaded - emit system.start to begin");

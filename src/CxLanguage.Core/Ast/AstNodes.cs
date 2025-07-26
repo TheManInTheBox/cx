@@ -18,7 +18,6 @@ public interface IAstVisitor<T>
     T VisitReturn(ReturnStatementNode node);
     T VisitIf(IfStatementNode node);
     T VisitWhile(WhileStatementNode node);
-    T VisitFor(ForStatementNode node);
     T VisitBinaryExpression(BinaryExpressionNode node);
     T VisitUnaryExpression(UnaryExpressionNode node);
     T VisitCallExpression(CallExpressionNode node);
@@ -196,18 +195,6 @@ public class WhileStatementNode : StatementNode
     public StatementNode Body { get; set; } = null!;
 
     public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitWhile(this);
-}
-
-/// <summary>
-/// For loop statement
-/// </summary>
-public class ForStatementNode : StatementNode
-{
-    public string Variable { get; set; } = string.Empty;
-    public ExpressionNode Iterable { get; set; } = null!;
-    public StatementNode Body { get; set; } = null!;
-
-    public override T Accept<T>(IAstVisitor<T> visitor) => visitor.VisitFor(this);
 }
 
 /// <summary>

@@ -9,7 +9,6 @@ statement
     | consciousDeclaration
     | variableDeclaration
     | expressionStatement
-    | forStatement
     | blockStatement
     | onStatement
     | emitStatement
@@ -55,18 +54,15 @@ parameter: IDENTIFIER (':' type)?;  // Make type optional
 // Variable declarations
 variableDeclaration: 'var' IDENTIFIER '=' expression ';';
 
-// For-in loop for iteration (arrays, dictionaries, collections)
-forStatement: 'for' '(' ('var' IDENTIFIER | IDENTIFIER) 'in' expression ')' statement;
-
 // Cognitive Event-driven statements
-eventNamePart: IDENTIFIER | 'any' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'ai' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await' | 'completed' | 'ready' | 'activation' | 'timing' | 'decision' | 'work' | 'new' | 'iam';
+eventNamePart: IDENTIFIER | 'any' | 'critical' | 'assigned' | 'tickets' | 'tasks' | 'support' | 'dev' | 'system' | 'alerts' | 'ai' | 'sync' | 'learn' | 'think' | 'generate' | 'chat' | 'communicate' | 'search' | 'execute' | 'speak' | 'listen' | 'image' | 'analyze' | 'transcribe' | 'audio' | 'await' | 'completed' | 'ready' | 'activation' | 'timing' | 'decision' | 'work' | 'new' | 'iam' | 'infer';
 eventName: eventNamePart ('.' eventNamePart)*;
 onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
 
 // AI service statements - cognitive capabilities only
 aiServiceName
-    : 'is' | 'not' | 'iam' | 'learn' | 'think' | 'await' | 'adapt' | 'execute'
+    : 'is' | 'not' | 'iam' | 'learn' | 'think' | 'await' | 'adapt' | 'execute' | 'infer'
     ;
 aiServiceStatement: aiServiceName expression ';';
 
@@ -140,6 +136,7 @@ ADAPT: 'adapt';
 NOT: 'not';
 IAM: 'iam';
 REALIZE: 'realize';
+INFER: 'infer';
 
 IDENTIFIER: [a-zA-Z_] [a-zA-Z_0-9]*;
 STRING_LITERAL: '"' (~["\r\n] | '\\' .)* '"';

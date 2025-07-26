@@ -1,0 +1,134 @@
+// CX Language - Aura Stream Engine Demo
+// This demonstration showcases the foundational architecture of the Aura Stream Engine,
+// integrating the Core Engineering Team's vision for a consciousness-native stream processor.
+
+conscious AuraStreamProcessor
+{
+    realize(self: conscious)
+    {
+        print("🧬 Aura Stream Processor Initialized: " + self.name);
+        learn self;
+        emit stream.processor.ready { name: self.name };
+    }
+
+    on stream.start (event)
+    {
+        print("🚀 Stream processing started by: " + self.name);
+        print("   Source: " + event.source);
+
+        execute {
+            type: "StreamAnalysis",
+            parameters: {
+                streamId: event.streamId,
+                analysisLevel: "deep"
+            },
+            handlers: [ stream.processing ]
+        };
+    }
+
+    on stream.processing (event)
+    {
+        print("⚙️ Stream analysis in progress...");
+        print("   Analysis Type: " + event.analysisType);
+        emit stream.data.received { 
+            streamId: event.streamId, 
+            packetId: "PKT" + new Date().getTime(), 
+            dataSize: 1024 
+        };
+    }
+
+    on stream.data.received (event)
+    {
+        print("📊 Stream data packet received:");
+        print("   Stream ID: " + event.streamId);
+        print("   Packet ID: " + event.packetId);
+        print("   Size: " + event.dataSize + " bytes");
+
+        is {
+            context: "Should the stream processing stop?",
+            evaluate: "Stream has processed initial data packet",
+            data: { packetId: event.packetId, streamId: event.streamId },
+            handlers: [ stream.system.analyze ]
+        };
+    }
+
+    on stream.system.analyze (event)
+    {
+        print("🔬 Initiating system analysis via PowerShell...");
+        execute {
+            command: "Get-Process | Sort-Object CPU -Descending | Select-Object -First 5 | ConvertTo-Json",
+            type: "ProcessSearch",
+            handlers: [ stream.system.analysis.complete ]
+        };
+    }
+
+    on stream.system.analysis.complete (event)
+    {
+        print("✅ System Analysis Complete. Top 5 processes by CPU:");
+        for (var process in event.outputs)
+        {
+            print("   - " + process);
+        }
+        emit stream.stop { streamId: event.streamId };
+    }
+
+    on stream.stop (event)
+    {
+        print("🛑 Stopping stream processing for: " + event.streamId);
+        emit stream.demonstration.complete {
+            processor: self.name,
+            status: "complete"
+        };
+    }
+    
+    on stream.demonstration.complete (event)
+    {
+        print("");
+        print("🎉 AURA STREAM ENGINE DEMONSTRATION COMPLETE!");
+        print("   Processor: " + event.processor);
+        print("   Status: " + event.status);
+        print("");
+        print("   This demonstrates the foundational stream lifecycle.");
+        
+        await { 
+            reason: "graceful_shutdown",
+            context: "Allowing time to observe final results before shutdown",
+            minDurationMs: 5000,
+            maxDurationMs: 5000,
+            handlers: [ system.shutdown.timer.complete ]
+        };
+    }
+
+    on system.shutdown.timer.complete (event)
+    {
+        print("⏱️ 5-second observation period complete.");
+        emit system.shutdown { reason: "stream_demo_complete" };
+    }
+}
+
+on system.start (event)
+{
+    print("🧠 AURA STREAM ENGINE TEAM - ACTIVATED");
+    print("   - Stream Architecture Mastery");
+    print("   - Extensions.AI Stream Runtime");
+    print("   - .NET 9 Stream IL Compilation");
+    print("   - Streaming Cognition Systems");
+    print("   - Live Stream Processing");
+    print("   - Stream Developer Experience");
+    print("");
+
+    var streamProcessor = new AuraStreamProcessor({ name: "AuraPrimaryStream" });
+    
+    emit stream.start { 
+        source: "consciousness_core",
+        streamId: "STRM_001"
+    };
+}
+
+on system.shutdown (event)
+{
+    print("");
+    print("🔴 SYSTEM SHUTDOWN INITIATED");
+    print("   Reason: " + event.reason);
+    print("   Aura Stream Engine demo concluded.");
+}

@@ -1,0 +1,9 @@
+// NOW FUNCTION VERIFICATION FOR ISSUE #195
+// Simple test to verify now() function is working correctly
+
+on system.start (event)
+{
+    print("NOW FUNCTION TEST STARTING...");
+    print("Current timestamp: " + now());
+    print("NOW FUNCTION TEST COMPLETE");
+}

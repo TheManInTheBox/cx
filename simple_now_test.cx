@@ -1,0 +1,17 @@
+// Direct test of built-in now() function
+on system.start (event)
+{
+    print("🚀 Testing Built-in now() Function");
+    
+    // Test now() function directly
+    print("📅 Current timestamp: " + now());
+    
+    // Test now() function in variables
+    var currentTime = now();
+    print("⏰ Timestamp stored in variable: " + currentTime);
+    
+    // Test now() function in concatenation
+    print("🕐 Inline timestamp: The time is " + now() + " right now");
+    
+    print("✅ Built-in now() function serialization test complete");
+}

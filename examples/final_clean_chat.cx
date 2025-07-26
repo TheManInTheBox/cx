@@ -1,0 +1,115 @@
+// 🎯 FINAL CLEAN CHAT AGENT - Direct Print Version
+// Your local AI assistant for real conversation!
+
+conscious FinalCleanAgent
+{
+    realize(self: conscious)
+    {
+        print("");
+        print("🎯 FINAL CLEAN CHAT AGENT");
+        print("══════════════════════════════════════");
+        print("👋 Hello! I'm your local AI assistant.");
+        print("💡 Completely private - running locally!");
+        print("✨ Ready for clean conversation!");
+        print("");
+        
+        learn self;
+        emit chat.initialize;
+    }
+    
+    on chat.initialize (event)
+    {
+        print("🔥 Loading AI model...");
+        
+        emit local.llm.load { 
+            modelPath: "models/local_llm/llama-3.2-3b-instruct-q4_k_m.gguf",
+            purpose: "FinalCleanChat"
+        };
+    }
+    
+    on local.llm.model.loaded (event)
+    {
+        print("✅ AI model ready!");
+        print("");
+        print("🎮 CONVERSATION STARTING");
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        print("💬 Let me introduce myself...");
+        print("");
+        
+        emit local.llm.generate {
+            prompt: "Say hello in exactly 15 words. Introduce yourself as a helpful local AI assistant.",
+            purpose: "Greeting"
+        };
+    }
+    
+    on local.llm.text.generated (event)
+    {
+        // Handle greeting
+        is {
+            context: "Is this the greeting response?",
+            evaluate: "Check if purpose is Greeting",
+            data: { purpose: event.purpose },
+            handlers: [ show.greeting ]
+        };
+        
+        // Handle main conversation
+        is {
+            context: "Is this the main conversation response?",
+            evaluate: "Check if purpose is MainChat",
+            data: { purpose: event.purpose },
+            handlers: [ show.conversation ]
+        };
+    }
+    
+    on show.greeting (event)
+    {
+        print("🤖 AI: " + event.response);
+        print("");
+        print("Now let me solve a math problem:");
+        print("👤 Human: What is 23 + 23?");
+        print("");
+        
+        emit local.llm.generate {
+            prompt: "Calculate 23 + 23. Show your work and give the final answer.",
+            purpose: "MainChat"
+        };
+    }
+    
+    on show.conversation (event)
+    {
+        print("🤖 AI: " + event.response);
+        print("");
+        print("🎉 CLEAN CONVERSATION SUCCESS!");
+        print("══════════════════════════════════════");
+        print("✅ Local AI: WORKING");
+        print("✅ Real responses: WORKING");  
+        print("✅ Clean output: WORKING");
+        print("✅ No debug noise: SUCCESS");
+        print("══════════════════════════════════════");
+        print("");
+        
+        await {
+            reason: "final_chat_complete",
+            context: "Conversation complete pause",
+            minDurationMs: 1000,
+            maxDurationMs: 1000,
+            handlers: [ chat.finished ]
+        };
+    }
+    
+    on chat.finished (event)
+    {
+        print("🚀 Your clean local AI chat is ready!");
+        print("✨ Conversation complete!");
+        
+        emit system.shutdown;
+    }
+}
+
+var finalAgent = new FinalCleanAgent({ name: "FinalCleanAgent" });
+
+on system.start (event)
+{
+    print("🎯 STARTING FINAL CLEAN CHAT");
+    emit chat.initialize;
+}

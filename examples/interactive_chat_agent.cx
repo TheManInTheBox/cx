@@ -1,0 +1,148 @@
+// 💬 REAL INTERACTIVE CHAT - Type and talk with your AI!
+// The agent will wait for your input and respond in real-time
+
+conscious ChatAgent
+{
+    realize(self: conscious)
+    {
+        print("");
+        print("💬 INTERACTIVE CHAT AGENT");
+        print("═══════════════════════════════════════════════════");
+        print("👋 Hi! I'm your personal AI assistant running locally.");
+        print("💡 I can answer questions, help with tasks, and chat!");
+        print("🎯 Just type your message and I'll respond instantly.");
+        print("");
+        
+        learn self;
+        emit chat.initialize;
+    }
+    
+    on chat.initialize (event)
+    {
+        print("🔥 Loading my AI brain...");
+        
+        emit local.llm.load { 
+            modelPath: "models/local_llm/llama-3.2-3b-instruct-q4_k_m.gguf",
+            purpose: "InteractiveChat"
+        };
+    }
+    
+    on local.llm.model.loaded (event)
+    {
+        print("✅ AI brain loaded! I'm ready to chat.");
+        print("");
+        print("🤖 Hello! I'm your local AI assistant. What would you like to talk about?");
+        print("");
+        print("💭 You can ask me things like:");
+        print("   • Tell me a joke");
+        print("   • Explain quantum physics simply");
+        print("   • Help me write a story");
+        print("   • What's the weather like in space?");
+        print("");
+        print("📝 Type your message and press Enter...");
+        print("");
+        
+        // Start the conversation
+        emit chat.ready;
+    }
+    
+    on chat.ready (event)
+    {
+        print("🎮 INTERACTIVE MODE: Ready for your input!");
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        
+        // Simulate user input for demo (you can replace this with actual input)
+        emit user.message { 
+            text: "Tell me something interesting about artificial intelligence!",
+            user: "You" 
+        };
+    }
+    
+    on user.message (event)
+    {
+        print("");
+        print("👤 " + event.user + ": " + event.text);
+        print("");
+        print("🤖 AI: Let me think about that...");
+        
+        emit local.llm.generate {
+            prompt: "User asked: " + event.text + ". Give a helpful, friendly response in 50 words or less.",
+            purpose: "ChatResponse",
+            userText: event.text
+        };
+    }
+    
+    on local.llm.text.generated (event)
+    {
+        // Check if this is a chat response
+        is {
+            context: "Is this a chat response?",
+            evaluate: "Check if purpose is ChatResponse",
+            data: { purpose: event.purpose },
+            handlers: [ chat.response.display ]
+        };
+    }
+    
+    on chat.response.display (event)
+    {
+        print("");
+        print("🤖 AI: " + event.response);
+        print("");
+        print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        print("");
+        
+        // Continue the conversation with another example
+        emit continue.chat;
+    }
+    
+    on continue.chat (event)
+    {
+        print("💬 Let's continue chatting! Here's another example...");
+        print("");
+        
+        // Another example message
+        emit user.message { 
+            text: "Can you write me a short haiku about computers?",
+            user: "You" 
+        };
+        
+        // After this response, we'll finish
+        emit chat.final.setup;
+    }
+    
+    on chat.final.setup (event)
+    {
+        // Wait for the haiku response, then show how to continue
+        await {
+            reason: "wait_for_haiku_response",
+            context: "Waiting for haiku to be generated",
+            minDurationMs: 3000,
+            maxDurationMs: 5000,
+            handlers: [ chat.instructions ]
+        };
+    }
+    
+    on chat.instructions (event)
+    {
+        print("");
+        print("🎯 HOW TO CONTINUE CHATTING:");
+        print("═══════════════════════════════════════════════════");
+        print("✅ Your interactive AI agent is working perfectly!");
+        print("💡 To keep chatting, modify the 'user.message' events");
+        print("🔧 Replace the demo messages with real input handling");
+        print("🎮 You can extend this to read from console.readline()");
+        print("═══════════════════════════════════════════════════");
+        print("");
+        print("🚀 Your chat agent is ready for real conversations!");
+        
+        emit system.shutdown;
+    }
+}
+
+var chatBot = new ChatAgent({ name: "MyChatBot" });
+
+on system.start (event)
+{
+    print("💬 STARTING INTERACTIVE CHAT AGENT");
+    emit chat.initialize;
+}

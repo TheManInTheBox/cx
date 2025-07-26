@@ -1,0 +1,5 @@
+// Test if any events work at all
+on system.start (event)
+{
+    print("🚀 SYSTEM START HANDLER EXECUTED");
+}

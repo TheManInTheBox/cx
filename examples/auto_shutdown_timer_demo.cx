@@ -1,0 +1,102 @@
+// Auto Shutdown Timer Demo - Demonstrates the new automatic system shutdown capabilities
+// This shows how CX Language applications automatically terminate after a configurable delay
+
+conscious AutoTimerAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on user.demo.start (event)
+    {
+        print("🎯 Auto Shutdown Timer Demo Starting");
+        print("=====================================");
+        print("This demo shows the automatic shutdown timer in action:");
+        print("• System automatically shuts down after 30 seconds (default)");
+        print("• Timer can be cancelled, extended, or monitored");
+        print("• Provides graceful shutdown for all applications");
+        print("");
+        
+        // Demonstrate timer control
+        emit timer.control.demo;
+    }
+    
+    on timer.control.demo (event)
+    {
+        print("🕒 Demonstrating timer control capabilities...");
+        
+        // Example: Extend the timer if we need more time
+        print("⏰ Extending auto shutdown timer by 10 seconds");
+        emit timer.shutdown.extend { additionalMs: 10000 };
+        
+        // Show how to cancel if needed (commented out for demo)
+        // print("❌ To cancel timer: emit timer.shutdown.cancel { reason: 'user_interaction' }");
+        
+        print("✨ Timer extended! System will now shutdown later");
+        print("📊 Watch the timer events below...");
+    }
+    
+    // Auto timer event handlers
+    on timer.shutdown.started (event)
+    {
+        print("🚀 AUTO TIMER: Timer started");
+        print("📅 Start time: " + event.startTime);
+        print("⏱️ Delay: " + event.delaySeconds + " seconds");
+        print("🕒 Estimated shutdown: " + event.estimatedShutdownTime);
+        print("🎯 Reason: " + event.reason);
+    }
+    
+    on timer.shutdown.extended (event)
+    {
+        print("⏰ AUTO TIMER: Timer extended");
+        print("➕ Additional time: " + event.additionalSeconds + " seconds");
+        print("🕒 New estimated shutdown: " + event.newEstimatedShutdownTime);
+        print("✅ Timer extension applied successfully");
+    }
+    
+    on timer.shutdown.elapsed (event)
+    {
+        print("⏱️ AUTO TIMER: Timer elapsed");
+        print("🛑 Automatic shutdown initiated");
+        print("📅 Elapsed at: " + event.elapsedAt);
+        print("🎯 Original delay: " + event.originalDelayMs + "ms");
+        print("🔄 System shutdown in progress...");
+    }
+    
+    on timer.shutdown.cancelled (event)
+    {
+        print("❌ AUTO TIMER: Timer cancelled");
+        print("🎯 Cancellation reason: " + event.reason);
+        print("📅 Cancelled at: " + event.cancelledAt);
+        print("♾️ Application will run indefinitely until manual shutdown");
+    }
+}
+
+// Global system handlers
+on system.start (event)
+{
+    print("🔥 CX Language Auto Shutdown Timer Demo");
+    print("=======================================");
+    print("🧠 This demo showcases the new automatic shutdown timer feature");
+    print("⏰ Default timer: 30 seconds + 10 second extension = 40 seconds total");
+    print("🎯 Timer ensures graceful shutdown without manual intervention");
+    print("");
+    
+    var timerAgent = new AutoTimerAgent({ name: "TimerBot" });
+    emit user.demo.start;
+}
+
+on system.shutdown (event)
+{
+    print("");
+    print("🔴 SYSTEM SHUTDOWN EVENT RECEIVED");
+    print("==================================");
+    print("🎯 Shutdown reason: " + event.reason);
+    print("📊 Shutdown source: " + event.source);
+    print("📅 Shutdown time: " + event.shutdownTime);
+    print("✅ Auto shutdown timer working perfectly!");
+    print("🌟 Thank you for testing the CX Language auto timer feature");
+    print("");
+}

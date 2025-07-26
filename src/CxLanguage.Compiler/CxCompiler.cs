@@ -174,13 +174,11 @@ public class CxCompiler : IAstVisitor<object>
             _currentLocals.Clear();
 
             // **PASS 1: Collect function and class declarations, and event handlers**
-            Console.WriteLine("[DEBUG] Starting Pass 1: Collecting declarations");
             _isFirstPass = true;
             _pendingFunctions.Clear();
             _eventRegistrations.Clear();
             _eventHandlerMethodNames.Clear();
             ast.Accept(this);
-            Console.WriteLine($"[DEBUG] Pass 1 complete. Found {_pendingFunctions.Count} functions and {_eventRegistrations.Count} event handlers.");
 
             // Finish constructor after all imports are processed
             if (_constructorIl != null)
@@ -189,13 +187,11 @@ public class CxCompiler : IAstVisitor<object>
             }
 
             // **PASS 2: Compile function and event handler bodies**
-            Console.WriteLine("[DEBUG] Starting Pass 2: Compiling function and event handler bodies");
             _isFirstPass = false;
 
             // Compile all pending function bodies
             foreach (var functionNode in _pendingFunctions)
             {
-                Console.WriteLine($"[DEBUG] Compiling function body: {functionNode.Name}");
                 CompileFunctionBody(functionNode);
             }
 
@@ -210,7 +206,6 @@ public class CxCompiler : IAstVisitor<object>
             }
 
             // **PASS 3: Compile the main program body**
-            Console.WriteLine("[DEBUG] Starting Pass 3: Compiling main program statements");
             
             // Add runtime debug output at the start of the Run method
             var printMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
@@ -234,14 +229,11 @@ public class CxCompiler : IAstVisitor<object>
             _currentIl.Emit(OpCodes.Call, printMethod!);
             
             // Return null by default
-            Console.WriteLine("[DEBUG] Adding final return to main method");
             _currentIl.Emit(OpCodes.Ldnull);
             _currentIl.Emit(OpCodes.Ret);
             
             // Create the type
-            Console.WriteLine("[DEBUG] Creating program type");
             var programType = _programTypeBuilder.CreateType();
-            Console.WriteLine("[DEBUG] Compilation successful");
             
             return CompilationResult.Success(_assemblyBuilder, programType);
         }
@@ -262,8 +254,6 @@ public class CxCompiler : IAstVisitor<object>
             return;
         }
 
-        Console.WriteLine($"[DEBUG] Generating registration code for {_eventRegistrations.Count} event handlers");
-
         foreach (var (eventName, handlerMethodName) in _eventRegistrations)
         {
             if (!_eventHandlers.TryGetValue(eventName, out var handlerMethod))
@@ -271,8 +261,6 @@ public class CxCompiler : IAstVisitor<object>
                 Console.WriteLine($"[ERROR] Handler method not found for event: {eventName}");
                 continue;
             }
-
-            Console.WriteLine($"[DEBUG] Registering event handler: {eventName} -> {handlerMethodName}");
 
             // Load the event name as string parameter
             _currentIl!.Emit(OpCodes.Ldstr, eventName);
@@ -331,6 +319,18 @@ public class CxCompiler : IAstVisitor<object>
         if (name == "write" && argCount == 1)
         {
             return typeof(Console).GetMethod("Write", new[] { typeof(object) });
+        }
+        
+        // Built-in typeof function
+        if (name == "typeof" && argCount == 1)
+        {
+            return typeof(CxRuntimeHelper).GetMethod("GetTypeOf", new[] { typeof(object) });
+        }
+        
+        // Built-in now function
+        if (name == "now" && argCount == 0)
+        {
+            return typeof(CxRuntimeHelper).GetMethod("Now", Type.EmptyTypes);
         }
         
         // Vector database functions
@@ -431,15 +431,9 @@ public class CxCompiler : IAstVisitor<object>
         // Only pop if the expression actually left a value on the stack
         if (needsPop)
         {
-            Console.WriteLine("[DEBUG] Popping expression result from stack");
             _currentIl!.Emit(OpCodes.Pop);
         }
-        else
-        {
-            Console.WriteLine("[DEBUG] No pop needed - expression doesn't leave value on stack");
-        }
         
-        Console.WriteLine("[DEBUG] Expression statement processing complete");
         return new object();
     }
 
@@ -1512,22 +1506,30 @@ public class CxCompiler : IAstVisitor<object>
 
     public object VisitObjectLiteral(ObjectLiteralNode node)
     {
-        // Check if this object literal contains the special 'handlers' property
-        var handlersProperty = node.Properties.FirstOrDefault(p => p.Key == "handlers");
-        var regularProperties = node.Properties.Where(p => p.Key != "handlers").ToList();
+        if (_isFirstPass)
+        {
+            return new object();
+        }
+
+        Console.WriteLine($"[DEBUG] Compiling object literal with {node.Properties.Count} properties");
         
         // Create a new Dictionary<string, object> for the object literal
         var dictionaryType = typeof(Dictionary<string, object>);
         var dictionaryConstructor = dictionaryType.GetConstructor(Type.EmptyTypes);
         var addMethod = dictionaryType.GetMethod("Add", new[] { typeof(string), typeof(object) });
         
-        // Create new Dictionary<string, object>()
-        _currentIl!.Emit(OpCodes.Newobj, dictionaryConstructor!);
-        
-        // Add each regular property to the dictionary (excluding 'handlers')
-        foreach (var property in regularProperties)
+        if (dictionaryConstructor == null || addMethod == null)
         {
-            // Duplicate dictionary reference
+            throw new CompilationException("Cannot find Dictionary<string, object> constructor or Add method");
+        }
+        
+        // Create new Dictionary<string, object>()
+        _currentIl!.Emit(OpCodes.Newobj, dictionaryConstructor);
+        
+        // Add each property to the dictionary (including 'handlers' - let runtime handle it)
+        foreach (var property in node.Properties)
+        {
+            // Duplicate dictionary reference for the Add call
             _currentIl.Emit(OpCodes.Dup);
             
             // Load property key as string
@@ -1537,100 +1539,10 @@ public class CxCompiler : IAstVisitor<object>
             property.Value.Accept(this);
             
             // Call dictionary.Add(key, value)
-            _currentIl.Emit(OpCodes.Callvirt, addMethod!);
+            _currentIl.Emit(OpCodes.Callvirt, addMethod);
         }
         
-        // If there's a handlers property, process it for multi-scope event emission
-        if (handlersProperty != null)
-        {
-            Console.WriteLine("[DEBUG] Found handlers property in object literal - processing multi-scope events");
-            
-            // Store the main dictionary temporarily
-            var tempDictLocal = _currentIl.DeclareLocal(typeof(Dictionary<string, object>));
-            _currentIl.Emit(OpCodes.Dup); // Duplicate the dictionary
-            _currentIl.Emit(OpCodes.Stloc, tempDictLocal); // Store copy in local variable
-            
-            // Process handlers - support both object literal {} and array literal [] syntax
-            if (handlersProperty.Value is ObjectLiteralNode handlersObject)
-            {
-                Console.WriteLine($"[DEBUG] Processing {handlersObject.Properties.Count} handler events from object literal");
-                
-                foreach (var handlerProperty in handlersObject.Properties)
-                {
-                    var eventName = handlerProperty.Key;
-                    Console.WriteLine($"[DEBUG] Emitting additional event: {eventName}");
-                    
-                    // Emit each handler event with the same data
-                    // Load event name
-                    _currentIl.Emit(OpCodes.Ldstr, eventName);
-                    
-                    // Load the stored dictionary as payload
-                    _currentIl.Emit(OpCodes.Ldloc, tempDictLocal);
-                    
-                    // Load source identifier
-                    _currentIl.Emit(OpCodes.Ldstr, _currentClassName ?? "MainScript");
-                    
-                    // Call CxRuntimeHelper.EmitEvent(string eventName, object data, string source)
-                    var emitMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("EmitEvent", 
-                        new[] { typeof(string), typeof(object), typeof(string) });
-                    _currentIl.Emit(OpCodes.Call, emitMethod!);
-                }
-            }
-            else if (handlersProperty.Value is ArrayLiteralNode handlersArray)
-            {
-                Console.WriteLine($"[DEBUG] Processing {handlersArray.Elements.Count} handler events from array literal");
-                
-                foreach (var element in handlersArray.Elements)
-                {
-                    Console.WriteLine($"[DEBUG] Handler element type: {element.GetType().Name}");
-                    
-                    string eventName = "";
-                    
-                    // Handle different types of event name representations
-                    if (element is LiteralNode literal && literal.Type == LiteralType.String)
-                    {
-                        // String literal from handlersList rule
-                        eventName = literal.Value?.ToString() ?? "";
-                    }
-                    else if (element is IdentifierNode identifier)
-                    {
-                        // Simple identifier (e.g., "complete", "done")
-                        eventName = identifier.Name;
-                    }
-                    else if (element is MemberAccessNode memberAccess)
-                    {
-                        // Dotted event name (e.g., "analysis.complete")
-                        eventName = GetFullMemberAccessName(memberAccess);
-                    }
-                    
-                    if (!string.IsNullOrEmpty(eventName))
-                    {
-                        Console.WriteLine($"[DEBUG] Emitting additional event: {eventName}");
-                        
-                        // Emit each handler event with the same data
-                        // Load event name
-                        _currentIl.Emit(OpCodes.Ldstr, eventName);
-                        
-                        // Load the stored dictionary as payload
-                        _currentIl.Emit(OpCodes.Ldloc, tempDictLocal);
-                        
-                        // Load source identifier
-                        _currentIl.Emit(OpCodes.Ldstr, _currentClassName ?? "MainScript");
-                        
-                        // Call CxRuntimeHelper.EmitEvent(string eventName, object data, string source)
-                        var emitMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("EmitEvent", 
-                            new[] { typeof(string), typeof(object), typeof(string) });
-                        _currentIl.Emit(OpCodes.Call, emitMethod!);
-                    }
-                    else
-                    {
-                        Console.WriteLine($"[DEBUG] Unable to extract event name from element type: {element.GetType().Name}");
-                    }
-                }
-            }
-        }
-        
-        // Dictionary is now on top of stack
+        // Dictionary is now on top of stack and ready to be returned
         return new object();
     }
 
@@ -1829,145 +1741,8 @@ public class CxCompiler : IAstVisitor<object>
         return false;
     }
 
-    // Required interface methods that are not implemented yet
-    public object VisitFor(ForStatementNode node)
-    {
-        if (_isFirstPass)
-        {
-            return new object();
-        }
-
-        Console.WriteLine($"[DEBUG] Processing for-in loop with variable: {node.Variable}");
-        
-        // Get the iterable expression 
-        node.Iterable.Accept(this);
-        
-        // Check if the object is a Dictionary<string, object> at runtime
-        var objectLocal = _currentIl!.DeclareLocal(typeof(object));
-        _currentIl.Emit(OpCodes.Stloc, objectLocal);
-        
-        // Check if it's a dictionary
-        _currentIl.Emit(OpCodes.Ldloc, objectLocal);
-        _currentIl.Emit(OpCodes.Isinst, typeof(Dictionary<string, object>));
-        
-        var notDictionary = _currentIl.DefineLabel();
-        var endLoop = _currentIl.DefineLabel();
-        
-        _currentIl.Emit(OpCodes.Brfalse, notDictionary);
-        
-        // Dictionary iteration path
-        _currentIl.Emit(OpCodes.Ldloc, objectLocal);
-        _currentIl.Emit(OpCodes.Castclass, typeof(Dictionary<string, object>));
-        
-        // Get the dictionary's enumerator
-        var getDictEnumeratorMethod = typeof(Dictionary<string, object>).GetMethod("GetEnumerator");
-        _currentIl.Emit(OpCodes.Callvirt, getDictEnumeratorMethod!);
-        
-        var enumeratorLocal = _currentIl.DeclareLocal(typeof(Dictionary<string, object>.Enumerator));
-        _currentIl.Emit(OpCodes.Stloc, enumeratorLocal);
-        
-        // Create a local variable for the loop variable (KeyValuePair)
-        var loopVarLocal = _currentIl.DeclareLocal(typeof(object));
-        _currentLocals[node.Variable] = loopVarLocal;
-        
-        var dictLoopStart = _currentIl.DefineLabel();
-        var dictLoopEnd = _currentIl.DefineLabel();
-        
-        // Dictionary loop: while (enumerator.MoveNext())
-        _currentIl.MarkLabel(dictLoopStart);
-        
-        _currentIl.Emit(OpCodes.Ldloca, enumeratorLocal);
-        var moveNextMethod = typeof(Dictionary<string, object>.Enumerator).GetMethod("MoveNext");
-        _currentIl.Emit(OpCodes.Call, moveNextMethod!);
-        _currentIl.Emit(OpCodes.Brfalse, dictLoopEnd);
-        
-        // Get current KeyValuePair and store in loop variable
-        _currentIl.Emit(OpCodes.Ldloca, enumeratorLocal);
-        var getCurrentMethod = typeof(Dictionary<string, object>.Enumerator).GetProperty("Current")!.GetMethod;
-        _currentIl.Emit(OpCodes.Call, getCurrentMethod!);
-        _currentIl.Emit(OpCodes.Box, typeof(KeyValuePair<string, object>));
-        _currentIl.Emit(OpCodes.Stloc, loopVarLocal);
-        
-        // Execute loop body
-        node.Body.Accept(this);
-        
-        // Jump back to loop start
-        _currentIl.Emit(OpCodes.Br, dictLoopStart);
-        
-        // End of dictionary loop
-        _currentIl.MarkLabel(dictLoopEnd);
-        _currentIl.Emit(OpCodes.Br, endLoop);
-        
-        // Array iteration path (existing code)
-        _currentIl.MarkLabel(notDictionary);
-        
-        // Cast to array (object[])
-        _currentIl.Emit(OpCodes.Ldloc, objectLocal);
-        _currentIl.Emit(OpCodes.Castclass, typeof(object[]));
-        
-        // Store the array in a temporary local variable
-        var arrayLocal = _currentIl.DeclareLocal(typeof(object[]));
-        _currentIl.Emit(OpCodes.Stloc, arrayLocal);
-        
-        // Create a local variable for the loop index
-        var indexLocal = _currentIl.DeclareLocal(typeof(int));
-        _currentIl.Emit(OpCodes.Ldc_I4_0);  // index = 0
-        _currentIl.Emit(OpCodes.Stloc, indexLocal);
-        
-        // Create a local variable for the loop variable (reuse if not already created)
-        if (!_currentLocals.ContainsKey(node.Variable))
-        {
-            var arrayLoopVarLocal = _currentIl.DeclareLocal(typeof(object));
-            _currentLocals[node.Variable] = arrayLoopVarLocal;
-        }
-        
-        // Define labels for loop control
-        var loopStart = _currentIl.DefineLabel();
-        var loopEndArray = _currentIl.DefineLabel();
-        
-        // Start of loop: check if index < array.Length
-        _currentIl.MarkLabel(loopStart);
-        
-        // Load index
-        _currentIl.Emit(OpCodes.Ldloc, indexLocal);
-        
-        // Load array length
-        _currentIl.Emit(OpCodes.Ldloc, arrayLocal);
-        _currentIl.Emit(OpCodes.Ldlen);
-        _currentIl.Emit(OpCodes.Conv_I4);
-        
-        // Compare: if index >= length, exit loop
-        _currentIl.Emit(OpCodes.Bge, loopEndArray);
-        
-        // Load current array element: array[index]
-        _currentIl.Emit(OpCodes.Ldloc, arrayLocal);
-        _currentIl.Emit(OpCodes.Ldloc, indexLocal);
-        _currentIl.Emit(OpCodes.Ldelem_Ref);
-        
-        // Store in loop variable
-        _currentIl.Emit(OpCodes.Stloc, _currentLocals[node.Variable]);
-        
-        // Execute loop body
-        node.Body.Accept(this);
-        
-        // Increment index
-        _currentIl.Emit(OpCodes.Ldloc, indexLocal);
-        _currentIl.Emit(OpCodes.Ldc_I4_1);
-        _currentIl.Emit(OpCodes.Add);
-        _currentIl.Emit(OpCodes.Stloc, indexLocal);
-        
-        // Jump back to loop start
-        _currentIl.Emit(OpCodes.Br, loopStart);
-        
-        // End of array loop
-        _currentIl.MarkLabel(loopEndArray);
-        
-        // End of all loops
-        _currentIl.MarkLabel(endLoop);
-        
-        Console.WriteLine($"[DEBUG] For-in loop compilation complete");
-        return new object();
-    }
+    // Traditional for-loop functionality removed from CX Language
+    // CX uses consciousness-aware event processing instead of traditional loops
     public object VisitParameter(ParameterNode node) => new object();
     public object VisitImport(ImportStatementNode node)
     {
@@ -2417,10 +2192,6 @@ public class CxCompiler : IAstVisitor<object>
                 return CheckForAwaitExpressions(whileStmt.Condition) ||
                        CheckForAwaitExpressions(whileStmt.Body);
             
-            case ForStatementNode forStmt:
-                return CheckForAwaitExpressions(forStmt.Iterable) ||
-                       CheckForAwaitExpressions(forStmt.Body);
-            
             case ExpressionStatementNode exprStmt:
                 return CheckForAwaitExpressions(exprStmt.Expression);
             
@@ -2696,10 +2467,10 @@ public class CxCompiler : IAstVisitor<object>
             if (methodInfo != null)
             {
                 Console.WriteLine($"[DEBUG] Found built-in function: {identifier.Name}");
-                // For console methods, we don't need to load this instance
-                if (identifier.Name == "print" || identifier.Name == "write")
+                // For static methods, we don't need to load this instance
+                if (identifier.Name == "print" || identifier.Name == "write" || identifier.Name == "now")
                 {
-                    // Don't load instance for static Console methods
+                    // Don't load instance for static methods
                 }
                 else
                 {
@@ -2882,16 +2653,43 @@ public class CxCompiler : IAstVisitor<object>
             }
             else
             {
-                // For other types of objects, fall back to the old behavior
-                // Create a message showing the method call
-                _currentIl!.Emit(OpCodes.Ldstr, $"[Method '{methodName}' called on object]");
+                // For complex object expressions (like event.text), use CallInstanceMethod
+                // The object instance is already on the stack from objectExpr.Accept(this)
                 
-                // Call Console.WriteLine
-                var writeLineMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
-                _currentIl.EmitCall(OpCodes.Call, writeLineMethod!, null);
+                // Load the method name as string
+                _currentIl!.Emit(OpCodes.Ldstr, methodName);
                 
-                // Return null for void methods
-                _currentIl.Emit(OpCodes.Ldnull);
+                // Create array for arguments
+                _currentIl.Emit(OpCodes.Ldc_I4, node.Arguments.Count);
+                _currentIl.Emit(OpCodes.Newarr, typeof(object));
+                
+                // Store arguments in array
+                for (int i = 0; i < node.Arguments.Count; i++)
+                {
+                    _currentIl.Emit(OpCodes.Dup); // Duplicate array reference
+                    _currentIl.Emit(OpCodes.Ldc_I4, i); // Load index
+                    node.Arguments[i].Accept(this); // Load argument value
+                    _currentIl.Emit(OpCodes.Stelem_Ref); // Store in array
+                }
+                
+                // Call CxRuntimeHelper.CallInstanceMethod(object, methodName, args)
+                var callInstanceMethodComplex = typeof(CxRuntimeHelper).GetMethod("CallInstanceMethod", 
+                    new[] { typeof(object), typeof(string), typeof(object[]) });
+                
+                if (callInstanceMethodComplex != null)
+                {
+                    Console.WriteLine($"[DEBUG] Using runtime method call for complex object expression: {methodName}");
+                    _currentIl.EmitCall(OpCodes.Call, callInstanceMethodComplex, null);
+                }
+                else
+                {
+                    // Fallback: clean up stack and return null
+                    _currentIl.Emit(OpCodes.Pop); // Remove args array
+                    _currentIl.Emit(OpCodes.Pop); // Remove method name
+                    _currentIl.Emit(OpCodes.Pop); // Remove object instance
+                    _currentIl.Emit(OpCodes.Ldnull);
+                    Console.WriteLine($"[DEBUG] CallInstanceMethod not found, returning null");
+                }
             }
             
             return new object();
@@ -3580,28 +3378,8 @@ public class CxCompiler : IAstVisitor<object>
 
         Console.WriteLine($"[DEBUG] Compiling AI service statement - Service: {node.ServiceName}");
         
-        // Extract payload and check for special 'handlers' property
-        List<string>? handlerEvents = null;
-        
-        if (node.Payload is ObjectLiteralNode objectLiteral)
-        {
-            // Check for handlers property and extract it
-            var handlersProperty = objectLiteral.Properties.FirstOrDefault(p => p.Key == "handlers");
-            if (handlersProperty != null)
-            {
-                Console.WriteLine("[DEBUG] Found handlers property in AI service call");
-                
-                if (handlersProperty.Value is ObjectLiteralNode handlersObject)
-                {
-                    handlerEvents = handlersObject.Properties.Select(p => p.Key).ToList();
-                    Console.WriteLine($"[DEBUG] Extracted {handlerEvents.Count} handler events: {string.Join(", ", handlerEvents)}");
-                }
-            }
-        }
-        
-        // For now, convert AI service calls to event emissions
-        // This allows the handlers pattern to work immediately
-        // In the future, this could call actual AI service methods
+        // Convert AI service calls to event emissions for the consciousness framework
+        // This enables the event-driven architecture while maintaining cognitive semantics
         
         var eventName = $"ai.{node.ServiceName}.request";
         Console.WriteLine($"[DEBUG] Converting AI service call to event: {eventName}");
@@ -3609,92 +3387,39 @@ public class CxCompiler : IAstVisitor<object>
         // Load the event name as string parameter
         _currentIl!.Emit(OpCodes.Ldstr, eventName);
         
-        // Generate enhanced payload with instance collection information when in class context
-        if (_currentClassName != null)
+        // Generate payload - simplified approach that works in both static and instance contexts
+        if (node.Payload != null)
         {
-            Console.WriteLine($"[DEBUG] AI service call within class {_currentClassName} - adding instance collection info");
-            
-            // Create a dictionary to hold the enhanced payload
-            var dictType = typeof(Dictionary<string, object>);
-            var dictCtor = dictType.GetConstructor(Type.EmptyTypes);
-            var addMethod = dictType.GetMethod("Add", new[] { typeof(string), typeof(object) });
-            
-            // Create new Dictionary<string, object>()
-            _currentIl.Emit(OpCodes.Newobj, dictCtor!);
-            var dictLocal = _currentIl.DeclareLocal(dictType);
-            _currentIl.Emit(OpCodes.Stloc, dictLocal);
-            
-            // Add original payload properties if present
-            if (node.Payload != null)
-            {
-                // We need to evaluate the original payload and copy its properties
-                // For now, we'll handle this by adding a special flag to indicate we need instance routing
-                Console.WriteLine("[DEBUG] Merging original payload with instance collection info");
-                
-                // Load dict, key "originalPayload", and value
-                _currentIl.Emit(OpCodes.Ldloc, dictLocal);
-                _currentIl.Emit(OpCodes.Ldstr, "originalPayload");
-                node.Payload.Accept(this); // This puts the original payload on the stack
-                _currentIl.Emit(OpCodes.Callvirt, addMethod!);
-            }
-            
-            // Add instance collection name for routing to instance-specific memory
-            // Load dict, key "_instanceCollection", and value (this reference + collection name)
-            _currentIl.Emit(OpCodes.Ldloc, dictLocal);
-            _currentIl.Emit(OpCodes.Ldstr, "_instanceCollection");
-            
-            // Load 'this' reference to get the instance collection name
-            _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
-            
-            // Call GetInstanceCollectionName() method on the instance (defined in ModernAiServiceBase)
-            var getCollectionMethod = typeof(CxLanguage.StandardLibrary.Core.ModernAiServiceBase)
-                .GetMethod("GetInstanceCollectionName", BindingFlags.Public | BindingFlags.Instance);
-            if (getCollectionMethod != null)
-            {
-                _currentIl.Emit(OpCodes.Callvirt, getCollectionMethod);
-            }
-            else
-            {
-                // Fallback to class name if method not found
-                _currentIl.Emit(OpCodes.Pop); // Remove 'this' from stack
-                _currentIl.Emit(OpCodes.Ldstr, _currentClassName + "_instance");
-            }
-            
-            _currentIl.Emit(OpCodes.Callvirt, addMethod!);
-            
-            // Add source information
-            _currentIl.Emit(OpCodes.Ldloc, dictLocal);
-            _currentIl.Emit(OpCodes.Ldstr, "source");
-            _currentIl.Emit(OpCodes.Ldstr, _currentClassName);
-            _currentIl.Emit(OpCodes.Callvirt, addMethod!);
-            
-            // Load the final dictionary as the payload
-            _currentIl.Emit(OpCodes.Ldloc, dictLocal);
+            // Evaluate the payload expression - this handles object literals correctly
+            Console.WriteLine("[DEBUG] Evaluating payload for AI service");
+            node.Payload.Accept(this);
         }
         else
         {
-            // Generate code for the payload (if present) - global scope
-            if (node.Payload != null)
-            {
-                // Evaluate the payload expression (this will handle the handlers extraction automatically)
-                node.Payload.Accept(this);
-            }
-            else
-            {
-                // No payload - load null
-                _currentIl.Emit(OpCodes.Ldnull);
-            }
+            // No payload - load null
+            Console.WriteLine("[DEBUG] No payload provided, loading null");
+            _currentIl.Emit(OpCodes.Ldnull);
         }
         
-        // Load source identifier
-        _currentIl.Emit(OpCodes.Ldstr, _currentClassName ?? "MainScript");
+        // Load source identifier - use current class name or "MainScript" for global scope
+        var sourceIdentifier = _currentClassName ?? "MainScript";
+        Console.WriteLine($"[DEBUG] Using source identifier: {sourceIdentifier}");
+        _currentIl.Emit(OpCodes.Ldstr, sourceIdentifier);
         
         // Call CxRuntimeHelper.EmitEvent(string eventName, object data, string source)
         var emitMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("EmitEvent", 
             new[] { typeof(string), typeof(object), typeof(string) });
-        _currentIl.Emit(OpCodes.Call, emitMethod!);
         
-        Console.WriteLine($"[DEBUG] AI service statement compiled as event emission: {eventName}");
+        if (emitMethod == null)
+        {
+            throw new CompilationException("EmitEvent method not found in CxRuntimeHelper");
+        }
+        
+        Console.WriteLine("[DEBUG] Emitting call to CxRuntimeHelper.EmitEvent");
+        _currentIl.Emit(OpCodes.Call, emitMethod);
+        
+        // The EmitEvent method returns void, so no stack cleanup needed
+        Console.WriteLine($"[DEBUG] AI service statement compiled successfully as event emission: {eventName}");
         return new object();
     }
 
