@@ -1,0 +1,24 @@
+// Simple runtime test to verify print statements work
+print("🔥 SIMPLE RUNTIME TEST STARTING...");
+
+conscious SimpleTest
+{
+    realize(self: conscious)
+    {
+        print("✅ SimpleTest conscious entity created: " + self.name);
+        learn self;
+        emit test.start { name: self.name };
+    }
+    
+    on test.start (event)
+    {
+        print("🚀 Test event received!");
+        print("📊 Event data:");
+        print(event);
+        print("🎯 Name: " + event.name);
+    }
+}
+
+var test = new SimpleTest({ name: "SimpleTest" });
+print("🔍 Test instance created");
+emit test.start { name: "Direct" };

@@ -1,0 +1,58 @@
+// Minimal Vector Database Ingestion Test - guaranteed event output
+
+conscious VectorTest
+{
+    realize(self: conscious)
+    {
+        learn self;
+        // Delayed event emission to ensure handlers are registered
+        emit test.init { name: self.name };
+    }
+    
+    on test.init (event) 
+    {
+        print(event);
+        
+        // Vector learning operation
+        learn {
+            data: "sample vector data for ingestion",
+            handlers: [ vector.stored ]
+        };
+    }
+    
+    on vector.stored (event)
+    {
+        print(event);
+        
+        // Vector inference operation
+        infer {
+            prompt: "analyze stored vector data",
+            handlers: [ vector.analyzed ]
+        };
+    }
+    
+    on vector.analyzed (event)
+    {
+        print(event);
+        
+        // Final completion
+        emit vector.complete { 
+            status: "ingestion_complete",
+            operations: 2
+        };
+    }
+    
+    on vector.complete (event)
+    {
+        print(event);
+    }
+}
+
+// Create instance and trigger vector database operations
+var vectorTest = new VectorTest({ name: "VectorIngestor" });
+
+// Manual trigger to ensure event flow starts after handlers are registered
+on system.start (event)
+{
+    emit test.init { name: "SystemTriggered" };
+}

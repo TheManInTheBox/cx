@@ -152,8 +152,6 @@ public class CxCompiler : IAstVisitor<object>
             ctorIl.Emit(OpCodes.Stfld, _aiServiceField);
             
             // Store service provider in static field (arg 3)
-            Console.WriteLine($"[DEBUG] IL-EMIT: Storing service provider in static field");
-            Console.WriteLine($"[DEBUG] IL-EMIT: Service provider field info - Name: {_serviceProviderField.Name}, Type: {_serviceProviderField.FieldType}, IsStatic: {_serviceProviderField.IsStatic}");
             ctorIl.Emit(OpCodes.Ldarg_3);
             ctorIl.Emit(OpCodes.Stsfld, _serviceProviderField);
             
@@ -207,11 +205,6 @@ public class CxCompiler : IAstVisitor<object>
 
             // **PASS 3: Compile the main program body**
             
-            // Add runtime debug output at the start of the Run method
-            var printMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
-            _currentIl.Emit(OpCodes.Ldstr, "[DEBUG] RUNTIME: Run method started executing");
-            _currentIl.Emit(OpCodes.Call, printMethod!);
-
             // Generate event handler registration code at the beginning of the Run method
             GenerateEventHandlerRegistrations();
 
@@ -223,10 +216,6 @@ public class CxCompiler : IAstVisitor<object>
                     statement.Accept(this);
                 }
             }
-            
-            // Add runtime debug output at the end of the Run method (before the return)
-            _currentIl.Emit(OpCodes.Ldstr, "[DEBUG] RUNTIME: Run method completed successfully");
-            _currentIl.Emit(OpCodes.Call, printMethod!);
             
             // Return null by default
             _currentIl.Emit(OpCodes.Ldnull);
@@ -1059,33 +1048,25 @@ public class CxCompiler : IAstVisitor<object>
     {
         if (node.Value == null)
         {
-            Console.WriteLine($"[IL-EMIT] Emitting Ldnull for null literal");
             _currentIl!.Emit(OpCodes.Ldnull);
         }
         else if (node.Value is int intValue)
         {
-            Console.WriteLine($"[IL-EMIT] Emitting Ldc_I4 {intValue} for int literal");
             _currentIl!.Emit(OpCodes.Ldc_I4, intValue);
-            Console.WriteLine($"[IL-EMIT] Emitting Box(int) to box int value");
             _currentIl.Emit(OpCodes.Box, typeof(int));
         }
         else if (node.Value is bool boolValue)
         {
-            Console.WriteLine($"[IL-EMIT] Emitting Ldc_I4_{(boolValue ? "1" : "0")} for bool literal");
             _currentIl!.Emit(boolValue ? OpCodes.Ldc_I4_1 : OpCodes.Ldc_I4_0);
-            Console.WriteLine($"[IL-EMIT] Emitting Box(bool) to box bool value");
             _currentIl.Emit(OpCodes.Box, typeof(bool));
         }
         else if (node.Value is double doubleValue)
         {
-            Console.WriteLine($"[IL-EMIT] Emitting Ldc_R8 {doubleValue} for double literal");
             _currentIl!.Emit(OpCodes.Ldc_R8, doubleValue);
-            Console.WriteLine($"[IL-EMIT] Emitting Box(double) to box double value");
             _currentIl.Emit(OpCodes.Box, typeof(double));
         }
         else if (node.Value is string stringValue)
         {
-            Console.WriteLine($"[IL-EMIT] Emitting Ldstr '{stringValue}' for string literal");
             _currentIl!.Emit(OpCodes.Ldstr, stringValue);
             // Don't box strings - they're already reference types
         }
@@ -1295,13 +1276,7 @@ public class CxCompiler : IAstVisitor<object>
                         BindingFlags.Public | BindingFlags.Static);
                     if (setFieldMethod != null)
                     {
-                        Console.WriteLine($"[IL-EMIT] Found SetInstanceField method: {setFieldMethod}");
-                        Console.WriteLine($"[IL-EMIT] Method signature: {setFieldMethod.ReturnType} {setFieldMethod.Name}({string.Join(", ", setFieldMethod.GetParameters().Select(p => $"{p.ParameterType} {p.Name}"))})");
-                        Console.WriteLine($"[IL-EMIT] Stack before Call: [return_value, this, fieldName, value]");
-                        Console.WriteLine($"[IL-EMIT] Emitting Call to SetInstanceField");
                         _currentIl.Emit(OpCodes.Call, setFieldMethod);
-                        Console.WriteLine($"[IL-EMIT] Stack after Call: [return_value] (SetInstanceField returns void)");
-                        Console.WriteLine($"[DEBUG] Runtime field assignment complete, return value on stack");
                     }
                     else
                     {
@@ -1589,19 +1564,13 @@ public class CxCompiler : IAstVisitor<object>
             if (methodInfo != null)
             {
                 // Built-in function (like print, write)
-                Console.WriteLine($"[IL-EMIT] Found built-in method: {methodInfo.DeclaringType?.Name}.{methodInfo.Name}");
-                Console.WriteLine($"[IL-EMIT] Method signature: {methodInfo.ReturnType.Name} {methodInfo.Name}({string.Join(", ", methodInfo.GetParameters().Select(p => $"{p.ParameterType.Name} {p.Name}"))})");
-                Console.WriteLine($"[IL-EMIT] Stack before Call: {node.Arguments.Count} arguments");
-                Console.WriteLine($"[IL-EMIT] Emitting Call to {methodInfo.Name}");
                 _currentIl!.EmitCall(OpCodes.Call, methodInfo, null);
                 
                 // Methods like print/write return void, but we need object for expressions
                 if (methodInfo.ReturnType == typeof(void))
                 {
-                    Console.WriteLine($"[IL-EMIT] Method returns void, emitting Ldnull for expression compatibility");
                     _currentIl.Emit(OpCodes.Ldnull);
                 }
-                Console.WriteLine($"[IL-EMIT] Built-in function call complete, result on stack");
             }
             else
             {

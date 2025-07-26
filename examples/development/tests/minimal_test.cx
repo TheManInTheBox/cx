@@ -1,0 +1,11 @@
+// Minimal test to verify runtime execution
+print("🔥 MINIMAL TEST STARTING");
+
+on system.start (event)
+{
+    print("✅ SYSTEM START EVENT RECEIVED");
+    print("📊 Event data:");
+    print(event);
+}
+
+print("🎯 MINIMAL TEST COMPLETE");

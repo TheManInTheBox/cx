@@ -715,9 +715,9 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         aiServiceStmt.ServiceName = context.aiServiceName().GetText();
 
         // Parse payload (expression, if present)
-        if (context.expression() != null)
+        if (context.aiServiceParameters() != null)
         {
-            aiServiceStmt.Payload = (ExpressionNode)Visit(context.expression());
+            aiServiceStmt.Payload = (ExpressionNode)Visit(context.aiServiceParameters().expression());
         }
 
         return aiServiceStmt;

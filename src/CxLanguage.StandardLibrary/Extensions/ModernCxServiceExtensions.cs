@@ -60,6 +60,7 @@ namespace CxLanguage.StandardLibrary.Extensions
 
             // Add cognitive services
             services.AddSingleton<global::CxLanguage.StandardLibrary.Services.Ai.ThinkService>();
+            services.AddSingleton<global::CxLanguage.StandardLibrary.Services.Ai.LearnService>();
             services.AddSingleton<global::CxLanguage.StandardLibrary.Services.Ai.InferService>();
             
             // Add Auto Shutdown Timer Service for graceful system termination
