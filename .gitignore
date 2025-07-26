@@ -439,6 +439,11 @@ test-results.txt
 # Example program outputs
 examples/output/
 
+# Model files (too large for git)
+*.gguf
+models/
+models/**/*.gguf
+
 # Temporary compilation files
 temp/
 tmp/
