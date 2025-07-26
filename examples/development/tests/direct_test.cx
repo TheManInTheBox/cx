@@ -1,0 +1,23 @@
+// Focus: Only print event objects to see runtime data flow
+
+conscious EventTracker
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit test.start { name: self.name };
+    }
+    
+    on test.start (event)
+    {
+        print(event);
+        emit test.complete { original: event.name };
+    }
+    
+    on test.complete (event)
+    {
+        print(event);
+    }
+}
+
+var tracker = new EventTracker({ name: "EventTracker" });

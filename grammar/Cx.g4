@@ -60,11 +60,21 @@ eventName: eventNamePart ('.' eventNamePart)*;
 onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
 
-// AI service statements - cognitive capabilities only
+// AI service statements - cognitive capabilities with parallel handlers
 aiServiceName
     : 'is' | 'not' | 'iam' | 'learn' | 'think' | 'await' | 'adapt' | 'execute' | 'infer'
     ;
-aiServiceStatement: aiServiceName expression ';';
+aiServiceStatement: aiServiceName aiServiceParameters ';';
+
+// 🚀 ENHANCED AI SERVICE PARAMETERS - Supports parallel execution
+aiServiceParameters: expression;
+
+// Enhanced parameter structure for parallel handler detection
+enhancedParameterList
+    : (standardParameter | parallelHandlerParameter) (',' (standardParameter | parallelHandlerParameter))*
+    ;
+
+standardParameter: IDENTIFIER ':' expression;
 
 // Blocks
 blockStatement: '{' statement* '}';
@@ -88,10 +98,14 @@ expression
     ;
 
 objectPropertyList: objectProperty (',' objectProperty)*;
-objectProperty: (IDENTIFIER | STRING_LITERAL) ':' (expression | handlersList);
+objectProperty: (IDENTIFIER | STRING_LITERAL) ':' (expression | handlersList | parallelHandlerParameter);
 
 handlersList: '[' handlerItem (',' handlerItem)* ']';
 handlerItem: eventName ('{' objectPropertyList? '}')?;
+
+// 🚀 PARALLEL HANDLER PARAMETERS - Critical Path Enhancement
+parallelHandlerParameter: eventHandlerReference;
+eventHandlerReference: IDENTIFIER ('.' IDENTIFIER)*;
 
 argumentList: expression (',' expression)*;
 

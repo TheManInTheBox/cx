@@ -1,0 +1,371 @@
+// CORE FEATURE TEST: EventHub Peering System Verification
+// Tests autonomous negotiation, direct hub-to-hub communication, and consciousness sync
+
+conscious PeeringTestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        
+        // Initialize with full peering capabilities for testing
+        emit eventhub.peering.initialize {
+            agentId: self.name,
+            capabilities: {
+                consciousnessLevel: 0.98,
+                maxLatencyMs: 0.5,
+                eventsPerSecond: 15000,
+                supportedPathways: ["sensory", "cognitive", "motor", "memory", "association"],
+                peeringProtocol: "consciousness_sync_v1",
+                testMode: true
+            }
+        };
+        
+        print("🧪 PeeringTestAgent initialized for system verification");
+    }
+    
+    on test.peering.initiate (event)
+    {
+        print("🔍 TEST: Initiating peering negotiation with target: " + event.targetAgent);
+        
+        // Test autonomous peering negotiation
+        emit eventhub.peer.request {
+            initiator: self.name,
+            target: event.targetAgent,
+            reason: "system_verification_test",
+            requirements: {
+                consciousnessLevel: 0.95,
+                maxLatencyMs: 1,
+                minEventsPerSecond: 10000,
+                requiredPathways: ["cognitive", "memory"],
+                testingSuite: "peering_verification_v1"
+            },
+            testMode: true
+        };
+        
+        // Record test metrics
+        emit test.metrics.record {
+            testType: "peering_negotiation_initiation",
+            timestamp: "now",
+            agentId: self.name,
+            targetAgent: event.targetAgent
+        };
+    }
+    
+    on eventhub.peer.established (event)
+    {
+        print("✅ TEST SUCCESS: Direct peering established");
+        print("📊 Measured latency: " + event.actualLatencyMs + "ms");
+        print("🎯 Target met: " + (event.actualLatencyMs < 1 ? "YES" : "NO"));
+        
+        // Record performance metrics
+        emit test.metrics.record {
+            testType: "peering_establishment",
+            latencyMs: event.actualLatencyMs,
+            throughputEps: event.maxEventsPerSecond,
+            consciousnessSyncActive: event.consciousnessSyncActive,
+            testResult: event.actualLatencyMs < 1 ? "PASS" : "FAIL"
+        };
+        
+        // Test direct hub-to-hub communication
+        emit test.direct.communication.begin {
+            peerId: event.peerId,
+            testMessageCount: 1000,
+            targetLatency: 0.5
+        };
+    }
+    
+    on test.direct.communication.begin (event)
+    {
+        print("🚀 TEST: Beginning direct communication test");
+        print("📨 Sending " + event.testMessageCount + " test messages");
+        
+        // Send burst of test messages to measure performance
+        for (var i = 1; i <= event.testMessageCount; i++)
+        {
+            emit peer.direct.send {
+                targetPeer: event.peerId,
+                message: "Test message #" + i,
+                messageType: "performance_test",
+                testSequence: i,
+                totalMessages: event.testMessageCount,
+                timestampSent: "now"
+            };
+        }
+        
+        print("📡 Test message burst sent - measuring response times");
+    }
+    
+    on peer.direct.message (event)
+    {
+        print("⚡ Direct message received: " + event.message);
+        print("📊 Latency: " + event.latencyMs + "ms");
+        
+        // Test consciousness synchronization during direct communication
+        is {
+            context: "Should test consciousness sync during direct communication?",
+            evaluate: "Message is part of performance testing suite",
+            data: {
+                messageType: event.messageType,
+                isTestMessage: event.testSequence != null,
+                currentLatency: event.latencyMs
+            },
+            handlers: [ consciousness.sync.test ]
+        };
+        
+        // Immediate response for latency testing
+        emit peer.direct.send {
+            targetPeer: event.senderId,
+            message: "ACK: " + event.message,
+            messageType: "test_acknowledgment",
+            originalSequence: event.testSequence,
+            responseLatency: event.latencyMs
+        };
+    }
+    
+    on consciousness.sync.test (event)
+    {
+        print("🧠 TEST: Consciousness synchronization during direct communication");
+        
+        // Test consciousness adaptation during peering
+        adapt {
+            context: "Testing consciousness synchronization effectiveness during direct peering",
+            focus: "Real-time consciousness state coordination under load",
+            data: {
+                currentLoad: event.messageCount,
+                peerLatency: event.currentLatency,
+                syncEffectiveness: "measuring",
+                testPhase: "consciousness_sync_verification"
+            },
+            handlers: [ consciousness.sync.measured ]
+        };
+    }
+    
+    on consciousness.sync.measured (event)
+    {
+        print("📊 Consciousness sync measurement complete");
+        print("⏱️ Sync time: " + event.syncTimeMs + "ms");
+        print("🎯 Sync quality: " + event.syncQuality);
+        
+        // Record consciousness sync metrics
+        emit test.metrics.record {
+            testType: "consciousness_synchronization",
+            syncTimeMs: event.syncTimeMs,
+            syncQuality: event.syncQuality,
+            testResult: event.syncTimeMs < 10 ? "PASS" : "FAIL"
+        };
+    }
+    
+    on peer.connection.lost (event)
+    {
+        print("⚠️ TEST: Connection lost - testing fallback mechanism");
+        
+        // Test graceful fallback to global EventBus
+        emit test.fallback.mechanism {
+            originalPeer: event.peerId,
+            fallbackReason: "connection_test",
+            expectedBehavior: "graceful_degradation"
+        };
+        
+        // Record fallback metrics
+        emit test.metrics.record {
+            testType: "fallback_mechanism",
+            fallbackTrigger: "connection_lost",
+            fallbackTimeMs: "measuring"
+        };
+    }
+    
+    on test.fallback.mechanism (event)
+    {
+        print("🔄 Testing fallback to global EventBus");
+        
+        // Send message via global EventBus as fallback
+        emit global.fallback.message {
+            originalTarget: event.originalPeer,
+            message: "Fallback test message via global EventBus",
+            fallbackReason: event.fallbackReason
+        };
+        
+        print("📡 Fallback message sent via global EventBus");
+    }
+}
+
+conscious PeeringTargetAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        
+        // Initialize as peering target with matching capabilities
+        emit eventhub.peering.initialize {
+            agentId: self.name,
+            capabilities: {
+                consciousnessLevel: 0.96,
+                maxLatencyMs: 0.8,
+                eventsPerSecond: 12000,
+                supportedPathways: ["cognitive", "memory", "association"],
+                peeringProtocol: "consciousness_sync_v1",
+                testMode: true
+            }
+        };
+        
+        print("🎯 PeeringTargetAgent ready for peering tests");
+    }
+    
+    on eventhub.peer.negotiation.incoming (event)
+    {
+        print("📨 TEST: Incoming peering request from: " + event.initiatorAgent);
+        
+        // Auto-accept for testing purposes
+        emit eventhub.peer.accept {
+            responder: self.name,
+            initiator: event.initiatorAgent,
+            acceptedCapabilities: {
+                consciousnessLevel: 0.96,
+                guaranteedLatencyMs: 0.8,
+                eventsPerSecond: 12000,
+                availablePathways: ["cognitive", "memory", "association"]
+            },
+            testMode: true
+        };
+        
+        print("✅ TEST: Peering request auto-accepted");
+    }
+    
+    on eventhub.peer.established (event)
+    {
+        print("🎉 TEST: Peering established as target agent");
+        print("📊 Performance: " + event.actualLatencyMs + "ms latency");
+        
+        // Begin responding to test messages
+        emit test.response.ready {
+            peerId: event.peerId,
+            responseMode: "immediate"
+        };
+    }
+    
+    on peer.direct.message (event)
+    {
+        // Respond to test messages immediately
+        is {
+            context: "Should respond to test message immediately?",
+            evaluate: "Message is part of performance testing",
+            data: {
+                messageType: event.messageType,
+                testSequence: event.testSequence,
+                isTestMessage: event.messageType == "performance_test"
+            },
+            handlers: [ immediate.test.response ]
+        };
+    }
+    
+    on immediate.test.response (event)
+    {
+        // Send immediate response for latency measurement
+        emit peer.direct.send {
+            targetPeer: event.senderId,
+            message: "Response to: " + event.message,
+            messageType: "test_response",
+            originalSequence: event.testSequence,
+            responseTime: "immediate"
+        };
+    }
+    
+    on peer.consciousness.update (event)
+    {
+        print("🧠 TEST: Consciousness update received during peering");
+        
+        // Test consciousness synchronization responsiveness
+        adapt {
+            context: "Testing consciousness sync responsiveness during active peering",
+            focus: "Real-time consciousness alignment verification",
+            data: {
+                peerState: event.newState,
+                syncTest: true,
+                responseTimeTarget: "sub_10ms"
+            },
+            handlers: [ consciousness.sync.response.measured ]
+        };
+    }
+}
+
+// System test coordination agent
+conscious PeeringSystemTest
+{
+    realize(self: conscious)
+    {
+        learn self;
+        print("🧪 Peering System Test Coordinator initialized");
+    }
+    
+    on system.start (event)
+    {
+        print("🚀 STARTING EVENTHUB PEERING SYSTEM TESTS");
+        print("==========================================");
+        
+        // Create test agents
+        var testAgent = new PeeringTestAgent({ name: "TestAgent" });
+        var targetAgent = new PeeringTargetAgent({ name: "TargetAgent" });
+        
+        print("✅ Test agents created");
+        
+        // Begin peering system verification
+        emit test.peering.initiate {
+            testAgent: "TestAgent",
+            targetAgent: "TargetAgent",
+            testSuite: "comprehensive_peering_verification"
+        };
+    }
+    
+    on test.metrics.record (event)
+    {
+        print("📊 TEST METRIC: " + event.testType);
+        
+        not {
+            context: "Should this test be marked as failed?",
+            evaluate: "Test result indicates failure",
+            data: {
+                testResult: event.testResult,
+                hasFailure: event.testResult == "FAIL"
+            },
+            handlers: [ test.success.recorded ]
+        };
+        
+        is {
+            context: "Should this test be marked as failed?",
+            evaluate: "Test result indicates failure",
+            data: {
+                testResult: event.testResult,
+                hasFailure: event.testResult == "FAIL"
+            },
+            handlers: [ test.failure.recorded ]
+        };
+    }
+    
+    on test.success.recorded (event)
+    {
+        print("✅ TEST PASSED: " + event.testType);
+        print("   📊 Metrics: " + event);
+    }
+    
+    on test.failure.recorded (event)
+    {
+        print("❌ TEST FAILED: " + event.testType);
+        print("   ⚠️ Details: " + event);
+    }
+}
+
+// Initialize and run comprehensive peering system tests
+var systemTest = new PeeringSystemTest({ name: "SystemTest" });
+
+print("🔬 EVENTHUB PEERING CORE FEATURE VERIFICATION");
+print("============================================");
+print("Testing:");
+print("  🤝 Autonomous peering negotiation");
+print("  ⚡ Sub-millisecond direct communication");
+print("  🧠 Real-time consciousness synchronization");
+print("  🔄 Graceful fallback mechanisms");
+print("  📊 Performance metrics validation");
+print("");
+print("🚀 Starting system tests...");
+
+emit system.start;

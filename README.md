@@ -12,7 +12,7 @@
 [![Azure OpenAI](https://img.shields.io/badge/Azure_OpenAI-Realtime_API-blue?style=flat-square)](https://github.com/TheManInTheBox/cx)
 [![MIT License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://github.com/TheManInTheBox/cx/blob/master/LICENSE)
 
-[🚀 Quick Start](#quick-start) • [💡 Features](#features) • [🧠 Aura Framework](#aura-cognitive-framework) • [📖 Documentation](#documentation) • [🌟 Examples](#examples)
+[🚀 Quick Start](#quick-start) • [💡 Features](#features) • [🧠 Aura Framework](#aura-cognitive-framework) • [📖 Documentation](#documentation) • [🗂️ Repository Organization](#repository-organization) • [🌟 Examples](#examples)
 
 </div>
 
@@ -428,7 +428,48 @@ conscious AnalyticsAgent
 
 ---
 
-## 📖 **Documentation**
+## �️ **Repository Organization**
+
+CX Language uses a structured repository organization designed for maximum development efficiency and clear separation of concerns:
+
+### **📁 Core Directory Structure**
+```
+cx/
+├── 📂 src/                     # Core CX Language platform source code
+│   ├── 🧠 CxLanguage.CLI/      # Command-line interface & Azure configuration
+│   ├── 🔧 CxLanguage.Parser/   # ANTLR4 parser (grammar/Cx.g4)  
+│   ├── ⚡ CxLanguage.Compiler/ # IL generation with consciousness
+│   ├── 🎭 CxLanguage.Runtime/  # UnifiedEventBus & consciousness runtime
+│   └── 📚 CxLanguage.StandardLibrary/ # AI services & cognitive functions
+├── 📂 examples/                # All CX Language demonstrations
+│   ├── 🚀 production/          # Production-ready applications
+│   ├── 🔬 core_features/       # Core system feature tests
+│   ├── 🎮 development/         # Development workspace
+│   │   ├── tests/              # Unit tests & verification scripts
+│   │   └── demos/              # Interactive demonstrations
+│   └── 📦 archive/             # Historical & experimental code
+├── 📂 docs/                    # Comprehensive documentation
+│   ├── 📋 milestones/          # Project milestones & completion reports
+│   ├── 🌟 features/            # Feature documentation & guides
+│   └── 📊 research/            # Research papers & breakthrough discoveries
+├── 📂 wiki/                    # Static reference documentation
+├── 📂 .github/                 # GitHub workflows & instructions
+│   └── instructions/           # Team coordination & language guides
+└── 📂 grammar/                 # ANTLR4 grammar definitions
+```
+
+### **🧭 Navigation Guide**
+- **🎯 New to CX?** Start with `/examples/production/` for working applications
+- **🔬 Testing Features?** Explore `/examples/core_features/` for specific capabilities  
+- **🛠️ Development?** Use `/examples/development/` for experiments and testing
+- **📖 Learning?** Check `/wiki/` for comprehensive guides and references
+- **🚀 Latest Achievements?** Review `/docs/milestones/` for recent breakthroughs
+
+For complete organization details, see **[📋 Repository Organization Guide](/docs/REPOSITORY_ORGANIZATION.md)**
+
+---
+
+## �📖 **Documentation**
 
 - **[🎯 Language Syntax Guide](/.github/instructions/cx.instructions.md)** - Complete CX Language reference
 - **[🧠 Aura Cognitive Framework](/.github/instructions/aura-visionary-team.instructions.md)** - Deep dive into neural architecture

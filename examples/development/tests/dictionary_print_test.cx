@@ -1,0 +1,56 @@
+// Test to demonstrate dictionary serialization issue and solution
+
+conscious DictionaryTestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit test.dictionary.start { name: self.name };
+    }
+    
+    on test.dictionary.start (event)
+    {
+        print("🧪 Dictionary Serialization Test");
+        print("Agent: " + event.name);
+        
+        // This will show the problem - concatenation converts to type name
+        print("Problem - Concatenated: " + event.payload);
+        
+        // This will show the solution - direct print serializes properly
+        print("Solution - Direct print:");
+        print(event.payload);
+        
+        // Let's test with a nested dictionary in the event data
+        emit test.complex.data {
+            name: "Complex Test",
+            data: {
+                level1: "value1",
+                level2: {
+                    nested: "nested_value",
+                    number: 42
+                }
+            }
+        };
+    }
+    
+    on test.complex.data (event)
+    {
+        print("🔍 Complex Data Test");
+        
+        // Problem case
+        print("Problem - Event data concatenated: " + event.data);
+        
+        // Solution case  
+        print("Solution - Event data direct:");
+        print(event.data);
+        
+        // Full event object
+        print("Full event object:");
+        print(event);
+        
+        emit system.shutdown { reason: "test_complete" };
+    }
+}
+
+var testAgent = new DictionaryTestAgent({ name: "DictionaryTester" });
+emit test.dictionary.start { name: "DictionaryTester" };

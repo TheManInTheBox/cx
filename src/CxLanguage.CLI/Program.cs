@@ -177,8 +177,6 @@ class Program
             {
                 try
                 {
-                    Console.WriteLine($"[DEBUG] RUNTIME: About to create Program instance");
-                    
                     // NEURAL SYSTEM: Create instance with simplified parameters for biological testing
                     var instance = Activator.CreateInstance(
                         compilationResult.ProgramType, 
@@ -187,12 +185,7 @@ class Program
                         host.Services  // Service provider for DI
                     );
                     
-                    Console.WriteLine($"[DEBUG] RUNTIME: Program instance created successfully");
-                    Console.WriteLine($"[DEBUG] RUNTIME: About to invoke Run method");
-                    
                     runMethod.Invoke(instance, null);
-                    
-                    Console.WriteLine($"[DEBUG] RUNTIME: Run method completed successfully");
                     
                     // Track successful execution
                     telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
@@ -233,9 +226,7 @@ class Program
                         // Now emit system.start event to trigger CX program execution
                         try
                         {
-                            Console.WriteLine($"[DEBUG] RUNTIME: Emitting system.start event");
                             await eventBus.EmitAsync("system.start", new { timestamp = DateTime.UtcNow });
-                            Console.WriteLine($"[DEBUG] RUNTIME: system.start event emitted successfully");
                         }
                         catch (Exception ex)
                         {
@@ -543,6 +534,24 @@ class Program
                     catch (Exception ex)
                     {
                         Console.WriteLine($"⚠️ Warning: InferService could not be initialized: {ex.Message}");
+                    }
+
+                    // Initialize and register the LearnService
+                    try
+                    {
+                        services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.LearnService>(provider =>
+                        {
+                            var eventBus = provider.GetRequiredService<CxLanguage.Runtime.ICxEventBus>();
+                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.LearnService>>();
+                            var localLLMService = provider.GetRequiredService<ILocalLLMService>();
+                            var vectorStore = provider.GetRequiredService<IVectorStoreService>();
+                            return new CxLanguage.StandardLibrary.Services.Ai.LearnService(eventBus, logger, localLLMService, vectorStore);
+                        });
+                        Console.WriteLine("✅ LearnService (Local LLM) with vector storage capabilities registered successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Warning: LearnService could not be initialized: {ex.Message}");
                     }
 
                     try

@@ -174,20 +174,42 @@ namespace CxLanguage.Runtime
         /// </summary>
         private static void PrintArray(Array array)
         {
-            Console.Write("[");
+            Console.WriteLine("[");
             
             for (int i = 0; i < array.Length; i++)
             {
-                if (i > 0) Console.Write(", ");
-                
                 var item = array.GetValue(i);
-                if (item is string str)
+                
+                if (item is Dictionary<string, object> dict)
                 {
-                    Console.Write($"\"{str}\"");
+                    Console.WriteLine("  {");
+                    foreach (var kvp in dict)
+                    {
+                        Console.Write($"    {kvp.Key}: ");
+                        
+                        if (kvp.Value is Dictionary<string, object> nestedDict)
+                        {
+                            Console.WriteLine();
+                            PrintNestedDictionary(nestedDict, "      ");
+                        }
+                        else if (kvp.Value is string str)
+                        {
+                            Console.WriteLine($"\"{str}\"");
+                        }
+                        else
+                        {
+                            Console.WriteLine(kvp.Value ?? "null");
+                        }
+                    }
+                    Console.WriteLine("  }");
+                }
+                else if (item is string str)
+                {
+                    Console.WriteLine($"  \"{str}\"");
                 }
                 else
                 {
-                    Console.Write(item ?? "null");
+                    Console.WriteLine($"  {item ?? "null"}");
                 }
             }
             
@@ -203,16 +225,38 @@ namespace CxLanguage.Runtime
             
             for (int i = 0; i < array.Length; i++)
             {
-                Console.Write($"{indent}  ");
-                
                 var item = array.GetValue(i);
-                if (item is string str)
+                
+                if (item is Dictionary<string, object> nestedDict)
                 {
-                    Console.WriteLine($"\"{str}\"");
+                    Console.WriteLine($"{indent}  {{");
+                    foreach (var kvp in nestedDict)
+                    {
+                        Console.Write($"{indent}    {kvp.Key}: ");
+                        
+                        if (kvp.Value is Dictionary<string, object> deepNestedDict)
+                        {
+                            Console.WriteLine();
+                            PrintNestedDictionary(deepNestedDict, indent + "      ");
+                        }
+                        else if (kvp.Value is string str)
+                        {
+                            Console.WriteLine($"\"{str}\"");
+                        }
+                        else
+                        {
+                            Console.WriteLine(kvp.Value ?? "null");
+                        }
+                    }
+                    Console.WriteLine($"{indent}  }}");
+                }
+                else if (item is string str)
+                {
+                    Console.WriteLine($"{indent}  \"{str}\"");
                 }
                 else
                 {
-                    Console.WriteLine(item ?? "null");
+                    Console.WriteLine($"{indent}  {item ?? "null"}");
                 }
             }
             
@@ -224,21 +268,40 @@ namespace CxLanguage.Runtime
         /// </summary>
         private static void PrintEnumerable(System.Collections.IEnumerable enumerable)
         {
-            Console.Write("[");
+            Console.WriteLine("[");
             
-            bool first = true;
             foreach (var item in enumerable)
             {
-                if (!first) Console.Write(", ");
-                first = false;
-                
-                if (item is string str)
+                if (item is Dictionary<string, object> dict)
                 {
-                    Console.Write($"\"{str}\"");
+                    Console.WriteLine("  {");
+                    foreach (var kvp in dict)
+                    {
+                        Console.Write($"    {kvp.Key}: ");
+                        
+                        if (kvp.Value is Dictionary<string, object> nestedDict)
+                        {
+                            Console.WriteLine();
+                            PrintNestedDictionary(nestedDict, "      ");
+                        }
+                        else if (kvp.Value is string str)
+                        {
+                            Console.WriteLine($"\"{str}\"");
+                        }
+                        else
+                        {
+                            Console.WriteLine(kvp.Value ?? "null");
+                        }
+                    }
+                    Console.WriteLine("  }");
+                }
+                else if (item is string str)
+                {
+                    Console.WriteLine($"  \"{str}\"");
                 }
                 else
                 {
-                    Console.Write(item ?? "null");
+                    Console.WriteLine($"  {item ?? "null"}");
                 }
             }
             
