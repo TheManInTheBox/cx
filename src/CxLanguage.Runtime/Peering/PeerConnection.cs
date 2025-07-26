@@ -137,4 +137,34 @@ namespace CxLanguage.Runtime.Peering
         /// </summary>
         public DateTimeOffset ReceivedAt { get; set; }
     }
+    
+    /// <summary>
+    /// Peer connection states.
+    /// </summary>
+    public enum PeerConnectionState
+    {
+        Disconnected,
+        Negotiating,
+        Connecting,
+        Connected,
+        Synchronizing,
+        Active,
+        Degraded,
+        Reconnecting,
+        Failed
+    }
+
+    /// <summary>
+    /// Information about a peer connection including neural plasticity metrics.
+    /// </summary>
+    public class PeerConnectionInfo
+    {
+        public string PeerId { get; set; } = string.Empty;
+        public bool IsConnected { get; set; }
+        public PeerConnectionState State { get; set; }
+        public DateTimeOffset? ConnectedAt { get; set; }
+        public DateTimeOffset? LastActivity { get; set; }
+        public double PlasticityStrength { get; set; }
+        public double ConsciousnessCoherence { get; set; }
+    }
 }

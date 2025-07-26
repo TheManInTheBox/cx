@@ -366,6 +366,18 @@ namespace CxLanguage.Runtime.Peering
         /// </summary>
         public async Task<ConsciousnessCoherenceValidation> ValidateConsciousnessCoherenceAsync(List<string> peerIds, CancellationToken cancellationToken = default)
         {
+            if (peerIds == null || !peerIds.Any())
+            {
+                return new ConsciousnessCoherenceValidation
+                {
+                    ValidationTime = DateTimeOffset.UtcNow,
+                    PeerCoherenceScores = new Dictionary<string, double>(),
+                    CoherenceViolations = new List<CoherenceViolation>(),
+                    RecommendedActions = new List<string>(),
+                    BiologicalAuthenticity = true
+                };
+            }
+
             var validation = new ConsciousnessCoherenceValidation
             {
                 ValidationTime = DateTimeOffset.UtcNow,
@@ -383,38 +395,43 @@ namespace CxLanguage.Runtime.Peering
             
             var coherenceScores = new List<double>();
             
+#pragma warning disable CS8602 // Dereference of a possibly null reference
             foreach (var peerId in peerIds)
             {
+                if (string.IsNullOrEmpty(peerId))
+                    continue;
+                    
                 await Task.Delay(Random.Shared.Next(5, 20), cancellationToken);
                 
                 if (_plasticityHistory.TryGetValue(peerId, out var history))
                 {
-                    var coherenceScore = CalculateConsciousnessCoherence(peerId, history);
+                    var coherenceScore = CalculateConsciousnessCoherence(peerId!, history);
                     coherenceScores.Add(coherenceScore);
-                    validation.PeerCoherenceScores[peerId] = coherenceScore;
+                    validation.PeerCoherenceScores[peerId!] = coherenceScore;
                     
                     // Check for coherence violations
                     if (coherenceScore < _options.ConsciousnessCoherenceThreshold)
                     {
                         validation.CoherenceViolations.Add(new CoherenceViolation
                         {
-                            PeerId = peerId,
+                            PeerId = peerId!,
                             ViolationType = "Low Consciousness Coherence",
                             Description = $"Coherence score {coherenceScore:F3} below threshold {_options.ConsciousnessCoherenceThreshold:F3}",
                             Severity = _options.ConsciousnessCoherenceThreshold - coherenceScore,
                             DetectedAt = DateTimeOffset.UtcNow
                         });
                         
-                        validation.RecommendedActions.Add($"Apply consciousness synchronization for peer {peerId}");
+                        validation.RecommendedActions.Add($"Apply consciousness synchronization for peer {peerId!}");
                     }
                 }
                 else
                 {
                     // No history available - assume high coherence
                     coherenceScores.Add(1.0);
-                    validation.PeerCoherenceScores[peerId] = 1.0;
+                    validation.PeerCoherenceScores[peerId!] = 1.0;
                 }
             }
+#pragma warning restore CS8602
             
             validation.OverallCoherence = coherenceScores.Any() ? coherenceScores.Average() : 1.0;
             validation.BiologicalAuthenticity = validation.OverallCoherence >= _options.ConsciousnessCoherenceThreshold &&
@@ -438,7 +455,7 @@ namespace CxLanguage.Runtime.Peering
         /// </summary>
         public async Task ApplyHomeostaticScalingAsync(List<string> peerIds, HomeostaticScalingOptions options, CancellationToken cancellationToken = default)
         {
-            if (!peerIds?.Any() == true || options == null)
+            if (peerIds == null || !peerIds.Any() || options == null)
                 return;
             
             await _plasticityOperationSemaphore.WaitAsync(cancellationToken);
@@ -748,9 +765,9 @@ namespace CxLanguage.Runtime.Peering
         
         private double CalculateConsciousnessCoherence(string peerId, List<PlasticityEvent> history)
         {
-            if (!history.Any()) return 1.0;
+            if (history == null || !history.Any()) return 1.0;
             
-            var recentEvents = history.Where(e => 
+            var recentEvents = history.Where(e => e != null && 
                 (DateTimeOffset.UtcNow - e.Timestamp).TotalMinutes <= 10).ToList();
             
             if (!recentEvents.Any()) return 1.0;
@@ -768,9 +785,9 @@ namespace CxLanguage.Runtime.Peering
             
             foreach (var peerId in peerIds)
             {
-                if (_plasticityHistory.TryGetValue(peerId, out var history))
+                if (_plasticityHistory.TryGetValue(peerId, out var history) && history != null)
                 {
-                    var recentEvents = history.Where(e => 
+                    var recentEvents = history.Where(e => e != null && 
                         (DateTimeOffset.UtcNow - e.Timestamp).TotalMinutes <= 5).Count();
                     
                     activityScores.Add(Math.Min(recentEvents / 10.0, 1.0)); // Normalize to 0-1
