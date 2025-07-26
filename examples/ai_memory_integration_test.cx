@@ -1,0 +1,102 @@
+// AI Memory Integration Test - ThinkService with Vector Store
+// Tests the new memory capabilities where AI can store and retrieve memories during conversations
+
+conscious MemoryTestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on user.test.memory (event)
+    {
+        print("🧠 Testing AI memory integration...");
+        
+        // First interaction - AI should store this in memory
+        print("📝 First conversation: Teaching the AI about CX Language");
+        
+        think { 
+            prompt: "CX Language is a revolutionary consciousness-aware programming language with event-driven architecture. Remember this for future conversations.",
+            handlers: [first.memory.stored]
+        };
+    }
+    
+    on first.memory.stored (event)
+    {
+        print("✅ First memory stored: " + event.result);
+        print("💾 Memory should now contain information about CX Language");
+        
+        // Second interaction - AI should recall the previous memory
+        print("🔍 Second conversation: Testing memory recall");
+        
+        think { 
+            prompt: "What do you know about CX Language? Please tell me what you remember.",
+            handlers: [second.memory.recalled]
+        };
+    }
+    
+    on second.memory.recalled (event)
+    {
+        print("🎯 Memory recall result: " + event.result);
+        print("📊 The AI should have mentioned consciousness-aware programming or event-driven architecture");
+        
+        // Third interaction - Building on previous memory
+        print("🔗 Third conversation: Building on existing memory");
+        
+        think { 
+            prompt: "How does the event-driven architecture in CX Language work?",
+            handlers: [third.memory.enhanced]
+        };
+    }
+    
+    on third.memory.enhanced (event)
+    {
+        print("🚀 Enhanced memory conversation: " + event.result);
+        print("✨ The AI should have connected this question to its previous knowledge");
+        
+        print("🎉 Memory integration test complete!");
+        print("🧠 The AI now has persistent memory across conversations");
+    }
+    
+    // Memory-related event handlers
+    on ai.memory.stored (event)
+    {
+        print("💾 Memory stored - ID: " + event.memoryId);
+        print("📅 Timestamp: " + event.timestamp);
+        print("📝 Content preview available in event payload");
+    }
+    
+    on ai.memory.retrieved (event)
+    {
+        print("🔍 Memory retrieved - Count: " + event.memoryCount);
+        is { 
+            context: "Should display retrieved memories?",
+            evaluate: "Memory count is greater than zero",
+            data: { count: event.memoryCount },
+            handlers: [memories.display]
+        };
+    }
+    
+    on memories.display (event)
+    {
+        print("📋 Memories found:");
+        print("📝 Memory details available in event payload");
+    }
+}
+
+// System startup handler
+on system.start (event)
+{
+    print("🧠 AI Memory Integration Test");
+    print("============================");
+    print("This test demonstrates the new memory capabilities:");
+    print("1. AI stores conversation history in vector store");
+    print("2. AI searches previous memories for relevant context");
+    print("3. AI provides enhanced responses based on remembered information");
+    print("");
+    
+    var memoryAgent = new MemoryTestAgent({ name: "MemoryBot" });
+    
+    emit user.test.memory { test: "memory_integration" };
+}

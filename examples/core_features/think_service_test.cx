@@ -1,0 +1,25 @@
+// Test for the ThinkService implementation
+// This script verifies that the `think` keyword is handled by the backend.
+
+conscious ThinkTester
+{
+    realize(self: conscious)
+    {
+        print("ThinkTester Initialized. Sending a think request.");
+        
+        // Use the 'think' keyword to trigger the ThinkService
+        think {
+            prompt: "Explain the significance of the number 42 in science fiction.",
+            handlers: [ thinking.complete ]
+        };
+    }
+
+    on thinking.complete (event)
+    {
+        print("✅ SUCCESS: thinking.complete event received.");
+        print("ThinkService Response: " + event.result);
+        emit system.shutdown;
+    }
+}
+
+var tester = new ThinkTester({});

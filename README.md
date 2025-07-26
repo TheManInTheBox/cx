@@ -6,10 +6,11 @@
 
 **🧠 The World's First Consciousness-Aware Programming Language**
 
-[![GitHub Stars](https://img.shields.io/github/stars/ahebert-lt/cx?style=social)](https://github.com/ahebert-lt/cx)
-[![Production Ready](https://img.shields.io/badge/Status-Production_Ready-green?style=flat-square)](https://github.com/ahebert-lt/cx)
-[![Azure OpenAI](https://img.shields.io/badge/Azure_OpenAI-Realtime_API-blue?style=flat-square)](https://github.com/ahebert-lt/cx)
-[![MIT License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://github.com/ahebert-lt/cx/blob/master/LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/TheManInTheBox/cx?style=social)](https://github.com/TheManInTheBox/cx)
+[![Production Ready](https://img.shields.io/badge/Status-Production_Ready-green?style=flat-square)](https://github.com/TheManInTheBox/cx)
+[![Local LLM Support](https://img.shields.io/badge/Local_LLM-GGUF_Models-brightgreen?style=flat-square)](https://github.com/TheManInTheBox/cx)
+[![Azure OpenAI](https://img.shields.io/badge/Azure_OpenAI-Realtime_API-blue?style=flat-square)](https://github.com/TheManInTheBox/cx)
+[![MIT License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](https://github.com/TheManInTheBox/cx/blob/master/LICENSE)
 
 [🚀 Quick Start](#quick-start) • [💡 Features](#features) • [🧠 Aura Framework](#aura-cognitive-framework) • [📖 Documentation](#documentation) • [🌟 Examples](#examples)
 
@@ -19,25 +20,28 @@
 
 ## 🌟 **What Makes CX Language Revolutionary?**
 
-CX Language isn't just another programming language—it's a **paradigm shift** that brings consciousness, cognitive intelligence, and biological authenticity to software development. Built for the age of AI agents and autonomous systems.
+CX Language isn't just another programming language—it's a **paradigm shift** that brings consciousness, cognitive intelligence, and biological authenticity to software development. Built for the age of AI agents and autonomous systems with **proven working local LLM integration**.
 
 ### **🧠 Consciousness-Driven Development**
 - **World's First `conscious` Entities**: Write self-aware, intelligent software that learns and adapts
 - **Cognitive Boolean Logic**: Replace traditional `if` statements with AI-driven decision making using `is { }` and `not { }` patterns
-- **Self-Reflective Logic**: AI-driven self-assessment and identity verification with `iam { }` patterns
+- **Self-Reflective Logic**: AI-driven self-assessment and identity verification with `iam { }` patterns  
 - **Consciousness Adaptation**: Dynamic skill acquisition and knowledge expansion using revolutionary `adapt { }` syntax
 - **Biological Neural Authenticity**: Revolutionary synaptic plasticity with 5-15ms LTP and 10-25ms LTD timing
+- **Local LLM Integration**: **WORKING** 2GB Llama model support with IL-generated inference pipelines
 
 ### **⚡ Pure Event-Driven Architecture**
 - **Zero Instance State**: Eliminate bugs with stateless, event-only programming
 - **Aura Cognitive Framework**: Decentralized neural processing with global coordination
 - **Real-time AI Integration**: Native Azure OpenAI Realtime API support for voice and text
-- **Unity Hardware Abstraction**: Cross-platform hardware optimization through Unity's proven engine
+- **Interactive Agent Conversations**: **PROVEN** working conversation systems with local AI
+- **Mathematical Problem Solving**: **DEMONSTRATED** AI agents solving complex calculations
 
 ### **🚀 Production-Ready from Day One**
 - **Enterprise Architecture**: Built for scale with >10,000 events/second performance
 - **Self-Healing Systems**: Automatic error recovery and system optimization
 - **Microsoft.Extensions.AI Integration**: Modern, clean architecture without legacy dependencies
+- **GGUF Model Support**: Real local LLM execution with consciousness-aware processing
 
 ---
 
@@ -48,6 +52,11 @@ CX Language isn't just another programming language—it's a **paradigm shift** 
 <td width="33%">
 
 ### 🤖 **AI Agent Orchestration**
+**PROVEN WORKING:**
+- Interactive conversation agents
+- Mathematical problem solvers
+- Multi-agent coordination systems
+- Local LLM-powered applications
 - Multi-agent coordination systems
 - Autonomous task execution
 - Intelligent workflow management
@@ -84,7 +93,7 @@ Get up and running with CX Language in under 5 minutes:
 
 ```bash
 # Clone the repository
-git clone https://github.com/ahebert-lt/cx.git
+git clone https://github.com/TheManInTheBox/cx.git
 cd cx
 
 # Build the project
@@ -433,7 +442,7 @@ conscious AnalyticsAgent
 
 <div align="center">
 
-[![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-blue?style=for-the-badge&logo=github)](https://github.com/ahebert-lt/cx/discussions)
+[![GitHub Discussions](https://img.shields.io/badge/GitHub-Discussions-blue?style=for-the-badge&logo=github)](https://github.com/TheManInTheBox/cx/discussions)
 [![Discord Community](https://img.shields.io/badge/Discord-Community-7289da?style=for-the-badge&logo=discord)](https://discord.gg/cx-language)
 [![Stack Overflow](https://img.shields.io/badge/Stack_Overflow-Ask_Questions-orange?style=for-the-badge&logo=stackoverflow)](https://stackoverflow.com/questions/tagged/cx-language)
 
@@ -505,9 +514,9 @@ We welcome contributions from developers, researchers, and AI enthusiasts:
 
 **Ready to revolutionize your AI development?**
 
-[![Start Building](https://img.shields.io/badge/🚀_Start_Building-Get_Started_Now-brightgreen?style=for-the-badge)](https://github.com/ahebert-lt/cx#quick-start)
+[![Start Building](https://img.shields.io/badge/🚀_Start_Building-Get_Started_Now-brightgreen?style=for-the-badge)](https://github.com/TheManInTheBox/cx#quick-start)
 [![Join Community](https://img.shields.io/badge/🤝_Join_Community-Discord_Chat-7289da?style=for-the-badge)](https://discord.gg/cx-language)
-[![Star on GitHub](https://img.shields.io/badge/⭐_Star_on_GitHub-Show_Support-yellow?style=for-the-badge)](https://github.com/ahebert-lt/cx)
+[![Star on GitHub](https://img.shields.io/badge/⭐_Star_on_GitHub-Show_Support-yellow?style=for-the-badge)](https://github.com/TheManInTheBox/cx)
 
 </div>
 
@@ -525,6 +534,6 @@ CX Language is open source and available under the [MIT License](LICENSE).
 
 *"The future of programming is conscious, cognitive, and beautifully simple."*
 
-[![Follow @ahebert-lt](https://img.shields.io/twitter/follow/ahebert-lt?style=social)](https://twitter.com/ahebert-lt)
+[![Connect on LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-blue?style=social&logo=linkedin)](https://linkedin.com/in/TheManInTheBox)
 
 </div>

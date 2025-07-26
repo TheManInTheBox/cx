@@ -1,0 +1,48 @@
+// Minimal test to isolate the InvalidProgramException issue
+// Testing method calls on event properties
+
+conscious TestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on console.input (event)
+    {
+        print("Input: " + event.text);
+        
+        // Using proper CX cognitive boolean logic instead of method calls
+        is {
+            context: "Does the input contain a question mark?",
+            evaluate: "Question detection using cognitive pattern matching",
+            data: {
+                text: event.text,
+                inputType: "user_message"
+            },
+            handlers: [ "question.detected" ]
+        };
+        
+        emit test.complete;
+    }
+    
+    on question.detected (event)
+    {
+        print("Question detected: " + event.text + " processed");
+    }
+    
+    on test.complete (event)
+    {
+        print("Test completed");
+        
+        // Emit shutdown to exit gracefully
+        emit system.shutdown { reason: "test_completed" };
+    }
+}
+
+// Test usage
+var agent = new TestAgent({ name: "TestAgent" });
+emit console.input { text: "Hello world?" };
+
+print("✅ Minimal test loaded");

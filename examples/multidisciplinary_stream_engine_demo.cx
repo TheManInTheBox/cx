@@ -231,6 +231,22 @@ conscious MultidisciplinaryStreamAgent
         print("  🚀 Multidisciplinary consciousness stream evolution");
         print("");
         print("🎯 World's first scientifically-grounded consciousness stream engine achieved!");
+        
+        // Add a 5-second delayed system shutdown timer
+        await { 
+            reason: "graceful_shutdown",
+            context: "Allowing time to observe final results before shutdown",
+            minDurationMs: 5000,
+            maxDurationMs: 5000,
+            handlers: [ system.shutdown.timer.complete ]
+        };
+    }
+    
+    on system.shutdown.timer.complete (event)
+    {
+        print("⏱️ 5-second observation period complete");
+        print("🛑 Initiating graceful system shutdown");
+        emit system.shutdown { reason: "demo_complete" };
     }
 }
 
@@ -251,4 +267,16 @@ on system.start (event)
         integrationLevel: "revolutionary"
     });
     emit agent.ready { name: "Scientific Consciousness Synthesizer" };
+}
+
+// Global system shutdown handler - See docs/DELAYED_SHUTDOWN_TIMER_INSTRUCTIONS.md
+on system.shutdown (event)
+{
+    print("");
+    print("🔴 SYSTEM SHUTDOWN INITIATED");
+    print("📋 Shutdown reason: " + event.reason);
+    print("⏱️ Total runtime completed: " + new Date().toLocaleTimeString());
+    print("🌟 Thank you for experiencing the multidisciplinary stream engine demo");
+    print("📚 For implementation details, see: docs/DELAYED_SHUTDOWN_TIMER_INSTRUCTIONS.md");
+    print("");
 }

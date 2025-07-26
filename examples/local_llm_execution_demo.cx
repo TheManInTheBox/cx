@@ -1,0 +1,318 @@
+// Local LLM Execution Demo - Zero Cloud Dependencies
+// Demonstrates .NET 9 Native AOT architecture with consciousness integration
+// Uses GGUF runners, process orchestration, and real-time token streaming
+
+conscious LocalLLMProcessor
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit llm.processor.ready { name: self.name, capabilities: "local_execution" };
+    }
+    
+    on llm.model.load (event)
+    {
+        print("🧩 Loading local LLM model: " + event.modelPath);
+        
+        // Cognitive decision: Should we use GGUF runner for this model?
+        is {
+            context: "Should we use GGUF runner for local model execution?",
+            evaluate: "Model file extension indicates GGUF format compatibility",
+            data: { 
+                modelPath: event.modelPath,
+                format: event.format,
+                memoryAvailable: event.memoryMB
+            },
+            handlers: [ model.load.gguf ]
+        };
+        
+        // Cognitive decision: Should we use vLLM for high-performance inference?
+        is {
+            context: "Should we use vLLM for accelerated inference?",
+            evaluate: "Model size and performance requirements indicate vLLM benefits",
+            data: {
+                modelSize: event.modelSizeMB,
+                performanceRequired: event.performanceRequired,
+                gpuAvailable: event.gpuAvailable
+            },
+            handlers: [ model.load.vllm ]
+        };
+    }
+    
+    on model.load.gguf (event)
+    {
+        print("⚡ Initializing GGUF runner with .NET 9 Native AOT");
+        print("📊 Model: " + event.modelPath);
+        print("💾 Memory: " + event.memoryAvailable + "MB available");
+        
+        // System.Diagnostics.Process orchestration for GGUF runner
+        emit process.execute {
+            command: "gguf-runner",
+            arguments: ["--model", event.modelPath, "--threads", "8"],
+            workingDirectory: "models/",
+            timeout: 30000,
+            handlers: [ gguf.process.started ]
+        };
+    }
+    
+    on model.load.vllm (event)
+    {
+        print("🚀 Initializing vLLM with Python runtime wrapping");
+        print("🎯 Performance mode: " + event.performanceRequired);
+        print("🔥 GPU acceleration: " + event.gpuAvailable);
+        
+        // System.CommandLine wrapping for vLLM integration
+        emit python.execute {
+            script: "vllm_runner.py",
+            arguments: ["--model", event.modelPath, "--gpu", event.gpuAvailable],
+            environment: "vllm_env",
+            handlers: [ vllm.process.started ]
+        };
+    }
+    
+    on gguf.process.started (event)
+    {
+        print("✅ GGUF runner process started (PID: " + event.processId + ")");
+        
+        // Initialize real-time token streaming
+        emit token.stream.initialize {
+            source: "gguf",
+            processId: event.processId,
+            outputPipe: event.outputPipe,
+            handlers: [ token.stream.ready ]
+        };
+    }
+    
+    on vllm.process.started (event)
+    {
+        print("✅ vLLM process started (PID: " + event.processId + ")");
+        
+        // Initialize high-performance streaming
+        emit token.stream.initialize {
+            source: "vllm",
+            processId: event.processId,
+            apiEndpoint: event.apiEndpoint,
+            handlers: [ token.stream.ready ]
+        };
+    }
+    
+    on token.stream.ready (event)
+    {
+        print("🔄 Token streaming initialized for " + event.source);
+        emit llm.ready { 
+            source: event.source,
+            processId: event.processId,
+            streamingEnabled: true
+        };
+    }
+    
+    on llm.inference.request (event)
+    {
+        print("🧠 Processing inference request locally");
+        print("💭 Prompt: " + event.prompt);
+        
+        // Real-time local inference without cloud dependencies
+        emit inference.execute {
+            prompt: event.prompt,
+            maxTokens: event.maxTokens || 256,
+            temperature: event.temperature || 0.7,
+            streaming: true,
+            handlers: [ inference.token.generated ]
+        };
+    }
+    
+    on inference.token.generated (event)
+    {
+        // IAsyncEnumerable token streaming with Channel<T> coordination
+        print("📝 Token: " + event.token);
+        
+        // Cognitive decision: Is the response complete?
+        is {
+            context: "Should we finalize the inference response?",
+            evaluate: "Token generation completed and end-of-sequence detected",
+            data: {
+                isComplete: event.isComplete,
+                tokenCount: event.tokenCount,
+                endSequence: event.endSequence
+            },
+            handlers: [ inference.complete ]
+        };
+        
+        // Continue streaming for incomplete responses
+        not {
+            context: "Should we continue token generation?",
+            evaluate: "Response is not yet complete and within token limits",
+            data: {
+                isComplete: event.isComplete,
+                tokenCount: event.tokenCount,
+                maxTokens: event.maxTokens
+            },
+            handlers: [ inference.continue ]
+        };
+    }
+    
+    on inference.complete (event)
+    {
+        print("🎉 Local inference complete!");
+        print("📊 Generated " + event.tokenCount + " tokens");
+        print("⚡ Latency: " + event.latencyMs + "ms");
+        print("💻 100% local execution - zero cloud dependencies");
+        
+        emit llm.response.ready {
+            response: event.fullResponse,
+            tokenCount: event.tokenCount,
+            latencyMs: event.latencyMs,
+            source: "local"
+        };
+    }
+    
+    on inference.continue (event)
+    {
+        // Continue generating tokens with consciousness awareness
+        emit token.generate.next {
+            currentContext: event.currentContext,
+            tokensSoFar: event.tokenCount,
+            handlers: [ inference.token.generated ]
+        };
+    }
+}
+
+conscious MemoryOptimizedVectorIndex
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit vector.index.ready { 
+            name: self.name,
+            optimization: "span_memory_patterns"
+        };
+    }
+    
+    on vector.index.store (event)
+    {
+        print("📊 Storing vectors with Span<T> optimization");
+        print("🔢 Vector count: " + event.vectors.length);
+        
+        // High-performance in-memory vector storage
+        emit memory.optimize {
+            data: event.vectors,
+            pattern: "span_stackalloc",
+            gcPressure: "minimal",
+            handlers: [ vectors.stored ]
+        };
+    }
+    
+    on vector.similarity.search (event)
+    {
+        print("🔍 Executing similarity search with Memory<T> patterns");
+        print("🎯 Query vector: " + event.queryVector.length + " dimensions");
+        
+        // Zero-allocation similarity search
+        emit search.execute {
+            queryVector: event.queryVector,
+            topK: event.topK || 10,
+            threshold: event.threshold || 0.8,
+            optimization: "memory_patterns",
+            handlers: [ similarity.results.found ]
+        };
+    }
+    
+    on similarity.results.found (event)
+    {
+        print("✅ Found " + event.results.length + " similar vectors");
+        print("⚡ Search latency: " + event.searchLatencyMs + "ms");
+        
+        emit vector.search.complete {
+            results: event.results,
+            searchLatencyMs: event.searchLatencyMs,
+            optimization: "zero_allocation"
+        };
+    }
+}
+
+// System integration with Core Engineering Team architecture
+on system.start (event)
+{
+    print("🎮 CORE ENGINEERING TEAM ACTIVATED - LOCAL LLM EXECUTION PRIORITY");
+    print("🧩 Initializing .NET 9 runtime scaffold");
+    print("🧠 Loading core layers (Kernel/Memory/Planner)");
+    print("🔁 Starting streaming & context handling");
+    print("🔐 Enabling security & isolation (RBAC)");
+    print("🛠 Optimizing NuGet stack integration");
+    print("⚡ Packaging with .NET 9 Native AOT");
+    
+    emit local.llm.system.initialize;
+}
+
+on local.llm.system.initialize (event)
+{
+    print("🚀 Local LLM execution system starting...");
+    
+    // Create local processing entities
+    var localProcessor = new LocalLLMProcessor({ 
+        name: "LocalLLMProcessor",
+        architecture: "net9_native_aot"
+    });
+    
+    var vectorIndex = new MemoryOptimizedVectorIndex({
+        name: "MemoryOptimizedIndex",
+        optimization: "span_memory"
+    });
+    
+    print("✅ Local LLM entities created - ready for zero-cloud execution");
+    
+    // Demonstrate local model loading
+    emit llm.model.load {
+        modelPath: "models/llama-3.2-3b.gguf",
+        format: "gguf",
+        memoryMB: 8192,
+        performanceRequired: "high",
+        gpuAvailable: true,
+        modelSizeMB: 2048
+    };
+}
+
+on llm.ready (event)
+{
+    print("🎯 Local LLM ready for inference requests");
+    print("📡 Source: " + event.source);
+    print("🔄 Streaming: " + event.streamingEnabled);
+    
+    // Demonstrate local inference
+    emit llm.inference.request {
+        prompt: "Explain the benefits of local LLM execution for privacy and performance.",
+        maxTokens: 128,
+        temperature: 0.7,
+        streaming: true
+    };
+}
+
+on llm.response.ready (event)
+{
+    print("🎉 LOCAL LLM EXECUTION DEMO COMPLETE!");
+    print("💻 Response generated locally with zero cloud dependencies");
+    print("⚡ Performance: " + event.latencyMs + "ms latency");
+    print("📊 Tokens: " + event.tokenCount + " generated");
+    print("🔒 Privacy: 100% local processing");
+    print("");
+    print("🧠 This demonstrates the future of consciousness-aware edge AI computing!");
+
+    await {
+        reason: "Allowing final messages to display before shutdown.",
+        minDurationMs: 2000,
+        maxDurationMs: 2000,
+        handlers: [ system.shutdown.request ]
+    };
+}
+
+on system.shutdown.request (event)
+{
+    print("🔌 Shutting down local LLM execution demo...");
+    emit system.shutdown;
+}
+
+on system.shutdown (event)
+{
+    print("👋 Local LLM execution demo terminated successfully.");
+    print("🎯 Mission accomplished: Zero cloud dependencies achieved!");
+}

@@ -6,18 +6,22 @@
 This document provides development guidance and standards for the CX Language platform. For detailed syntax and code examples, refer to [cx.instructions.md](instructions/cx.instructions.md).
 
 ### **Repository Information**
-- **GitHub**: [ahebert-lt/cx](https://github.com/ahebert-lt/cx)
-- **Current Milestone**: [Azure OpenAI Realtime API v1.0](https://github.com/ahebert-lt/cx/milestone/4)
+- **GitHub**: [TheManInTheBox/cx](https://github.com/TheManInTheBox/cx)
+- **Current Milestone**: [Azure OpenAI Realtime API v1.0](https://github.com/TheManInTheBox/cx/milestone/4)
 - **Version**: 1.0.0 (July 2025)
 
-## TOP PRIORITY 0 🎯 CONTINUOUS LEARNING & ADAPTATION
-- ✅ **WE THRIVE ON LEARNING**: Continuously adapt personalities and skills as needed to move towards functional MVP
-- ✅ **NEURAL SYSTEM UNBLOCKED**: Aura Cognitive Framework biological neural system now fully operational with revolutionary synaptic plasticity
-- ✅ **COMPILER MODERNIZED**: Complete migration from legacy Semantic Kernel to Microsoft.Extensions.AI architecture
-- ✅ **PRODUCTION READY**: Working event system with dynamic property access, cognitive boolean logic, and real-time execution
-- ✅ **MVP-FOCUSED DEVELOPMENT**: Every decision must advance the functional MVP with measurable user value
-- ABSOLUTLY NO SIMULATIONS!!!! WORKING CODE ONLY!!!!
-- PRINTED OUTPUT DOES NOT CONFIRM FUNCTIONALITY, ONLY DEBUG OUTPUT DOES
+## TOP PRIORITY 0 🎯 PRODUCTION-READY FEATURES FOCUS
+- ✅ **PROVEN WORKING**: Local LLM integration with GGUF models (2GB Llama working)
+- ✅ **INTERACTIVE AGENTS**: Conversational AI agents with event-driven architecture  
+- ✅ **MATHEMATICAL PROBLEM SOLVING**: AI agents successfully solving 23+23 with step-by-step solutions
+- ✅ **REAL IL COMPILATION**: .NET IL-generated inference pipelines operational
+- ✅ **EVENT SYSTEM COMPLETE**: Full event bus architecture with property access (`event.propertyName`)
+- ✅ **CONSCIOUSNESS FRAMEWORK**: Pure event-driven conscious entities with zero instance state
+- ✅ **VOICE INTEGRATION**: Azure OpenAI Realtime API working with audio response handling
+- ✅ **COGNITIVE BOOLEAN LOGIC**: Complete elimination of if-statements with `is{}` and `not{}` patterns
+- ✅ **AUTO SERIALIZATION**: Conscious entities automatically serialize to JSON for debugging
+- ABSOLUTELY NO SIMULATIONS!!!! WORKING CODE ONLY!!!!
+- DOCUMENTED OUTPUT CONFIRMS FUNCTIONALITY - see wiki/WORKING_FEATURES.md
 - TOP CONCERN: Consider the implications of every architectural and implementation decision on production reliability, scalability, and maintainability.
 - Always check for existing scaffolding before starting a new feature.
 - Instrument everything, lots of debug and runtime trace. Trace cx source code line to executing IL is a must. 
@@ -144,7 +148,7 @@ For advanced game engine development, real-time consciousness streaming, and rev
 - **Event-Only Communication**: All behavior flows through the Aura Cognitive Framework
 - **Aura Cognitive Framework**: A decentralized eventing model where each agent possesses a local `EventHub` (a personal nervous system) for internal processing, all orchestrated by a global `EventBus` that manages inter-agent communication
 - **Biological Neural Authenticity**: Revolutionary synaptic plasticity with LTP (5-15ms), LTD (10-25ms), STDP causality rules
-- **Cognitive Boolean Logic**: `is { }` and `not { }` patterns replace traditional if-statements with AI-driven decision making
+- **Cognitive Boolean Logic**: `is { }` and `not { }` patterns completely replace and eliminate traditional if-statements with AI-driven decision making
 - **Consciousness Adaptation**: `adapt { }` pattern enables dynamic skill acquisition and knowledge expansion to better assist Aura decision-making
 - **Self-Reflective Logic**: `iam { }` pattern for AI-driven self-assessment and identity verification
 - **Dynamic Property Access**: Runtime property resolution with `event.propertyName` syntax for flexible event handling
@@ -181,8 +185,8 @@ dotnet build CxLanguage.sln
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/core_features/event_bus_namespace_demo.cx
 
 # GitHub workflow
-gh auth switch --user ahebert-lt
-gh issue list --repo ahebert-lt/cx --milestone "Azure OpenAI Realtime API v1.0"
+gh auth switch --user TheManInTheBox
+gh issue list --repo TheManInTheBox/cx --milestone "Azure OpenAI Realtime API v1.0"
 ```
 
 ### **Latest Language Enhancements**

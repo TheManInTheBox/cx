@@ -1,0 +1,141 @@
+// 🎮 CORE ENGINEERING TEAM LOCAL LLM DIAGNOSTIC TEST
+// Testing IL-generated GGUF inference engine with real local model
+// Dr. Marcus "LocalLLM" Chen + Dr. Sterling IL mastery + Dr. Hayes Stream Fusion
+
+conscious LocalLLMDiagnosticTest
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit test.ready { name: self.name };
+    }
+    
+    on test.start (event)
+    {
+        print("🎮 CORE ENGINEERING TEAM: Starting LOCAL LLM DIAGNOSTIC");
+        print("🧩 Testing IL-generated GGUF inference engine");
+        print("📋 Checking system readiness...");
+        
+        // First check if LocalLLM service is ready
+        emit test.system.check;
+    }
+    
+    on test.system.check (event)
+    {
+        print("🔍 Checking if LocalLLM service is available...");
+        
+        // Try multiple common model paths
+        var modelPaths = [
+            "models/llama-3.2-3b-instruct.gguf",
+            "models/Llama-3.2-3B-Instruct.gguf", 
+            "../models/llama-3.2-3b-instruct.gguf",
+            "C:/models/llama-3.2-3b-instruct.gguf",
+            "./llama-3.2-3b-instruct.gguf"
+        ];
+        
+        print("📂 Will test these model paths:");
+        for (var path in modelPaths)
+        {
+            print("  - " + path);
+        }
+        
+        // Start with first path
+        emit test.load.model { modelPath: modelPaths[0], attemptNumber: 1 };
+    }
+    
+    on test.load.model (event)
+    {
+        print("📂 Attempting to load model: " + event.modelPath);
+        print("� Attempt #" + event.attemptNumber);
+        
+        emit local.llm.load { modelPath: event.modelPath };
+        
+        // Set a timeout to try next path if this fails
+        await { 
+            reason: "model_load_timeout", 
+            context: "Waiting for model load response",
+            minDurationMs: 3000,
+            maxDurationMs: 5000,
+            handlers: [ test.load.timeout { attemptNumber: event.attemptNumber } ]
+        };
+    }
+    
+    on test.load.timeout (event)
+    {
+        print("⏰ Model load timeout - trying alternative approach");
+        print("🚨 LocalLLM service may not be responding to events");
+        
+        // Try a simple test prompt directly
+        emit test.simple.prompt;
+    }
+    
+    on test.simple.prompt (event)
+    {
+        print("🧪 Testing simple prompt emission...");
+        emit local.llm.generate { prompt: "Hello" };
+        
+        await { 
+            reason: "simple_prompt_timeout", 
+            context: "Waiting for simple prompt response",
+            minDurationMs: 2000,
+            maxDurationMs: 3000,
+            handlers: [ test.final.diagnostic ]
+        };
+    }
+    
+    on test.final.diagnostic (event)
+    {
+        print("🔍 FINAL DIAGNOSTIC:");
+        print("❌ LocalLLM service is not responding to events");
+        print("🛠️ Possible issues:");
+        print("   1. LocalLLMEventBridge not initialized");
+        print("   2. Service registration missing");
+        print("   3. Event bus not connected");
+        print("   4. NativeGGUFInferenceEngine compilation issue");
+        
+        emit system.shutdown;
+    }
+    
+    on local.llm.model.loaded (event)
+    {
+        print("✅ SUCCESS! Model loaded: " + event.modelName);
+        print("🔧 Architecture: " + event.architecture);
+        print("� Size: " + event.sizeBytes + " bytes");
+        print("⚡ IL Generated: " + event.ilGenerated);
+        
+        // Test direct generation
+        var testPrompt = "What is consciousness?";
+        print("🧠 Testing generation with prompt: " + testPrompt);
+        
+        emit local.llm.generate { prompt: testPrompt };
+    }
+    
+    on local.llm.generated (event)
+    {
+        print("🎯 Generation complete!");
+        print("📝 Response: " + event.response);
+        print("🎉 LOCAL LLM DIRECT TEST SUCCESS - IL-GENERATED INFERENCE WORKING!");
+        
+        emit system.shutdown;
+    }
+    
+    on local.llm.ready (event)
+    {
+        print("✅ Local LLM Service ready with architecture: " + event.architecture);
+        emit test.start;
+    }
+    
+    on system.any.ready (event)
+    {
+        print("🔔 System event detected: " + event.name);
+    }
+}
+
+// System handler for graceful shutdown
+on system.shutdown (event)
+{
+    print("🛑 System shutdown requested - diagnostic complete");
+}
+
+// Create and start the diagnostic test
+var test = new LocalLLMDiagnosticTest({ name: "DiagnosticLLMTest" });

@@ -1,0 +1,347 @@
+// Google Web API Integration Demo - CX Language
+// Demonstrates consciousness-aware web API calling with Google services
+
+conscious GoogleWebAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name, service: "google_web_api" };
+    }
+    
+    on search.request (event)
+    {
+        print("🔍 Processing Google search request: " + event.query);
+        
+        // Cognitive decision: Should we perform the search?
+        is {
+            context: "Should agent execute Google web search?",
+            evaluate: "Search query validation and safety check",
+            data: { 
+                query: event.query, 
+                safeSearch: true,
+                apiKey: "configured"
+            },
+            handlers: [ search.validated ]
+        };
+    }
+    
+    on search.validated (event)
+    {
+        print("✅ Search validated, executing Google Custom Search API call");
+        
+        // Execute web search using PowerShell for HTTP requests
+        execute {
+            command: "Invoke-RestMethod",
+            parameters: [
+                "-Uri", "https://www.googleapis.com/customsearch/v1",
+                "-Method", "GET",
+                "-Headers", "@{'Content-Type'='application/json'}",
+                "-Body", "@{key='YOUR_API_KEY';cx='YOUR_SEARCH_ENGINE_ID';q='" + event.query + "'}"
+            ],
+            handlers: [ search.api.response ]
+        };
+        
+        print("🌐 Google API request initiated for: " + event.query);
+    }
+    
+    on search.api.response (event)
+    {
+        print("📡 Google API response received");
+        
+        // Cognitive decision: Was the search successful?
+        is {
+            context: "Was the Google search API call successful?",
+            evaluate: "Search API response success validation",
+            data: { 
+                success: event.success,
+                output: event.output,
+                error: event.error
+            },
+            handlers: [ search.success.confirmed ]
+        };
+        
+        // Cognitive decision: Did the search fail?
+        not {
+            context: "Did the Google search API call fail?",
+            evaluate: "Search API response failure detection",
+            data: { 
+                success: event.success,
+                error: event.error,
+                query: event.query
+            },
+            handlers: [ search.failure.detected ]
+        };
+    }
+    
+    on search.success.confirmed (event)
+    {
+        print("✅ Search successful!");
+        print("Results: " + event.output);
+        
+        // Parse and process results
+        think {
+            prompt: "Analyze these Google search results: " + event.output,
+            handlers: [ results.analyzed ]
+        };
+    }
+    
+    on search.failure.detected (event)
+    {
+        print("❌ Search failed: " + event.error);
+        emit search.error { error: event.error, query: event.query };
+    }
+    
+    on results.analyzed (event)
+    {
+        print("🧠 Search results analysis complete");
+        print("Analysis: " + event.result);
+        
+        emit search.complete { 
+            originalQuery: event.query,
+            analysis: event.result,
+            timestamp: "2025-07-25"
+        };
+    }
+    
+    on maps.request (event)
+    {
+        print("🗺️ Processing Google Maps API request");
+        
+        // Google Maps Geocoding API call
+        execute {
+            command: "Invoke-RestMethod",
+            parameters: [
+                "-Uri", "https://maps.googleapis.com/maps/api/geocode/json",
+                "-Method", "GET",
+                "-Body", "@{address='" + event.address + "';key='YOUR_MAPS_API_KEY'}"
+            ],
+            handlers: [ maps.api.response ]
+        };
+        
+        print("🌍 Google Maps API request initiated for: " + event.address);
+    }
+    
+    on maps.api.response (event)
+    {
+        print("📍 Google Maps API response received");
+        
+        // Cognitive decision: Was the geocoding successful?
+        is {
+            context: "Was the Google Maps geocoding successful?",
+            evaluate: "Maps API response success validation",
+            data: { 
+                success: event.success,
+                output: event.output,
+                address: event.address
+            },
+            handlers: [ maps.success.confirmed ]
+        };
+        
+        // Cognitive decision: Did the geocoding fail?
+        not {
+            context: "Did the Google Maps geocoding fail?",
+            evaluate: "Maps API response failure detection",
+            data: { 
+                success: event.success,
+                error: event.error,
+                address: event.address
+            },
+            handlers: [ maps.failure.detected ]
+        };
+    }
+    
+    on maps.success.confirmed (event)
+    {
+        print("✅ Geocoding successful!");
+        print("Location data: " + event.output);
+        
+        emit maps.complete { 
+            address: event.address,
+            coordinates: event.output,
+            service: "google_maps"
+        };
+    }
+    
+    on maps.failure.detected (event)
+    {
+        print("❌ Geocoding failed: " + event.error);
+        emit maps.error { error: event.error, address: event.address };
+    }
+    
+    on translate.request (event)
+    {
+        print("🌐 Processing Google Translate API request");
+        print("Text: " + event.text);
+        print("Target Language: " + event.targetLanguage);
+        
+        // Google Translate API call
+        execute {
+            command: "Invoke-RestMethod",
+            parameters: [
+                "-Uri", "https://translation.googleapis.com/language/translate/v2",
+                "-Method", "POST",
+                "-Headers", "@{'Content-Type'='application/json'}",
+                "-Body", "'{\"q\":\"" + event.text + "\",\"target\":\"" + event.targetLanguage + "\",\"key\":\"YOUR_TRANSLATE_API_KEY\"}'"
+            ],
+            handlers: [ translate.api.response ]
+        };
+        
+        print("🔤 Google Translate API request initiated");
+    }
+    
+    on translate.api.response (event)
+    {
+        print("📝 Google Translate API response received");
+        
+        // Cognitive decision: Was the translation successful?
+        is {
+            context: "Was the Google Translate API call successful?",
+            evaluate: "Translation API response success validation",
+            data: { 
+                success: event.success,
+                output: event.output,
+                text: event.text,
+                targetLanguage: event.targetLanguage,
+                originalText: event.text
+            },
+            handlers: [ translate.success.confirmed ]
+        };
+        
+        // Cognitive decision: Did the translation fail?
+        not {
+            context: "Did the Google Translate API call fail?",
+            evaluate: "Translation API response failure detection",
+            data: { 
+                success: event.success,
+                error: event.error,
+                text: event.text,
+                targetLanguage: event.targetLanguage
+            },
+            handlers: [ translate.failure.detected ]
+        };
+    }
+    
+    on translate.success.confirmed (event)
+    {
+        print("✅ Translation successful!");
+        print("Translated text: " + event.output);
+        print("Target language: " + event.targetLanguage);
+        
+        emit translate.complete { 
+            originalText: event.originalText,
+            translatedText: event.output,
+            targetLanguage: event.targetLanguage
+        };
+    }
+    
+    on translate.failure.detected (event)
+    {
+        print("❌ Translation failed: " + event.error);
+        emit translate.error { 
+            error: event.error, 
+            text: event.text,
+            targetLanguage: event.targetLanguage
+        };
+    }
+}
+
+// Web API Configuration Manager
+conscious GoogleApiConfig
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit config.ready { service: "google_apis" };
+    }
+    
+    on config.setup (event)
+    {
+        print("⚙️ Setting up Google API configuration");
+        
+        // Configuration validation
+        is {
+            context: "Are Google API credentials properly configured?",
+            evaluate: "API key and service configuration validation",
+            data: { 
+                hasSearchKey: event.searchApiKey != null,
+                hasMapsKey: event.mapsApiKey != null,
+                hasTranslateKey: event.translateApiKey != null
+            },
+            handlers: [ config.validated ]
+        };
+    }
+    
+    on config.validated (event)
+    {
+        print("✅ Google API configuration validated");
+        emit api.ready { 
+            services: ["search", "maps", "translate"],
+            status: "configured"
+        };
+    }
+}
+
+// Global system event handlers
+on system.start (event)
+{
+    print("🚀 Starting Google Web API Demo");
+    
+    var googleAgent = new GoogleWebAgent({ name: "GoogleWebAgent" });
+    var apiConfig = new GoogleApiConfig({ name: "GoogleApiConfig" });
+    
+    // Setup API configuration
+    emit config.setup {
+        searchApiKey: "YOUR_SEARCH_API_KEY",
+        mapsApiKey: "YOUR_MAPS_API_KEY", 
+        translateApiKey: "YOUR_TRANSLATE_API_KEY"
+    };
+    
+    print("📡 Google Web API system initialized");
+}
+
+on api.ready (event)
+{
+    print("🎯 Google APIs ready, starting demo requests");
+    
+    // Demo Google Custom Search
+    emit search.request { 
+        query: "CX Language consciousness-aware programming",
+        maxResults: 10
+    };
+    
+    // Demo Google Maps Geocoding
+    emit maps.request {
+        address: "1600 Amphitheatre Parkway, Mountain View, CA"
+    };
+    
+    // Demo Google Translate
+    emit translate.request {
+        text: "Hello, world! This is consciousness-aware programming.",
+        targetLanguage: "es"
+    };
+}
+
+on search.complete (event)
+{
+    print("🔍 Search Demo Complete!");
+    print("Query: " + event.originalQuery);
+    print("Analysis: " + event.analysis);
+}
+
+on maps.complete (event)
+{
+    print("🗺️ Maps Demo Complete!");
+    print("Address: " + event.address);
+    print("Coordinates: " + event.coordinates);
+}
+
+on translate.complete (event)
+{
+    print("🌐 Translation Demo Complete!");
+    print("Original: " + event.originalText);
+    print("Translated: " + event.translatedText);
+    print("Language: " + event.targetLanguage);
+}
+
+print("📋 Google Web API Demo loaded - emit system.start to begin");

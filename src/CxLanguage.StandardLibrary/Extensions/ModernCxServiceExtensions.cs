@@ -7,6 +7,7 @@ using Azure;
 using System;
 using CxLanguage.StandardLibrary.AI.Chat;
 using CxLanguage.StandardLibrary.AI.Embeddings;
+using CxLanguage.StandardLibrary.Services.VectorStore;
 
 namespace CxLanguage.StandardLibrary.Extensions
 {
@@ -39,13 +40,30 @@ namespace CxLanguage.StandardLibrary.Extensions
             services.AddSingleton<global::CxLanguage.StandardLibrary.Services.IVoiceInputService, global::CxLanguage.StandardLibrary.Services.VoiceInputService>();
             services.AddSingleton<global::CxLanguage.StandardLibrary.Services.IVoiceOutputService, global::CxLanguage.StandardLibrary.Services.VoiceOutputService>();
             
+            // Add Local LLM Service for consciousness-aware inference
+            services.AddSingleton<global::CxLanguage.StandardLibrary.Services.ILocalLLMService, global::CxLanguage.StandardLibrary.Services.LocalLLMService>();
+            
+            // 🧠 Dr. Marcus "MemoryLayer" Sterling's Vector Store Integration
+            services.AddSingleton<IVectorStoreService, InMemoryVectorStoreService>();
+            
             // Add Event Bridges for Service Integration
             services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.VoiceInputEventBridge>();
             services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.VoiceOutputEventBridge>();
             services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.AzureRealtimeEventBridge>();
+            services.AddSingleton<global::CxLanguage.StandardLibrary.EventBridges.LocalLLMEventBridge>();
             
             // Add Voice Service Initialization
             services.AddHostedService<global::CxLanguage.StandardLibrary.Services.VoiceServiceInitializer>();
+            
+            // Add Developer Terminal Service for consciousness-aware interactive development
+            services.AddHostedService<global::CxLanguage.StandardLibrary.Services.DeveloperTerminalService>();
+
+            // Add cognitive services
+            services.AddSingleton<global::CxLanguage.StandardLibrary.Services.Ai.ThinkService>();
+            services.AddSingleton<global::CxLanguage.StandardLibrary.Services.Ai.InferService>();
+            
+            // Add Auto Shutdown Timer Service for graceful system termination
+            services.AddSingleton<global::CxLanguage.StandardLibrary.Services.AutoShutdownTimerService>();
 
             return services;
         }
@@ -124,6 +142,7 @@ namespace CxLanguage.StandardLibrary.Extensions
                     "Embedding" => "EmbeddingDeploymentName", 
                     "Image" => "ImageDeploymentName",
                     "Realtime" => "RealtimeDeploymentName",
+                    "Think" => "ThinkDeploymentName",
                     _ => "DeploymentName"
                 };
                 
@@ -141,6 +160,7 @@ namespace CxLanguage.StandardLibrary.Extensions
                 "Embedding" => "EmbeddingDeploymentName",
                 "Image" => "ImageDeploymentName", 
                 "Realtime" => "RealtimeDeploymentName",
+                "Think" => "ThinkDeploymentName",
                 _ => "DeploymentName"
             };
             

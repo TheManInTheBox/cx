@@ -1,0 +1,85 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <PublishAot>true</PublishAot>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <EnableConfigurationBinding>false</EnableConfigurationBinding>
+    <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
+    
+    <!-- Native AOT optimizations for local LLM execution -->
+    <OptimizationPreference>Speed</OptimizationPreference>
+    <DebugType>none</DebugType>
+    <PublishSingleFile>true</PublishSingleFile>
+    <PublishTrimmed>true</PublishTrimmed>
+    <TrimMode>full</TrimMode>
+    
+    <!-- Consciousness-aware metadata -->
+    <AssemblyTitle>CX Language Local LLM Runtime Engine</AssemblyTitle>
+    <AssemblyDescription>Zero-cloud dependency LLM execution with consciousness integration</AssemblyDescription>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Authors>CX Language Core Engineering Team</Authors>
+    <Copyright>© 2025 CX Language Project</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core .NET 9 packages for local LLM execution -->
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
+    
+    <!-- High-performance streaming and channels -->
+    <PackageReference Include="System.Threading.Channels" Version="9.0.7" />
+    <PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
+    
+    <!-- Roslyn for dynamic plugin compilation -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.11.0" />
+    
+    <!-- Command line integration for Python runtime wrapping -->
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    
+    <!-- TorchSharp for ML.NET integration (when available) -->
+    <!-- <PackageReference Include="TorchSharp" Version="0.102.5" /> -->
+    
+    <!-- ONNX Runtime for embedding processing (when available) -->
+    <!-- <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.19.2" /> -->
+    
+    <!-- Memory and performance optimization -->
+    <PackageReference Include="System.Memory" Version="4.5.5" />
+    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    
+    <!-- OpenTelemetry for consciousness observability -->
+    <PackageReference Include="OpenTelemetry" Version="1.9.0" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.9.0" />
+    
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project references for consciousness integration -->
+    <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
+    <ProjectReference Include="..\CxLanguage.StandardLibrary\CxLanguage.StandardLibrary.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Native AOT compatibility analysis -->
+    <TrimmerRootAssembly Include="CxLanguage.LocalLLM" />
+  </ItemGroup>
+
+  <!-- Native AOT warnings suppression for consciousness-aware patterns -->
+  <PropertyGroup>
+    <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
+    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+  </PropertyGroup>
+
+  <!-- Custom MSBuild targets for local LLM optimization -->
+  <Target Name="OptimizeForLocalLLM" BeforeTargets="Build">
+    <Message Text="🧩 Optimizing for .NET 9 Native AOT local LLM execution..." Importance="high" />
+    <Message Text="🧠 Consciousness-aware compilation in progress..." Importance="high" />
+    <Message Text="⚡ Span&lt;T&gt; and Memory&lt;T&gt; patterns enabled" Importance="high" />
+    <Message Text="🔐 RBAC security integration active" Importance="high" />
+  </Target>
+
+</Project>

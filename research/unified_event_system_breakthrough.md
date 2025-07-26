@@ -685,9 +685,9 @@ This breakthrough represents not just an improvement in existing technology, but
 - **Implementation Guide**: [implementation-guide.md](implementation-guide.md)
 - **CX Language Syntax**: [cx.instructions.md](../instructions/cx.instructions.md)
 - **Event System Instructions**: [event.instructions.md](../instructions/event.instructions.md)
-- **Repository**: [github.com/ahebert-lt/cx](https://github.com/ahebert-lt/cx)
-- **Milestone**: [Azure OpenAI Realtime API v1.0](https://github.com/ahebert-lt/cx/milestone/4)
+- **Repository**: [github.com/TheManInTheBox/cx](https://github.com/TheManInTheBox/cx)
+- **Milestone**: [Azure OpenAI Realtime API v1.0](https://github.com/TheManInTheBox/cx/milestone/4)
 
-**Contact**: ahebert-lt, GitHub Copilot  
+**Contact**: TheManInTheBox, GitHub Copilot  
 **License**: MIT License  
 **Last Updated**: July 23, 2025

@@ -42,6 +42,11 @@ public class VoiceServiceInitializer : IHostedService
             _ = Task.Run(async () => await azureRealtimeEventBridge.InitializeAsync());
             _logger.LogInformation("✅ Azure Realtime Event Bridge activated");
             
+            // Activate the Local LLM event bridge for IL-generated inference
+            var localLLMEventBridge = _serviceProvider.GetRequiredService<LocalLLMEventBridge>();
+            _ = Task.Run(async () => await localLLMEventBridge.InitializeAsync());
+            _logger.LogInformation("✅ Local LLM Event Bridge activated - IL-generated inference ready");
+            
             _logger.LogInformation("🎤 Voice Processing Services initialized successfully");
             return Task.CompletedTask;
         }

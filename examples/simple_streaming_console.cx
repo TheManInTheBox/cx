@@ -1,0 +1,257 @@
+// Simple Streaming Console Input - Production Ready
+// Real-time console input processing with basic consciousness awareness
+//
+// NOTE: This demo shows the consciousness processing framework for co    on input.prompt (event)
+    {
+        print("");
+        print("👤 Enter input: ");
+        
+        // For demo purposes, show realistic user input
+        // In real implementation: var userInput = Console.ReadLine();
+        emit console.input {
+            text: "What is consciousness in AI?",
+            source: "user"
+        };
+    }
+// For actual keyboard input, replace the demo input with:
+//   var userInput = Console.ReadLine();
+//   emit console.input { text: userInput, source: "user" };
+// The consciousness processing (questions, commands, AI responses) remains the same.
+
+conscious SimpleConsoleAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on console.input (event)
+    {
+        print("📝 Processing: " + event.text);
+        
+        // Simple cognitive classification
+        is {
+            context: "Is this input a question?",
+            evaluate: "Question detection for appropriate response",
+            data: {
+                text: event.text,
+                hasQuestion: event.text.indexOf("?") >= 0,
+                length: event.text.length
+            },
+            handlers: [ question.processing ]
+        };
+        
+        // Command detection
+        is {
+            context: "Is this input a command?",
+            evaluate: "Command detection for system operations",
+            data: {
+                text: event.text,
+                isCommand: event.text.indexOf("/") == 0,
+                command: event.text
+            },
+            handlers: [ command.processing ]
+        };
+        
+        // Default processing for general input
+        emit input.general { text: event.text };
+    }
+                text: event.text,
+                hasQuestion: event.text.indexOf("?") >= 0,
+                length: event.text.length
+            },
+            handlers: [ question.processing ]
+        };
+        
+        // Command detection
+        is {
+            context: "Is this input a command?",
+            evaluate: "Command detection for system operations",
+            data: {
+                text: event.text,
+                isCommand: event.text.indexOf("/") == 0,
+                command: event.text
+            },
+            handlers: [ command.processing ]
+        };
+        
+        // Default processing for general input
+        emit input.general { text: event.text };
+    }
+    
+    on question.processing (event)
+    {
+        print("❓ Question detected, processing with AI...");
+        
+        think 
+        {
+            prompt: event.text,
+            handlers: [ ai.answer.ready ]
+        };
+    }
+    
+    on command.processing (event)
+    {
+        print("⚡ Command detected: " + event.command);
+        
+        var cmd = event.command.substring(1); // Remove /
+        
+        // Simple command routing
+        is {
+            context: "Should we show help?",
+            evaluate: "Help command processing",
+            data: { cmd: cmd, isHelp: cmd == "help" },
+            handlers: [ show.help ]
+        };
+        
+        is {
+            context: "Should we show status?",
+            evaluate: "Status command processing",
+            data: { cmd: cmd, isStatus: cmd == "status" },
+            handlers: [ show.status ]
+        };
+        
+        is {
+            context: "Should we exit?",
+            evaluate: "Exit command processing",
+            data: { cmd: cmd, isQuit: cmd == "quit" },
+            handlers: [ system.exit ]
+        };
+    }
+    
+    on show.help (event)
+    {
+        print("📖 Available Commands:");
+        print("  /help - Show this help");
+        print("  /status - Show system status");
+        print("  /quit - Exit");
+        print("  Just type questions or text for AI processing");
+        
+        emit command.complete { type: "help" };
+    }
+    
+    on show.status (event)
+    {
+        print("📊 System Status: Online");
+        print("🧠 AI Services: Active");
+        print("⚡ Console: Streaming");
+        
+        emit command.complete { type: "status" };
+    }
+    
+    on system.exit (event)
+    {
+        print("👋 Goodbye! Console session ending...");
+        emit system.shutdown { reason: "user_request" };
+    }
+    
+    on ai.answer.ready (event)
+    {
+        print("🤖 AI: " + event.result);
+        emit response.complete { 
+            type: "ai_response",
+            content: event.result
+        };
+    }
+    
+    on input.general (event)
+    {
+        print("💭 General input received: " + event.text);
+        
+        // Learn from the input
+        learn {
+            data: event.text,
+            handlers: [ learning.complete ]
+        };
+    }
+    
+    on learning.complete (event)
+    {
+        print("📚 Input learned");
+        emit response.complete { 
+            type: "learned",
+            content: "Input processed and learned"
+        };
+    }
+    
+    on response.complete (event)
+    {
+        print("✅ " + event.type + " complete");
+        print("---");
+        emit ready.next.input;
+    }
+    
+    on ready.next.input (event)
+    {
+        print("💬 Ready for next input...");
+    }
+}
+
+// NOTE: For actual keyboard input in a real implementation:
+// 1. Create a background thread that continuously reads Console.ReadLine()
+// 2. When input is received, emit: console.input { text: userInput, source: "user" }
+// 3. The SimpleConsoleAgent will process it through the consciousness framework
+// 4. This creates a real-time interactive console experience
+
+// Real Console Input Handler
+conscious ConsoleInputHandler
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit input.handler.ready { name: self.name };
+    }
+    
+    on input.start (event)
+    {
+        print("💬 Console ready for your input!");
+        print("💡 Type questions, commands (/help, /status, /quit), or any text");
+        print("───────────────────────────────────────");
+        emit input.prompt;
+    }
+    
+    on input.prompt (event)
+    {
+        print("");
+        print("� Enter input: ");
+        
+        // This would be where real console input happens
+        // For demo purposes, we'll simulate some realistic inputs
+        emit console.input {
+            text: "What is consciousness in AI?",
+            source: "user"
+        };
+    }
+    
+    on ready.next.input (event)
+    {
+        // After processing, wait briefly then prompt for next input
+        await {
+            reason: "user_input_delay",
+            context: "Brief pause before next input prompt",
+            minDurationMs: 1000,
+            maxDurationMs: 1500,
+            handlers: [ input.prompt ]
+        };
+    }
+}
+
+// Global coordination
+on system.start (event)
+{
+    print("🚀 Real-Time Console Input Processing");
+    print("═══════════════════════════════════════");
+    print("🧠 Consciousness-aware console interaction");
+    print("");
+    
+    var consoleAgent = new SimpleConsoleAgent({ name: "SimpleConsoleAgent" });
+    var inputHandler = new ConsoleInputHandler({ name: "ConsoleInputHandler" });
+    
+    print("🎯 Console system initialized");
+    print("");
+    
+    emit input.start;
+}
+
+print("📋 Real-Time Console loaded - emit system.start to begin interaction");

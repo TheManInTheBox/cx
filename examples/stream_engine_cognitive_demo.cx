@@ -1,0 +1,322 @@
+// Stream Engine Cognitive Boolean Demo
+// Demonstrates the complete elimination of if statements with cognitive boolean logic
+// Created by: Core Engineering Team (July 24, 2025)
+
+conscious StreamEngineDemonstrator
+{
+    realize(self: conscious)
+    {
+        learn self;
+        print("✅ Stream Engine demonstrator initialized");
+        emit stream.engine.ready { name: self.name };
+    }
+    
+    on stream.start (event)
+    {
+        print("🚀 Starting Stream Engine demonstration with query: " + event.query);
+        
+        // COGNITIVE BOOLEAN LOGIC: Data validation check
+        is {
+            context: "Should we validate the input query before processing?",
+            evaluate: "Check if query meets minimum requirements for processing",
+            data: { 
+                query: event.query, 
+                queryLength: event.query.length,
+                minLength: 3
+            },
+            handlers: [ query.validation.check ]
+        };
+        
+        // COGNITIVE BOOLEAN LOGIC: Stream priority determination
+        is {
+            context: "Should this query receive high-priority stream processing?",
+            evaluate: "Check if query contains critical keywords for prioritization",
+            data: {
+                query: event.query,
+                priorityKeywords: ["urgent", "critical", "emergency", "immediate"],
+                userPriority: event.priority
+            },
+            handlers: [ stream.priority.determine ]
+        };
+        
+        emit stream.processing.initiated { query: event.query };
+    }
+    
+    // Handler for query validation cognitive decision
+    on query.validation.check (event)
+    {
+        var queryLength = event.queryLength;
+        var minLength = event.minLength;
+        
+        // COGNITIVE BOOLEAN LOGIC: Length check (replaces traditional if statement)
+        is {
+            context: "Is the query too short for proper processing?",
+            evaluate: "Check if query length is below minimum required length",
+            data: { 
+                queryLength: queryLength,
+                minLength: minLength,
+                query: event.query
+            },
+            handlers: [ query.length.insufficient ]
+        };
+        
+        // COGNITIVE BOOLEAN LOGIC: Negative check (replaces !condition)
+        not {
+            context: "Is the query insufficient for processing?",
+            evaluate: "Check if query fails to meet quality requirements",
+            data: {
+                queryLength: queryLength,
+                minLength: minLength,
+                query: event.query
+            },
+            handlers: [ query.validated ]
+        };
+    }
+    
+    // Handler for query too short
+    on query.length.insufficient (event)
+    {
+        print("⚠️ Query too short: " + event.query);
+        print("   Length: " + event.queryLength + ", Required: " + event.minLength);
+        emit stream.processing.error { 
+            error: "Query too short", 
+            query: event.query,
+            minimumLength: event.minLength
+        };
+    }
+    
+    // Handler for validated query
+    on query.validated (event)
+    {
+        print("✅ Query validated: " + event.query);
+        print("   Length: " + event.queryLength + " (minimum: " + event.minLength + ")");
+        emit stream.processing.continue { query: event.query };
+    }
+    
+    // Handler for priority determination
+    on stream.priority.determine (event)
+    {
+        var priorityKeywords = event.priorityKeywords;
+        var foundPriorityKeyword = false;
+        var query = event.query.toLowerCase();
+        
+        // Check for priority keywords using cognitive for-in loop
+        for (var keyword in priorityKeywords)
+        {
+            // COGNITIVE BOOLEAN LOGIC: Keyword detection (replaces indexOf check)
+            is {
+                context: "Does the query contain this priority keyword?",
+                evaluate: "Check if query text contains the current priority keyword",
+                data: {
+                    query: query,
+                    keyword: keyword
+                },
+                handlers: [ keyword.found ]
+            };
+        }
+        
+        // COGNITIVE BOOLEAN LOGIC: User priority check
+        is {
+            context: "Did the user explicitly set high priority?",
+            evaluate: "Check if user-specified priority is high",
+            data: {
+                userPriority: event.userPriority
+            },
+            handlers: [ user.priority.high ]
+        };
+        
+        // Default to standard priority using handler from for-in loop results
+        emit stream.priority.determined { 
+            query: event.query,
+            isPriority: foundPriorityKeyword || (event.userPriority == "high"),
+            reason: "Standard processing"
+        };
+    }
+    
+    // Handler for keyword detection
+    on keyword.found (event)
+    {
+        print("🔥 Priority keyword detected: " + event.keyword);
+        emit stream.priority.determined {
+            query: event.query,
+            isPriority: true,
+            reason: "Contains priority keyword: " + event.keyword
+        };
+    }
+    
+    // Handler for user-specified high priority
+    on user.priority.high (event)
+    {
+        print("🔥 User-specified high priority");
+        emit stream.priority.determined {
+            query: event.query,
+            isPriority: true,
+            reason: "User-specified high priority"
+        };
+    }
+    
+    // Handler for priority determination
+    on stream.priority.determined (event)
+    {
+        // COGNITIVE BOOLEAN LOGIC: Priority processing path (replaces if/else)
+        is {
+            context: "Should we use high-priority stream processing?",
+            evaluate: "Check if query has been marked for priority processing",
+            data: {
+                isPriority: event.isPriority,
+                query: event.query,
+                reason: event.reason
+            },
+            handlers: [ stream.processing.highPriority ]
+        };
+        
+        // COGNITIVE BOOLEAN LOGIC: Standard processing path (replaces else clause)
+        not {
+            context: "Should we avoid using high-priority stream processing?",
+            evaluate: "Check if query does NOT require priority handling",
+            data: {
+                isPriority: event.isPriority,
+                query: event.query,
+                reason: event.reason
+            },
+            handlers: [ stream.processing.standardPriority ]
+        };
+    }
+    
+    // Handler for high priority processing
+    on stream.processing.highPriority (event)
+    {
+        print("⚡ HIGH PRIORITY STREAM: " + event.query);
+        print("   Reason: " + event.reason);
+        
+        // Simulate priority processing
+        await {
+            reason: "priority_processing",
+            context: "High-priority stream processing",
+            minDurationMs: 500,
+            maxDurationMs: 1000,
+            handlers: [ stream.processing.complete ]
+        };
+    }
+    
+    // Handler for standard priority processing
+    on stream.processing.standardPriority (event)
+    {
+        print("🔄 Standard priority stream: " + event.query);
+        
+        // Simulate standard processing
+        await {
+            reason: "standard_processing",
+            context: "Standard stream processing",
+            minDurationMs: 1500,
+            maxDurationMs: 3000,
+            handlers: [ stream.processing.complete ]
+        };
+    }
+    
+    // Handler for processing completion
+    on stream.processing.complete (event)
+    {
+        print("✅ Stream processing complete");
+        emit stream.engine.result {
+            query: event.query,
+            result: "Simulated result for query: " + event.query,
+            processingTime: event.actualDurationMs
+        };
+    }
+    
+    // Handler for stream processing error
+    on stream.processing.error (event)
+    {
+        print("❌ Stream processing error: " + event.error);
+        print("   Query: " + event.query);
+        
+        // COGNITIVE BOOLEAN LOGIC: Error type determination
+        is {
+            context: "Is this a validation error?",
+            evaluate: "Check if error is related to input validation",
+            data: {
+                error: event.error,
+                query: event.query
+            },
+            handlers: [ error.validation ]
+        };
+    }
+    
+    // Handler for validation errors
+    on error.validation (event)
+    {
+        print("🛑 Validation error for query: " + event.query);
+        print("   Please provide a longer query (minimum " + event.minimumLength + " characters)");
+        emit stream.engine.complete { success: false, error: event.error };
+    }
+    
+    // Handler for stream engine result
+    on stream.engine.result (event)
+    {
+        print("📊 Stream Engine Result:");
+        print("   Query: " + event.query);
+        print("   Result: " + event.result);
+        print("   Processing Time: " + event.processingTime + "ms");
+        
+        emit stream.engine.complete { success: true, result: event.result };
+    }
+    
+    // Handler for stream engine completion
+    on stream.engine.complete (event)
+    {
+        print("🏁 Stream Engine Demo Complete");
+        print("   Success: " + event.success);
+        
+        // COGNITIVE BOOLEAN LOGIC: Success reporting (replaces if/else)
+        is {
+            context: "Should we report successful completion?",
+            evaluate: "Check if stream processing completed successfully",
+            data: {
+                success: event.success,
+                result: event.result
+            },
+            handlers: [ demo.success ]
+        };
+        
+        // COGNITIVE BOOLEAN LOGIC: Error reporting (replaces else clause)
+        not {
+            context: "Should we report failure?",
+            evaluate: "Check if stream processing failed",
+            data: {
+                success: event.success,
+                error: event.error
+            },
+            handlers: [ demo.failure ]
+        };
+    }
+    
+    // Handler for successful demo
+    on demo.success (event)
+    {
+        print("🎉 Demo completed successfully!");
+        print("   Result: " + event.result);
+    }
+    
+    // Handler for failed demo
+    on demo.failure (event)
+    {
+        print("💥 Demo failed!");
+        print("   Error: " + event.error);
+    }
+}
+
+// Demo entry point
+var demonstrator = new StreamEngineDemonstrator({ name: "CognitiveDemo" });
+
+// Short query test
+emit stream.start { query: "AI" };
+
+// Standard query test
+emit stream.start { query: "Machine Learning" };
+
+// Priority query test
+emit stream.start { query: "Urgent AI assistance needed" };
+
+// User-specified priority test
+emit stream.start { query: "Normal query with high priority", priority: "high" };

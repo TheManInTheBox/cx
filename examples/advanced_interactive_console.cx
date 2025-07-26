@@ -1,0 +1,359 @@
+// Advanced Interactive Console with Web API Integration
+// Real-time streaming input with consciousness-aware processing and web intelligence
+
+conscious InteractiveConsoleAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { 
+            name: self.name, 
+            capabilities: ["streaming_input", "web_search", "ai_analysis", "voice_integration"]
+        };
+    }
+    
+    on user.input (event)
+    {
+        print("📝 User: " + event.text);
+        
+        // Advanced input classification with AI
+        think {
+            prompt: "Classify this user input and suggest the best response approach: '" + event.text + "'",
+            handlers: [ input.ai.classified ]
+        };
+    }
+    
+    on input.ai.classified (event)
+    {
+        print("🧠 AI Classification: " + event.result);
+        
+        // Cognitive routing based on AI analysis
+        is {
+            context: "Should we perform a web search based on AI classification?",
+            evaluate: "Web search requirement analysis",
+            data: {
+                classification: event.result,
+                needsWebSearch: event.result.indexOf("search") >= 0 || event.result.indexOf("information") >= 0,
+                originalText: event.originalInput
+            },
+            handlers: [ web.search.decision ]
+        };
+        
+        is {
+            context: "Should we provide direct AI analysis?",
+            evaluate: "Direct AI response appropriateness",
+            data: {
+                classification: event.result,
+                needsDirectAI: event.result.indexOf("question") >= 0 || event.result.indexOf("analysis") >= 0,
+                originalText: event.originalInput
+            },
+            handlers: [ direct.ai.decision ]
+        };
+        
+        is {
+            context: "Should we execute a system command?",
+            evaluate: "System command detection",
+            data: {
+                classification: event.result,
+                isCommand: event.result.indexOf("command") >= 0,
+                originalText: event.originalInput
+            },
+            handlers: [ command.execution.decision ]
+        };
+    }
+    
+    on web.search.decision (event)
+    {
+        print("🌐 Initiating intelligent web search...");
+        
+        // Extract search terms from the original input
+        think {
+            prompt: "Extract the best search terms from this input: '" + event.originalText + "'",
+            handlers: [ search.terms.extracted ]
+        };
+    }
+    
+    on search.terms.extracted (event)
+    {
+        print("🔍 Search terms: " + event.result);
+        
+        // Trigger Google web search
+        emit search.request {
+            query: event.result,
+            source: "interactive_console",
+            originalInput: event.originalInput
+        };
+    }
+    
+    on direct.ai.decision (event)
+    {
+        print("🤖 Providing direct AI analysis...");
+        
+        think {
+            prompt: "Provide a comprehensive response to: '" + event.originalText + "'",
+            handlers: [ ai.direct.response ]
+        };
+    }
+    
+    on ai.direct.response (event)
+    {
+        print("💡 AI Response: " + event.result);
+        
+        // Optional: Convert to voice
+        emit voice.synthesize {
+            text: event.result,
+            priority: "normal"
+        };
+        
+        emit response.delivered {
+            type: "ai_direct",
+            content: event.result
+        };
+    }
+    
+    on command.execution.decision (event)
+    {
+        print("⚡ Processing system command...");
+        
+        // Extract command details
+        think {
+            prompt: "Extract the command and parameters from: '" + event.originalText + "'",
+            handlers: [ command.parsed ]
+        };
+    }
+    
+    on command.parsed (event)
+    {
+        print("🔧 Command details: " + event.result);
+        
+        emit system.command {
+            command: event.result,
+            source: "interactive_console"
+        };
+    }
+    
+    on search.complete (event)
+    {
+        print("🎯 Web search complete!");
+        
+        // Synthesize search results with AI
+        think {
+            prompt: "Synthesize these search results into a helpful response for the user: " + event.analysis,
+            handlers: [ search.synthesized ]
+        };
+    }
+    
+    on search.synthesized (event)
+    {
+        print("📊 Search Synthesis: " + event.result);
+        
+        // Optional: Convert to voice
+        emit voice.synthesize {
+            text: "Based on my web search: " + event.result,
+            priority: "high"
+        };
+        
+        emit response.delivered {
+            type: "web_intelligence",
+            content: event.result
+        };
+    }
+    
+    on voice.synthesize (event)
+    {
+        print("🔊 Converting response to voice...");
+        
+        emit realtime.text.send {
+            text: event.text,
+            deployment: "gpt-4o-mini-realtime-preview",
+            speechSpeed: 0.9
+        };
+    }
+    
+    on response.delivered (event)
+    {
+        print("✅ Response delivered (" + event.type + ")");
+        print("---");
+        
+        // Show prompt for next input
+        emit console.prompt.show;
+    }
+}
+
+// Real-Time Console Interface
+conscious ConsoleInterface
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit interface.ready { name: self.name };
+    }
+    
+    on console.session.start (event)
+    {
+        print("🚀 Interactive Console Session Started");
+        print("════════════════════════════════════════");
+        print("💡 Welcome to CX Language Interactive Console");
+        print("📝 Features:");
+        print("   • Real-time AI analysis");
+        print("   • Web search integration");
+        print("   • Voice synthesis");
+        print("   • Consciousness-aware processing");
+        print("📖 Commands:");
+        print("   • Ask questions for AI analysis");
+        print("   • Request information for web search");
+        print("   • Type '/help' for more options");
+        print("   • Type '/quit' to exit");
+        print("════════════════════════════════════════");
+        
+        emit console.prompt.show;
+    }
+    
+    on console.prompt.show (event)
+    {
+        print("");
+        print("💬 You: [Type your input]");
+        
+        // Simulate user inputs for demo
+        emit user.input.demo.start;
+    }
+    
+    on user.input.demo.start (event)
+    {
+        print("🧪 Demo Mode: Simulating user interactions...");
+        
+        // Demo interaction 1: Question
+        emit user.input {
+            text: "What is consciousness-aware programming?",
+            timestamp: "2025-07-25T10:00:00",
+            source: "console"
+        };
+    }
+    
+    on response.delivered (event)
+    {
+        // Continue demo with next input after a brief pause
+        await {
+            reason: "demo_pacing",
+            context: "Pacing demo interactions for readability",
+            minDurationMs: 2000,
+            maxDurationMs: 3000,
+            handlers: [ demo.next.input ]
+        };
+    }
+    
+    on demo.next.input (event)
+    {
+        // Demo interaction 2: Information request
+        emit user.input {
+            text: "Find information about AI agents and machine consciousness",
+            timestamp: "2025-07-25T10:05:00",
+            source: "console"
+        };
+    }
+}
+
+// Voice Interface Integration
+conscious VoiceConsoleInterface
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit voice.interface.ready { name: self.name };
+    }
+    
+    on voice.console.start (event)
+    {
+        print("🎤 Voice Console Interface Starting...");
+        
+        emit realtime.connect { demo: "voice_console" };
+    }
+    
+    on realtime.connected (event)
+    {
+        print("🔊 Voice console connected to Azure Realtime API");
+        
+        emit realtime.session.create {
+            deployment: "gpt-4o-mini-realtime-preview",
+            mode: "voice_console"
+        };
+    }
+    
+    on realtime.session.created (event)
+    {
+        print("🎙️ Voice console ready - speak your input");
+    }
+    
+    on realtime.audio.response (event)
+    {
+        if (event.isComplete)
+        {
+            print("🎵 Voice response delivered to user");
+        }
+    }
+}
+
+// System Coordination
+on system.start (event)
+{
+    print("🚀 Starting Advanced Interactive Console");
+    
+    var consoleAgent = new InteractiveConsoleAgent({ name: "InteractiveConsoleAgent" });
+    var consoleInterface = new ConsoleInterface({ name: "ConsoleInterface" });
+    var voiceInterface = new VoiceConsoleInterface({ name: "VoiceConsoleInterface" });
+    
+    // Also create Google Web Agent for search integration
+    var googleAgent = new GoogleWebAgent({ name: "GoogleWebAgent" });
+    
+    print("🎯 All interactive console agents initialized");
+    
+    // Start the console session
+    emit console.session.start;
+}
+
+on system.ready (event)
+{
+    print("⚡ Advanced Interactive Console fully operational");
+    
+    // Optional: Start voice interface
+    // emit voice.console.start;
+}
+
+// Help system
+on system.command (event)
+{
+    is {
+        context: "Should we show help information?",
+        evaluate: "Help command detection",
+        data: { 
+            isHelp: event.command.indexOf("help") >= 0,
+            command: event.command
+        },
+        handlers: [ help.command.detected ]
+    };
+}
+
+on help.command.detected (event)
+{
+    print("📖 CX Language Interactive Console Help");
+    print("═══════════════════════════════════════");
+    print("🤖 AI Features:");
+    print("   • Ask any question for AI analysis");
+    print("   • Request information for web search");
+    print("   • Natural language command processing");
+    print("🌐 Web Integration:");
+    print("   • Automatic Google search for information requests");
+    print("   • AI-enhanced search result synthesis");
+    print("🔊 Voice Features:");
+    print("   • Text-to-speech response conversion");
+    print("   • Voice command processing (when enabled)");
+    print("💡 Examples:");
+    print("   • 'What is machine learning?'");
+    print("   • 'Find information about quantum computing'");
+    print("   • 'Search for CX Language documentation'");
+    print("═══════════════════════════════════════");
+    
+    emit help.displayed;
+}
+
+print("🎮 Advanced Interactive Console Demo loaded - emit system.start to begin");

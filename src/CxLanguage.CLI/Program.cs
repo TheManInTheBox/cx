@@ -15,6 +15,9 @@ using CxLanguage.StandardLibrary.Extensions;
 using CxLanguage.CLI.Extensions;
 using CxLanguage.Core.Ast;
 using CxLanguage.Runtime;
+using CxLanguage.StandardLibrary.Services;
+using CxLanguage.StandardLibrary.Services.VectorStore;
+using CxLanguage.Core.Events;
 using CxCoreAI = CxLanguage.Core.AI;
 
 namespace CxLanguage.CLI;
@@ -89,6 +92,17 @@ class Program
             
             // Start hosted services (including VoiceInputEventBridge via VoiceServiceInitializer)
             await host.StartAsync();
+            
+            // 🧠 Force ThinkService instantiation to ensure event subscription
+            var thinkService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.ThinkService>();
+            if (thinkService != null)
+            {
+                Console.WriteLine("✅ ThinkService instantiated and event subscriptions active");
+            }
+            else
+            {
+                Console.WriteLine("⚠️ Warning: ThinkService not available");
+            }
             
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             var telemetryService = host.Services.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
@@ -191,6 +205,17 @@ class Program
                     
                     if (eventBus != null)
                     {
+                        // Initialize AutoShutdownTimerService to ensure it's listening for system.start
+                        try
+                        {
+                            var autoShutdownTimer = host.Services.GetRequiredService<global::CxLanguage.StandardLibrary.Services.AutoShutdownTimerService>();
+                            Console.WriteLine("⏰ Auto Shutdown Timer Service initialized successfully");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"⚠️ Warning: Auto Shutdown Timer Service could not be initialized: {ex.Message}");
+                        }
+                        
                         // Subscribe to system.shutdown event BEFORE emitting system.start
                         eventBus.Subscribe("system.shutdown", (cxEvent) =>
                         {
@@ -451,12 +476,25 @@ class Program
                     // Add CX Language telemetry service
                     services.AddSingleton<CxLanguage.Core.Telemetry.CxTelemetryService>();
 
-                    // Register CX Event Bus for agent communication with comprehensive logging
-                    services.AddSingleton<ICxEventBus>(provider => 
-                    {
-                        var logger = provider.GetRequiredService<ILogger<UnifiedEventBus>>();
-                        return UnifiedEventBusRegistry.Instance as ICxEventBus;
-                    });
+                    // 🧠 CONSCIOUSNESS SERVICE ORCHESTRATION (Dr. Kai Nakamura)
+                    // Revolutionary unified service architecture with consciousness-aware lifecycle management
+                    
+                    // Phase 1: Register AuraCognitiveEventBus as primary event system
+                    services.AddSingleton<AuraCognitiveEventBus>();
+                    services.AddSingleton<CxLanguage.Runtime.ICxEventBus>(provider => provider.GetRequiredService<AuraCognitiveEventBus>());
+                    
+                    // Phase 2: Register ConsciousnessServiceOrchestrator for unified service management
+                    services.AddSingleton<ConsciousnessServiceOrchestrator>();
+                    services.AddHostedService<ConsciousnessServiceOrchestrator>(provider => 
+                        provider.GetRequiredService<ConsciousnessServiceOrchestrator>());
+                    
+                    // Phase 3: Register ConsciousnessStreamEngine for stream processing (Dr. River Hayes)
+                    services.AddSingleton<ConsciousnessStreamEngine>();
+                    
+                    // ⌨️ KEYBOARD INPUT INTEGRATION (Marcus Chen + Dr. Rodriguez)
+                    // Register real-time console input service for consciousness interaction
+                    services.AddSingleton<CxLanguage.StandardLibrary.Services.ConsoleInputService>();
+                    services.AddHostedService<CxLanguage.StandardLibrary.Services.ConsoleInputService>();
 
                     // Always register Vector Database services - they can work without full Azure OpenAI config
                     try
@@ -469,6 +507,42 @@ class Program
                     {
                         Console.WriteLine($"Warning: Vector Database initialization failed: {vectorEx.Message}");
                         // The extension method handles fallback gracefully
+                    }
+
+                    // Initialize and register the ThinkService
+                    try
+                    {
+                        services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.ThinkService>(provider =>
+                        {
+                            var eventBus = provider.GetRequiredService<CxLanguage.Runtime.ICxEventBus>();
+                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.ThinkService>>();
+                            var localLLMService = provider.GetRequiredService<ILocalLLMService>();
+                            var vectorStore = provider.GetRequiredService<IVectorStoreService>();
+                            return new CxLanguage.StandardLibrary.Services.Ai.ThinkService(eventBus, logger, localLLMService, vectorStore);
+                        });
+                        Console.WriteLine("✅ ThinkService (Local LLM) with memory integration registered successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Warning: ThinkService could not be initialized: {ex.Message}");
+                    }
+
+                    // Initialize and register the InferService
+                    try
+                    {
+                        services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.InferService>(provider =>
+                        {
+                            var eventBus = provider.GetRequiredService<CxLanguage.Runtime.ICxEventBus>();
+                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.InferService>>();
+                            var localLLMService = provider.GetRequiredService<ILocalLLMService>();
+                            var vectorStore = provider.GetRequiredService<IVectorStoreService>();
+                            return new CxLanguage.StandardLibrary.Services.Ai.InferService(eventBus, logger, localLLMService, vectorStore);
+                        });
+                        Console.WriteLine("✅ InferService (Local LLM) with inference capabilities registered successfully.");
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine($"⚠️ Warning: InferService could not be initialized: {ex.Message}");
                     }
 
                     try
@@ -499,10 +573,10 @@ class Program
                 {
                     services.AddLogging(builder => builder.AddConsole());
                     services.AddSingleton<CxCoreAI.IAiService>(provider => null!);
-                    services.AddSingleton<ICxEventBus>(provider => 
+                    services.AddSingleton<CxLanguage.Runtime.ICxEventBus>(provider => 
                     {
                         var logger = provider.GetRequiredService<ILogger<UnifiedEventBus>>();
-                        return UnifiedEventBusRegistry.Instance as ICxEventBus;
+                        return UnifiedEventBusRegistry.Instance as CxLanguage.Runtime.ICxEventBus;
                     });
                 })
                 .Build();

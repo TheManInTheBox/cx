@@ -124,8 +124,6 @@ namespace CxLanguage.Runtime
         /// </summary>
         public void Subscribe(string eventName, Action<CxEvent> handler)
         {
-            Console.WriteLine($"[DEBUG] ICxEventBus.Subscribe: {eventName}");
-
             // Convert Action<CxEvent> to EventHandler for unified bus
             EventHandler unifiedHandler = (payload) =>
             {
@@ -159,16 +157,11 @@ namespace CxLanguage.Runtime
         /// </summary>
         public void Subscribe(string eventName, object instance, Action<CxEvent> handler)
         {
-            Console.WriteLine($"[DEBUG] ICxEventBus.Subscribe (instance): {eventName}");
-
             // Convert Action<CxEvent> to EventHandler for unified bus
             EventHandler unifiedHandler = (payload) =>
             {
                 try
                 {
-                    Console.WriteLine($"[DEBUG] Instance handler payload.Data type: {payload.Data?.GetType().FullName ?? "null"}");
-                    Console.WriteLine($"[DEBUG] Instance handler payload.Data value: {payload.Data ?? "null"}");
-
                     // Convert raw payload data to a dictionary for CX consumption
                     var eventData = CxRuntimeHelper.ConvertToEventData(payload.Data);
                     var cxEvent = new CxEvent
@@ -178,9 +171,7 @@ namespace CxLanguage.Runtime
                         timestamp = payload.Timestamp
                     };
 
-                    Console.WriteLine($"[DEBUG] About to call instance handler with cxEvent: {cxEvent.name}");
                     handler(cxEvent);
-                    Console.WriteLine($"[DEBUG] Instance handler completed successfully");
                 }
                 catch (Exception ex)
                 {
@@ -207,8 +198,6 @@ namespace CxLanguage.Runtime
         /// </summary>
         public void Emit(string eventName, object payload)
         {
-            Console.WriteLine($"[DEBUG] ICxEventBus.Emit: {eventName}");
-
             // Emit through unified event system
             Task.Run(async () => await EmitUnifiedAsync(eventName, payload, "ICxEventBus", UnifiedEventScope.Global));
         }
@@ -218,8 +207,6 @@ namespace CxLanguage.Runtime
         /// </summary>
         public async Task EmitAsync(string eventName, object payload)
         {
-            Console.WriteLine($"[DEBUG] ICxEventBus.EmitAsync: {eventName}");
-
             // Emit through unified event system
             await EmitUnifiedAsync(eventName, payload, "ICxEventBus", UnifiedEventScope.Global);
         }

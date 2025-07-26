@@ -290,7 +290,7 @@ conscious AuraConsciousnessInterface
 
 ### **Open Source Contributions**
 
-**GitHub Repository**: [ahebert-lt/cx](https://github.com/ahebert-lt/cx)
+**GitHub Repository**: [TheManInTheBox/cx](https://github.com/TheManInTheBox/cx)
 - **Complete source code** for Aura Cognitive Framework
 - **Example implementations** of biological neural patterns
 - **Documentation** for cognitive programming language features

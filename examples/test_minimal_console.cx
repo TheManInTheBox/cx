@@ -1,0 +1,39 @@
+// Minimal test to isolate InvalidProgramException
+
+conscious TestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on console.input (event)
+    {
+        print("Input received: " + event.text);
+        emit input.processed;
+    }
+    
+    on input.processed (event)
+    {
+        print("Processing complete");
+    }
+}
+
+// Create and test
+var agent = new TestAgent({ name: "TestAgent" });
+emit console.input { text: "hello world" };
+
+// Wait and exit
+await { 
+    reason: "test_completion", 
+    minDurationMs: 1000, 
+    maxDurationMs: 2000,
+    handlers: [ test.complete ]
+};
+
+on test.complete (event)
+{
+    print("Test completed successfully");
+    emit system.shutdown { reason: "test_complete" };
+}
