@@ -99,7 +99,7 @@ namespace CxLanguage.Runtime
 
         private readonly ConcurrentDictionary<string, EventSubscription> _subscriptions = new();
         private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, List<EventHandler>>> _handlers = new();
-        private readonly ConcurrentDictionary<string, List<Func<object, Task>>> _icxHandlers = new(); // For ICxEventBus compatibility
+        private readonly ConcurrentDictionary<string, List<CxEventHandler>> _icxHandlers = new(); // For ICxEventBus compatibility
         private readonly ConcurrentDictionary<string, HashSet<string>> _channelMembers = new();
         private readonly ConcurrentDictionary<string, HashSet<string>> _roleMembers = new();
         private readonly ILogger<UnifiedEventBus>? _logger;
@@ -209,20 +209,34 @@ namespace CxLanguage.Runtime
         {
             // Emit through unified event system
             await EmitUnifiedAsync(eventName, payload, "ICxEventBus", UnifiedEventScope.Global);
-        }
 
-        public void Subscribe(string eventName, Func<object, Task> handler)
-        {
-            if (!_icxHandlers.ContainsKey(eventName))
+            // Also emit to ICxEventBus-specific handlers
+            if (_icxHandlers.TryGetValue(eventName, out var handlers))
             {
-                _icxHandlers[eventName] = new List<Func<object, Task>>();
+                var eventPayload = new CxEventPayload
+                {
+                    EventName = eventName,
+                    Data = payload,
+                    Timestamp = DateTime.UtcNow,
+                    Source = "UnifiedEventBus"
+                };
+                var tasks = handlers.Select(h => h(eventPayload));
+                await Task.WhenAll(tasks);
             }
-            _icxHandlers[eventName].Add(handler);
         }
 
-        public void Unsubscribe(string eventName)
+        public void Subscribe(string eventName, CxEventHandler handler)
         {
-            _icxHandlers.TryRemove(eventName, out _);
+            var handlers = _icxHandlers.GetOrAdd(eventName, _ => new List<CxEventHandler>());
+            handlers.Add(handler);
+        }
+
+        public void Unsubscribe(string eventName, CxEventHandler handler)
+        {
+            if (_icxHandlers.TryGetValue(eventName, out var handlers))
+            {
+                handlers.Remove(handler);
+            }
         }
 
         #endregion

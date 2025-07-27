@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.AI;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 
 namespace CxLanguage.StandardLibrary.Core;
 
@@ -83,18 +83,18 @@ public abstract class ModernAiServiceBase
     /// <summary>
     /// Extract payload from CX event - maintains compatibility with existing CX Language patterns
     /// </summary>
-    protected virtual object? ExtractPayload(CxEvent eventData)
+    protected virtual object? ExtractPayload(CxEventPayload eventData)
     {
         try
         {
-            if (eventData?.payload is null)
+            if (eventData?.Data is null)
             {
                 _logger.LogWarning("⚠️ Event payload is null");
                 return null;
             }
 
             _logger.LogDebug("📦 Extracting payload from event: {EventName}", eventData.name);
-            return eventData.payload;
+            return eventData.Data;
         }
         catch (Exception ex)
         {

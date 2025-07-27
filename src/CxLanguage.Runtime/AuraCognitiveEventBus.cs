@@ -17,7 +17,7 @@ namespace CxLanguage.Runtime
     public class AuraCognitiveEventBus : ICxEventBus
     {
         private readonly ILogger<AuraCognitiveEventBus> _logger;
-        private readonly ConcurrentDictionary<string, List<Func<object, Task>>> _eventHandlers;
+        private readonly ConcurrentDictionary<string, List<CxEventHandler>> _eventHandlers;
         private readonly ConcurrentDictionary<string, ConsciousnessEntity> _consciousnessEntities;
         private readonly ConcurrentDictionary<string, long> _eventStatistics;
         private readonly object _lock = new object();
@@ -51,7 +51,7 @@ namespace CxLanguage.Runtime
         public AuraCognitiveEventBus(ILogger<AuraCognitiveEventBus> logger)
         {
             _logger = logger;
-            _eventHandlers = new ConcurrentDictionary<string, List<Func<object, Task>>>();
+            _eventHandlers = new ConcurrentDictionary<string, List<CxEventHandler>>();
             _consciousnessEntities = new ConcurrentDictionary<string, ConsciousnessEntity>();
             _eventStatistics = new ConcurrentDictionary<string, long>();
             
@@ -94,9 +94,17 @@ namespace CxLanguage.Runtime
             {
                 // Biological neural timing simulation (5-15ms for LTP)
                 await Task.Delay(Random.Shared.Next(5, 16));
+
+                var eventPayload = new CxEventPayload
+                {
+                    EventName = eventName,
+                    Data = payload,
+                    Timestamp = DateTime.UtcNow,
+                    Source = "AuraCognitiveEventBus.EventHub"
+                };
                 
                 // Execute handlers in parallel for decentralized processing
-                var tasks = handlers.Select(handler => ExecuteHandlerSafely(handler, payload));
+                var tasks = handlers.Select(handler => ExecuteHandlerSafely(handler, eventPayload));
                 await Task.WhenAll(tasks);
                 
                 _logger.LogDebug("🧠 EventHub processed: {EventName} ({HandlerCount} handlers)", 
@@ -157,7 +165,7 @@ namespace CxLanguage.Runtime
         /// <summary>
         /// Execute handler with error handling
         /// </summary>
-        private async Task ExecuteHandlerSafely(Func<object, Task> handler, object payload)
+        private async Task ExecuteHandlerSafely(CxEventHandler handler, CxEventPayload payload)
         {
             try
             {
@@ -172,49 +180,34 @@ namespace CxLanguage.Runtime
         /// <summary>
         /// Subscribe to events with consciousness awareness
         /// </summary>
-        public void Subscribe(string eventName, Func<object, Task> handler)
+        public void Subscribe(string eventName, CxEventHandler handler)
         {
             lock (_lock)
             {
-                if (!_eventHandlers.ContainsKey(eventName))
-                {
-                    _eventHandlers[eventName] = new List<Func<object, Task>>();
-                }
-                
-                _eventHandlers[eventName].Add(handler);
+                var handlers = _eventHandlers.GetOrAdd(eventName, _ => new List<CxEventHandler>());
+                handlers.Add(handler);
                 _logger.LogDebug("📡 Aura subscription: {EventName} (Total handlers: {Count})", 
-                    eventName, _eventHandlers[eventName].Count);
+                    eventName, handlers.Count);
             }
         }
-        
+
         /// <summary>
-        /// Subscribe to events with a global handler that receives CxEvent objects (ICxEventBus implementation)
+        /// Unsubscribe from events
         /// </summary>
-        public void Subscribe(string eventName, Action<CxEvent> handler)
+        public void Unsubscribe(string eventName, CxEventHandler handler)
         {
-            var asyncHandler = new Func<object, Task>(async payload =>
+            lock (_lock)
             {
-                var cxEvent = payload as CxEvent ?? new CxEvent { name = eventName, payload = ConvertToDictionary(payload) };
-                handler(cxEvent);
-                await Task.CompletedTask;
-            });
-            
-            Subscribe(eventName, asyncHandler);
-        }
-        
-        /// <summary>
-        /// Subscribe to events with an instance-scoped handler that receives CxEvent objects (ICxEventBus implementation)
-        /// </summary>
-        public void Subscribe(string eventName, object instance, Action<CxEvent> handler)
-        {
-            var asyncHandler = new Func<object, Task>(async payload =>
-            {
-                var cxEvent = payload as CxEvent ?? new CxEvent { name = eventName, payload = ConvertToDictionary(payload) };
-                handler(cxEvent);
-                await Task.CompletedTask;
-            });
-            
-            Subscribe(eventName, asyncHandler);
+                if (_eventHandlers.TryGetValue(eventName, out var handlers))
+                {
+                    handlers.Remove(handler);
+                    if (handlers.Count == 0)
+                    {
+                        _eventHandlers.TryRemove(eventName, out _);
+                    }
+                    _logger.LogDebug("❌ Aura unsubscription: {EventName}", eventName);
+                }
+            }
         }
         
         /// <summary>
@@ -224,22 +217,7 @@ namespace CxLanguage.Runtime
         {
             _ = EmitAsync(eventName, payload);
         }
-        
-        /// <summary>
-        /// Unsubscribe from events
-        /// </summary>
-        public void Unsubscribe(string eventName)
-        {
-            lock (_lock)
-            {
-                if (_eventHandlers.ContainsKey(eventName))
-                {
-                    _eventHandlers.TryRemove(eventName, out _);
-                    _logger.LogDebug("❌ Aura unsubscription: {EventName}", eventName);
-                }
-            }
-        }
-        
+
         /// <summary>
         /// Get comprehensive Aura framework statistics
         /// </summary>

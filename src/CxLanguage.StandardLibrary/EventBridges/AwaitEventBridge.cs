@@ -1,4 +1,4 @@
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.AI.Wait;
 using CxLanguage.StandardLibrary.Core;
 using Microsoft.Extensions.Logging;
@@ -44,16 +44,13 @@ public class AwaitEventBridge
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error initializing AwaitEventBridge: {Error}", ex.Message);
+            throw;
         }
     }
 
-            _logger.LogInformation("✅ AwaitEventBridge initialized successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "❌ Failed to initialize AwaitEventBridge: {Error}", ex.Message);
-            throw;
-        }
+    private async Task OnAwaitRequest(CxEventPayload cxEvent)
+    {
+        await ProcessAwaitRequestAsync(cxEvent);
     }
 
     public Task StartAsync()
@@ -68,14 +65,14 @@ public class AwaitEventBridge
         return Task.CompletedTask;
     }
 
-    private async Task ProcessAwaitRequestAsync(CxEvent cxEvent)
+    private async Task ProcessAwaitRequestAsync(CxEventPayload cxEvent)
     {
         try
         {
-            _logger.LogInformation("⏰ Processing await request: {EventName}", cxEvent.Name);
+            _logger.LogInformation("⏰ Processing await request: {EventName}", cxEvent.EventName);
 
             // Extract await parameters from event payload
-            var payload = cxEvent.Payload as Dictionary<string, object> ?? new Dictionary<string, object>();
+            var payload = cxEvent.Data as Dictionary<string, object> ?? new Dictionary<string, object>();
             
             var reason = payload.GetValueOrDefault("reason", "unknown")?.ToString() ?? "unknown";
             var context = payload.GetValueOrDefault("context")?.ToString() ?? "";

@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 
 namespace CxLanguage.StandardLibrary.Services
 {
@@ -39,7 +39,7 @@ namespace CxLanguage.StandardLibrary.Services
                 _shutdownDelayMs / 1000);
         }
 
-        private void OnSystemStart(CxEvent cxEvent)
+        private Task OnSystemStart(CxEventPayload cxEvent)
         {
             _logger.LogInformation("🚀 System started - initializing {DelaySeconds}s shutdown timer", 
                 _shutdownDelayMs / 1000);
@@ -68,7 +68,7 @@ namespace CxLanguage.StandardLibrary.Services
                 _shutdownDelayMs / 1000);
         }
 
-        private void OnShutdownCancel(CxEvent cxEvent)
+        private Task OnShutdownCancel(CxEventPayload cxEvent)
         {
             _logger.LogInformation("❌ Shutdown timer cancelled by request");
             
@@ -79,17 +79,17 @@ namespace CxLanguage.StandardLibrary.Services
             {
                 await _eventBus.EmitAsync("timer.shutdown.cancelled", new
                 {
-                    reason = cxEvent.payload,
+                    reason = cxEvent.Data,
                     cancelledAt = DateTimeOffset.UtcNow
                 });
             });
         }
 
-        private void OnShutdownExtend(CxEvent cxEvent)
+        private Task OnShutdownExtend(CxEventPayload cxEvent)
         {
             var additionalMs = 30000; // Default 30 seconds extension
             
-            if (cxEvent.payload is Dictionary<string, object> dict && dict.ContainsKey("additionalMs"))
+            if (cxEvent.Data is Dictionary<string, object> dict && dict.ContainsKey("additionalMs"))
             {
                 if (int.TryParse(dict["additionalMs"]?.ToString(), out var parsed))
                 {
@@ -153,7 +153,7 @@ namespace CxLanguage.StandardLibrary.Services
             }
         }
 
-        private void OnSystemShutdown(CxEvent cxEvent)
+        private Task OnSystemShutdown(CxEventPayload cxEvent)
         {
             _logger.LogInformation("🛑 System shutdown event received - disposing timer");
             

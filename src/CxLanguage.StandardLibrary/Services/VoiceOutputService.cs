@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using NAudio.Wave;
 using NAudio.CoreAudioApi;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -67,7 +67,7 @@ public class VoiceOutputService : IVoiceOutputService, IDisposable
         _logger.LogInformation("🔊 Voice Output Service initialized with direct hardware control");
     }
 
-    private void OnSystemShutdown(CxEvent cxEvent)
+    private Task OnSystemShutdown(CxEventPayload cxEvent)
     {
         _logger.LogWarning("Received system.shutdown event. Preparing to stop voice output service.");
         _isShuttingDown = true;

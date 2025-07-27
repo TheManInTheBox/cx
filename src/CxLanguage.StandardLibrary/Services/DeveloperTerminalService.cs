@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using System.Text;
 using System;
 using System.Threading;
@@ -75,7 +75,7 @@ namespace CxLanguage.StandardLibrary.Services
             return Task.CompletedTask;
         }
 
-        private void OnTerminalStart(CxEvent eventData)
+        private Task OnTerminalStart(CxEventPayload eventData)
         {
             _logger.LogInformation("🚀 Developer Terminal - Starting consciousness-aware session");
             
@@ -154,16 +154,16 @@ namespace CxLanguage.StandardLibrary.Services
             _logger.LogInformation("✅ Terminal input loop finished");
         }
 
-        private void OnTerminalStop(CxEvent eventData)
+        private Task OnTerminalStop(CxEventPayload eventData)
         {
             _logger.LogInformation("🛑 Developer Terminal - Stopping consciousness session");
             _isActive = false;
             _cancellationTokenSource.Cancel();
         }
 
-        private void OnPromptSet(CxEvent eventData)
+        private Task OnPromptSet(CxEventPayload eventData)
         {
-            var payload = eventData.payload as Dictionary<string, object>;
+            var payload = eventData.Data as Dictionary<string, object>;
             if (payload != null && payload.ContainsKey("prompt"))
             {
                 _currentPrompt = payload["prompt"]?.ToString() ?? "cx> ";
@@ -171,9 +171,9 @@ namespace CxLanguage.StandardLibrary.Services
             }
         }
 
-        private void OnCommandExecute(CxEvent eventData)
+        private Task OnCommandExecute(CxEventPayload eventData)
         {
-            var payload = eventData.payload as Dictionary<string, object>;
+            var payload = eventData.Data as Dictionary<string, object>;
             if (payload != null && payload.ContainsKey("command"))
             {
                 var command = payload["command"]?.ToString() ?? "";
@@ -182,7 +182,7 @@ namespace CxLanguage.StandardLibrary.Services
             }
         }
 
-        private void OnSystemShutdown(CxEvent eventData)
+        private Task OnSystemShutdown(CxEventPayload eventData)
         {
             _logger.LogInformation("🔄 System shutdown detected - gracefully stopping terminal");
             _isActive = false;
@@ -390,9 +390,9 @@ namespace CxLanguage.StandardLibrary.Services
             });
         }
 
-        private void OnAiThinkResponse(CxEvent eventData)
+        private Task OnAiThinkResponse(CxEventPayload eventData)
         {
-            var payload = eventData.payload as Dictionary<string, object>;
+            var payload = eventData.Data as Dictionary<string, object>;
             if (payload != null && payload.ContainsKey("result"))
             {
                 var result = payload["result"]?.ToString() ?? "";
@@ -411,9 +411,9 @@ namespace CxLanguage.StandardLibrary.Services
             }
         }
 
-        private void OnAiNeedsMoreInfo(CxEvent eventData)
+        private Task OnAiNeedsMoreInfo(CxEventPayload eventData)
         {
-            var payload = eventData.payload as Dictionary<string, object>;
+            var payload = eventData.Data as Dictionary<string, object>;
             if (payload != null && payload.ContainsKey("question"))
             {
                 var question = payload["question"]?.ToString() ?? "";

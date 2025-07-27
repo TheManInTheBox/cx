@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
+    <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -15,6 +15,7 @@
     <ProjectReference Include="..\CxLanguage.Core\CxLanguage.Core.csproj" />
     <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
     <ProjectReference Include="..\CxLanguage.Azure\CxLanguage.Azure.csproj" />
+    <ProjectReference Include="..\CxLanguage.LocalLLM\CxLanguage.LocalLLM.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -32,7 +33,7 @@
     <PackageReference Include="NAudio" Version="2.2.1" />
     <PackageReference Include="Microsoft.CognitiveServices.Speech" Version="1.40.0" />
     <!-- PowerShell for command execution -->
-    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.4.6" />
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.5.0" />
   </ItemGroup>
 
 </Project>

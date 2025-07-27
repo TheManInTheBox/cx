@@ -9,8 +9,6 @@ using CxLanguage.Parser;
 using CxLanguage.Compiler;
 using CxLanguage.Compiler.Modules;
 using CxLanguage.Azure.Services;
-// NEURAL SYSTEM BYPASS: Legacy VectorDatabase reference disabled
-// using CxLanguage.StandardLibrary.AI.VectorDatabase;
 using CxLanguage.StandardLibrary.Extensions;
 using CxLanguage.CLI.Extensions;
 using CxLanguage.Core.Ast;
@@ -18,6 +16,7 @@ using CxLanguage.Runtime;
 using CxLanguage.StandardLibrary.Services;
 using CxLanguage.StandardLibrary.Services.VectorStore;
 using CxLanguage.Core.Events;
+using CxLanguage.LocalLLM;
 using CxCoreAI = CxLanguage.Core.AI;
 
 namespace CxLanguage.CLI;
@@ -93,7 +92,15 @@ class Program
             // Start hosted services (including VoiceInputEventBridge via VoiceServiceInitializer)
             await host.StartAsync();
             
-            // 🧠 Force ThinkService instantiation to ensure event subscription
+            // Register LocalLLM service for consciousness integration
+            var localLLMService = host.Services.GetService<CxLanguage.LocalLLM.ILocalLLMService>();
+            if (localLLMService != null)
+            {
+                CxLanguage.Runtime.CxRuntimeHelper.RegisterService("LocalLLMService", localLLMService);
+                Console.WriteLine("✅ GPU-FIRST LocalLLMService registered for static access in consciousness processing");
+            }
+            
+            // Force ThinkService instantiation to ensure event subscription
             var thinkService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.ThinkService>();
             if (thinkService != null)
             {
@@ -177,115 +184,23 @@ class Program
             {
                 try
                 {
-                    // NEURAL SYSTEM: Create instance with simplified parameters for biological testing
-                    var instance = Activator.CreateInstance(
-                        compilationResult.ProgramType, 
-                        new object(),  // Console object
-                        aiService,     // AI service (can be null)
-                        host.Services  // Service provider for DI
-                    );
-                    
-                    runMethod.Invoke(instance, null);
-                    
-                    // Track successful execution
-                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true);
-                    
-                    // Set up shutdown event handling BEFORE emitting system.start
-                    Console.WriteLine("\n🔗 Setting up system.shutdown event listener...");
-                    
-                    var shutdownCompletionSource = new TaskCompletionSource<bool>();
-                    var eventBus = host.Services.GetService<CxLanguage.Runtime.ICxEventBus>();
-                    
-                    if (eventBus != null)
+                    var task = (Task?)runMethod.Invoke(null, null);
+                    if (task != null)
                     {
-                        // Initialize AutoShutdownTimerService to ensure it's listening for system.start
-                        try
-                        {
-                            var autoShutdownTimer = host.Services.GetRequiredService<global::CxLanguage.StandardLibrary.Services.AutoShutdownTimerService>();
-                            Console.WriteLine("⏰ Auto Shutdown Timer Service initialized successfully");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"⚠️ Warning: Auto Shutdown Timer Service could not be initialized: {ex.Message}");
-                        }
-                        
-                        // Subscribe to system.shutdown event BEFORE emitting system.start
-                        eventBus.Subscribe("system.shutdown", (cxEvent) =>
-                        {
-                            var reason = "unknown";
-                            if (cxEvent.payload is Dictionary<string, object> dict && dict.ContainsKey("reason"))
-                            {
-                                reason = dict["reason"]?.ToString() ?? "unknown";
-                            }
-                            Console.WriteLine($"✅ Received system.shutdown event - Reason: {reason}");
-                            shutdownCompletionSource.SetResult(true);
-                        });
-                        
-                        Console.WriteLine("🔗 Shutdown event listener registered");
-                        
-                        // Now emit system.start event to trigger CX program execution
-                        try
-                        {
-                            await eventBus.EmitAsync("system.start", new { timestamp = DateTime.UtcNow });
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"[DEBUG] RUNTIME: Error emitting system.start: {ex.Message}");
-                        }
-                        
-                        // Wait for the shutdown event (with timeout as safety measure)
-                        Console.WriteLine("⏳ Waiting for system.shutdown event to exit...");
-                        try
-                        {
-                            await shutdownCompletionSource.Task.WaitAsync(TimeSpan.FromMinutes(10));
-                            Console.WriteLine("🏁 Program completed successfully via system.shutdown event");
-                        }
-                        catch (TimeoutException)
-                        {
-                            Console.WriteLine("⚠️ Timeout waiting for system.shutdown event - exiting after 10 minutes");
-                        }
+                        await task;
+                    }
+                }
+                catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException != null)
+                {
+                    if (ex.InnerException is OperationCanceledException)
+                    {
+                        Console.WriteLine("Script execution was cancelled.");
                     }
                     else
                     {
-                        Console.WriteLine("⚠️ No event bus available - exiting immediately");
+                        Console.Error.WriteLine($"Script execution error: {ex.InnerException.Message}");
+                        telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, ex.InnerException.Message);
                     }
-                }
-                catch (System.Reflection.TargetInvocationException ex)
-                {
-                    Console.WriteLine($"[DEBUG] RUNTIME: TargetInvocationException caught");
-                    Console.WriteLine($"[DEBUG] RUNTIME: Outer exception: {ex.Message}");
-                    
-                    var innerEx = ex.InnerException;
-                    while (innerEx != null)
-                    {
-                        Console.WriteLine($"[DEBUG] RUNTIME: Inner exception: {innerEx.GetType().Name}: {innerEx.Message}");
-                        if (innerEx.StackTrace != null)
-                        {
-                            Console.WriteLine($"[DEBUG] RUNTIME: Inner stack trace: {innerEx.StackTrace}");
-                        }
-                        innerEx = innerEx.InnerException;
-                    }
-                    
-                    var errorMessage = ex.InnerException?.Message ?? ex.Message;
-                    Console.Error.WriteLine($"Runtime error: {errorMessage}");
-                    if (ex.InnerException != null)
-                    {
-                        Console.Error.WriteLine($"Stack trace: {ex.InnerException.StackTrace}");
-                    }
-                    
-                    // Track failed execution
-                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, errorMessage);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[DEBUG] RUNTIME: General exception caught: {ex.GetType().Name}: {ex.Message}");
-                    Console.WriteLine($"[DEBUG] RUNTIME: Stack trace: {ex.StackTrace}");
-                    
-                    Console.Error.WriteLine($"Runtime error: {ex.Message}");
-                    Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
-                    
-                    // Track failed execution
-                    telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, ex.Message);
                 }
             }
             else
@@ -293,16 +208,14 @@ class Program
                 Console.Error.WriteLine("No Run method found in compiled assembly.");
                 telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, "No Run method found");
             }
+            
+            // Track successful script execution
+            telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, true, null);
         }
         catch (Exception ex)
         {
-            Console.Error.WriteLine($"Error running script: {ex.Message}");
-            Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
-            
-            // Track exception
-            var telemetryService = host?.Services?.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
-            telemetryService?.TrackException(ex, "RunScript");
-            telemetryService?.TrackScriptExecution(file.Name, scriptExecutionStopwatch.Elapsed, false, ex.Message);
+            Console.Error.WriteLine($"Error executing script: {ex.Message}");
+            CxDebugTracing.TraceError("CLI", "Script execution failed", new { FileName = file.FullName, Error = ex.Message });
         }
         finally
         {
@@ -316,22 +229,94 @@ class Program
 
     static async Task CompileScript(FileInfo source, FileInfo? output)
     {
-        if (!source.Exists)
-        {
-            Console.Error.WriteLine($"Error: Source file '{source.FullName}' not found.");
-            return;
-        }
-
         try
         {
-            using var host = CreateHost();
-            var logger = host.Services.GetRequiredService<ILogger<Program>>();
+            if (!source.Exists)
+            {
+                Console.Error.WriteLine($"Error: Source file '{source.FullName}' not found.");
+                return;
+            }
 
-            logger.LogInformation("Compiling Cx script: {FileName}", source.Name);
+            // Set default output file if not specified
+            output ??= new FileInfo(Path.ChangeExtension(source.FullName, ".dll"));
 
-            // Read and parse the script
-            var sourceCode = await File.ReadAllTextAsync(source.FullName);
-            var parseResult = CxLanguage.Parser.CxLanguageParser.Parse(sourceCode, source.FullName);
+            // Setup services (needed for AI integration)
+            var host = CreateHost();
+            await host.StartAsync();
+            
+            try
+            {
+                var sourceCode = await File.ReadAllTextAsync(source.FullName);
+                var parseResult = CxLanguage.Parser.CxLanguageParser.Parse(sourceCode, source.FullName);
+
+                if (!parseResult.IsSuccess)
+                {
+                    Console.Error.WriteLine("Parse errors:");
+                    foreach (var error in parseResult.Errors)
+                    {
+                        Console.Error.WriteLine($"  Line {error.Line}, Column {error.Column}: {error.Message}");
+                    }
+                    return;
+                }
+
+                var options = new CompilerOptions();
+                CxCoreAI.IAiService? aiService = null;
+                
+                try
+                {
+                    aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Warning: AI service not available: {ex.Message}");
+                    aiService = null;
+                }
+                
+                var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(source.Name), options, aiService);
+                var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, Path.GetFileNameWithoutExtension(source.Name), sourceCode);
+
+                if (!compilationResult.IsSuccess)
+                {
+                    Console.Error.WriteLine($"Compilation error: {compilationResult.ErrorMessage}");
+                    return;
+                }
+
+                if (compilationResult.Assembly != null)
+                {
+                    // Save assembly to file
+                    var assemblyBytes = File.ReadAllBytes(compilationResult.Assembly.Location);
+                    await File.WriteAllBytesAsync(output.FullName, assemblyBytes);
+                    Console.WriteLine($"Compilation successful. Output: {output.FullName}");
+                }
+                else
+                {
+                    Console.Error.WriteLine("Compilation did not produce an assembly.");
+                }
+            }
+            finally
+            {
+                await host.StopAsync();
+                host.Dispose();
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.Error.WriteLine($"Error compiling script: {ex.Message}");
+        }
+    }
+
+    static async Task ParseScript(FileInfo file)
+    {
+        try
+        {
+            if (!file.Exists)
+            {
+                Console.Error.WriteLine($"Error: File '{file.FullName}' not found.");
+                return;
+            }
+
+            var source = await File.ReadAllTextAsync(file.FullName);
+            var parseResult = CxLanguage.Parser.CxLanguageParser.Parse(source, file.FullName);
 
             if (!parseResult.IsSuccess)
             {
@@ -343,76 +328,10 @@ class Program
                 return;
             }
 
-            // Compile the script
-            var assemblyName = output?.Name ?? Path.ChangeExtension(source.Name, ".dll");
-            var options = new CompilerOptions();
-            
-            CxCoreAI.IAiService? aiService = null;
-            // NEURAL SYSTEM BYPASS: Remove legacy aiFunctions parameter
-            
-            try
-            {
-                aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
-                Console.WriteLine($"✅ Neural System: AI Service loaded for compile mode");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Warning: AI service not available: {ex.Message}");
-                aiService = null;
-            }
-            
-            var compiler = new CxCompiler(Path.GetFileNameWithoutExtension(assemblyName), options, aiService);
-            var sourceText = File.ReadAllText(source.FullName);
-            var compilationResult = compiler.Compile((ProgramNode)parseResult.Value!, Path.GetFileNameWithoutExtension(assemblyName), sourceText);
-
-            if (!compilationResult.IsSuccess)
-            {
-                Console.Error.WriteLine($"Compilation error: {compilationResult.ErrorMessage}");
-                return;
-            }
-
-            Console.WriteLine($"Successfully compiled to: {assemblyName}");
-        }
-        catch (Exception ex)
-        {
-            Console.Error.WriteLine($"Error compiling script: {ex.Message}");
-            Console.Error.WriteLine($"Stack trace: {ex.StackTrace}");
-        }
-    }
-
-    static async Task ParseScript(FileInfo file)
-    {
-        if (!file.Exists)
-        {
-            Console.Error.WriteLine($"Error: File '{file.FullName}' not found.");
-            return;
-        }
-
-        try
-        {
-            var source = await File.ReadAllTextAsync(file.FullName);
-            var parseResult = CxLanguage.Parser.CxLanguageParser.Parse(source, file.FullName);
-
-            if (!parseResult.IsSuccess)
-            {
-                Console.WriteLine("Parse errors:");
-                foreach (var error in parseResult.Errors)
-                {
-                    Console.WriteLine($"  Line {error.Line}, Column {error.Column}: {error.Message}");
-                }
-                return;
-            }
-
-            Console.WriteLine("Parse successful!");
-            var program = (ProgramNode)parseResult.Value!;
-            Console.WriteLine($"Program contains {program.Statements.Count} statements");
-            Console.WriteLine($"Imports: {program.Imports.Count}");
-
-            // Display basic AST structure
-            var astPrinter = new AstPrinter();
-            var output = astPrinter.Print(parseResult.Value!);
-            Console.WriteLine("\nAST Structure:");
-            Console.WriteLine(output);
+            Console.WriteLine("Parse successful. AST:");
+            var printer = new AstPrinter();
+            var astOutput = printer.Print(parseResult.Value!);
+            Console.WriteLine(astOutput);
         }
         catch (Exception ex)
         {
@@ -420,255 +339,77 @@ class Program
         }
     }
 
-    static Task ShowVersion()
+    static void ShowVersion()
     {
-        var version = typeof(Program).Assembly.GetName().Version;
-        Console.WriteLine($"Cx Language v{version}");
-        Console.WriteLine("AI-Integrated Scripting Language for .NET");
-        Console.WriteLine("Built with Azure OpenAI integration");
-        return Task.CompletedTask;
+        var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        Console.WriteLine($"Cx Language CLI Version {version}");
+        Console.WriteLine("Copyright (c) 2025 CX Language Development Team");
     }
 
+    /// <summary>
+    /// Creates and configures the dependency injection host with all required services
+    /// </summary>
     static IHost CreateHost()
     {
-        try
-        {
-            return Host.CreateDefaultBuilder()
-                .ConfigureAppConfiguration((context, config) =>
+        var builder = Host.CreateDefaultBuilder()
+            .ConfigureAppConfiguration((context, config) =>
+            {
+                // Add configuration sources
+                config.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+                config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true);
+                config.AddJsonFile("appsettings.local.json", optional: true);
+                config.AddEnvironmentVariables();
+            })
+            .ConfigureServices((context, services) =>
+            {
+                var configuration = context.Configuration;
+                
+                // Add Application Insights telemetry if configured
+                var appInsightsConnectionString = configuration["ApplicationInsights:ConnectionString"];
+                if (!string.IsNullOrEmpty(appInsightsConnectionString))
                 {
-                    // Get the directory where the executable is located
-                    var assemblyLocation = System.Reflection.Assembly.GetExecutingAssembly().Location;
-                    var basePath = Path.GetDirectoryName(assemblyLocation) ?? Directory.GetCurrentDirectory();
-                    
-                    config.SetBasePath(basePath);
-                    config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-                    config.AddJsonFile($"appsettings.{context.HostingEnvironment.EnvironmentName}.json", optional: true, reloadOnChange: true);
-                    config.AddJsonFile("appsettings.local.json", optional: true, reloadOnChange: true);
-                    config.AddEnvironmentVariables();
-                })
-                .ConfigureServices((context, services) =>
-                {
-                    services.AddLogging(builder => 
+                    services.AddApplicationInsightsTelemetryWorkerService(options =>
                     {
-                        builder.AddConsole();
-                        builder.AddApplicationInsights(
-                            configureTelemetryConfiguration: (config) => 
-                            {
-                                config.ConnectionString = context.Configuration.GetConnectionString("APPLICATIONINSIGHTS_CONNECTION_STRING") 
-                                    ?? context.Configuration.GetSection("ApplicationInsights")["ConnectionString"];
-                            },
-                            configureApplicationInsightsLoggerOptions: (options) => { }
-                        );
+                        options.ConnectionString = appInsightsConnectionString;
                     });
-
-                    // Add Application Insights telemetry for console applications
-                    services.AddApplicationInsightsTelemetryWorkerService(context.Configuration);
                     
-                    // Add CX Language telemetry service
                     services.AddSingleton<CxLanguage.Core.Telemetry.CxTelemetryService>();
+                }
 
-                    // 🧠 CONSCIOUSNESS SERVICE ORCHESTRATION (Dr. Kai Nakamura)
-                    // Revolutionary unified service architecture with consciousness-aware lifecycle management
-                    
-                    // Phase 1: Register AuraCognitiveEventBus as primary event system
-                    services.AddSingleton<AuraCognitiveEventBus>();
-                    services.AddSingleton<CxLanguage.Runtime.ICxEventBus>(provider => provider.GetRequiredService<AuraCognitiveEventBus>());
-                    
-                    // Phase 2: Register ConsciousnessServiceOrchestrator for unified service management
-                    services.AddSingleton<ConsciousnessServiceOrchestrator>();
-                    services.AddHostedService<ConsciousnessServiceOrchestrator>(provider => 
-                        provider.GetRequiredService<ConsciousnessServiceOrchestrator>());
-                    
-                    // Phase 3: Register ConsciousnessStreamEngine for stream processing (Dr. River Hayes)
-                    services.AddSingleton<ConsciousnessStreamEngine>();
-                    
-                    // ⌨️ KEYBOARD INPUT INTEGRATION (Marcus Chen + Dr. Rodriguez)
-                    // Register real-time console input service for consciousness interaction
-                    services.AddSingleton<CxLanguage.StandardLibrary.Services.ConsoleInputService>();
-                    services.AddHostedService<CxLanguage.StandardLibrary.Services.ConsoleInputService>();
+                // Add modern CX Language services
+                services.AddModernCxAiServices(configuration);
 
-                    // Always register Vector Database services - they can work without full Azure OpenAI config
-                    try
-                    {
-                        // NEURAL SYSTEM BYPASS: Skip legacy Kernel Memory services
-                        Console.WriteLine("Neural System: Skipping legacy Vector Database services");
-                        Console.WriteLine("Vector Database services registered successfully");
-                    }
-                    catch (Exception vectorEx)
-                    {
-                        Console.WriteLine($"Warning: Vector Database initialization failed: {vectorEx.Message}");
-                        // The extension method handles fallback gracefully
-                    }
+                // Add event bus for consciousness integration
+                services.AddSingleton<CxLanguage.Core.Events.ICxEventBus, CxLanguage.Runtime.CxEventBus>();
 
-                    // Initialize and register the ThinkService
-                    try
-                    {
-                        services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.ThinkService>(provider =>
-                        {
-                            var eventBus = provider.GetRequiredService<CxLanguage.Runtime.ICxEventBus>();
-                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.ThinkService>>();
-                            var localLLMService = provider.GetRequiredService<ILocalLLMService>();
-                            var vectorStore = provider.GetRequiredService<IVectorStoreService>();
-                            return new CxLanguage.StandardLibrary.Services.Ai.ThinkService(eventBus, logger, localLLMService, vectorStore);
-                        });
-                        Console.WriteLine("✅ ThinkService (Local LLM) with memory integration registered successfully.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"⚠️ Warning: ThinkService could not be initialized: {ex.Message}");
-                    }
+                // Register VoiceServiceInitializer as hosted service for automatic voice initialization
+                services.AddHostedService<VoiceServiceInitializer>();
+            });
 
-                    // Initialize and register the InferService
-                    try
-                    {
-                        services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.InferService>(provider =>
-                        {
-                            var eventBus = provider.GetRequiredService<CxLanguage.Runtime.ICxEventBus>();
-                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.InferService>>();
-                            var localLLMService = provider.GetRequiredService<ILocalLLMService>();
-                            var vectorStore = provider.GetRequiredService<IVectorStoreService>();
-                            return new CxLanguage.StandardLibrary.Services.Ai.InferService(eventBus, logger, localLLMService, vectorStore);
-                        });
-                        Console.WriteLine("✅ InferService (Local LLM) with inference capabilities registered successfully.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"⚠️ Warning: InferService could not be initialized: {ex.Message}");
-                    }
-
-                    // Initialize and register the LearnService
-                    try
-                    {
-                        services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.LearnService>(provider =>
-                        {
-                            var eventBus = provider.GetRequiredService<CxLanguage.Runtime.ICxEventBus>();
-                            var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.LearnService>>();
-                            var localLLMService = provider.GetRequiredService<ILocalLLMService>();
-                            var vectorStore = provider.GetRequiredService<IVectorStoreService>();
-                            return new CxLanguage.StandardLibrary.Services.Ai.LearnService(eventBus, logger, localLLMService, vectorStore);
-                        });
-                        Console.WriteLine("✅ LearnService (Local LLM) with vector storage capabilities registered successfully.");
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"⚠️ Warning: LearnService could not be initialized: {ex.Message}");
-                    }
-
-                    try
-                    {
-                        // NEURAL SYSTEM BYPASS: Use modern services instead of legacy Semantic Kernel
-                        services.AddModernCxAiServices(context.Configuration);
-                        Console.WriteLine("✅ Neural System: Modern AI services registered");
-                    }
-                    catch (Exception ex)
-                    {
-                        // Log the error but continue - we'll just have null AI service
-                        Console.WriteLine($"Warning: AI services could not be initialized: {ex.Message}");
-                        Console.WriteLine("Function return values will still work, but AI functions will not.");
-                        
-                        // Register a null AI service for testing non-AI features
-                        services.AddSingleton<CxCoreAI.IAiService>(provider => null!);
-                    }
-                })
-                .Build();
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error creating host: {ex.Message}");
-            
-            // Create a minimal host for testing
-            return new HostBuilder()
-                .ConfigureServices(services =>
-                {
-                    services.AddLogging(builder => builder.AddConsole());
-                    services.AddSingleton<CxCoreAI.IAiService>(provider => null!);
-                    services.AddSingleton<CxLanguage.Runtime.ICxEventBus>(provider => 
-                    {
-                        var logger = provider.GetRequiredService<ILogger<UnifiedEventBus>>();
-                        return UnifiedEventBusRegistry.Instance as CxLanguage.Runtime.ICxEventBus;
-                    });
-                })
-                .Build();
-        }
+        return builder.Build();
     }
 }
 
 /// <summary>
-/// Simple AST printer for debugging
+/// Simple AST printer for debugging purposes
 /// </summary>
 public class AstPrinter
 {
     private int _indentLevel = 0;
-    private const string IndentString = "  ";
 
-    public string Print(CxLanguage.Core.Ast.AstNode node)
+    public string Print(object node)
     {
         var result = new System.Text.StringBuilder();
         PrintNode(node, result);
         return result.ToString();
     }
 
-    private void PrintNode(CxLanguage.Core.Ast.AstNode node, System.Text.StringBuilder result)
+    private void PrintNode(object node, System.Text.StringBuilder result)
     {
-        var indent = new string(' ', _indentLevel * 2);
-        result.AppendLine($"{indent}{node.GetType().Name}");
-
+        result.AppendLine($"{new string(' ', _indentLevel * 2)}{node.GetType().Name}");
         _indentLevel++;
 
-        // Print basic node information
-        if (node is CxLanguage.Core.Ast.FunctionDeclarationNode func)
-        {
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}Name: {func.Name}");
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}IsAsync: {func.IsAsync}");
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}Parameters: {func.Parameters.Count}");
-            
-            // Print function body
-            if (func.Body != null)
-            {
-                result.AppendLine($"{new string(' ', _indentLevel * 2)}Body:");
-                _indentLevel++;
-                PrintNode(func.Body, result);
-                _indentLevel--;
-            }
-        }
-        else if (node is CxLanguage.Core.Ast.BlockStatementNode block)
-        {
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}Statements: {block.Statements.Count}");
-            foreach (var stmt in block.Statements)
-            {
-                PrintNode(stmt, result);
-            }
-        }
-        else if (node is CxLanguage.Core.Ast.ExpressionStatementNode exprStmt)
-        {
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}Expression:");
-            _indentLevel++;
-            PrintNode(exprStmt.Expression, result);
-            _indentLevel--;
-        }
-        else if (node is CxLanguage.Core.Ast.VariableDeclarationNode var)
-        {
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}Name: {var.Name}");
-            if (var.Initializer != null)
-            {
-                result.AppendLine($"{new string(' ', _indentLevel * 2)}Initializer:");
-                _indentLevel++;
-                PrintNode(var.Initializer, result);
-                _indentLevel--;
-            }
-        }
-        else if (node is CxLanguage.Core.Ast.AssignmentExpressionNode assign)
-        {
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}Left:");
-            _indentLevel++;
-            PrintNode(assign.Left, result);
-            _indentLevel--;
-            result.AppendLine($"{new string(' ', _indentLevel * 2)}Right:");
-            _indentLevel++;
-            PrintNode(assign.Right, result);
-            _indentLevel--;
-        }
-        else if (node is CxLanguage.Core.Ast.CallExpressionNode call)
+        if (node is CxLanguage.Core.Ast.CallExpressionNode call)
         {
             result.AppendLine($"{new string(' ', _indentLevel * 2)}Callee:");
             _indentLevel++;

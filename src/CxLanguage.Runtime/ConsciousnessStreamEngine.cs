@@ -364,24 +364,21 @@ namespace CxLanguage.Runtime
             _logger.LogInformation("🔧 Registering consciousness stream event handlers");
             
             // Register handlers for various consciousness events
-            _eventBus.Subscribe("consciousness.stream.input", (Func<object, Task>)(async payload => 
+            _eventBus.Subscribe("consciousness.stream.input", async (CxEventPayload payload) => 
             {
-                var data = payload is CxEvent cxEvent ? cxEvent.payload as Dictionary<string, object> 
-                          : payload as Dictionary<string, object>;
+                var data = payload.Data as Dictionary<string, object>;
                 if (data != null) await HandleStreamInput(data);
-            }));
-            _eventBus.Subscribe("consciousness.stream.fusion", (Func<object, Task>)(async payload => 
+            });
+            _eventBus.Subscribe("consciousness.stream.fusion", async (CxEventPayload payload) => 
             {
-                var data = payload is CxEvent cxEvent ? cxEvent.payload as Dictionary<string, object> 
-                          : payload as Dictionary<string, object>;
+                var data = payload.Data as Dictionary<string, object>;
                 if (data != null) await HandleStreamFusion(data);
-            }));
-            _eventBus.Subscribe("consciousness.stream.status", (Func<object, Task>)(async payload => 
+            });
+            _eventBus.Subscribe("consciousness.stream.status", async (CxEventPayload payload) => 
             {
-                var data = payload is CxEvent cxEvent ? cxEvent.payload as Dictionary<string, object> 
-                          : payload as Dictionary<string, object>;
+                var data = payload.Data as Dictionary<string, object>;
                 if (data != null) await HandleStreamStatus(data);
-            }));
+            });
             
             await Task.CompletedTask;
             _logger.LogInformation("✅ Stream event handlers registered");

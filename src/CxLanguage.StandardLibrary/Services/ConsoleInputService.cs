@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -130,7 +130,7 @@ namespace CxLanguage.StandardLibrary.Services
                     };
 
                     // Emit to consciousness framework
-                    _eventBus.Emit("console.input", inputEvent);
+                    _eventBus.EmitAsync("console.input", inputEvent);
                     
                     _logger.LogInformation("✅ Consciousness event emitted: console.input");
                 }
@@ -141,12 +141,12 @@ namespace CxLanguage.StandardLibrary.Services
             }
         }
 
-        private void OnConsolePromptRequested(CxEvent cxEvent)
+        private Task OnConsolePromptRequested(CxEventPayload cxEvent)
         {
             _logger.LogInformation("📝 Console prompt requested by consciousness framework");
             
             // Extract custom prompt if provided
-            if (cxEvent.payload is IDictionary<string, object> data && data.ContainsKey("prompt"))
+            if (cxEvent.Data is IDictionary<string, object> data && data.ContainsKey("prompt"))
             {
                 _currentPrompt = data["prompt"]?.ToString() ?? "👤 Enter input: ";
             }
@@ -160,13 +160,13 @@ namespace CxLanguage.StandardLibrary.Services
             _logger.LogInformation("⌨️ Keyboard input prompt activated: {Prompt}", _currentPrompt);
         }
 
-        private void OnInputSessionStart(CxEvent cxEvent)
+        private Task OnInputSessionStart(CxEventPayload cxEvent)
         {
             _logger.LogInformation("🚀 Console input session starting");
             _isPromptActive = true;
         }
 
-        private void OnInputSessionStop(CxEvent cxEvent)
+        private Task OnInputSessionStop(CxEventPayload cxEvent)
         {
             _logger.LogInformation("🔄 Console input session stopping");
             _isPromptActive = false;

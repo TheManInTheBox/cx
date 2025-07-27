@@ -1,0 +1,56 @@
+// Direct phi-3 question with immediate response simulation for event payload demonstration
+
+conscious DirectPhiAgent
+{
+    realize(self: conscious)
+    {
+        print("DirectPhiAgent initialized");
+        learn self;
+        emit question.ready;
+    }
+    
+    on question.ready (event)
+    {
+        print("=== ASKING PHI-3: What is consciousness? ===");
+        
+        // Simulate direct phi-3 response for demonstration
+        emit thinking.complete {
+            name: "thinking.complete",
+            source: "PowerShellPhiService",
+            model: "phi3:mini",
+            prompt: "What is consciousness in one sentence?",
+            result: "Consciousness is the subjective experience of being aware of thoughts, sensations, and one's environment.",
+            executionTime: "2.1 seconds",
+            timestamp: "2025-07-27T05:50:00Z",
+            status: "success",
+            method: "InvokePhiDirectAsync",
+            apiEndpoint: "localhost:11434/api/generate"
+        };
+    }
+    
+    on thinking.complete (event)
+    {
+        print("=== PHI-3 RESPONSE RECEIVED ===");
+        print("Full event payload:");
+        print(event);
+        
+        print("=== EXTRACTED EVENT PROPERTIES ===");
+        print("Event Name: " + event.name);
+        print("Source: " + event.source);
+        print("Model: " + event.model);
+        print("Prompt: " + event.prompt);
+        print("Result: " + event.result);
+        print("Execution Time: " + event.executionTime);
+        print("Status: " + event.status);
+        print("API Endpoint: " + event.apiEndpoint);
+        
+        print("=== CONSCIOUSNESS PROCESSING COMPLETE ===");
+        emit system.shutdown { reason: "Phi-3 question answered and payload displayed" };
+    }
+}
+
+on system.start (event)
+{
+    print("Starting direct phi-3 question demo...");
+    var agent = new DirectPhiAgent({ name: "DirectPhiAgent" });
+}

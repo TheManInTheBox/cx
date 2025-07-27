@@ -3,7 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net9.0</TargetFramework>
     <Nullable>enable</Nullable>
-    <PublishAot>true</PublishAot>
+    <!-- Temporarily disable Native AOT while debugging -->
+    <PublishAot>false</PublishAot>
     <InvariantGlobalization>true</InvariantGlobalization>
     <EnableConfigurationBinding>false</EnableConfigurationBinding>
     <JsonSerializerIsReflectionEnabledByDefault>false</JsonSerializerIsReflectionEnabledByDefault>
@@ -31,9 +32,16 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
     
+    <!-- PowerShell Management for consciousness-aware command execution -->
+    <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.5.0" />
+    
     <!-- High-performance streaming and channels -->
     <PackageReference Include="System.Threading.Channels" Version="9.0.7" />
     <PackageReference Include="System.IO.Pipelines" Version="9.0.0" />
+    
+    <!-- HTTP client for Ollama REST API integration -->
+    <PackageReference Include="System.Net.Http" Version="4.3.4" />
+    <PackageReference Include="System.Text.Json" Version="9.0.7" />
     
     <!-- Roslyn for dynamic plugin compilation -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Scripting" Version="4.11.0" />
@@ -41,11 +49,11 @@
     <!-- Command line integration for Python runtime wrapping -->
     <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
     
-    <!-- TorchSharp for ML.NET integration (when available) -->
-    <!-- <PackageReference Include="TorchSharp" Version="0.102.5" /> -->
+    <!-- TorchSharp for GPU/CUDA acceleration - ENABLED for GPU-FIRST processing -->
+    <PackageReference Include="TorchSharp" Version="0.102.5" />
     
-    <!-- ONNX Runtime for embedding processing (when available) -->
-    <!-- <PackageReference Include="Microsoft.ML.OnnxRuntime" Version="1.19.2" /> -->
+    <!-- ONNX Runtime for GPU-accelerated embedding processing - ENABLED -->
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.19.2" />
     
     <!-- Memory and performance optimization -->
     <PackageReference Include="System.Memory" Version="4.5.5" />
@@ -60,7 +68,6 @@
   <ItemGroup>
     <!-- Project references for consciousness integration -->
     <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
-    <ProjectReference Include="..\CxLanguage.StandardLibrary\CxLanguage.StandardLibrary.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -71,7 +78,9 @@
   <!-- Native AOT warnings suppression for consciousness-aware patterns -->
   <PropertyGroup>
     <SuppressTrimAnalysisWarnings>true</SuppressTrimAnalysisWarnings>
-    <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
+    <EnableTrimAnalyzer>false</EnableTrimAnalyzer>
+    <WarningsAsErrors />
+    <NoWarn>$(NoWarn);IL2026;IL3050</NoWarn>
   </PropertyGroup>
 
   <!-- Custom MSBuild targets for local LLM optimization -->

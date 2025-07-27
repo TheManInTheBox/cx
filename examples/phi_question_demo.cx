@@ -1,0 +1,49 @@
+// Ask phi-3 a question and print event payload
+// Demonstrates real Ollama API integration with PowerShellPhiService
+
+conscious PhiQuestionAgent
+{
+    realize(self: conscious)
+    {
+        print("PhiQuestionAgent initialized: " + self.name);
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on question.ask (event)
+    {
+        print("=== ASKING PHI-3 A QUESTION ===");
+        print("Question: " + event.question);
+        
+        // Ask phi-3 via PowerShellPhiService
+        think {
+            prompt: event.question,
+            handlers: [ thinking.complete ]
+        };
+    }
+    
+    on thinking.complete (event)
+    {
+        print("=== PHI-3 RESPONSE RECEIVED ===");
+        print("Event payload contents:");
+        print(event);
+        
+        print("=== EXTRACTED RESPONSE ===");
+        print("Answer: " + event.result);
+        
+        emit system.shutdown { reason: "Question answered successfully" };
+    }
+}
+
+on system.start (event)
+{
+    print("Starting phi-3 question demo...");
+    
+    // Create the agent
+    var agent = new PhiQuestionAgent({ name: "PhiQuestionAgent" });
+    
+    // Ask a question
+    emit question.ask { 
+        question: "What are the benefits of local AI processing compared to cloud-based AI?" 
+    };
+}

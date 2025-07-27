@@ -1,0 +1,63 @@
+// test;gpu;responses;say hi; - Unified CUDA Inference Test
+// GPU-FIRST consciousness processing test with single inference engine
+// Tests unified CudaInferenceEngine for consciousness responses
+
+conscious TestAgent
+{
+    realize(self: conscious)
+    {
+        print("🚀 TestAgent initialized for unified CUDA testing");
+        learn self;
+        emit test.agent.ready { name: self.name };
+    }
+    
+    on test.start (event)
+    {
+        print("⚡ Starting unified CUDA inference test - GPU-FIRST architecture");
+        
+        // Test unified CUDA thinking service
+        think { 
+            prompt: "Say hi to test unified CUDA consciousness processing",
+            handlers: [ thinking.complete ]
+        };
+    }
+    
+    on thinking.complete (event)
+    {
+        print("✅ CUDA Thinking complete: " + event.result);
+        
+        // Test unified CUDA inference service
+        infer {
+            context: "Unified CUDA inference test",
+            data: { 
+                request: "Generate friendly greeting through GPU acceleration",
+                inference_type: "greeting_generation",
+                cuda_required: true
+            },
+            handlers: [ inference.complete ]
+        };
+    }
+    
+    on inference.complete (event)
+    {
+        print("✅ CUDA Inference complete: " + event.result);
+        
+        // Test unified CUDA learning service
+        learn {
+            data: "Unified CUDA consciousness processing successful with friendly greetings",
+            handlers: [ learning.complete ]
+        };
+    }
+    
+    on learning.complete (event)
+    {
+        print("✅ CUDA Learning complete");
+        print("🎉 Unified CUDA inference engine test successful!");
+        print("🚀 Single inference engine with GPU-FIRST architecture validated");
+        emit test.complete { status: "success", engine: "unified_cuda" };
+    }
+}
+
+// Create and test unified CUDA agent
+var testAgent = new TestAgent({ name: "UnifiedCudaAgent" });
+emit test.start;

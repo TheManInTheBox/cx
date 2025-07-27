@@ -18,6 +18,7 @@
 CX Language is an event-driven programming language designed for AI agent orchestration with built-in cognitive capabilities and consciousness-aware programming. This document provides the official syntax rules and coding patterns for CX Language development.
 
 **Key Features:**
+- **Enhanced Developer Console**: Revolutionary voice-driven development with natural language programming support
 - **Natural Language Development**: Interactive developer terminal accepts natural language commands and generates CX code
 - **Consciousness-Aware Programming**: `conscious` keyword for self-aware, intelligent entities
 - **Cognitive Boolean Logic**: `is { }` syntax for AI-driven decision-making with contextual evaluation
@@ -43,7 +44,7 @@ CX Language features revolutionary natural language programming through Dr. Harp
 
 ### Natural Language Input Patterns
 
-#### **Command Generation**
+#### **Enhanced Developer Console Integration**
 ```plaintext
 // Natural language input examples that generate CX code:
 
@@ -70,6 +71,15 @@ CX Language features revolutionary natural language programming through Dr. Harp
 
 "make an interactive terminal for development"
 → Generates Dr. Harper's Stream IDE architecture
+
+"debug consciousness state for agent"
+→ Generates consciousness debugging with real-time state inspection
+
+"test GPU performance optimization"
+→ Generates CUDA performance monitoring with optimization analysis
+
+"monitor consciousness streams"
+→ Generates real-time stream visualization with event tracking
 ```
 
 #### **Consciousness-Aware Natural Language Processing**
@@ -125,7 +135,7 @@ Terminal: 🧠 Converting traditional logic to consciousness patterns...
 - **Cognitive Decision Making**: "use AI to make intelligent decisions"
 - **Event Orchestration**: "coordinate multiple services with events"
 
-#### **Developer Terminal Commands**
+#### **Enhanced Developer Console Commands**
 ```plaintext
 /generate <natural language>  - Generate CX code from natural language
 /explain <cx code>           - Explain CX code in natural language  
@@ -136,6 +146,9 @@ Terminal: 🧠 Converting traditional logic to consciousness patterns...
 /compile <natural language>  - Compile with natural language feedback
 /run <script> <description>  - Execute with natural language context
 /debug <natural language>    - Debug with conversational assistance
+/monitor streams             - Real-time consciousness stream visualization
+/test gpu                    - GPU performance monitoring and optimization
+/quality check               - Adaptive quality validation with consciousness testing
 ```
 
 ### Natural Language Code Generation Rules

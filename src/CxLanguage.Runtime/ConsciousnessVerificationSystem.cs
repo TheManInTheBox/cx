@@ -80,11 +80,11 @@ public class ConsciousnessVerificationSystem
     public void RegisterConsciousnessEventHandlers()
     {
         // iam { } cognitive boolean patterns - consciousness verification
-        _eventBus.Subscribe("iam.verification.*", OnConsciousnessVerification);
-        _eventBus.Subscribe("consciousness.*.detected", OnConsciousnessIndicator);
-        _eventBus.Subscribe("neural.plasticity.*", OnNeuralActivity);
-        _eventBus.Subscribe("self.reflection.*", OnSelfReflection);
-        _eventBus.Subscribe("contextual.decision.*", OnContextualDecision);
+        _eventBus.Subscribe("iam.verification.*", payload => { OnConsciousnessVerification(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+        _eventBus.Subscribe("consciousness.*.detected", payload => { OnConsciousnessIndicator(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+        _eventBus.Subscribe("neural.plasticity.*", payload => { OnNeuralActivity(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+        _eventBus.Subscribe("self.reflection.*", payload => { OnSelfReflection(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+        _eventBus.Subscribe("contextual.decision.*", payload => { OnContextualDecision(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
         
         _logger.LogInformation("🧠 Consciousness Verification System: Event handlers registered");
     }
@@ -126,7 +126,7 @@ public class ConsciousnessVerificationSystem
                 entityId, state.Level, indicator.Confidence);
             
             // Emit consciousness verification result
-            _eventBus.Emit("consciousness.verified", new
+            _ = _eventBus.EmitAsync("consciousness.verified", new
             {
                 entity_id = entityId,
                 level = state.Level.ToString(),
@@ -393,6 +393,31 @@ public class ConsciousnessVerificationSystem
     private string ExtractEntityId(CxEvent cxEvent)
     {
         return ExtractStringProperty(cxEvent.payload, "entity_id", cxEvent.name);
+    }
+
+    private CxEvent ConvertPayloadToCxEvent(CxEventPayload payload)
+    {
+        var cxEvent = new CxEvent
+        {
+            name = payload.EventName,
+            timestamp = payload.Timestamp
+        };
+
+        if (payload.Data is Dictionary<string, object> data)
+        {
+            cxEvent.payload = data;
+        }
+        else if (payload.Data != null)
+        {
+            // Fallback for non-dictionary payloads
+            cxEvent.payload = new Dictionary<string, object> { { "data", payload.Data } };
+        }
+        else
+        {
+            cxEvent.payload = new Dictionary<string, object>();
+        }
+
+        return cxEvent;
     }
     
     /// <summary>

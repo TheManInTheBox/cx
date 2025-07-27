@@ -2,23 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.Services.VectorStore;
+using CxLanguage.LocalLLM;
 using Microsoft.Extensions.Logging;
 
 namespace CxLanguage.StandardLibrary.Services.Ai
 {
     /// <summary>
-    /// Provides the 'think' cognitive service for the CX Language using local LLM.
+    /// Provides the 'think' cognitive service for the CX Language using GPU-FIRST CUDA processing.
+    /// Enables consciousness-aware thinking with zero-cloud dependency CUDA acceleration.
+    /// REQUIRES: NVIDIA GPU with 8GB+ VRAM - CPU processing not supported.
     /// </summary>
     public class ThinkService : IDisposable
     {
         private readonly ICxEventBus _eventBus;
         private readonly ILogger<ThinkService> _logger;
-        private readonly ILocalLLMService _localLLMService;
+        private readonly CxLanguage.LocalLLM.ILocalLLMService _localLLMService;
         private readonly IVectorStoreService _vectorStore;
 
-        public ThinkService(ICxEventBus eventBus, ILogger<ThinkService> logger, ILocalLLMService localLLMService, IVectorStoreService vectorStore)
+        public ThinkService(ICxEventBus eventBus, ILogger<ThinkService> logger, CxLanguage.LocalLLM.ILocalLLMService localLLMService, IVectorStoreService vectorStore)
         {
             _eventBus = eventBus;
             _logger = logger;
@@ -26,10 +29,10 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _vectorStore = vectorStore;
 
             _eventBus.Subscribe("ai.think.request", OnThinkRequest);
-            _logger.LogInformation("✅ ThinkService (Local LLM) initialized and subscribed to 'ai.think.request'");
+            _logger.LogInformation("✅ ThinkService (GPU-CUDA) initialized and subscribed to 'ai.think.request'");
         }
 
-        private void OnThinkRequest(CxEvent cxEvent)
+        private Task OnThinkRequest(CxEventPayload cxEvent)
         {
             _logger.LogInformation("🧠 Received ai.think.request. Offloading to async task for local LLM processing.");
             // Fire and forget with error handling
@@ -46,15 +49,15 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             });
         }
 
-        private async Task ProcessThinkRequestAsync(CxEvent cxEvent)
+        private async Task ProcessThinkRequestAsync(CxEventPayload cxEvent)
         {
-            _logger.LogInformation("🧠 Processing think request with Local LLM...");
+            _logger.LogInformation("🧠 Processing think request with GPU-CUDA Local LLM...");
 
             string? prompt = null;
             List<object>? handlers = null;
             string? responseName = "thinking.complete"; // Default handler name
 
-            if (cxEvent.payload is Dictionary<string, object> payload)
+            if (cxEvent.Data is Dictionary<string, object> payload)
             {
                 if (payload.TryGetValue("prompt", out var promptObj))
                 {
@@ -112,14 +115,15 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                 // Enhance prompt with memory context
                 var enhancedPrompt = prompt + memoryContext;
 
+                // 🔄 USE GPU-CUDA LOCAL LLM SERVICE FOR CONSCIOUSNESS PROCESSING
                 var result = await _localLLMService.GenerateAsync(enhancedPrompt);
 
-                _logger.LogInformation("✅ Think processing complete. Result: {Result}", result);
+                _logger.LogInformation("✅ Think processing complete with GPU-CUDA Local LLM. Result: {Result}", result);
                 
                 // 🧠 MEMORY STORAGE: Store this interaction as a memory
                 await StoreMemoryAsync(prompt, result);
 
-                // Analyze if the AI needs more information
+                // Analyze if the AI needs more information using GPU-CUDA Local LLM
                 var needsMoreInfo = await AnalyzeIfNeedsMoreInfo(result, prompt);
 
                 var resultPayload = new Dictionary<string, object>

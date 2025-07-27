@@ -20,7 +20,7 @@ namespace CxLanguage.StandardLibrary.NeuroHub
         private Task HandleAlert(NeuroEvent @event)
         {
             Console.WriteLine($"[Brain] Cognitive Orchestrator received an alert on topic {@event.Topic}");
-            Console.WriteLine($"[Brain] Payload: {@event.Payload}");
+            Console.WriteLine($"[Brain] Payload: {@event.Data}");
             Console.WriteLine("[Brain] Initiating complex workflow (e.g., notifying users, creating ticket)...");
             // In a real implementation, this would involve more complex logic,
             // like using Semantic Kernel to plan and execute a response.

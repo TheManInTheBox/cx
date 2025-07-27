@@ -101,7 +101,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                     handlerList.Count, eventName);
                 
                 // Emit registration event for monitoring
-                _eventBus.Emit("parallel.handlers.registered", new Dictionary<string, object?>
+                _ = _eventBus.EmitAsync("parallel.handlers.registered", new Dictionary<string, object?>
                 {
                     ["eventName"] = eventName,
                     ["handlerCount"] = handlerList.Count,
@@ -150,14 +150,14 @@ namespace CxLanguage.Runtime.ParallelHandlers
                     RecordExecutionMetrics(result);
                     
                     // Emit standard event as fallback
-                    _eventBus.Emit(eventName, results);
+                    await _eventBus.EmitAsync(eventName, results);
                     
                     return result;
                 }
                 else
                 {
                     // No parallel handlers registered, emit standard event
-                    _eventBus.Emit(eventName, payload);
+                    await _eventBus.EmitAsync(eventName, payload);
                     
                     var executionTime = DateTimeOffset.UtcNow - startTime;
                     return new ParallelExecutionResult
@@ -212,7 +212,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
         /// <summary>
         /// Validate event system integrity for parallel processing.
         /// </summary>
-        public Task<SystemIntegrityReport> ValidateSystemIntegrityAsync()
+        public async Task<SystemIntegrityReport> ValidateSystemIntegrityAsync()
         {
             var report = new SystemIntegrityReport
             {
@@ -227,7 +227,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
             {
                 // Validate event bus connectivity
                 var testEventName = $"system.integrity.test.{Guid.NewGuid()}";
-                _eventBus.Emit(testEventName, new { test = true });
+                await _eventBus.EmitAsync(testEventName, new { test = true });
                 report.EventBusConnectivity = true;
                 
                 // Validate parallel coordinator
@@ -262,14 +262,14 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 _logger.LogInformation("🔍 System integrity validation complete: {Health} ({IssueCount} issues)", 
                     report.OverallHealth, report.Issues.Count);
                 
-                return Task.FromResult(report);
+                return report;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ System integrity validation failed");
                 report.Issues.Add($"Validation error: {ex.Message}");
                 report.OverallHealth = "Validation Failed";
-                return Task.FromResult(report);
+                return report;
             }
         }
 
@@ -345,7 +345,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                         CalculatePerformanceImprovement(r.ExecutionTime, r.HandlerCount));
                     
                     // Emit performance metrics event
-                    _eventBus.Emit("parallel.system.metrics", new Dictionary<string, object?>
+                    _ = _eventBus.EmitAsync("parallel.system.metrics", new Dictionary<string, object?>
                     {
                         ["totalExecutions"] = totalExecutions,
                         ["successfulExecutions"] = successfulExecutions,
