@@ -4,6 +4,7 @@ using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
+using CxLanguage.Core.Events;
 
 namespace CxLanguage.Runtime
 {
@@ -391,32 +392,20 @@ namespace CxLanguage.Runtime
             var subscriptionId = UnifiedEventBusRegistry.Instance.RegisterSubscription(
                 "Global", "system", UnifiedEventScope.Global);
             
-            // Create Action<CxEvent> to invoke the compiled static handler directly
-            Action<CxEvent> action = (cxEvent) =>
+            // Wrap the CxEventHandler to match the expected EventHandler delegate
+            EventHandler unifiedHandler = (payload) =>
             {
-                try
+                var cxPayload = new CxEventPayload
                 {
-                    // Call the compiled handler, passing the structured CxEvent with proper payload
-                    var task = handler(new CxEventPayload
-                    {
-                        EventName = cxEvent.name,
-                        Data = cxEvent,  // This passes the CxEvent itself, which has the payload
-                        Timestamp = cxEvent.timestamp,
-                        Source = "Global"
-                    });
-                    task.ConfigureAwait(false);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"[ERROR] Global handler execution failed: {ex.Message}");
-                }
+                    EventName = payload.EventName,
+                    Data = payload.Data,
+                    Timestamp = payload.Timestamp,
+                    Source = payload.Source
+                };
+                return handler(cxPayload);
             };
-            
-            // Subscribe using ICxEventBus to pass structured CxEvent to the handler
-            if (UnifiedEventBusRegistry.Instance is ICxEventBus bus)
-            {
-                bus.Subscribe(eventName, action);
-            }
+
+            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
         }
 
         /// <summary>
@@ -626,30 +615,54 @@ namespace CxLanguage.Runtime
                 return;
             }
             
-            // Create an Action<CxEvent> to invoke the compiled instance method
-            Action<CxEvent> cxHandler = (cxEvent) =>
+            // Create a CxEventHandler to invoke the compiled instance method
+            CxEventHandler cxHandler = (payload) =>
             {
                 try
                 {
                     // Check if the parameter type is compatible
-                    if (!parameters[0].ParameterType.IsAssignableFrom(typeof(CxEvent)))
+                    if (parameters.Length == 0 || !parameters[0].ParameterType.IsAssignableFrom(typeof(CxEvent)))
                     {
-                        return;
+                        return Task.CompletedTask;
                     }
+
+                    var cxEvent = new CxEvent
+                    {
+                        name = payload.EventName,
+                        payload = payload.Data as Dictionary<string, object> ?? new Dictionary<string, object>(),
+                        timestamp = payload.Timestamp
+                    };
                     
-                    method.Invoke(instance, new object[] { cxEvent! });
+                    var result = method.Invoke(instance, new object[] { cxEvent! });
+                    if (result is Task task)
+                    {
+                        return task;
+                    }
                 }
                 catch (Exception)
                 {
                     // Silent error handling for clean output
                 }
+                return Task.CompletedTask;
             };
             
-            // Subscribe using ICxEventBus to pass structured CxEvent to the handler
-            if (UnifiedEventBusRegistry.Instance is ICxEventBus bus)
+            // Subscribe using the instance-aware subscription method
+            var subscriptionId = UnifiedEventBusRegistry.Instance.RegisterSubscription(
+                $"{instance.GetType().Name}_{instance.GetHashCode()}", "instance", UnifiedEventScope.Agent, instance: instance);
+            
+            EventHandler unifiedHandler = (payload) =>
             {
-                bus.Subscribe(eventName, instance, cxHandler);
-            }
+                var cxPayload = new CxEventPayload
+                {
+                    EventName = payload.EventName,
+                    Data = payload.Data,
+                    Timestamp = payload.Timestamp,
+                    Source = payload.Source
+                };
+                return cxHandler(cxPayload);
+};
+
+            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
         }
 
         /// <summary>
@@ -704,18 +717,8 @@ namespace CxLanguage.Runtime
             {
                 try
                 {
-                    // Create CxEvent object from the payload
-                    // Convert raw data object to dictionary for structured payload
-                    var eventData = ConvertToEventData(payload.Data);
-                    var cxEvent = new CxEvent
-                    {
-                        name = payload.EventName,
-                        payload = eventData,
-                        timestamp = payload.Timestamp
-                    };
-                    
-                    // Pass the CxEvent object to the compiled handler
-                    await handler(cxEvent);
+                    // Pass the raw data object to the handler
+                    await handler(payload.Data ?? new object());
                 }
                 catch (Exception)
                 {

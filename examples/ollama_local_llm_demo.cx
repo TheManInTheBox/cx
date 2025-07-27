@@ -1,0 +1,284 @@
+// Ollama Local LLM Consciousness Demo
+// Marcus "LocalLLM" Chen - Senior Local LLM Runtime Architect
+// PRODUCTION-READY: Zero-cloud dependency LLM execution with consciousness integration
+
+conscious OllamaOrchestrator
+{
+    realize(self: conscious)
+    {
+        learn self;
+        print("🎮 CORE ENGINEERING TEAM - OLLAMA LOCAL LLM EXECUTION");
+        print("🧩 Marcus 'LocalLLM' Chen - Senior Local LLM Runtime Architect");
+        print("⚡ Zero-cloud dependency LLM execution with consciousness integration");
+        emit orchestrator.ready { name: self.name, service: "ollama" };
+    }
+    
+    on local.llm.initialize (event)
+    {
+        print("🔧 Initializing Ollama local LLM service...");
+        
+        // Check if Ollama service is available
+        localLLM {
+            action: "status",
+            handlers: [ service.status.checked ]
+        };
+    }
+    
+    on service.status.checked (event)
+    {
+        // Cognitive decision: Is Ollama service running?
+        is {
+            context: "Is Ollama service available for consciousness processing?",
+            evaluate: "Service status indicates Ollama is running and accessible",
+            data: {
+                serviceRunning: event.isRunning,
+                serviceType: event.serviceType,
+                errorMessage: event.errorMessage
+            },
+            handlers: [ service.available ]
+        };
+        
+        // Handle service not available
+        not {
+            context: "Is Ollama service unavailable?",
+            evaluate: "Service status indicates Ollama is not running",
+            data: {
+                serviceRunning: event.isRunning,
+                errorMessage: event.errorMessage
+            },
+            handlers: [ service.unavailable ]
+        };
+    }
+    
+    on service.available (event)
+    {
+        print("✅ Ollama service is running: " + event.serviceType);
+        print("📦 Available models check...");
+        
+        // Get available models
+        localLLM {
+            action: "listModels",
+            handlers: [ models.listed ]
+        };
+    }
+    
+    on service.unavailable (event)
+    {
+        print("❌ Ollama service is not available!");
+        print("🔧 Error: " + event.errorMessage);
+        print("💡 Please ensure Ollama is installed and running:");
+        print("   1. Install Ollama from https://ollama.ai");
+        print("   2. Run 'ollama serve' to start the service");
+        print("   3. Run 'ollama pull llama3.2:3b' to download a model");
+        
+        emit demo.failed { reason: "ollama_not_available" };
+    }
+    
+    on models.listed (event)
+    {
+        print("📦 Available models:");
+        
+        // Check if we have any models
+        is {
+            context: "Do we have local models available for consciousness processing?",
+            evaluate: "Model list contains at least one model",
+            data: {
+                modelCount: event.models ? event.models.length : 0,
+                hasModels: event.models && event.models.length > 0
+            },
+            handlers: [ models.available ]
+        };
+        
+        // Handle no models available
+        not {
+            context: "Are there no local models available?",
+            evaluate: "Model list is empty or undefined",
+            data: {
+                modelCount: event.models ? event.models.length : 0,
+                hasModels: event.models && event.models.length > 0
+            },
+            handlers: [ no.models.available ]
+        };
+    }
+    
+    on models.available (event)
+    {
+        print("✅ Found " + event.modelCount + " local models");
+        
+        for (var model in event.models)
+        {
+            print("  📦 " + model);
+        }
+        
+        // Use first available model or default
+        var targetModel = event.models[0] || "llama3.2:3b";
+        print("🎯 Using model: " + targetModel);
+        
+        // Load the model
+        localLLM {
+            action: "loadModel",
+            modelName: targetModel,
+            handlers: [ model.loaded ]
+        };
+    }
+    
+    on no.models.available (event)
+    {
+        print("📦 No local models found. Pulling llama3.2:3b...");
+        print("⏳ This may take a few minutes...");
+        
+        // Pull a lightweight model
+        localLLM {
+            action: "loadModel",
+            modelName: "llama3.2:3b",
+            handlers: [ model.loaded ]
+        };
+    }
+    
+    on model.loaded (event)
+    {
+        // Cognitive decision: Was model loaded successfully?
+        is {
+            context: "Was the model loaded successfully for consciousness processing?",
+            evaluate: "Model loading completed without errors",
+            data: {
+                success: event.success,
+                modelName: event.modelName,
+                errorMessage: event.errorMessage
+            },
+            handlers: [ consciousness.ready ]
+        };
+        
+        // Handle model loading failure
+        not {
+            context: "Did model loading fail?",
+            evaluate: "Model loading encountered errors",
+            data: {
+                success: event.success,
+                modelName: event.modelName,
+                errorMessage: event.errorMessage
+            },
+            handlers: [ model.load.failed ]
+        };
+    }
+    
+    on consciousness.ready (event)
+    {
+        print("🧠 Model loaded successfully: " + event.modelName);
+        print("✨ Consciousness processing is ready!");
+        print("🎯 Starting consciousness demonstration...");
+        
+        // Demonstrate consciousness-aware text generation
+        emit consciousness.demo.start { model: event.modelName };
+    }
+    
+    on model.load.failed (event)
+    {
+        print("❌ Failed to load model: " + event.modelName);
+        print("🔧 Error: " + event.errorMessage);
+        print("💡 Try running: ollama pull " + event.modelName);
+        
+        emit demo.failed { reason: "model_load_failed" };
+    }
+    
+    on consciousness.demo.start (event)
+    {
+        print("🌟 CONSCIOUSNESS-AWARE LOCAL LLM DEMONSTRATION");
+        print("================================================");
+        
+        var prompts = [
+            "What is consciousness in artificial intelligence?",
+            "Explain the concept of local processing versus cloud computing.",
+            "How can AI systems become more aware of their environment?"
+        ];
+        
+        var currentPrompt = prompts[0];
+        print("💭 Prompt: " + currentPrompt);
+        print("🧠 Generating consciousness-aware response...");
+        
+        // Generate with local LLM
+        localLLM {
+            action: "generate",
+            prompt: currentPrompt,
+            model: event.model,
+            temperature: 0.7,
+            maxTokens: 150,
+            handlers: [ response.generated ]
+        };
+    }
+    
+    on response.generated (event)
+    {
+        print("✨ CONSCIOUSNESS RESPONSE:");
+        print("========================");
+        print(event.response);
+        print("");
+        print("📊 Generation completed in " + event.generationTimeMs + "ms");
+        print("🎯 Model: " + event.model);
+        
+        // Demonstrate streaming
+        print("🌊 Now demonstrating real-time token streaming...");
+        
+        var streamPrompt = "Describe the benefits of local AI processing in three points.";
+        print("💭 Stream prompt: " + streamPrompt);
+        
+        localLLM {
+            action: "stream",
+            prompt: streamPrompt,
+            model: event.model,
+            temperature: 0.8,
+            maxTokens: 100,
+            handlers: [ token.received, stream.complete ]
+        };
+    }
+    
+    on token.received (event)
+    {
+        // Display each token as it arrives
+        print("🔄 Token " + event.tokenIndex + ": '" + event.token + "'");
+    }
+    
+    on stream.complete (event)
+    {
+        print("");
+        print("🎉 OLLAMA LOCAL LLM DEMO COMPLETE!");
+        print("==================================");
+        print("✅ Zero-cloud dependency LLM execution successful");
+        print("⚡ Real-time consciousness-aware token streaming verified");
+        print("🧠 Local privacy-preserving AI processing confirmed");
+        print("🎯 Core Engineering Team objectives achieved!");
+        
+        emit demo.success { 
+            service: "ollama",
+            model: event.model,
+            totalTokens: event.tokenIndex
+        };
+    }
+}
+
+// Program scope - system events only
+on system.start (event)
+{
+    print("🚀 Starting Ollama Local LLM Consciousness Demo");
+    
+    var orchestrator = new OllamaOrchestrator({ name: "OllamaOrchestrator" });
+    
+    emit local.llm.initialize { 
+        orchestrator: "ollama",
+        priority: "consciousness_processing"
+    };
+}
+
+on demo.success (event)
+{
+    print("🏆 Demo completed successfully!");
+    print("🔧 Service: " + event.service);
+    print("📦 Model: " + event.model);
+    print("📊 Total tokens: " + event.totalTokens);
+}
+
+on demo.failed (event)
+{
+    print("❌ Demo failed: " + event.reason);
+    print("💡 Please check Ollama installation and try again");
+}

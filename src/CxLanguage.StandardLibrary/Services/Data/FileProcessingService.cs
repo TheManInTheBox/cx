@@ -5,7 +5,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.Services.VectorStore;
 
 namespace CxLanguage.StandardLibrary.Services.Data;
@@ -30,7 +30,7 @@ public class FileProcessingService
         _eventBus = eventBus;
         _vectorStore = vectorStore;
         _logger.LogInformation("🗂️ Dr. Marcus 'LocalLLM' Chen's FileProcessingService initialized");
-        _eventBus.Emit("file.processing.service.ready", new { service = nameof(FileProcessingService) });
+        _eventBus.EmitAsync("file.processing.service.ready", new { service = nameof(FileProcessingService) });
     }
 
     /// <summary>
@@ -66,7 +66,7 @@ public class FileProcessingService
 
             if (result.IsSuccess)
             {
-                _eventBus.Emit("file.processed", new { 
+                _eventBus.EmitAsync("file.processed", new { 
                     filePath, 
                     extension, 
                     contentLength = result.ExtractedText?.Length ?? 0,
@@ -120,7 +120,7 @@ public class FileProcessingService
             }
         }
 
-        _eventBus.Emit("batch.processing.complete", new { 
+        _eventBus.EmitAsync("batch.processing.complete", new { 
             totalFiles, 
             successCount, 
             failureCount = totalFiles - successCount 

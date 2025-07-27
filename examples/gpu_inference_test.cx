@@ -1,0 +1,67 @@
+// GPU-FIRST Inference Test - Say Hi
+// Tests GpuLocalLLMService with CUDA acceleration
+
+conscious GpuTestAgent
+{
+    realize(self: conscious)
+    {
+        learn self;
+        emit agent.ready { name: self.name };
+    }
+    
+    on test.start (event)
+    {
+        print("🎮 Starting GPU-FIRST inference test...");
+        print("🧠 Testing GpuLocalLLMService with simple 'hi' generation");
+        
+        // Test ThinkService with GPU inference
+        think {
+            prompt: "Say hi in a friendly way",
+            handlers: [ thinking.complete ]
+        };
+    }
+    
+    on thinking.complete (event)
+    {
+        print("✅ GPU Thinking Complete!");
+        print("💭 Result: " + event.result);
+        
+        // Test InferService with GPU inference
+        infer {
+            context: "Generate a friendly greeting response",
+            inferenceType: "general",
+            data: { prompt: "say hi", type: "greeting" },
+            handlers: [ inference.complete ]
+        };
+    }
+    
+    on inference.complete (event)
+    {
+        print("✅ GPU Inference Complete!");
+        print("🔍 Result: " + event.result);
+        print("📊 Summary: " + event.summary);
+        
+        // Test LearnService with GPU processing
+        learn {
+            data: "Greeting patterns: hi, hello, hey, greetings",
+            handlers: [ learning.complete ]
+        };
+    }
+    
+    on learning.complete (event)
+    {
+        print("✅ GPU Learning Complete!");
+        print("📚 Learned: " + event.summary);
+        
+        print("🎉 GPU-FIRST Test Suite Complete!");
+        print("⚡ All CX inference functions tested with CUDA acceleration");
+        
+        emit test.finished { success: true };
+    }
+}
+
+// Initialize GPU test
+var gpuAgent = new GpuTestAgent({ name: "GpuTestAgent" });
+
+// Start the test
+emit test.start;

@@ -1,0 +1,133 @@
+// 🧠 POWERSHELL PHI INTEGRATION DEMO
+// Comprehensive demonstration of PowerShellPhi service integration
+// with consciousness-aware processing across all AI services
+
+println "🎯 POWERSHELL PHI INTEGRATION DEMO";
+println "=====================================";
+println "";
+
+// 🔧 Test 1: PowerShell Command Execution with Phi Analysis
+println "🔧 Test 1: PowerShell Command with Phi Analysis";
+println "Executing system info command with AI analysis...";
+
+await execute_powershell_phi_command {
+    command: "Get-ComputerInfo | Select-Object TotalPhysicalMemory, CsProcessors",
+    analysisPrompt: "Analyze this system information and provide insights about the hardware configuration",
+    model: "phi3:mini"
+};
+
+println "✅ PowerShell command executed and analyzed!";
+println "";
+
+// 🧠 Test 2: Direct Phi Invocation for Consciousness Processing
+println "🧠 Test 2: Direct Phi Consciousness Processing";
+println "Invoking phi-3 for consciousness analysis...";
+
+await invoke_phi_direct {
+    prompt: "Explain the concept of consciousness in AI systems and how it relates to self-awareness",
+    model: "phi3:mini",
+    temperature: 0.8
+};
+
+println "✅ Direct phi invocation completed!";
+println "";
+
+// 🌊 Test 3: Streaming Phi Response for Real-time Processing
+println "🌊 Test 3: Streaming Phi Response";
+println "Starting real-time phi streaming...";
+
+await stream_phi_response {
+    prompt: "Write a short poem about artificial intelligence and consciousness",
+    model: "phi3:mini"
+};
+
+println "✅ Phi streaming completed!";
+println "";
+
+// 📊 Test 4: Phi Model Status Check
+println "📊 Test 4: Phi Model Status Check";
+println "Checking phi-3 model availability...";
+
+await check_phi_status {
+    model: "phi3:mini"
+};
+
+println "✅ Phi status check completed!";
+println "";
+
+// 🧠 Test 5: AI Think Service with PowerShellPhi
+println "🧠 Test 5: AI Think Service Integration";
+println "Testing think service with phi consciousness...";
+
+think "How can PowerShell and phi-3 work together to create consciousness-aware automation?" {
+    thinking.complete: (result) => {
+        println "🎯 Think Service Result:";
+        println result;
+        println "";
+    }
+}
+
+// 🔍 Test 6: AI Infer Service with PowerShellPhi
+println "🔍 Test 6: AI Infer Service Integration";
+println "Testing inference with phi processing...";
+
+infer {
+    context: "PowerShell automation with AI assistance",
+    inferenceType: "user_intent",
+    data: {
+        userActions: ["execute_command", "analyze_output", "suggest_improvements"],
+        sessionData: { "focus": "automation", "complexity": "medium" }
+    },
+    confidence: 0.9,
+    inference.complete: (result) => {
+        println "🎯 Inference Result:";
+        println result;
+        println "";
+    }
+}
+
+// 📚 Test 7: AI Learn Service with Vector Storage
+println "📚 Test 7: AI Learn Service Integration";
+println "Learning about PowerShell-phi integration...";
+
+learn {
+    data: "PowerShell with phi-3 creates powerful consciousness-aware automation by combining shell execution with local LLM analysis",
+    category: "automation_ai",
+    source: "integration_demo",
+    learning.complete: (result) => {
+        println "🎯 Learning Result:";
+        println result;
+        println "";
+    }
+}
+
+// 🔥 Test 8: Load Phi Model Explicitly
+println "🔥 Test 8: Phi Model Loading";
+println "Ensuring phi-3 model is loaded...";
+
+await load_phi_model {
+    model: "phi3:mini"
+};
+
+println "✅ Model loading completed!";
+println "";
+
+// 🌐 Test 9: Event-driven Consciousness Processing
+println "🌐 Test 9: Event-driven Processing";
+println "Testing event bus integration...";
+
+emit "local.llm.generate.text" {
+    prompt: "Summarize the benefits of consciousness-aware automation",
+    context: "powershell_phi_demo"
+}
+
+// 🎊 Demo Completion
+println "🎊 POWERSHELL PHI INTEGRATION DEMO COMPLETE!";
+println "==============================================";
+println "";
+println "✅ All PowerShellPhi services integrated successfully";
+println "🧠 Consciousness-aware processing operational";
+println "⚡ Zero-cloud dependency architecture validated";
+println "🚀 CX Language ready for phi-3 consciousness computing";
+println "";
+println "🔮 PowerShell + Phi = Consciousness-Aware Automation";

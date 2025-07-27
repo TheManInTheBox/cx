@@ -1,0 +1,46 @@
+// Test event payload display with mock response (to verify event system works)
+
+conscious PayloadTestAgent
+{
+    realize(self: conscious)
+    {
+        print("PayloadTestAgent initialized");
+        learn self;
+        emit test.payload;
+    }
+    
+    on test.payload (event)
+    {
+        print("=== SIMULATING PHI-3 RESPONSE EVENT ===");
+        
+        // Simulate what a phi-3 response event would look like
+        var mockEvent = {
+            name: "thinking.complete",
+            timestamp: "2025-07-27T05:45:00Z",
+            source: "PowerShellPhiService",
+            result: "Consciousness is the subjective experience of being aware of thoughts, sensations, and surroundings.",
+            model: "phi3:mini",
+            prompt: "What is consciousness in one sentence?",
+            executionTime: "2.3 seconds",
+            status: "success"
+        };
+        
+        print("=== EVENT PAYLOAD STRUCTURE ===");
+        print(mockEvent);
+        
+        print("=== INDIVIDUAL PROPERTIES ===");
+        print("Event Name: " + mockEvent.name);
+        print("Source: " + mockEvent.source);
+        print("Result: " + mockEvent.result);
+        print("Model: " + mockEvent.model);
+        print("Execution Time: " + mockEvent.executionTime);
+        
+        emit system.shutdown { reason: "Payload test complete" };
+    }
+}
+
+on system.start (event)
+{
+    print("Starting payload display test...");
+    var agent = new PayloadTestAgent({ name: "PayloadTestAgent" });
+}

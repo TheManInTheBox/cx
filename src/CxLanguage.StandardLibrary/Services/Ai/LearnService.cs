@@ -2,25 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.Services.VectorStore;
+using CxLanguage.LocalLLM;
 using Microsoft.Extensions.Logging;
 
 namespace CxLanguage.StandardLibrary.Services.Ai
 {
     /// <summary>
-    /// Provides the 'learn' cognitive service for the CX Language using local LLM.
-    /// Enables AI-driven learning, knowledge storage, and vector database ingestion.
+    /// Provides the 'learn' cognitive service for the CX Language using GpuLocalLLMService.
+    /// GPU-FIRST consciousness learning with CUDA acceleration and zero-cloud dependency.
     /// </summary>
     public class LearnService : IDisposable
     {
         private readonly ICxEventBus _eventBus;
         private readonly ILogger<LearnService> _logger;
-        private readonly ILocalLLMService _localLLMService;
+        private readonly CxLanguage.LocalLLM.ILocalLLMService _localLLMService;
         private readonly IVectorStoreService _vectorStore;
         private readonly Random _random = new();
 
-        public LearnService(ICxEventBus eventBus, ILogger<LearnService> logger, ILocalLLMService localLLMService, IVectorStoreService vectorStore)
+        public LearnService(ICxEventBus eventBus, ILogger<LearnService> logger, CxLanguage.LocalLLM.ILocalLLMService localLLMService, IVectorStoreService vectorStore)
         {
             _eventBus = eventBus;
             _logger = logger;
@@ -28,10 +29,10 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _vectorStore = vectorStore;
 
             _eventBus.Subscribe("ai.learn.request", OnLearnRequest);
-            _logger.LogInformation("✅ LearnService (Local LLM) initialized and subscribed to 'ai.learn.request'");
+            _logger.LogInformation("✅ LearnService (GPU-CUDA) initialized and subscribed to 'ai.learn.request'");
         }
 
-        private void OnLearnRequest(CxEvent cxEvent)
+        private Task OnLearnRequest(CxEventPayload cxEvent)
         {
             _logger.LogInformation("🧠 Received ai.learn.request. Offloading to async task for local LLM learning processing.");
             // Fire and forget with error handling
@@ -48,13 +49,13 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             });
         }
 
-        private async Task ProcessLearnRequestAsync(CxEvent cxEvent)
+        private async Task ProcessLearnRequestAsync(CxEventPayload cxEvent)
         {
             try
             {
                 _logger.LogInformation("🧠 Processing learn request with vector database storage");
 
-                var payload = cxEvent.payload as Dictionary<string, object>;
+                var payload = cxEvent.Data as Dictionary<string, object>;
                 if (payload == null)
                 {
                     _logger.LogWarning("⚠️ No payload in learn request");
@@ -100,7 +101,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                         if (handler is string handlerName)
                         {
                             _logger.LogInformation($"🔗 Emitting handler event: {handlerName}");
-                            _eventBus.Emit(handlerName, new Dictionary<string, object>
+                            _eventBus.EmitAsync(handlerName, new Dictionary<string, object>
                             {
                                 ["data"] = data ?? string.Empty,
                                 ["category"] = category ?? "general",
@@ -117,7 +118,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                 else
                 {
                     // Default handler
-                    _eventBus.Emit("learning.complete", new Dictionary<string, object>
+                    _eventBus.EmitAsync("learning.complete", new Dictionary<string, object>
                     {
                         ["data"] = data ?? string.Empty,
                         ["category"] = category ?? "general",
@@ -135,7 +136,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                 _logger.LogError(ex, "❌ Error processing learn request");
                 
                 // Emit error event
-                _eventBus.Emit("learning.error", new Dictionary<string, object>
+                _eventBus.EmitAsync("learning.error", new Dictionary<string, object>
                 {
                     ["error"] = ex.Message,
                     ["timestamp"] = DateTime.UtcNow,

@@ -11,6 +11,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
+using CxLanguage.Core.Events;
 
 namespace CxLanguage.Runtime.ParallelHandlers
 {
@@ -123,7 +124,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 // Emit performance achievement event
                 if (performanceImprovement >= 2.0) // 200%+ improvement achieved
                 {
-                    _eventBus.Emit("parallel.performance.achievement", new Dictionary<string, object?>
+                    _ = _eventBus.EmitAsync("parallel.performance.achievement", new Dictionary<string, object?>
                     {
                         ["executionId"] = executionId,
                         ["improvement"] = performanceImprovement,
@@ -142,7 +143,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                     executionId, stopwatch.ElapsedMilliseconds);
                 
                 // Emit failure event for monitoring
-                _eventBus.Emit("parallel.execution.failed", new
+                _ = _eventBus.EmitAsync("parallel.execution.failed", new
                 {
                     executionId,
                     error = ex.Message,
@@ -185,18 +186,18 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 var resultEventName = $"{handlerEventName}.result.{parameterName}";
                 
                 // Register temporary result handler
-                var resultHandler = new Func<object, Task>(async payload =>
+                CxEventHandler resultHandler = (payload) =>
                 {
-                    resultTaskCompletionSource.SetResult(payload);
-                    await Task.CompletedTask;
-                });
+                    resultTaskCompletionSource.TrySetResult(payload.Data ?? new object());
+                    return Task.CompletedTask;
+                };
                 
                 _eventBus.Subscribe(resultEventName, resultHandler);
                 
                 try
                 {
                     // Emit the handler event
-                    _eventBus.Emit(handlerEventName, enhancedPayload);
+                    await _eventBus.EmitAsync(handlerEventName, enhancedPayload);
                     
                     // Wait for result with timeout (handler should complete within reasonable time)
                     var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
@@ -230,8 +231,8 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 }
                 finally
                 {
-                    // Clean up temporary result handler - simplified for current interface
-                    // _eventBus.UnregisterHandler(resultEventName, resultHandler);
+                    // Clean up temporary result handler
+                    _eventBus.Unsubscribe(resultEventName, resultHandler);
                 }
             }
             catch (Exception ex)

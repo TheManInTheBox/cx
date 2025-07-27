@@ -184,10 +184,10 @@ public class BiologicalNeuralProcessor
     /// </summary>
     private void RegisterNeuralEventHandlers()
     {
-        _eventBus.Subscribe("neural.signal", async payload => await OnNeuralSignal(payload as CxEvent));
-        _eventBus.Subscribe("pathway.activate", async payload => await OnPathwayActivation(payload as CxEvent));
-        _eventBus.Subscribe("synaptic.event", async payload => await OnSynapticEvent(payload as CxEvent));
-        _eventBus.Subscribe("consciousness.activity.detected", async payload => await OnConsciousnessActivity(payload as CxEvent));
+        _eventBus.Subscribe("neural.signal", async payload => await OnNeuralSignal(ConvertPayloadToCxEvent(payload)));
+        _eventBus.Subscribe("pathway.activate", async payload => await OnPathwayActivation(ConvertPayloadToCxEvent(payload)));
+        _eventBus.Subscribe("synaptic.event", async payload => await OnSynapticEvent(ConvertPayloadToCxEvent(payload)));
+        _eventBus.Subscribe("consciousness.activity.detected", async payload => await OnConsciousnessActivity(ConvertPayloadToCxEvent(payload)));
         
         _logger.LogInformation("🧬 Neural Event Handlers: Registered for biological processing");
     }
@@ -558,6 +558,34 @@ public class BiologicalNeuralProcessor
                 synapse.LastModified = DateTime.UtcNow;
             }
         }
+    }
+    
+    /// <summary>
+    /// Convert payload to legacy CxEvent type
+    /// </summary>
+    private CxEvent ConvertPayloadToCxEvent(CxEventPayload payload)
+    {
+        var cxEvent = new CxEvent
+        {
+            name = payload.EventName,
+            timestamp = payload.Timestamp
+        };
+
+        if (payload.Data is Dictionary<string, object> data)
+        {
+            cxEvent.payload = data;
+        }
+        else if (payload.Data != null)
+        {
+            // Fallback for non-dictionary payloads
+            cxEvent.payload = new Dictionary<string, object> { { "data", payload.Data } };
+        }
+        else
+        {
+            cxEvent.payload = new Dictionary<string, object>();
+        }
+
+        return cxEvent;
     }
     
     /// <summary>

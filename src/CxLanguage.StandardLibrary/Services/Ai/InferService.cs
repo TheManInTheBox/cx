@@ -2,25 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.Services.VectorStore;
+using CxLanguage.LocalLLM;
 using Microsoft.Extensions.Logging;
 
 namespace CxLanguage.StandardLibrary.Services.Ai
 {
     /// <summary>
-    /// Provides the 'infer' cognitive service for the CX Language using local LLM.
-    /// Enables AI-driven inference, deduction, and pattern recognition capabilities.
+    /// Provides the 'infer' cognitive service for the CX Language using GpuLocalLLMService.
+    /// GPU-FIRST consciousness inference with CUDA acceleration and zero-cloud dependency.
     /// </summary>
     public class InferService : IDisposable
     {
         private readonly ICxEventBus _eventBus;
         private readonly ILogger<InferService> _logger;
-        private readonly ILocalLLMService _localLLMService;
+        private readonly CxLanguage.LocalLLM.ILocalLLMService _localLLMService;
         private readonly IVectorStoreService _vectorStore;
         private readonly Random _random = new();
 
-        public InferService(ICxEventBus eventBus, ILogger<InferService> logger, ILocalLLMService localLLMService, IVectorStoreService vectorStore)
+        public InferService(ICxEventBus eventBus, ILogger<InferService> logger, CxLanguage.LocalLLM.ILocalLLMService localLLMService, IVectorStoreService vectorStore)
         {
             _eventBus = eventBus;
             _logger = logger;
@@ -28,10 +29,10 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _vectorStore = vectorStore;
 
             _eventBus.Subscribe("ai.infer.request", OnInferRequest);
-            _logger.LogInformation("✅ InferService (Local LLM) initialized and subscribed to 'ai.infer.request'");
+            _logger.LogInformation("✅ InferService (GPU-CUDA) initialized and subscribed to 'ai.infer.request'");
         }
 
-        private void OnInferRequest(CxEvent cxEvent)
+        private Task OnInferRequest(CxEventPayload cxEvent)
         {
             _logger.LogInformation("🔍 Received ai.infer.request. Offloading to async task for local LLM inference processing.");
             // Fire and forget with error handling
@@ -48,9 +49,9 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             });
         }
 
-        private async Task ProcessInferRequestAsync(CxEvent cxEvent)
+        private async Task ProcessInferRequestAsync(CxEventPayload cxEvent)
         {
-            _logger.LogInformation("🔍 Processing infer request with Local LLM...");
+            _logger.LogInformation("🔍 Processing infer request with GPU-CUDA Local LLM...");
 
             string? context = null;
             Dictionary<string, object>? data = null;
@@ -61,7 +62,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             List<object>? handlers = null;
             string? responseName = "inference.complete"; // Default handler name
 
-            if (cxEvent.payload is Dictionary<string, object> payload)
+            if (cxEvent.Data is Dictionary<string, object> payload)
             {
                 if (payload.TryGetValue("context", out var contextObj))
                 {

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
-using CxLanguage.Runtime;
+using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.Services;
 using System;
 using System.Threading.Tasks;
@@ -49,7 +49,7 @@ public class AzureRealtimeEventBridge
         }
     }
 
-    private void OnRealtimeConnect(CxEvent cxEvent)
+    private Task OnRealtimeConnect(CxEventPayload cxEvent)
     {
         try
         {
@@ -80,7 +80,7 @@ public class AzureRealtimeEventBridge
         }
     }
 
-    private void OnRealtimeSessionCreate(CxEvent cxEvent)
+    private Task OnRealtimeSessionCreate(CxEventPayload cxEvent)
     {
         try
         {
@@ -113,7 +113,7 @@ public class AzureRealtimeEventBridge
         }
     }
 
-    private void OnRealtimeTextSend(CxEvent cxEvent)
+    private Task OnRealtimeTextSend(CxEventPayload cxEvent)
     {
         try
         {
@@ -161,7 +161,7 @@ public class AzureRealtimeEventBridge
         }
     }
 
-    private void OnRealtimeAudioSend(CxEvent cxEvent)
+    private Task OnRealtimeAudioSend(CxEventPayload cxEvent)
     {
         try
         {
@@ -216,11 +216,11 @@ public class AzureRealtimeEventBridge
         return audioData;
     }
 
-    private T? GetPropertyValue<T>(CxEvent cxEvent, string propertyName, T? defaultValue = default)
+    private T? GetPropertyValue<T>(CxEventPayload cxEvent, string propertyName, T? defaultValue = default)
     {
         try
         {
-            if (cxEvent.payload != null && cxEvent.payload is System.Collections.Generic.Dictionary<string, object> dict)
+            if (cxEvent.Data != null && cxEvent.Data is System.Collections.Generic.Dictionary<string, object> dict)
             {
                 if (dict.TryGetValue(propertyName, out var value))
                 {
