@@ -77,7 +77,7 @@ public class LocalLLMEventBridge
                     {
                         var success = await _localLLMService.LoadModelAsync(path);
                         
-                        _eventBus.EmitAsync("local.llm.model.load.result", new Dictionary<string, object>
+                        _ = _eventBus.EmitAsync("local.llm.model.load.result", new Dictionary<string, object>
                         {
                             ["modelPath"] = path,
                             ["success"] = success,
@@ -97,7 +97,7 @@ public class LocalLLMEventBridge
                     {
                         _logger.LogError(ex, "❌ Error loading model via GPU Local LLM: {ModelPath}", path);
                         
-                        _eventBus.EmitAsync("local.llm.model.load.error", new Dictionary<string, object>
+                        _ = _eventBus.EmitAsync("local.llm.model.load.error", new Dictionary<string, object>
                         {
                             ["modelPath"] = path,
                             ["error"] = ex.Message,
@@ -133,7 +133,7 @@ public class LocalLLMEventBridge
                     {
                         var response = await _localLLMService.GenerateAsync(promptStr);
                         
-                        _eventBus.EmitAsync("local.llm.text.generated", new Dictionary<string, object>
+                        _ = _eventBus.EmitAsync("local.llm.text.generated", new Dictionary<string, object>
                         {
                             ["prompt"] = promptStr,
                             ["response"] = response,
@@ -146,7 +146,7 @@ public class LocalLLMEventBridge
                     {
                         _logger.LogError(ex, "❌ Error generating text via GPU Local LLM");
                         
-                        _eventBus.EmitAsync("local.llm.text.generation.error", new Dictionary<string, object>
+                        _ = _eventBus.EmitAsync("local.llm.text.generation.error", new Dictionary<string, object>
                         {
                             ["prompt"] = promptStr,
                             ["error"] = ex.Message,
@@ -180,7 +180,7 @@ public class LocalLLMEventBridge
                 {
                     try
                     {
-                        _eventBus.EmitAsync("local.llm.stream.started", new Dictionary<string, object>
+                        _ = _eventBus.EmitAsync("local.llm.stream.started", new Dictionary<string, object>
                         {
                             ["prompt"] = promptStr,
                             ["consciousness"] = "streamStarted"
@@ -188,7 +188,7 @@ public class LocalLLMEventBridge
                         
                         await foreach (var token in _localLLMService.StreamAsync(promptStr))
                         {
-                            _eventBus.EmitAsync("local.llm.stream.token.received", new Dictionary<string, object>
+                            _ = _eventBus.EmitAsync("local.llm.stream.token.received", new Dictionary<string, object>
                             {
                                 ["token"] = token,
                                 ["prompt"] = promptStr,
@@ -196,7 +196,7 @@ public class LocalLLMEventBridge
                             });
                         }
                         
-                        _eventBus.EmitAsync("local.llm.stream.completed", new Dictionary<string, object>
+                        _ = _eventBus.EmitAsync("local.llm.stream.completed", new Dictionary<string, object>
                         {
                             ["prompt"] = promptStr,
                             ["consciousness"] = "streamCompleted"
@@ -208,7 +208,7 @@ public class LocalLLMEventBridge
                     {
                         _logger.LogError(ex, "❌ Error streaming tokens via GPU Local LLM");
                         
-                        _eventBus.EmitAsync("local.llm.stream.error", new Dictionary<string, object>
+                        _ = _eventBus.EmitAsync("local.llm.stream.error", new Dictionary<string, object>
                         {
                             ["prompt"] = promptStr,
                             ["error"] = ex.Message,
@@ -240,7 +240,7 @@ public class LocalLLMEventBridge
                 {
                     await _localLLMService.UnloadModelAsync();
                     
-                    _eventBus.EmitAsync("local.llm.model.unloaded", new Dictionary<string, object>
+                    _ = _eventBus.EmitAsync("local.llm.model.unloaded", new Dictionary<string, object>
                     {
                         ["consciousness"] = "modelUnloaded",
                         ["success"] = true
@@ -251,7 +251,7 @@ public class LocalLLMEventBridge
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "❌ Error unloading model via GPU Local LLM");
-                    _eventBus.EmitAsync("local.llm.model.unloaded", new Dictionary<string, object>
+                    _ = _eventBus.EmitAsync("local.llm.model.unloaded", new Dictionary<string, object>
                     {
                         ["consciousness"] = "modelUnloaded",
                         ["success"] = false,
@@ -279,7 +279,7 @@ public class LocalLLMEventBridge
                     var isLoaded = _localLLMService.IsModelLoaded;
                     var modelInfo = _localLLMService.ModelInfo;
                     
-                    _eventBus.EmitAsync("local.llm.status.result", new Dictionary<string, object>
+                    _ = _eventBus.EmitAsync("local.llm.status.result", new Dictionary<string, object>
                     {
                         ["isModelLoaded"] = isLoaded,
                         ["modelName"] = modelInfo?.Name ?? "none",
@@ -294,7 +294,7 @@ public class LocalLLMEventBridge
                 {
                     _logger.LogError(ex, "❌ Error checking GPU Local LLM status");
                     
-                    _eventBus.EmitAsync("local.llm.status.error", new Dictionary<string, object>
+                    _ = _eventBus.EmitAsync("local.llm.status.error", new Dictionary<string, object>
                     {
                         ["error"] = ex.Message,
                         ["consciousness"] = "statusCheckError"
@@ -317,7 +317,7 @@ public class LocalLLMEventBridge
             var modelInfo = _localLLMService.ModelInfo;
             var isLoaded = _localLLMService.IsModelLoaded;
             
-            _eventBus.EmitAsync("local.llm.model.info.result", new Dictionary<string, object>
+            _ = _eventBus.EmitAsync("local.llm.model.info.result", new Dictionary<string, object>
             {
                 ["isModelLoaded"] = isLoaded,
                 ["modelName"] = modelInfo?.Name ?? "none",
@@ -337,3 +337,4 @@ public class LocalLLMEventBridge
         }
     }
 }
+
