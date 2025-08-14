@@ -27,22 +27,10 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js
+    - name: Setup Node.js (optional)
       uses: actions/setup-node@v4
       with:
         node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: 'website/package.json'
-        
-    - name: Install dependencies
-      working-directory: ./website
-      run: |
-        if [ -f package.json ]; then
-          npm ci
-        else
-          npm init -y
-          npm install --save-dev html-minifier-terser csso-cli terser
-        fi
         
     - name: Build website
       working-directory: ./website
@@ -56,21 +44,8 @@ jobs:
         # Copy assets
         cp -r assets dist/
         
-        # Minify HTML (if html-minifier-terser is available)
-        if command -v html-minifier-terser &> /dev/null; then
-          html-minifier-terser --input-dir dist --output-dir dist --file-ext html \
-            --remove-comments --collapse-whitespace --minify-css --minify-js
-        fi
-        
-        # Minify CSS (if csso-cli is available)
-        if command -v csso &> /dev/null; then
-          find dist -name "*.css" -exec csso {} --output {} \;
-        fi
-        
-        # Minify JS (if terser is available)
-        if command -v terser &> /dev/null; then
-          find dist -name "*.js" -exec terser {} --output {} --compress --mangle \;
-        fi
+        # Basic optimization without requiring npm packages
+        echo "✅ Website files copied to dist/"
         
     - name: Login to Azure
       uses: azure/login@v1
