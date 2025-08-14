@@ -17,6 +17,7 @@ env:
   AZURE_STORAGE_ACCOUNT: 'agilecloudwebsite'
   AZURE_CDN_PROFILE: 'agilecloud-cdn'
   AZURE_CDN_ENDPOINT: 'agilecloud-website'
+  CUSTOM_DOMAIN: 'agilecloud.ai'
 
 jobs:
   build-and-deploy:
@@ -151,16 +152,16 @@ jobs:
           --content-paths "/*" \
           --subscription $AZURE_SUBSCRIPTION_ID || true
           
-    - name: Configure Custom Domain (Optional)
-      if: ${{ vars.CUSTOM_DOMAIN }}
+    - name: Configure Custom Domain
+      if: env.CUSTOM_DOMAIN
       run: |
-        # Add custom domain if CUSTOM_DOMAIN variable is set
+        # Add custom domain if CUSTOM_DOMAIN is set
         az cdn custom-domain create \
           --endpoint-name $AZURE_CDN_ENDPOINT \
           --name agilecloud-custom-domain \
           --profile-name $AZURE_CDN_PROFILE \
           --resource-group $AZURE_RESOURCE_GROUP \
-          --hostname ${{ vars.CUSTOM_DOMAIN }} \
+          --hostname $CUSTOM_DOMAIN \
           --subscription $AZURE_SUBSCRIPTION_ID || true
           
     - name: Get Website URLs
