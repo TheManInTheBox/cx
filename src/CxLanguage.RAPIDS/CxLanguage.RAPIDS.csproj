@@ -1,0 +1,89 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyTitle>CX Language NVIDIA RAPIDS Integration</AssemblyTitle>
+    <AssemblyDescription>NVIDIA RAPIDS GPU acceleration for CX Language consciousness computing</AssemblyDescription>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Core .NET Dependencies -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
+    
+    <!-- NVIDIA RAPIDS Dependencies -->
+    <!-- Note: These are conceptual - actual .NET RAPIDS packages may vary -->
+    <PackageReference Include="CudaSharp" Version="12.3.0" Condition="'$(OS)' == 'Windows_NT'" />
+    <PackageReference Include="NVIDIA.ML.NET" Version="12.3.0" Condition="'$(OS)' == 'Windows_NT'" />
+    
+    <!-- GPU Computing Support -->
+    <PackageReference Include="TorchSharp" Version="0.102.5" />
+    <PackageReference Include="System.Numerics.Tensors" Version="9.0.0" />
+    
+    <!-- High Performance Collections -->
+    <PackageReference Include="System.Threading.Channels" Version="9.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="9.0.0" />
+    
+    <!-- JSON Serialization -->
+    <PackageReference Include="System.Text.Json" Version="9.0.0" />
+    
+    <!-- Performance Monitoring -->
+    <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="9.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Project References -->
+    <ProjectReference Include="..\CxLanguage.Core\CxLanguage.Core.csproj" />
+    <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Native Libraries (conceptual) -->
+    <None Include="native\**" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+    <DefineConstants>DEBUG;TRACE;RAPIDS_DEBUG</DefineConstants>
+    <DebugType>full</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DefineConstants>TRACE;RAPIDS_RELEASE</DefineConstants>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+  </PropertyGroup>
+
+  <!-- CUDA and RAPIDS Environment Variables -->
+  <PropertyGroup>
+    <CudaPath Condition="'$(CudaPath)' == ''">$(CUDA_PATH)</CudaPath>
+    <RapidsPath Condition="'$(RapidsPath)' == ''">$(RAPIDS_HOME)</RapidsPath>
+  </PropertyGroup>
+
+  <!-- Platform-specific configurations -->
+  <PropertyGroup Condition="'$(OS)' == 'Windows_NT'">
+    <DefineConstants>$(DefineConstants);WINDOWS</DefineConstants>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(OS)' == 'Unix'">
+    <DefineConstants>$(DefineConstants);LINUX</DefineConstants>
+  </PropertyGroup>
+
+  <!-- RAPIDS Installation Validation -->
+  <Target Name="ValidateRapidsInstallation" BeforeTargets="Build">
+    <Message Text="🔍 Validating RAPIDS environment..." Importance="high" />
+    <Message Text="   CUDA_PATH: $(CUDA_PATH)" Importance="normal" />
+    <Message Text="   RAPIDS_HOME: $(RAPIDS_HOME)" Importance="normal" />
+    <Warning Text="⚠️ CUDA_PATH not set. RAPIDS functionality may be limited." Condition="'$(CUDA_PATH)' == ''" />
+    <Message Text="✅ RAPIDS environment validation complete" Importance="high" />
+  </Target>
+
+</Project>

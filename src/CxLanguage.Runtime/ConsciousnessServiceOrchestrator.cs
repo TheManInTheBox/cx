@@ -166,11 +166,11 @@ namespace CxLanguage.Runtime
                 await StartConsciousnessCoordination();
                 
                 _logger.LogInformation("✅ Consciousness Service Orchestrator: All services operational");
-                await _eventBus.EmitAsync("consciousness.orchestrator.ready", new
+                await _eventBus.EmitAsync("consciousness.orchestrator.ready", new Dictionary<string, object>
                 {
-                    TotalServices = _registry.GetTotalServiceCount(),
-                    HealthyServices = _registry.GetHealthyServiceCount(),
-                    Timestamp = DateTime.UtcNow
+                    ["TotalServices"] = _registry.GetTotalServiceCount(),
+                    ["HealthyServices"] = _registry.GetHealthyServiceCount(),
+                    ["Timestamp"] = DateTime.UtcNow
                 });
             }
             catch (Exception ex)
@@ -456,16 +456,16 @@ namespace CxLanguage.Runtime
             }
             
             // Register for service lifecycle events
-            await _eventBus.EmitAsync("consciousness.coordination.start", new
+            await _eventBus.EmitAsync("consciousness.coordination.start", new Dictionary<string, object>
             {
-                Services = _registry.GetAllServices().Select(s => new
+                ["Services"] = _registry.GetAllServices().Select(s => new Dictionary<string, object>
                 {
-                    s.Name,
-                    s.Type,
-                    s.Status,
-                    s.RegisteredAt
-                }),
-                Timestamp = DateTime.UtcNow
+                    ["Name"] = s.Name,
+                    ["Type"] = s.Type,
+                    ["Status"] = s.Status,
+                    ["RegisteredAt"] = s.RegisteredAt
+                }).ToList(),
+                ["Timestamp"] = DateTime.UtcNow
             });
             
             _logger.LogInformation("✅ Consciousness coordination started");
@@ -513,12 +513,12 @@ namespace CxLanguage.Runtime
             }
             
             // Emit health status
-            await _eventBus.EmitAsync("consciousness.health.status", new
+            await _eventBus.EmitAsync("consciousness.health.status", new Dictionary<string, object>
             {
-                TotalServices = services.Count(),
-                HealthyServices = healthyCount,
-                HealthPercentage = services.Any() ? (double)healthyCount / services.Count() * 100 : 0,
-                Timestamp = DateTime.UtcNow
+                ["TotalServices"] = services.Count(),
+                ["HealthyServices"] = healthyCount,
+                ["HealthPercentage"] = services.Any() ? (double)healthyCount / services.Count() * 100 : 0,
+                ["Timestamp"] = DateTime.UtcNow
             });
         }
         
@@ -531,10 +531,10 @@ namespace CxLanguage.Runtime
             
             try
             {
-                await _eventBus.EmitAsync("consciousness.orchestrator.stopping", new
+                await _eventBus.EmitAsync("consciousness.orchestrator.stopping", new Dictionary<string, object>
                 {
-                    TotalServices = _registry.GetTotalServiceCount(),
-                    Timestamp = DateTime.UtcNow
+                    ["TotalServices"] = _registry.GetTotalServiceCount(),
+                    ["Timestamp"] = DateTime.UtcNow
                 });
                 
                 _logger.LogInformation("✅ Consciousness Service Orchestrator stopped gracefully");

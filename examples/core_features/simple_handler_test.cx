@@ -1,0 +1,41 @@
+// 🧪 SIMPLE HANDLER TEST
+// Test direct event emission to validate handler registration
+
+conscious SimpleValidator
+{
+    realize()
+    {
+        print("🧪 SIMPLE HANDLER TEST");
+        print("=====================");
+        print("⚡ Testing direct event emission...");
+        
+        // Test direct event emission to verify handlers work
+        emit validation.one, { message: "Direct test 1" };
+        emit validation.two, { message: "Direct test 2" };
+        emit validation.three, { message: "Direct test 3" };
+        
+        print("📊 All events emitted successfully");
+    }
+
+    on validation.one (event)
+    {
+        print("✅ Handler One executed: " + event.message);
+    }
+
+    on validation.two (event)
+    {
+        print("✅ Handler Two executed: " + event.message);
+    }
+
+    on validation.three (event)
+    {
+        print("✅ Handler Three executed: " + event.message);
+        print("🎉 All handlers completed successfully!");
+    }
+}
+
+// Create and run validator
+new SimpleValidator();
+
+print("🔍 Handler test completed");
+print("Press any key to exit...");

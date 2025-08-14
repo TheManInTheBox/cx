@@ -1,0 +1,27 @@
+// Test print function with Dictionary objects
+conscious PrintTester
+{
+    realize(self: conscious)
+    {
+        learn self;
+        
+        print("🔍 PRINT TEST STARTING");
+        print("======================");
+        
+        // Create a simple dictionary for testing
+        var testDict = {
+            name: "Test",
+            value: 42,
+            active: true
+        };
+        
+        print("📝 Printing test dictionary:");
+        print(testDict);
+        
+        print("✅ Print test complete");
+    }
+}
+
+// Create and run the test
+var tester = new PrintTester({ });
+print("🧠 Print test completed");

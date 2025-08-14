@@ -14,39 +14,32 @@ namespace CxLanguage.Runtime
     /// </summary>
     public class CxEventBus : ICxEventBus
     {
-        private readonly ConcurrentDictionary<string, List<CxEventHandler>> _eventHandlers;
+        private readonly ConcurrentDictionary<string, List<Func<object?, string, IDictionary<string, object>?, Task<bool>>>> _eventHandlers;
         private readonly ILogger<CxEventBus> _logger;
 
         public CxEventBus(ILogger<CxEventBus> logger)
         {
-            _eventHandlers = new ConcurrentDictionary<string, List<CxEventHandler>>();
+            _eventHandlers = new ConcurrentDictionary<string, List<Func<object?, string, IDictionary<string, object>?, Task<bool>>>>();
             _logger = logger;
         }
 
         /// <summary>
         /// Emit an event with data payload
         /// </summary>
-        public async Task EmitAsync(string eventName, object payload)
+        public async Task<bool> EmitAsync(string eventName, IDictionary<string, object>? payload = null, object? sender = null)
         {
             _logger.LogDebug("Emitting event: {EventName}", eventName);
+            var processed = false;
 
             if (_eventHandlers.TryGetValue(eventName, out var handlers))
             {
-                var eventPayload = new CxEventPayload
-                {
-                    EventName = eventName,
-                    Data = payload,
-                    Timestamp = DateTime.UtcNow,
-                    Source = "CxEventBus"
-                };
-
-                var tasks = new List<Task>();
+                var tasks = new List<Task<bool>>();
                 
                 foreach (var handler in handlers.ToArray())
                 {
                     try
                     {
-                        tasks.Add(handler(eventPayload));
+                        tasks.Add(handler(sender, eventName, payload));
                     }
                     catch (Exception ex)
                     {
@@ -54,33 +47,59 @@ namespace CxLanguage.Runtime
                     }
                 }
                 
-                await Task.WhenAll(tasks);
+                var results = await Task.WhenAll(tasks);
+                processed = results.Any(r => r);
             }
+            return processed;
         }
 
         /// <summary>
         /// Subscribe to an event with a handler function
         /// </summary>
-        public void Subscribe(string eventName, CxEventHandler handler)
+        public bool Subscribe(string eventPattern, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler)
         {
-            var handlers = _eventHandlers.GetOrAdd(eventName, _ => new List<CxEventHandler>());
-            lock (handlers)
+            try
             {
-                handlers.Add(handler);
+                _eventHandlers.AddOrUpdate(eventPattern,
+                    new List<Func<object?, string, IDictionary<string, object>?, Task<bool>>> { handler },
+                    (key, existingHandlers) =>
+                    {
+                        existingHandlers.Add(handler);
+                        return existingHandlers;
+                    });
+                _logger.LogDebug("Subscribed to event pattern: {EventPattern}", eventPattern);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to subscribe to event pattern: {EventPattern}", eventPattern);
+                return false;
             }
         }
 
         /// <summary>
         /// Unsubscribe from an event
         /// </summary>
-        public void Unsubscribe(string eventName, CxEventHandler handler)
+        public bool Unsubscribe(string eventPattern, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler)
         {
-            if (_eventHandlers.TryGetValue(eventName, out var handlers))
+            try
             {
-                lock (handlers)
+                if (_eventHandlers.TryGetValue(eventPattern, out var handlers))
                 {
                     handlers.Remove(handler);
+                    if (handlers.Count == 0)
+                    {
+                        _eventHandlers.TryRemove(eventPattern, out _);
+                    }
+                    _logger.LogDebug("Unsubscribed from event pattern: {EventPattern}", eventPattern);
+                    return true;
                 }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to unsubscribe from event pattern: {EventPattern}", eventPattern);
+                return false;
             }
         }
 

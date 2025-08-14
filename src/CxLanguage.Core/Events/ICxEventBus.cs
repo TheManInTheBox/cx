@@ -5,17 +5,6 @@ using System.Threading.Tasks;
 namespace CxLanguage.Core.Events
 {
     /// <summary>
-    /// Event payload wrapper for CX event-driven architecture
-    /// </summary>
-    public class CxEventPayload
-    {
-        public string EventName { get; set; } = string.Empty;
-        public object? Data { get; set; }
-        public DateTime Timestamp { get; set; } = DateTime.UtcNow;
-        public string Source { get; set; } = "Unknown";
-    }
-
-    /// <summary>
     /// Event handler delegate for CX events
     /// </summary>
     public delegate Task CxEventHandler(CxEventPayload payload);
@@ -29,22 +18,23 @@ namespace CxLanguage.Core.Events
         /// Emit an event to the CX event system
         /// </summary>
         /// <param name="eventName">The event name (e.g., "realtime.session.started")</param>
-        /// <param name="payload">The event payload object</param>
-        Task EmitAsync(string eventName, object payload);
+        /// <param name="payload">The event payload dictionary</param>
+        /// <param name="sender">Optional sender object</param>
+        Task<bool> EmitAsync(string eventName, IDictionary<string, object>? payload = null, object? sender = null);
         
         /// <summary>
         /// Subscribe to an event in the CX event system
         /// </summary>
         /// <param name="eventName">The event name to subscribe to</param>
         /// <param name="handler">The handler function to call when the event is emitted</param>
-        void Subscribe(string eventName, CxEventHandler handler);
+        bool Subscribe(string eventName, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler);
         
         /// <summary>
         /// Unsubscribe from an event in the CX event system
         /// </summary>
         /// <param name="eventName">The event name to unsubscribe from</param>
         /// <param name="handler">The handler function to remove</param>
-        void Unsubscribe(string eventName, CxEventHandler handler);
+        bool Unsubscribe(string eventName, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler);
         
         /// <summary>
         /// Get statistics about the event bus

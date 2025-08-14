@@ -1,0 +1,11 @@
+// Simple emit test to check if InferService receives events
+// Direct event emission without conscious entity complexity
+
+emit ai.infer.request {
+    context: "Test inference", 
+    data: { test: "simple" },
+    handlers: [ "test.result" ]
+};
+
+print("✅ ai.infer.request event emitted directly");
+print("? Check logs for InferService processing activity");

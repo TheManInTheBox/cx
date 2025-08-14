@@ -29,7 +29,7 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
             _logger = logger;
             _eventBus = eventBus;
             _logger.LogInformation("🧠 Dr. Marcus 'MemoryLayer' Sterling's InMemoryVectorStoreService initialized.");
-            _eventBus.EmitAsync("vectorstore.initialized", new { service = nameof(InMemoryVectorStoreService) });
+            _eventBus.EmitAsync("vectorstore.initialized", new Dictionary<string, object> { ["service"] = nameof(InMemoryVectorStoreService) });
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
 
             _vectorStore[record.Id] = record;
             _logger.LogDebug("Vector record added with ID: {RecordId}", record.Id);
-            _eventBus.EmitAsync("vectorstore.record.added", new { record.Id, record.Content });
+            _eventBus.EmitAsync("vectorstore.record.added", new Dictionary<string, object> { ["Id"] = record.Id, ["Content"] = record.Content });
             
             return Task.CompletedTask;
         }
@@ -87,7 +87,7 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                 .Select(x => x.Record);
             
             _logger.LogInformation("Search completed. Found {ResultCount} results.", results.Count());
-            _eventBus.EmitAsync("vectorstore.search.complete", new { QueryVectorLength = queryVector.Length, ResultCount = results.Count() });
+            _eventBus.EmitAsync("vectorstore.search.complete", new Dictionary<string, object> { ["QueryVectorLength"] = queryVector.Length, ["ResultCount"] = results.Count() });
 
             return Task.FromResult(results);
         }

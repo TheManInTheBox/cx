@@ -281,13 +281,7 @@ public class EventBusService
     public async Task EmitAsync(string eventName, object? data = null, string source = "System", 
         EventBusScope? forcedScope = null, string? targetChannel = null, string? targetRole = null)
     {
-        var payload = new CxEventPayload
-        {
-            EventName = eventName,
-            Data = data,
-            Timestamp = DateTime.UtcNow,
-            Source = source
-        };
+        var payload = new CxEventPayload(eventName, data ?? new object());
 
         _logger?.LogDebug("Emitting event: {EventName} from {Source} with scope strategy", eventName, source);
 
@@ -391,14 +385,8 @@ public class EventBusService
     {
         try
         {
-            // Add agent context to payload
-            var contextualPayload = new CxEventPayload
-            {
-                EventName = payload.EventName,
-                Data = payload.Data,
-                Timestamp = payload.Timestamp,
-                Source = $"{payload.Source}→{subscription.AgentName}"
-            };
+            // Add agent context to payload - Note: Source property removed from CxEventPayload
+            var contextualPayload = new CxEventPayload(payload.EventName, payload.Data);
 
             await handler(contextualPayload);
         }

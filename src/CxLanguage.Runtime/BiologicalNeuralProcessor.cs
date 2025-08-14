@@ -184,10 +184,10 @@ public class BiologicalNeuralProcessor
     /// </summary>
     private void RegisterNeuralEventHandlers()
     {
-        _eventBus.Subscribe("neural.signal", async payload => await OnNeuralSignal(ConvertPayloadToCxEvent(payload)));
-        _eventBus.Subscribe("pathway.activate", async payload => await OnPathwayActivation(ConvertPayloadToCxEvent(payload)));
-        _eventBus.Subscribe("synaptic.event", async payload => await OnSynapticEvent(ConvertPayloadToCxEvent(payload)));
-        _eventBus.Subscribe("consciousness.activity.detected", async payload => await OnConsciousnessActivity(ConvertPayloadToCxEvent(payload)));
+        _eventBus.Subscribe("neural.signal", async (sender, eventName, payload) => { await OnNeuralSignal(ConvertDictToCxEvent(eventName, payload)); return true; });
+        _eventBus.Subscribe("pathway.activate", async (sender, eventName, payload) => { await OnPathwayActivation(ConvertDictToCxEvent(eventName, payload)); return true; });
+        _eventBus.Subscribe("synaptic.event", async (sender, eventName, payload) => { await OnSynapticEvent(ConvertDictToCxEvent(eventName, payload)); return true; });
+        _eventBus.Subscribe("consciousness.activity.detected", async (sender, eventName, payload) => { await OnConsciousnessActivity(ConvertDictToCxEvent(eventName, payload)); return true; });
         
         _logger.LogInformation("🧬 Neural Event Handlers: Registered for biological processing");
     }
@@ -317,14 +317,14 @@ public class BiologicalNeuralProcessor
         }
         
         // Emit neural activity event
-        await _eventBus.EmitAsync("neural.activity.detected", new
+        await _eventBus.EmitAsync("neural.activity.detected", new Dictionary<string, object>
         {
-            pathway_id = pathway.PathwayId,
-            pathway_type = pathway.Type,
-            activity_level = pathway.ActivityLevel,
-            strength = pathway.Strength,
-            timestamp = timestamp,
-            signal = signal
+            { "pathway_id", pathway.PathwayId },
+            { "pathway_type", pathway.Type },
+            { "activity_level", pathway.ActivityLevel },
+            { "strength", pathway.Strength },
+            { "timestamp", timestamp },
+            { "signal", signal ?? (object)"null" }
         });
     }
     
@@ -348,13 +348,13 @@ public class BiologicalNeuralProcessor
         await ApplySynapticPlasticity(synapse, plasticityType, timestamp);
         
         // Emit synaptic activity
-        await _eventBus.EmitAsync("synaptic.activity.detected", new
+        await _eventBus.EmitAsync("synaptic.activity.detected", new Dictionary<string, object>
         {
-            synapse_id = synapse.SynapseId,
-            plasticity_type = plasticityType.ToString(),
-            weight = synapse.Weight,
-            activity_count = synapse.ActivityCount,
-            timestamp = timestamp
+            { "synapse_id", synapse.SynapseId },
+            { "plasticity_type", plasticityType.ToString() },
+            { "weight", synapse.Weight },
+            { "activity_count", synapse.ActivityCount },
+            { "timestamp", timestamp }
         });
     }
     
@@ -432,14 +432,14 @@ public class BiologicalNeuralProcessor
             }
             
             // Emit plasticity event
-            await _eventBus.EmitAsync("neural.plasticity.applied", new
+            await _eventBus.EmitAsync("neural.plasticity.applied", new Dictionary<string, object>
             {
-                synapse_id = synapse.SynapseId,
-                plasticity_type = plasticityType.ToString(),
-                weight_change = weightChange,
-                new_weight = synapse.Weight,
-                duration_ms = duration,
-                timestamp = timestamp
+                { "synapse_id", synapse.SynapseId },
+                { "plasticity_type", plasticityType.ToString() },
+                { "weight_change", weightChange },
+                { "new_weight", synapse.Weight },
+                { "duration_ms", duration },
+                { "timestamp", timestamp }
             });
             
             _logger.LogDebug("🧬 Synaptic Plasticity: {Type} - Weight: {Weight:F3} (Δ{Change:F3})", 
@@ -526,13 +526,13 @@ public class BiologicalNeuralProcessor
             
             // Emit homeostasis event
             var avgActivity = _pathways.Values.Average(p => p.ActivityLevel);
-            await _eventBus.EmitAsync("neural.homeostasis.regulated", new
+            await _eventBus.EmitAsync("neural.homeostasis.regulated", new Dictionary<string, object>
             {
-                network_activity = avgActivity,
-                target_activity = HOMEOSTASIS_TARGET,
-                pathway_count = _pathways.Count,
-                synapse_count = _synapses.Count,
-                timestamp = DateTime.UtcNow
+                { "network_activity", avgActivity },
+                { "target_activity", HOMEOSTASIS_TARGET },
+                { "pathway_count", _pathways.Count },
+                { "synapse_count", _synapses.Count },
+                { "timestamp", DateTime.UtcNow }
             });
             
             _logger.LogDebug("🌐 Homeostasis: Network activity: {Activity:F3} (target: {Target:F2})", 
@@ -558,6 +558,29 @@ public class BiologicalNeuralProcessor
                 synapse.LastModified = DateTime.UtcNow;
             }
         }
+    }
+    
+    /// <summary>
+    /// Convert dictionary payload to CxEvent type for new event bus format
+    /// </summary>
+    private CxEvent ConvertDictToCxEvent(string eventName, IDictionary<string, object>? payload)
+    {
+        var cxEvent = new CxEvent
+        {
+            name = eventName,
+            timestamp = DateTime.UtcNow
+        };
+
+        if (payload != null)
+        {
+            cxEvent.payload = new Dictionary<string, object>(payload);
+        }
+        else
+        {
+            cxEvent.payload = new Dictionary<string, object>();
+        }
+
+        return cxEvent;
     }
     
     /// <summary>

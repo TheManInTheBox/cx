@@ -376,6 +376,27 @@ namespace CxLanguage.Runtime
         /// </summary>
         public static void EmitEvent(string eventName, object? data = null, string source = "CxScript")
         {
+            // Try to use registered ICxEventBus service first
+            var eventBus = GetService("ICxEventBus") as CxLanguage.Core.Events.ICxEventBus;
+            if (eventBus != null)
+            {
+                try
+                {
+                    // Convert data to dictionary for ICxEventBus
+                    var payload = data as IDictionary<string, object> ?? 
+                                  ConvertToEventData(data).ToDictionary(kvp => kvp.Key, kvp => kvp.Value ?? new object());
+                    
+                    // Emit through DI-managed event bus (async fire-and-forget)
+                    _ = Task.Run(async () => await eventBus.EmitAsync(eventName, payload, source));
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Failed to emit event through ICxEventBus: {ex.Message}");
+                }
+            }
+            
+            // Fallback to UnifiedEventBusRegistry
             UnifiedEventBusRegistry.Instance.Emit(eventName, data, source);
         }
 
@@ -395,13 +416,7 @@ namespace CxLanguage.Runtime
             // Wrap the CxEventHandler to match the expected EventHandler delegate
             EventHandler unifiedHandler = (payload) =>
             {
-                var cxPayload = new CxEventPayload
-                {
-                    EventName = payload.EventName,
-                    Data = payload.Data,
-                    Timestamp = payload.Timestamp,
-                    Source = payload.Source
-                };
+                var cxPayload = new CxEventPayload(payload.EventName, payload.Data ?? new object());
                 return handler(cxPayload);
             };
 
@@ -614,6 +629,51 @@ namespace CxLanguage.Runtime
             {
                 return;
             }
+
+            // Try to use registered ICxEventBus service first (matches EmitEvent behavior)
+            var eventBus = GetService("ICxEventBus") as CxLanguage.Core.Events.ICxEventBus;
+            if (eventBus != null)
+            {
+                try
+                {
+                    // Create handler that matches ICxEventBus signature
+                    Func<object?, string, IDictionary<string, object>?, Task<bool>> asyncHandler = async (sender, eventNameReceived, payload) =>
+                    {
+                        try
+                        {
+                            var cxEvent = new CxEvent
+                            {
+                                name = eventNameReceived,
+                                payload = payload ?? new Dictionary<string, object>(),
+                                timestamp = DateTime.UtcNow
+                            };
+                            
+                            var result = method.Invoke(instance, new object[] { cxEvent });
+                            if (result is Task task)
+                            {
+                                await task;
+                            }
+                            return true;
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"[ERROR] Handler execution failed: {ex.Message}");
+                            return false;
+                        }
+                    };
+                    
+                    // Register with ICxEventBus (same system as EmitEvent)
+                    eventBus.Subscribe(eventName, asyncHandler);
+                    Console.WriteLine($"[DEBUG] Registered handler for {eventName} with ICxEventBus");
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"[ERROR] Failed to register handler with ICxEventBus: {ex.Message}");
+                }
+            }
+
+            // Fallback to UnifiedEventBusRegistry (legacy support)
             
             // Create a CxEventHandler to invoke the compiled instance method
             CxEventHandler cxHandler = (payload) =>
@@ -652,17 +712,9 @@ namespace CxLanguage.Runtime
             
             EventHandler unifiedHandler = (payload) =>
             {
-                var cxPayload = new CxEventPayload
-                {
-                    EventName = payload.EventName,
-                    Data = payload.Data,
-                    Timestamp = payload.Timestamp,
-                    Source = payload.Source
-                };
+                var cxPayload = new CxEventPayload(payload.EventName, payload.Data ?? new object());
                 return cxHandler(cxPayload);
-};
-
-            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
+            };            UnifiedEventBusRegistry.Instance.Subscribe(subscriptionId, eventName, unifiedHandler);
         }
 
         /// <summary>
@@ -899,20 +951,27 @@ namespace CxLanguage.Runtime
                     if (payloadProperty != null)
                     {
                         var payload = payloadProperty.GetValue(instance);
+                        
                         if (payload is Dictionary<string, object> payloadDict)
                         {
                             if (payloadDict.ContainsKey(propertyName))
                             {
-                                return payloadDict[propertyName];
+                                var result = payloadDict[propertyName];
+                                return result;
                             }
                             
                             if (payloadDict.ContainsKey("payload") && payloadDict["payload"] is Dictionary<string, object> nestedPayload)
                             {
                                 if (nestedPayload.ContainsKey(propertyName))
                                 {
-                                    return nestedPayload[propertyName];
+                                    var result = nestedPayload[propertyName];
+                                    return result;
                                 }
                             }
+                        }
+                        else
+                        {
+                            Console.WriteLine($"[DEBUG] Payload is not Dictionary<string, object>, it's: {payload?.GetType().FullName ?? "null"}");
                         }
                     }
                 }

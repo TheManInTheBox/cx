@@ -4,6 +4,7 @@ using CxLanguage.StandardLibrary.Core;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace CxLanguage.StandardLibrary.EventBridges;
@@ -35,8 +36,8 @@ public class AwaitEventBridge
         {
             _logger.LogInformation("🔗 Initializing AwaitEventBridge...");
 
-            // Subscribe to await request events from CX runtime
-            _eventBus.Subscribe("ai.await.request", OnAwaitRequest);
+            // Subscribe to await request events from CX runtime using new delegate signature
+            _eventBus.Subscribe("ai.await.request", async (sender, eventName, data) => { await OnAwaitRequest(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
 
             _logger.LogInformation("✅ AwaitEventBridge initialized successfully");
             await Task.CompletedTask;
@@ -100,17 +101,17 @@ public class AwaitEventBridge
             await EmitHandlerEventsAsync(handlers, result);
 
             // Emit await completion event
-            await _eventBus.EmitAsync("ai.await.response", result);
+            await _eventBus.EmitAsync("ai.await.response", ConvertAwaitResultToDictionary(result));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ Error processing await request: {Error}", ex.Message);
             
             // Emit error event
-            await _eventBus.EmitAsync("ai.await.error", new
+            await _eventBus.EmitAsync("ai.await.error", new Dictionary<string, object>
             {
-                error = ex.Message,
-                timestamp = DateTimeOffset.UtcNow
+                ["error"] = ex.Message,
+                ["timestamp"] = DateTimeOffset.UtcNow
             });
         }
     }
@@ -124,7 +125,7 @@ public class AwaitEventBridge
                 if (handler is string handlerName)
                 {
                     _logger.LogInformation("🎯 Emitting handler event: {HandlerName}", handlerName);
-                    await _eventBus.EmitAsync(handlerName, result);
+                    await _eventBus.EmitAsync(handlerName, ConvertAwaitResultToDictionary(result));
                 }
                 else if (handler is Dictionary<string, object> handlerObj)
                 {
@@ -134,7 +135,7 @@ public class AwaitEventBridge
                     {
                         var eventPayload = handlerObj[eventName];
                         _logger.LogInformation("🎯 Emitting handler event with payload: {HandlerName}", eventName);
-                        await _eventBus.EmitAsync(eventName, eventPayload);
+                        await _eventBus.EmitAsync(eventName, ConvertObjectToDictionary(eventPayload));
                     }
                 }
             }
@@ -157,5 +158,36 @@ public class AwaitEventBridge
             string strValue when int.TryParse(strValue, out var parsed) => parsed,
             _ => defaultValue
         };
+    }
+    
+    private static Dictionary<string, object> ConvertAwaitResultToDictionary(object result)
+    {
+        var properties = result.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var dictionary = new Dictionary<string, object>();
+        
+        foreach (var property in properties)
+        {
+            var value = property.GetValue(result);
+            dictionary[property.Name] = value ?? string.Empty;
+        }
+        
+        return dictionary;
+    }
+    
+    private static Dictionary<string, object> ConvertObjectToDictionary(object obj)
+    {
+        if (obj is Dictionary<string, object> dict)
+            return dict;
+            
+        var properties = obj.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+        var dictionary = new Dictionary<string, object>();
+        
+        foreach (var property in properties)
+        {
+            var value = property.GetValue(obj);
+            dictionary[property.Name] = value ?? string.Empty;
+        }
+        
+        return dictionary;
     }
 }

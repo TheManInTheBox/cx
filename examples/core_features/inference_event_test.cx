@@ -1,0 +1,159 @@
+// 🧠 IMMEDIATE INFERENCE EVENT TEST
+// Direct event emission to test inference handler event printing
+
+conscious InferenceEventTester
+{
+    realize()
+    {
+        print("🧠 IMMEDIATE INFERENCE EVENT TESTING");
+        print("====================================");
+        print("⚡ Emitting inference result events directly...");
+        
+        // Test 1: Pattern detection result
+        print("");
+        print("📊 TEST 1: Pattern Detection Result");
+        print("----------------------------------");
+        emit pattern.detected {
+            result: "The pattern is perfect squares: 1², 2², 3², 4², 5². Next is 36 (6²)",
+            confidence: "95%",
+            source: "DirectTest"
+        };
+        
+        // Test 2: Inference completion result
+        print("📊 TEST 2: Inference Completion Result");
+        print("--------------------------------------");
+        emit inference.complete {
+            result: "Pattern analysis completed successfully",
+            processingTime: "45ms",
+            source: "DirectTest"
+        };
+        
+        // Test 3: Classification result
+        print("");
+        print("📊 TEST 3: Classification Result");
+        print("--------------------------------");
+        emit classification.result {
+            classification: "Positive Sentiment",
+            confidence: "98%",
+            source: "DirectTest"
+        };
+        
+        // Test 4: Sentiment analysis result
+        print("📊 TEST 4: Sentiment Analysis Result");
+        print("------------------------------------");
+        emit sentiment.analysis {
+            sentiment: "Very Positive",
+            score: "0.94",
+            source: "DirectTest"
+        };
+        
+        // Test 5: Problem solving result
+        print("");
+        print("📊 TEST 5: Problem Solving Result");
+        print("---------------------------------");
+        emit problem.solved {
+            solution: "Distance = Speed × Time = 60 mph × 2.5 hours = 150 miles",
+            steps: "1. Identify formula: D = S × T, 2. Substitute values, 3. Calculate result",
+            source: "DirectTest"
+        };
+        
+        // Test 6: Calculation completion result
+        print("📊 TEST 6: Calculation Completion Result");
+        print("----------------------------------------");
+        emit calculation.complete {
+            result: "150 miles",
+            formula: "Distance = Speed × Time",
+            source: "DirectTest"
+        };
+        
+        print("");
+        print("✅ All inference events emitted - checking handlers...");
+    }
+
+    // Pattern detection handler
+    on pattern.detected (event)
+    {
+        print("");
+        print("🔍 PATTERN DETECTION EVENT RECEIVED:");
+        print("===================================");
+        print("📊 Event: pattern.detected");
+        print("📊 Result: " + event.result);
+        print("📊 Confidence: " + event.confidence);
+        print("📊 Source: " + event.source);
+        print("✅ Pattern recognition completed!");
+    }
+
+    // Inference completion handler
+    on inference.complete (event)
+    {
+        print("");
+        print("✅ INFERENCE COMPLETE EVENT RECEIVED:");
+        print("====================================");
+        print("📊 Event: inference.complete");
+        print("📊 Result: " + event.result);
+        print("📊 Processing Time: " + event.processingTime);
+        print("📊 Source: " + event.source);
+        print("🎉 General inference completed!");
+    }
+
+    // Classification result handler
+    on classification.result (event)
+    {
+        print("");
+        print("📋 CLASSIFICATION EVENT RECEIVED:");
+        print("=================================");
+        print("📊 Event: classification.result");
+        print("📊 Classification: " + event.classification);
+        print("📊 Confidence: " + event.confidence);
+        print("📊 Source: " + event.source);
+        print("✅ Classification analysis completed!");
+    }
+
+    // Sentiment analysis handler
+    on sentiment.analysis (event)
+    {
+        print("");
+        print("💭 SENTIMENT ANALYSIS EVENT RECEIVED:");
+        print("====================================");
+        print("📊 Event: sentiment.analysis");
+        print("📊 Sentiment: " + event.sentiment);
+        print("📊 Score: " + event.score);
+        print("📊 Source: " + event.source);
+        print("✅ Sentiment analysis completed!");
+    }
+
+    // Problem solving handler
+    on problem.solved (event)
+    {
+        print("");
+        print("🧮 PROBLEM SOLVED EVENT RECEIVED:");
+        print("=================================");
+        print("📊 Event: problem.solved");
+        print("📊 Solution: " + event.solution);
+        print("📊 Steps: " + event.steps);
+        print("📊 Source: " + event.source);
+        print("✅ Problem solving completed!");
+    }
+
+    // Calculation completion handler
+    on calculation.complete (event)
+    {
+        print("");
+        print("🔢 CALCULATION COMPLETE EVENT RECEIVED:");
+        print("======================================");
+        print("📊 Event: calculation.complete");
+        print("📊 Result: " + event.result);
+        print("📊 Formula: " + event.formula);
+        print("📊 Source: " + event.source);
+        print("🎉 Mathematical calculation completed!");
+        print("");
+        print("🎯 ALL INFERENCE EVENT HANDLERS EXECUTED SUCCESSFULLY!");
+        print("📊 Event printing system working perfectly!");
+    }
+}
+
+// Create and run test
+new InferenceEventTester();
+
+print("");
+print("Press any key to exit...");

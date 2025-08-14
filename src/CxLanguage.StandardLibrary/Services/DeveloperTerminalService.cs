@@ -37,15 +37,15 @@ namespace CxLanguage.StandardLibrary.Services
             _logger.LogInformation("⌨️ Consciousness-aware interactive development terminal starting...");
 
             // Subscribe to terminal control events
-            _eventBus.Subscribe("terminal.start", OnTerminalStart);
-            _eventBus.Subscribe("terminal.stop", OnTerminalStop);
-            _eventBus.Subscribe("terminal.prompt.set", OnPromptSet);
-            _eventBus.Subscribe("terminal.command.execute", OnCommandExecute);
-            _eventBus.Subscribe("system.shutdown", OnSystemShutdown);
+            _eventBus.Subscribe("terminal.start", async (sender, eventName, data) => { await OnTerminalStart(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("terminal.stop", async (sender, eventName, data) => { await OnTerminalStop(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("terminal.prompt.set", async (sender, eventName, data) => { await OnPromptSet(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("terminal.command.execute", async (sender, eventName, data) => { await OnCommandExecute(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("system.shutdown", async (sender, eventName, data) => { await OnSystemShutdown(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
             
             // Subscribe to AI response events for the behavior flow
-            _eventBus.Subscribe("ai.think.response", OnAiThinkResponse);
-            _eventBus.Subscribe("ai.think.needs_more_info", OnAiNeedsMoreInfo);
+            _eventBus.Subscribe("ai.think.response", async (sender, eventName, data) => { await OnAiThinkResponse(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("ai.think.needs_more_info", async (sender, eventName, data) => { await OnAiNeedsMoreInfo(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
 
             _logger.LogInformation("✅ Developer Terminal Service registered for consciousness events");
 
@@ -102,6 +102,8 @@ namespace CxLanguage.StandardLibrary.Services
 
             // Start the input processing task
             _inputTask = Task.Run(async () => await ProcessInputAsync(_cancellationTokenSource.Token));
+            
+            return Task.CompletedTask;
         }
 
         private async Task ProcessInputAsync(CancellationToken cancellationToken)
@@ -159,6 +161,7 @@ namespace CxLanguage.StandardLibrary.Services
             _logger.LogInformation("🛑 Developer Terminal - Stopping consciousness session");
             _isActive = false;
             _cancellationTokenSource.Cancel();
+            return Task.CompletedTask;
         }
 
         private Task OnPromptSet(CxEventPayload eventData)
@@ -169,6 +172,7 @@ namespace CxLanguage.StandardLibrary.Services
                 _currentPrompt = payload["prompt"]?.ToString() ?? "cx> ";
                 _logger.LogDebug($"🎯 Terminal prompt updated: {_currentPrompt}");
             }
+            return Task.CompletedTask;
         }
 
         private Task OnCommandExecute(CxEventPayload eventData)
@@ -180,6 +184,7 @@ namespace CxLanguage.StandardLibrary.Services
                 _logger.LogInformation($"⚡ Executing terminal command: {command}");
                 ProcessCommand(command);
             }
+            return Task.CompletedTask;
         }
 
         private Task OnSystemShutdown(CxEventPayload eventData)
@@ -187,6 +192,7 @@ namespace CxLanguage.StandardLibrary.Services
             _logger.LogInformation("🔄 System shutdown detected - gracefully stopping terminal");
             _isActive = false;
             _cancellationTokenSource.Cancel();
+            return Task.CompletedTask;
         }
 
         private async Task ProcessInputLine(string input)
@@ -201,11 +207,11 @@ namespace CxLanguage.StandardLibrary.Services
                 else
                 {
                     // Process as CX code - emit to consciousness framework
-                    await _eventBus.EmitAsync("developer.code.input", new
+                    await _eventBus.EmitAsync("developer.code.input", new Dictionary<string, object>
                     {
-                        code = input,
-                        timestamp = DateTime.UtcNow,
-                        source = "developer_terminal"
+                        ["code"] = input,
+                        ["timestamp"] = DateTime.UtcNow,
+                        ["source"] = "developer_terminal"
                     });
                 }
             }
@@ -231,10 +237,10 @@ namespace CxLanguage.StandardLibrary.Services
                     if (parts.Length > 1)
                     {
                         var naturalLanguage = string.Join(" ", parts.Skip(1));
-                        _eventBus.EmitAsync("developer.natural.language.generate", new { 
-                            input = naturalLanguage, 
-                            timestamp = DateTime.UtcNow,
-                            source = "terminal_command"
+                        _eventBus.EmitAsync("developer.natural.language.generate", new Dictionary<string, object> { 
+                            ["input"] = naturalLanguage, 
+                            ["timestamp"] = DateTime.UtcNow,
+                            ["source"] = "terminal_command"
                         });
                         Console.WriteLine($"🧠 Generating CX code from: {naturalLanguage}");
                     }
@@ -248,9 +254,9 @@ namespace CxLanguage.StandardLibrary.Services
                     if (parts.Length > 1)
                     {
                         var cxCode = string.Join(" ", parts.Skip(1));
-                        _eventBus.EmitAsync("developer.code.explain", new { 
-                            code = cxCode, 
-                            timestamp = DateTime.UtcNow 
+                        _eventBus.EmitAsync("developer.code.explain", new Dictionary<string, object> { 
+                            ["code"] = cxCode, 
+                            ["timestamp"] = DateTime.UtcNow 
                         });
                         Console.WriteLine($"🔍 Explaining CX code: {cxCode}");
                     }
@@ -264,9 +270,9 @@ namespace CxLanguage.StandardLibrary.Services
                     if (parts.Length > 1)
                     {
                         var description = string.Join(" ", parts.Skip(1));
-                        _eventBus.EmitAsync("developer.code.refactor", new { 
-                            description = description, 
-                            timestamp = DateTime.UtcNow 
+                        _eventBus.EmitAsync("developer.code.refactor", new Dictionary<string, object> { 
+                            ["description"] = description, 
+                            ["timestamp"] = DateTime.UtcNow 
                         });
                         Console.WriteLine($"🔧 Refactoring based on: {description}");
                     }
@@ -280,9 +286,9 @@ namespace CxLanguage.StandardLibrary.Services
                     if (parts.Length > 1)
                     {
                         var intent = string.Join(" ", parts.Skip(1));
-                        _eventBus.EmitAsync("developer.pattern.suggest", new { 
-                            intent = intent, 
-                            timestamp = DateTime.UtcNow 
+                        _eventBus.EmitAsync("developer.pattern.suggest", new Dictionary<string, object> { 
+                            ["intent"] = intent, 
+                            ["timestamp"] = DateTime.UtcNow 
                         });
                         Console.WriteLine($"🎯 Suggesting patterns for: {intent}");
                     }
@@ -296,9 +302,9 @@ namespace CxLanguage.StandardLibrary.Services
                     if (parts.Length > 1)
                     {
                         var voiceCommand = string.Join(" ", parts.Skip(1));
-                        _eventBus.EmitAsync("developer.voice.enable", new { 
-                            command = voiceCommand, 
-                            timestamp = DateTime.UtcNow 
+                        _eventBus.EmitAsync("developer.voice.enable", new Dictionary<string, object> { 
+                            ["command"] = voiceCommand, 
+                            ["timestamp"] = DateTime.UtcNow 
                         });
                         Console.WriteLine($"🔊 Voice-enabling: {voiceCommand}");
                     }
@@ -312,9 +318,9 @@ namespace CxLanguage.StandardLibrary.Services
                     if (parts.Length > 1)
                     {
                         var description = string.Join(" ", parts.Skip(1));
-                        _eventBus.EmitAsync("developer.consciousness.add", new { 
-                            description = description, 
-                            timestamp = DateTime.UtcNow 
+                        _eventBus.EmitAsync("developer.consciousness.add", new Dictionary<string, object> { 
+                            ["description"] = description, 
+                            ["timestamp"] = DateTime.UtcNow 
                         });
                         Console.WriteLine($"🧠 Adding consciousness features: {description}");
                     }
@@ -328,7 +334,7 @@ namespace CxLanguage.StandardLibrary.Services
                     if (parts.Length > 1)
                     {
                         var scriptPath = string.Join(" ", parts.Skip(1));
-                        _eventBus.EmitAsync("developer.script.run", new { script = scriptPath });
+                        _eventBus.EmitAsync("developer.script.run", new Dictionary<string, object> { ["script"] = scriptPath });
                         Console.WriteLine($"🚀 Executing script: {scriptPath}");
                     }
                     else
@@ -338,17 +344,17 @@ namespace CxLanguage.StandardLibrary.Services
                     break;
 
                 case "/compile":
-                    _eventBus.EmitAsync("developer.workspace.compile", new { timestamp = DateTime.UtcNow });
+                    _eventBus.EmitAsync("developer.workspace.compile", new Dictionary<string, object> { ["timestamp"] = DateTime.UtcNow });
                     Console.WriteLine("🔧 Compiling workspace...");
                     break;
 
                 case "/debug":
-                    _eventBus.EmitAsync("developer.debug.toggle", new { enabled = true });
+                    _eventBus.EmitAsync("developer.debug.toggle", new Dictionary<string, object> { ["enabled"] = true });
                     Console.WriteLine("🐛 Debug mode enabled");
                     break;
 
                 case "/events":
-                    _eventBus.EmitAsync("developer.events.status", new { request = "show_status" });
+                    _eventBus.EmitAsync("developer.events.status", new Dictionary<string, object> { ["request"] = "show_status" });
                     Console.WriteLine("📊 Event bus status requested");
                     break;
 
@@ -359,7 +365,7 @@ namespace CxLanguage.StandardLibrary.Services
 
                 case "/exit":
                     Console.WriteLine("👋 Exiting developer terminal...");
-                    _eventBus.EmitAsync("system.shutdown", new { reason = "developer_exit" });
+                    _eventBus.EmitAsync("system.shutdown", new Dictionary<string, object> { ["reason"] = "developer_exit" });
                     break;
 
                 default:
@@ -382,11 +388,11 @@ namespace CxLanguage.StandardLibrary.Services
             Console.WriteLine($"🧠 Processing natural language: {input}");
             
             // Send to AI for inference using the think service
-            await _eventBus.EmitAsync("ai.think.request", new { 
-                prompt = $"User input: {input}. Analyze this request and determine if you can complete it or if you need more information. If you need more info, specify exactly what additional details are required.",
-                requestId = Guid.NewGuid().ToString(),
-                timestamp = DateTime.UtcNow,
-                source = "developer_terminal"
+            await _eventBus.EmitAsync("ai.think.request", new Dictionary<string, object> { 
+                ["prompt"] = $"User input: {input}. Analyze this request and determine if you can complete it or if you need more information. If you need more info, specify exactly what additional details are required.",
+                ["requestId"] = Guid.NewGuid().ToString(),
+                ["timestamp"] = DateTime.UtcNow,
+                ["source"] = "developer_terminal"
             });
         }
 
@@ -409,6 +415,7 @@ namespace CxLanguage.StandardLibrary.Services
                     Console.Write(_currentPrompt);
                 }
             }
+            return Task.CompletedTask;
         }
 
         private Task OnAiNeedsMoreInfo(CxEventPayload eventData)
@@ -431,6 +438,7 @@ namespace CxLanguage.StandardLibrary.Services
                     Console.Write(_currentPrompt);
                 }
             }
+            return Task.CompletedTask;
         }
 
         private void ShowHelp()
