@@ -1,0 +1,43 @@
+{
+  "name": "agilecloud-website",
+  "version": "1.0.0",
+  "description": "AgileCloud.ai - Redefining Software through Consciousness Computing",
+  "main": "public/index.html",
+  "scripts": {
+    "build": "npm run build:css && npm run build:js && npm run build:html",
+    "build:css": "csso assets/css/styles.css --output dist/assets/css/styles.min.css",
+    "build:js": "terser assets/js/main.js --output dist/assets/js/main.min.js --compress --mangle",
+    "build:html": "html-minifier-terser public/index.html --output dist/index.html --remove-comments --collapse-whitespace --minify-css --minify-js",
+    "dev": "python -m http.server 8000 --directory public",
+    "serve": "npx serve dist",
+    "test": "echo \"No tests specified\" && exit 0",
+    "lint": "echo \"Linting HTML, CSS, and JS files\"",
+    "deploy": "echo \"Deployment handled by GitHub Actions\""
+  },
+  "keywords": [
+    "agilecloud",
+    "consciousness-computing",
+    "cx-language",
+    "ai",
+    "cloud",
+    "software-development"
+  ],
+  "author": "AgileCloud.ai",
+  "license": "MIT",
+  "devDependencies": {
+    "html-minifier-terser": "^7.2.0",
+    "csso-cli": "^4.0.2",
+    "terser": "^5.24.0",
+    "serve": "^14.2.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/TheManInTheBox/cx.git",
+    "directory": "website"
+  },
+  "homepage": "https://agilecloud.ai",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}

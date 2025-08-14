@@ -1,0 +1,27 @@
+// Simple math test to show 2+2 calculation
+
+conscious MathCalculator {
+    realize(self: conscious) {
+        print("🧮 Starting math calculation test...");
+        
+        // Request inference for 2+2
+        infer { 
+            context: "mathematical calculation", 
+            query: "What is 2+2? Please provide just the numerical answer.",
+            type: "math"
+        };
+        
+        // Add delay to let processing complete
+        await { reason: "Wait for calculation", minDurationMs: 2000, maxDurationMs: 3000 };
+    }
+    
+    // Handle inference results
+    on inference.complete {
+        print("🎯 Calculation completed!");
+        print("📊 Result:");
+        print(event.result);
+        print("✅ Math test finished");
+    }
+}
+
+var calculator = new MathCalculator({});

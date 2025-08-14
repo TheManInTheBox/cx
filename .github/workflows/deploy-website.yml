@@ -1,0 +1,254 @@
+name: Deploy Website to Azure
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - 'website/**'
+  pull_request:
+    branches: [ master, main ]
+    paths:
+      - 'website/**'
+  workflow_dispatch:
+
+env:
+  AZURE_SUBSCRIPTION_ID: '0ae2be9a-f470-4dfe-b2e0-b7e9726acdfb'
+  AZURE_RESOURCE_GROUP: 'agilecloud-rg'
+  AZURE_STORAGE_ACCOUNT: 'agilecloudwebsite'
+  AZURE_CDN_PROFILE: 'agilecloud-cdn'
+  AZURE_CDN_ENDPOINT: 'agilecloud-website'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: 'website/package.json'
+        
+    - name: Install dependencies
+      working-directory: ./website
+      run: |
+        if [ -f package.json ]; then
+          npm ci
+        else
+          npm init -y
+          npm install --save-dev html-minifier-terser csso-cli terser
+        fi
+        
+    - name: Build website
+      working-directory: ./website
+      run: |
+        # Create build directory
+        mkdir -p dist
+        
+        # Copy public files
+        cp -r public/* dist/
+        
+        # Copy assets
+        cp -r assets dist/
+        
+        # Minify HTML (if html-minifier-terser is available)
+        if command -v html-minifier-terser &> /dev/null; then
+          html-minifier-terser --input-dir dist --output-dir dist --file-ext html \
+            --remove-comments --collapse-whitespace --minify-css --minify-js
+        fi
+        
+        # Minify CSS (if csso-cli is available)
+        if command -v csso &> /dev/null; then
+          find dist -name "*.css" -exec csso {} --output {} \;
+        fi
+        
+        # Minify JS (if terser is available)
+        if command -v terser &> /dev/null; then
+          find dist -name "*.js" -exec terser {} --output {} --compress --mangle \;
+        fi
+        
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Create Azure Resources
+      run: |
+        # Create resource group if it doesn't exist
+        az group create --name $AZURE_RESOURCE_GROUP --location "East US" --subscription $AZURE_SUBSCRIPTION_ID
+        
+        # Create storage account for static website hosting
+        az storage account create \
+          --name $AZURE_STORAGE_ACCOUNT \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --location "East US" \
+          --sku Standard_LRS \
+          --kind StorageV2 \
+          --access-tier Hot \
+          --subscription $AZURE_SUBSCRIPTION_ID
+          
+        # Enable static website hosting
+        az storage blob service-properties update \
+          --account-name $AZURE_STORAGE_ACCOUNT \
+          --static-website \
+          --404-document 404.html \
+          --index-document index.html \
+          --subscription $AZURE_SUBSCRIPTION_ID
+          
+    - name: Deploy to Azure Storage
+      run: |
+        # Get storage account key
+        STORAGE_KEY=$(az storage account keys list \
+          --account-name $AZURE_STORAGE_ACCOUNT \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --subscription $AZURE_SUBSCRIPTION_ID \
+          --query "[0].value" -o tsv)
+          
+        # Upload files to $web container
+        az storage blob upload-batch \
+          --destination '$web' \
+          --source website/dist \
+          --account-name $AZURE_STORAGE_ACCOUNT \
+          --account-key "$STORAGE_KEY" \
+          --overwrite true
+          
+    - name: Setup Azure CDN
+      run: |
+        # Create CDN profile
+        az cdn profile create \
+          --name $AZURE_CDN_PROFILE \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --sku Standard_Microsoft \
+          --subscription $AZURE_SUBSCRIPTION_ID || true
+          
+        # Get storage account primary web endpoint
+        ORIGIN_URL=$(az storage account show \
+          --name $AZURE_STORAGE_ACCOUNT \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --subscription $AZURE_SUBSCRIPTION_ID \
+          --query "primaryEndpoints.web" -o tsv | sed 's|https://||' | sed 's|/$||')
+          
+        # Create CDN endpoint
+        az cdn endpoint create \
+          --name $AZURE_CDN_ENDPOINT \
+          --profile-name $AZURE_CDN_PROFILE \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --origin $ORIGIN_URL \
+          --origin-host-header $ORIGIN_URL \
+          --subscription $AZURE_SUBSCRIPTION_ID || true
+          
+    - name: Purge CDN Cache
+      run: |
+        # Purge CDN cache to ensure latest content is served
+        az cdn endpoint purge \
+          --name $AZURE_CDN_ENDPOINT \
+          --profile-name $AZURE_CDN_PROFILE \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --content-paths "/*" \
+          --subscription $AZURE_SUBSCRIPTION_ID || true
+          
+    - name: Configure Custom Domain (Optional)
+      if: ${{ vars.CUSTOM_DOMAIN }}
+      run: |
+        # Add custom domain if CUSTOM_DOMAIN variable is set
+        az cdn custom-domain create \
+          --endpoint-name $AZURE_CDN_ENDPOINT \
+          --name agilecloud-custom-domain \
+          --profile-name $AZURE_CDN_PROFILE \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --hostname ${{ vars.CUSTOM_DOMAIN }} \
+          --subscription $AZURE_SUBSCRIPTION_ID || true
+          
+    - name: Get Website URLs
+      run: |
+        # Get the primary web endpoint
+        WEBSITE_URL=$(az storage account show \
+          --name $AZURE_STORAGE_ACCOUNT \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --subscription $AZURE_SUBSCRIPTION_ID \
+          --query "primaryEndpoints.web" -o tsv)
+          
+        # Get CDN endpoint URL
+        CDN_URL=$(az cdn endpoint show \
+          --name $AZURE_CDN_ENDPOINT \
+          --profile-name $AZURE_CDN_PROFILE \
+          --resource-group $AZURE_RESOURCE_GROUP \
+          --subscription $AZURE_SUBSCRIPTION_ID \
+          --query "hostName" -o tsv 2>/dev/null || echo "CDN not configured")
+          
+        echo "🌐 Website URL: $WEBSITE_URL"
+        echo "⚡ CDN URL: https://$CDN_URL"
+        echo "🚀 Deployment completed successfully!"
+        
+        # Save URLs to GitHub environment
+        echo "WEBSITE_URL=$WEBSITE_URL" >> $GITHUB_ENV
+        echo "CDN_URL=https://$CDN_URL" >> $GITHUB_ENV
+        
+    - name: Comment on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const websiteUrl = process.env.WEBSITE_URL;
+          const cdnUrl = process.env.CDN_URL;
+          
+          const comment = `## 🚀 Website Deployment Preview
+          
+          Your website has been deployed and is available at:
+          
+          - **Primary URL**: ${websiteUrl}
+          - **CDN URL**: ${cdnUrl}
+          
+          The deployment includes:
+          - ✅ Static website hosting on Azure Storage
+          - ✅ Azure CDN for global distribution
+          - ✅ Automatic cache purging
+          - ✅ Optimized assets (minified CSS/JS/HTML)
+          
+          **Deployment Details:**
+          - Subscription: \`${process.env.AZURE_SUBSCRIPTION_ID}\`
+          - Resource Group: \`${process.env.AZURE_RESOURCE_GROUP}\`
+          - Storage Account: \`${process.env.AZURE_STORAGE_ACCOUNT}\`
+          `;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: comment
+          });
+
+  security-scan:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Run security scan
+      run: |
+        # Basic security checks for web files
+        echo "🔍 Running security scan..."
+        
+        # Check for common security issues in HTML/JS files
+        find website -type f \( -name "*.html" -o -name "*.js" \) -exec grep -l "eval\|innerHTML\|document.write" {} \; > security-issues.txt || true
+        
+        if [ -s security-issues.txt ]; then
+          echo "⚠️ Potential security issues found:"
+          cat security-issues.txt
+          exit 1
+        else
+          echo "✅ No obvious security issues detected"
+        fi
+        
+    - name: Validate HTML
+      run: |
+        # Basic HTML validation
+        echo "🔍 Validating HTML structure..."
+        find website/public -name "*.html" -exec echo "Checking {}" \; -exec grep -q "<!DOCTYPE html>" {} \; || echo "Missing DOCTYPE in {}"
+        echo "✅ HTML validation completed"

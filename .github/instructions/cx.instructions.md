@@ -1068,6 +1068,183 @@ conscious ComplexEventHandler
 - **Payload Dictionary**: `event.payload` contains the full dictionary of event data
 - **Metadata Access**: Built-in properties like `event.name`, `event.timestamp` are always available
 - **Pure Event-Driven State**: All data access through event parameters, no instance variables
+
+## Mathematical Computation
+
+### **Proven Mathematical Processing Capabilities**
+CX Language demonstrates direct mathematical computation with AI-driven calculation processing and automatic Dictionary serialization:
+
+```cx
+// Basic Mathematical Calculator
+conscious MathCalculator : AiServiceBase
+{
+    realize(self: conscious)
+    {
+        learn self;
+        print("MathCalculator Agent Initialized");
+        
+        // Perform basic mathematical computation
+        emit calculate.request { expression: "2 + 2", description: "Basic addition" };
+    }
+    
+    on calculate.request (event)
+    {
+        // Think through the mathematical problem
+        think {
+            context: "Mathematical computation request",
+            content: "I need to calculate: " + event.expression,
+            data: { 
+                expression: event.expression,
+                description: event.description,
+                timestamp: DateTime.Now.ToString()
+            },
+            handlers: [ math.analysis.complete ]
+        };
+    }
+    
+    on math.analysis.complete (event)
+    {
+        // AI verification through consciousness services - pure CX syntax
+        infer {
+            context: "Mathematical result verification",
+            content: "Verify calculation: " + event.expression + " and provide step-by-step solution",
+            data: { 
+                expression: event.expression,
+                description: event.description,
+                requestedOperation: "addition calculation with verification"
+            },
+            handlers: [ math.verification.complete ]
+        };
+    }
+    
+    on math.verification.complete (event)
+    {
+        // The AI service provides the calculated result in the event payload
+        // CX Language: AI services handle the actual computation
+        print("Mathematical Computation Complete:");
+        print(event.payload);  // ✅ AI service result with automatic JSON serialization
+        
+        // Cognitive decision on result presentation
+        is {
+            context: "Should present detailed calculation steps?",
+            evaluate: "AI verification is complete and calculation is accurate",
+            data: { 
+                expression: event.expression,
+                aiResult: event.payload,
+                verificationStatus: "complete"
+            },
+            handlers: [ math.presentation.detailed ]
+        };
+    }
+    
+    on math.result.ready (event)
+    {
+        // Store the AI-calculated result
+        learn {
+            context: "Mathematical computation learning",
+            content: "Storing AI-verified calculation result",
+            data: event.payload,
+            handlers: [ math.final.result ]
+        };
+    }
+    
+    on math.final.result (event)
+    {
+        print("Final Mathematical Result:");
+        print(event.payload);  // ✅ Automatic JSON serialization with indentation
+    }
+    
+    on math.presentation.detailed (event)
+    {
+        print("Detailed Mathematical Analysis:");
+        print("Expression: " + event.expression);
+        print("AI Calculation Result: " + event.aiResult);
+        print("Verification: " + event.verificationStatus);
+    }
+}
+```
+
+### **Advanced Mathematical Processing with Consciousness Integration**
+```cx
+// Complex Mathematical Operations
+conscious AdvancedMathProcessor : AiServiceBase
+{
+    realize(self: conscious)
+    {
+        learn self;
+        
+        // Request complex mathematical operations using pure CX syntax
+        emit complex.calculation.request { 
+            operation: "multi-step calculation",
+            expression: "(5 * 3) + (10 / 2) - 1",
+            requiresVerification: true,
+            description: "Complex mathematical expression with multiple operations"
+        };
+    }
+    
+    on complex.calculation.request (event)
+    {
+        // AI-powered mathematical reasoning
+        think {
+            context: "Complex mathematical analysis",
+            content: "Processing multi-step calculation with consciousness awareness: " + event.expression,
+            data: { 
+                operation: event.operation,
+                expression: event.expression,
+                requiresVerification: event.requiresVerification
+            },
+            handlers: [ complex.analysis.complete ]
+        };
+    }
+    
+    on complex.analysis.complete (event)
+    {
+        // Consciousness adaptation for mathematical skills
+        adapt {
+            context: "Mathematical computation enhancement",
+            focus: "Expanding mathematical reasoning capabilities",
+            data: {
+                currentCapabilities: ["basic arithmetic", "step-by-step processing"],
+                targetCapabilities: ["complex expressions", "multi-variable equations", "algebraic reasoning"],
+                learningObjective: "Enhanced mathematical consciousness for better calculation assistance"
+            },
+            handlers: [ math.skills.enhanced ]
+        };
+    }
+    
+    on math.skills.enhanced (event)
+    {
+        print("Mathematical Consciousness Enhanced:");
+        print(event.payload);  // ✅ Dictionary serialization with proper formatting
+        
+        // Cognitive verification of enhanced capabilities
+        not {
+            context: "Are mathematical capabilities still limited?",
+            evaluate: "Current capabilities include only basic arithmetic",
+            data: { enhancedCapabilities: event.payload["targetCapabilities"] },
+            handlers: [ math.capabilities.verified ]
+        };
+    }
+    
+    on math.capabilities.verified (event)
+    {
+        print("Mathematical processing capabilities successfully enhanced!");
+        print("Enhanced Capabilities: " + event.enhancedCapabilities);
+    }
+}
+```
+
+### **Mathematical Computation Features**
+- **AI-Driven Calculation**: CX Language uses Think/Infer/Learn AI services to perform mathematical computations
+- **Event-Driven Results**: Mathematical calculations return results through the event system  
+- **Automatic JSON Serialization**: AI service results automatically serialize to readable JSON format
+- **Pure CX Syntax**: Mathematical operations use consciousness-aware AI services, not manual calculations
+- **Step-by-Step AI Processing**: AI services provide detailed mathematical reasoning and verification
+- **Consciousness Mathematical Integration**: Mathematical reasoning through consciousness-aware AI services
+- **Event Property Access**: Reliable `event.propertyName` functionality with AI service results
+- **AI-Powered Verification**: AI services verify and validate mathematical calculations automatically
+- **Cognitive Boolean Logic**: Mathematical decision-making using `is {}` and `not {}` patterns
+- **Consciousness Adaptation**: Dynamic mathematical skill enhancement through `adapt {}` pattern
 ### Event Handler Declaration and Emission
 ```
 // ✅ Event handlers - Only `on system` handlers allowed at program scope

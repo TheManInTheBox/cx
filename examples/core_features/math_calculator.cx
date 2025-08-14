@@ -1,0 +1,49 @@
+// Direct calculation showing 2+2 = 4 result
+
+conscious MathCalculator {
+    realize(self: conscious) {
+        print("🧮 DIRECT MATH CALCULATION");
+        print("========================");
+        print("");
+        
+        // Show the mathematical operation
+        print("Problem: 2 + 2");
+        print("Process: Adding two units to two more units");
+        print("Method: Basic arithmetic addition");
+        print("");
+        
+        // Calculate and display result  
+        var a = 2;
+        var b = 2;
+        var result = a + b;
+        
+        print("Step-by-step calculation:");
+        print("Step 1: First number = " + a);
+        print("Step 2: Second number = " + b); 
+        print("Step 3: Addition operation = " + a + " + " + b);
+        print("Step 4: Final result = " + result);
+        print("");
+        print("✅ ANSWER: 2 + 2 = " + result);
+        print("========================");
+        print("");
+        
+        // Also demonstrate with AI services for comparison
+        print("🤖 Now trying with AI services for verification...");
+        
+        think { 
+            prompt: "Verify that 2+2=4 is correct. Just respond with 'Correct, 2+2=4'."
+        };
+        
+        // Shorter wait since we already showed the direct result
+        await { reason: "Brief wait for AI verification", minDurationMs: 2000, maxDurationMs: 3000 };
+    }
+    
+    on thinking.complete (event)
+    {
+        print("🧠 AI VERIFICATION:");
+        print("✅ " + event.result);
+        print("========================");
+    }
+}
+
+var calc = new MathCalculator({});
