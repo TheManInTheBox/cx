@@ -1,0 +1,19 @@
+// 🚀 SIMPLE EVENT TEST - Test basic event emission and handling
+
+print("🧪 SIMPLE EVENT SYSTEM TEST");
+print("============================");
+
+// Global event handler for testing
+on test.event (event)
+{
+    print("✅ Event handler executed successfully!");
+    print("📦 Event data:", event.payload);
+}
+
+print("🔥 Emitting test event directly...");
+
+// Use the EmitEvent function directly to test the event system
+emit test.event, { message: "Hello from simple test!" };
+
+print("📊 Test complete - if you see the handler message above, events are working!");
+print("Press any key to exit...");

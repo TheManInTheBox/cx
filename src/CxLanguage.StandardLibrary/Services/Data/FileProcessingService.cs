@@ -30,7 +30,7 @@ public class FileProcessingService
         _eventBus = eventBus;
         _vectorStore = vectorStore;
         _logger.LogInformation("🗂️ Dr. Marcus 'LocalLLM' Chen's FileProcessingService initialized");
-        _eventBus.EmitAsync("file.processing.service.ready", new { service = nameof(FileProcessingService) });
+        _eventBus.EmitAsync("file.processing.service.ready", new Dictionary<string, object> { ["service"] = nameof(FileProcessingService) });
     }
 
     /// <summary>
@@ -66,11 +66,11 @@ public class FileProcessingService
 
             if (result.IsSuccess)
             {
-                _eventBus.EmitAsync("file.processed", new { 
-                    filePath, 
-                    extension, 
-                    contentLength = result.ExtractedText?.Length ?? 0,
-                    recordsGenerated = result.Records?.Count ?? 0
+                await _eventBus.EmitAsync("file.processed", new Dictionary<string, object> { 
+                    ["filePath"] = filePath, 
+                    ["extension"] = extension, 
+                    ["contentLength"] = result.ExtractedText?.Length ?? 0,
+                    ["recordsGenerated"] = result.Records?.Count ?? 0
                 });
             }
 
@@ -120,10 +120,10 @@ public class FileProcessingService
             }
         }
 
-        _eventBus.EmitAsync("batch.processing.complete", new { 
-            totalFiles, 
-            successCount, 
-            failureCount = totalFiles - successCount 
+        await _eventBus.EmitAsync("batch.processing.complete", new Dictionary<string, object> { 
+            ["totalFiles"] = totalFiles, 
+            ["successCount"] = successCount, 
+            ["failureCount"] = totalFiles - successCount 
         });
 
         return new BatchProcessingResult

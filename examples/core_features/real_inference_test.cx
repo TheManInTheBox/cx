@@ -1,0 +1,204 @@
+// 🧠 ACTUAL INFERENCE TESTING WITH INFER STATEMENTS
+// Testing real InferService with infer statements and event printing
+
+conscious RealInferenceTester
+{
+    realize()
+    {
+        print("🧠 REAL INFERENCE TESTING DEMO");
+        print("==============================");
+        print("⚡ Testing actual infer statements with InferService...");
+        
+        // Test 1: Pattern recognition inference
+        print("");
+        print("📊 TEST 1: Pattern Recognition Inference");
+        print("----------------------------------------");
+        
+        infer {
+            prompt: "Analyze this mathematical pattern: 1, 4, 9, 16, 25. What comes next and why?",
+            handlers: [
+                "pattern.analysis.complete",
+                "math.pattern.detected"
+            ]
+        };
+        
+        print("✅ Pattern inference request submitted");
+        
+        // Test 2: Text classification inference
+        print("");
+        print("📊 TEST 2: Text Classification Inference");
+        print("---------------------------------------");
+        
+        infer {
+            prompt: "Classify the sentiment of this text: 'I absolutely love this incredible new technology! It's amazing!'",
+            handlers: [
+                "sentiment.classified",
+                "text.analysis.done"
+            ]
+        };
+        
+        print("✅ Classification inference request submitted");
+        
+        // Test 3: Problem solving inference
+        print("");
+        print("📊 TEST 3: Mathematical Problem Solving");
+        print("--------------------------------------");
+        
+        infer {
+            prompt: "Solve this step by step: A car travels at 65 mph for 3.5 hours. How far does it travel?",
+            handlers: [
+                "math.problem.solved",
+                "calculation.verified"
+            ]
+        };
+        
+        print("✅ Math problem inference request submitted");
+        
+        // Test 4: Creative reasoning inference
+        print("");
+        print("📊 TEST 4: Creative Reasoning Inference");
+        print("--------------------------------------");
+        
+        infer {
+            prompt: "Explain why the sky appears blue during the day but orange/red during sunset.",
+            handlers: [
+                "scientific.explanation.ready",
+                "reasoning.complete"
+            ]
+        };
+        
+        print("✅ Scientific reasoning inference request submitted");
+        
+        // Allow time for async inference processing
+        print("");
+        print("⏳ Waiting for InferService to process all requests...");
+        await { reason: "Allow InferService async processing", minDurationMs: 5000, maxDurationMs: 8000 };
+        
+        print("");
+        print("📋 INFERENCE TESTING SUMMARY");
+        print("============================");
+        print("🎯 All infer statements executed successfully");
+        print("⚡ InferService should process requests asynchronously");
+        print("📊 Handler events will be emitted when inference completes");
+    }
+
+    // Pattern analysis handlers
+    on pattern.analysis.complete (event)
+    {
+        print("");
+        print("🔍 PATTERN ANALYSIS EVENT RECEIVED:");
+        print("==================================");
+        print("📊 Event: pattern.analysis.complete");
+        print("📊 Analysis: " + event.result);
+        print("📊 Confidence: " + event.confidence);
+        print("📊 Processing Time: " + event.processingTime);
+        print("📊 Source: " + event.source);
+        print("✅ Pattern analysis completed by InferService!");
+    }
+
+    on math.pattern.detected (event)
+    {
+        print("");
+        print("🔢 MATH PATTERN EVENT RECEIVED:");
+        print("===============================");
+        print("📊 Event: math.pattern.detected");
+        print("📊 Pattern: " + event.pattern);
+        print("📊 Next Value: " + event.nextValue);
+        print("📊 Explanation: " + event.explanation);
+        print("📊 Source: " + event.source);
+        print("✅ Mathematical pattern detected!");
+    }
+
+    // Sentiment classification handlers
+    on sentiment.classified (event)
+    {
+        print("");
+        print("💭 SENTIMENT CLASSIFICATION EVENT RECEIVED:");
+        print("==========================================");
+        print("📊 Event: sentiment.classified");
+        print("📊 Sentiment: " + event.sentiment);
+        print("📊 Confidence: " + event.confidence);
+        print("📊 Score: " + event.score);
+        print("📊 Source: " + event.source);
+        print("✅ Sentiment classification completed!");
+    }
+
+    on text.analysis.done (event)
+    {
+        print("");
+        print("📋 TEXT ANALYSIS EVENT RECEIVED:");
+        print("================================");
+        print("📊 Event: text.analysis.done");
+        print("📊 Analysis: " + event.analysis);
+        print("📊 Keywords: " + event.keywords);
+        print("📊 Tone: " + event.tone);
+        print("📊 Source: " + event.source);
+        print("✅ Text analysis completed!");
+    }
+
+    // Math problem solving handlers
+    on math.problem.solved (event)
+    {
+        print("");
+        print("🧮 MATH PROBLEM SOLVED EVENT RECEIVED:");
+        print("=====================================");
+        print("📊 Event: math.problem.solved");
+        print("📊 Solution: " + event.solution);
+        print("📊 Steps: " + event.steps);
+        print("📊 Formula: " + event.formula);
+        print("📊 Source: " + event.source);
+        print("✅ Mathematical problem solved!");
+    }
+
+    on calculation.verified (event)
+    {
+        print("");
+        print("✔️ CALCULATION VERIFICATION EVENT RECEIVED:");
+        print("==========================================");
+        print("📊 Event: calculation.verified");
+        print("📊 Result: " + event.result);
+        print("📊 Verification: " + event.verification);
+        print("📊 Accuracy: " + event.accuracy);
+        print("📊 Source: " + event.source);
+        print("✅ Calculation verified!");
+    }
+
+    // Scientific reasoning handlers
+    on scientific.explanation.ready (event)
+    {
+        print("");
+        print("🔬 SCIENTIFIC EXPLANATION EVENT RECEIVED:");
+        print("========================================");
+        print("📊 Event: scientific.explanation.ready");
+        print("📊 Explanation: " + event.explanation);
+        print("📊 Scientific Basis: " + event.scientificBasis);
+        print("📊 Complexity: " + event.complexity);
+        print("📊 Source: " + event.source);
+        print("✅ Scientific explanation ready!");
+    }
+
+    on reasoning.complete (event)
+    {
+        print("");
+        print("🧠 REASONING COMPLETE EVENT RECEIVED:");
+        print("====================================");
+        print("📊 Event: reasoning.complete");
+        print("📊 Reasoning: " + event.reasoning);
+        print("📊 Logic Chain: " + event.logicChain);
+        print("📊 Conclusion: " + event.conclusion);
+        print("📊 Source: " + event.source);
+        print("🎉 Reasoning process completed!");
+        print("");
+        print("🎯 ALL INFERENCE PROCESSING COMPLETE!");
+        print("📊 InferService successfully processed all requests!");
+        print("⚡ Event printing system demonstrates full inference workflow!");
+    }
+}
+
+// Create and run real inference test
+new RealInferenceTester();
+
+print("");
+print("📊 Real inference testing with actual infer statements complete");
+print("⚡ Check output above for InferService processing results");
+print("Press any key to exit...");

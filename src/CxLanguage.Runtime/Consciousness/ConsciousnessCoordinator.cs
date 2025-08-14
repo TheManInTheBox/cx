@@ -157,12 +157,12 @@ namespace CxLanguage.Runtime.Consciousness
                     result.Status, result.TotalExecutionTime.TotalMilliseconds);
 
                 // Emit coordination completion event
-                await _eventBus.EmitAsync("consciousness.coordination.complete", new
+                await _eventBus.EmitAsync("consciousness.coordination.complete", new Dictionary<string, object>
                 {
-                    entityCount = entities.Count,
-                    status = result.Status.ToString(),
-                    duration = result.TotalExecutionTime.TotalMilliseconds,
-                    coherenceMaintained = result.PostExecutionCoherence.OverallCoherence >= MINIMUM_COHERENCE_THRESHOLD
+                    { "entityCount", entities.Count },
+                    { "status", result.Status.ToString() },
+                    { "duration", result.TotalExecutionTime.TotalMilliseconds },
+                    { "coherenceMaintained", result.PostExecutionCoherence.OverallCoherence >= MINIMUM_COHERENCE_THRESHOLD }
                 });
 
                 return result;
@@ -286,12 +286,12 @@ namespace CxLanguage.Runtime.Consciousness
                 _logger.LogDebug("✅ Consciousness synchronization complete");
 
                 // Emit synchronization event
-                await _eventBus.EmitAsync("consciousness.synchronization.complete", new
+                await _eventBus.EmitAsync("consciousness.synchronization.complete", new Dictionary<string, object>
                 {
-                    entityCount = entities.Count,
-                    memorySync = options.SynchronizeMemory,
-                    awarenessSync = options.SynchronizeAwareness,
-                    preserveIndividuality = options.PreserveIndividuality
+                    { "entityCount", entities.Count },
+                    { "memorySync", options.SynchronizeMemory },
+                    { "awarenessSync", options.SynchronizeAwareness },
+                    { "preserveIndividuality", options.PreserveIndividuality }
                 });
             }
             catch (OperationCanceledException)

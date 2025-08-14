@@ -1,0 +1,65 @@
+// Runtime Debug Test - Extended wait time for async service processing
+// Focus on ensuring we wait long enough for background Task.Run processing
+
+conscious RuntimeDebugger
+{
+    realize(self: conscious)
+    {
+        learn self;
+        
+        print("🔍 RUNTIME DEBUG TEST STARTING");
+        print("==============================");
+
+        print("✅ Testing service event processing with extended wait...");
+
+        // Test LearnService with simple request
+        learn {
+            data: {
+                content: "Simple learn test",
+                type: "debug_test"
+            },
+            handlers: [ "learn.debug.complete" ]
+        };
+
+        print("✅ Learn request sent");
+
+        // Test InferService with simple request
+        infer {
+            context: "Simple infer test",
+            data: {
+                prompt: "What is 2+2?",
+                type: "math"
+            },
+            handlers: [ "infer.debug.complete" ]
+        };
+
+        print("✅ Infer request sent");
+        
+        // Extended wait for background processing (Services use Task.Run)
+        await { reason: "Wait for background Task.Run processing", minDurationMs: 8000, maxDurationMs: 12000 };
+
+        print("🔍 RUNTIME DEBUG TEST COMPLETE");
+        print("If you see CAUGHT messages above, services are working");
+        print("If not, there may be service registration or processing issues");
+    }
+}
+
+// Global event handlers (outside conscious class)
+on learn.debug.complete (event) {
+    print("🎯 CAUGHT: learn.debug.complete event");
+    print("🔍 Event data: " + event.data);
+    print("🔍 Vector stored: " + event.vectorStored);
+    print("🔍 Processed by: " + event.processedBy);
+    print("✅ LearnService is processing events!");
+}
+
+on infer.debug.complete (event) {
+    print("🎯 CAUGHT: infer.debug.complete event");
+    print("🔍 Context: " + event.context);
+    print("🔍 Inference type: " + event.inferenceType);
+    print("🔍 Confidence: " + event.confidence);
+    print("✅ InferService is processing events!");
+}
+
+var debugger = new RuntimeDebugger({ });
+print("🧠 Runtime debug test with extended wait completed");

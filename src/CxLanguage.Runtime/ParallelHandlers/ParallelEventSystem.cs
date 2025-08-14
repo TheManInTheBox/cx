@@ -101,7 +101,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                     handlerList.Count, eventName);
                 
                 // Emit registration event for monitoring
-                _ = _eventBus.EmitAsync("parallel.handlers.registered", new Dictionary<string, object?>
+                _ = _eventBus.EmitAsync("parallel.handlers.registered", new Dictionary<string, object>
                 {
                     ["eventName"] = eventName,
                     ["handlerCount"] = handlerList.Count,
@@ -157,7 +157,8 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 else
                 {
                     // No parallel handlers registered, emit standard event
-                    await _eventBus.EmitAsync(eventName, payload);
+                    var payloadDict = payload as IDictionary<string, object> ?? new Dictionary<string, object> { ["data"] = payload };
+                    await _eventBus.EmitAsync(eventName, payloadDict);
                     
                     var executionTime = DateTimeOffset.UtcNow - startTime;
                     return new ParallelExecutionResult
@@ -227,7 +228,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
             {
                 // Validate event bus connectivity
                 var testEventName = $"system.integrity.test.{Guid.NewGuid()}";
-                await _eventBus.EmitAsync(testEventName, new { test = true });
+                await _eventBus.EmitAsync(testEventName, new Dictionary<string, object> { ["test"] = true });
                 report.EventBusConnectivity = true;
                 
                 // Validate parallel coordinator
@@ -345,7 +346,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                         CalculatePerformanceImprovement(r.ExecutionTime, r.HandlerCount));
                     
                     // Emit performance metrics event
-                    _ = _eventBus.EmitAsync("parallel.system.metrics", new Dictionary<string, object?>
+                    _ = _eventBus.EmitAsync("parallel.system.metrics", new Dictionary<string, object>
                     {
                         ["totalExecutions"] = totalExecutions,
                         ["successfulExecutions"] = successfulExecutions,

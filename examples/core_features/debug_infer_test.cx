@@ -1,0 +1,130 @@
+// Debug Infer Test - Check if InferService receives events
+// Testing infer statement event flow and handler execution
+// Implementing local vector cache per consciousness instance
+
+conscious DebugInferTester
+{
+    realize(self: conscious)
+    {
+        learn self;
+        
+        // Initialize local vector cache for this consciousness instance
+        learn {
+            data: {
+                cacheType: "local_vector_cache",
+                instanceId: "DebugInferTester_001",
+                maxSize: 1000,
+                evictionPolicy: "LRU"
+            },
+            handlers: [ "cache.initialized" ]
+        };
+        
+        print("🔍 INFER SERVICE DEBUG TEST");
+        print("============================");
+        print("? Testing if InferService receives ai.infer.request events...");
+        print("🧠 Local vector cache initialized for consciousness instance");
+        
+        // Simple infer statement for debugging with local cache integration
+        infer { 
+            context: "Simple test with local vector cache", 
+            data: { 
+                test: "debug",
+                useLocalCache: true,
+                instanceId: "DebugInferTester_001"
+            },
+            handlers: [ "test.complete" ]
+        };
+        
+        // Store inference result in local cache
+        learn {
+            data: {
+                cacheKey: "debug_inference_001",
+                content: "Simple inference test completed",
+                embeddings: [0.1, 0.2, 0.3, 0.4, 0.5],
+                metadata: {
+                    timestamp: "2025-08-14",
+                    source: "DebugInferTester",
+                    type: "inference_result"
+                }
+            },
+            handlers: [ "cache.stored" ]
+        };
+        
+        print("? Infer statement executed - should emit ai.infer.request");
+        print("? Waiting for InferService to process...");
+        
+        await { reason: "Allow time for InferService processing", minDurationMs: 2000, maxDurationMs: 5000 };
+        
+        print("? Debug test complete - check logs for InferService activity");
+        print("🔍 RUNTIME DEBUG: Checking if events were processed...");
+        print("? Expected events: cache.initialized, cache.stored, test.complete, global.knowledge.retrieved");
+        print("? If no handler output appears above, services may not be processing events");
+        
+        // Access global vector database for program-wide knowledge
+        learn {
+            data: {
+                query: "retrieve_global_knowledge",
+                scope: "program_wide",
+                searchTerms: ["inference", "consciousness", "debug"],
+                maxResults: 5
+            },
+            handlers: [ "global.knowledge.retrieved" ]
+        };
+    }
+    
+    on global.knowledge.retrieved (event) {
+        print("🌐 Global vector database accessed successfully!");
+        print("?? Global knowledge scope: " + event.scope);
+        print("?? Search terms: " + event.searchTerms);
+        print("?? Results found: " + event.resultsCount);
+        print("🔄 Consciousness can access both local cache and global knowledge");
+    }
+    
+    on cache.initialized (event) {
+        print("✅ Local vector cache initialized successfully!");
+        print("?? Cache Type: " + event.cacheType);
+        print("?? Instance ID: " + event.instanceId);
+        print("?? Max Size: " + event.maxSize);
+    }
+    
+    on cache.stored (event) {
+        print("✅ Data stored in local vector cache!");
+        print("?? Cache Key: " + event.cacheKey);
+        print("?? Content: " + event.content);
+        print("?? Local cache now contains inference results");
+    }
+    
+    on test.complete (event) {
+        print("✅ SUCCESS: test.complete handler executed!");
+        print("?? Event received from InferService");
+        print("?? Result: " + event.result);
+        print("?? Source: " + event.source);
+        print("?? InferService is working correctly!");
+        print("🧠 Local vector cache provides fast access to consciousness-specific data");
+    }
+}
+
+// Program-scope global vector database initialization
+learn {
+    data: {
+        scope: "global_program_database",
+        description: "Shared knowledge across all consciousness instances",
+        indexingStrategy: "semantic_clustering",
+        persistenceMode: "memory_resident"
+    },
+    handlers: [ "global.database.ready" ]
+};
+
+// Global event handler for program-wide vector database
+on global.database.ready (event) {
+    print("🌐 GLOBAL VECTOR DATABASE INITIALIZED");
+    print("=======================================");
+    print("?? Scope: " + event.scope);
+    print("?? Description: " + event.description);
+    print("?? Indexing Strategy: " + event.indexingStrategy);
+    print("🔄 All consciousness instances can now access shared knowledge");
+}
+
+var debugger = new DebugInferTester({ });
+print("? Debug infer test completed");
+print("🧠 Architecture: Local vector cache per consciousness + Global vector database");

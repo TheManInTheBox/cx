@@ -21,7 +21,7 @@ namespace CxLanguage.StandardLibrary.NeuroHub
 
         private async Task HandleTemperatureReading(NeuroEvent @event)
         {
-            if (@event.Data is double temperature)
+            if (@event.Payload is double temperature)
             {
                 Console.WriteLine($"[Reflex] Temperature reading received: {temperature}°C on topic {@event.Topic}");
 

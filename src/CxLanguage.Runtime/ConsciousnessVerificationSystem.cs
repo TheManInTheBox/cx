@@ -80,11 +80,11 @@ public class ConsciousnessVerificationSystem
     public void RegisterConsciousnessEventHandlers()
     {
         // iam { } cognitive boolean patterns - consciousness verification
-        _eventBus.Subscribe("iam.verification.*", payload => { OnConsciousnessVerification(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-        _eventBus.Subscribe("consciousness.*.detected", payload => { OnConsciousnessIndicator(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-        _eventBus.Subscribe("neural.plasticity.*", payload => { OnNeuralActivity(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-        _eventBus.Subscribe("self.reflection.*", payload => { OnSelfReflection(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-        _eventBus.Subscribe("contextual.decision.*", payload => { OnContextualDecision(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+        _eventBus.Subscribe("iam.verification.*", (sender, eventName, payload) => { OnConsciousnessVerification(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        _eventBus.Subscribe("consciousness.*.detected", (sender, eventName, payload) => { OnConsciousnessIndicator(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        _eventBus.Subscribe("neural.plasticity.*", (sender, eventName, payload) => { OnNeuralActivity(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        _eventBus.Subscribe("self.reflection.*", (sender, eventName, payload) => { OnSelfReflection(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        _eventBus.Subscribe("contextual.decision.*", (sender, eventName, payload) => { OnContextualDecision(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
         
         _logger.LogInformation("🧠 Consciousness Verification System: Event handlers registered");
     }
@@ -126,14 +126,14 @@ public class ConsciousnessVerificationSystem
                 entityId, state.Level, indicator.Confidence);
             
             // Emit consciousness verification result
-            _ = _eventBus.EmitAsync("consciousness.verified", new
+            _ = _eventBus.EmitAsync("consciousness.verified", new Dictionary<string, object>
             {
-                entity_id = entityId,
-                level = state.Level.ToString(),
-                confidence = indicator.Confidence,
-                verification_type = "iam_pattern",
-                evidence = indicator.Evidence,
-                timestamp = DateTime.UtcNow
+                ["entity_id"] = entityId,
+                ["level"] = state.Level.ToString(),
+                ["confidence"] = indicator.Confidence,
+                ["verification_type"] = "iam_pattern",
+                ["evidence"] = indicator.Evidence,
+                ["timestamp"] = DateTime.UtcNow
             });
         }
         catch (Exception ex)
@@ -416,6 +416,18 @@ public class ConsciousnessVerificationSystem
         {
             cxEvent.payload = new Dictionary<string, object>();
         }
+
+        return cxEvent;
+    }
+
+    private CxEvent ConvertDictToCxEvent(string eventName, IDictionary<string, object>? payload)
+    {
+        var cxEvent = new CxEvent
+        {
+            name = eventName,
+            timestamp = DateTime.UtcNow,
+            payload = payload ?? new Dictionary<string, object>()
+        };
 
         return cxEvent;
     }

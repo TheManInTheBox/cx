@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.Services;
 using CxLanguage.LocalLLM;
+using GpuLocalLLMService = CxLanguage.LocalLLM.ILocalLLMService;
 using System;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -24,12 +25,12 @@ namespace CxLanguage.StandardLibrary.EventBridges;
 public class LocalLLMEventBridge
 {
     private readonly ILogger<LocalLLMEventBridge> _logger;
-    private readonly ILocalLLMService _localLLMService;
+    private readonly GpuLocalLLMService _localLLMService;
     private readonly ICxEventBus _eventBus;
 
     public LocalLLMEventBridge(
         ILogger<LocalLLMEventBridge> logger,
-        ILocalLLMService localLLMService,
+        GpuLocalLLMService localLLMService,
         ICxEventBus eventBus)
     {
         _logger = logger;
@@ -43,13 +44,13 @@ public class LocalLLMEventBridge
         {
             _logger.LogInformation("🎮 Registering GPU Local LLM Event Bridge handlers for CUDA-accelerated consciousness processing");
 
-            // Subscribe to local LLM events
-            _eventBus.Subscribe("local.llm.load.model", OnLoadModel);
-            _eventBus.Subscribe("local.llm.generate.text", OnGenerateText);
-            _eventBus.Subscribe("local.llm.stream.tokens", OnStreamTokens);
-            _eventBus.Subscribe("local.llm.unload.model", OnUnloadModel);
-            _eventBus.Subscribe("local.llm.status.check", OnStatusCheck);
-            _eventBus.Subscribe("local.llm.model.info", OnModelInfo);
+            // Subscribe to local LLM events using new delegate signature  
+            _eventBus.Subscribe("local.llm.load.model", async (sender, eventName, data) => { await OnLoadModel(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("local.llm.generate.text", async (sender, eventName, data) => { await OnGenerateText(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("local.llm.stream.tokens", async (sender, eventName, data) => { await OnStreamTokens(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("local.llm.unload.model", async (sender, eventName, data) => { await OnUnloadModel(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("local.llm.status.check", async (sender, eventName, data) => { await OnStatusCheck(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            _eventBus.Subscribe("local.llm.model.info", async (sender, eventName, data) => { await OnModelInfo(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
 
             _logger.LogInformation("✅ GPU Local LLM Event Bridge handlers registered - unified CUDA consciousness ready");
             
@@ -62,7 +63,7 @@ public class LocalLLMEventBridge
         }
     }
 
-    private Task OnLoadModel(CxEventPayload cxEvent)
+    private async Task OnLoadModel(CxEventPayload cxEvent)
     {
         try
         {
@@ -71,7 +72,7 @@ public class LocalLLMEventBridge
             {
                 _logger.LogInformation("🔄 Loading model via event bridge: {ModelPath}", path);
                 
-                _ = Task.Run(async () =>
+                await Task.Run(async () =>
                 {
                     try
                     {
@@ -117,7 +118,7 @@ public class LocalLLMEventBridge
         }
     }
 
-    private Task OnGenerateText(CxEventPayload cxEvent)
+    private async Task OnGenerateText(CxEventPayload cxEvent)
     {
         try
         {
@@ -127,7 +128,7 @@ public class LocalLLMEventBridge
                 _logger.LogInformation("🧠 Generating text via event bridge: {Prompt}", 
                     promptStr.Substring(0, Math.Min(100, promptStr.Length)));
                 
-                _ = Task.Run(async () =>
+                await Task.Run(async () =>
                 {
                     try
                     {
@@ -166,7 +167,7 @@ public class LocalLLMEventBridge
         }
     }
 
-    private Task OnStreamTokens(CxEventPayload cxEvent)
+    private async Task OnStreamTokens(CxEventPayload cxEvent)
     {
         try
         {
@@ -176,7 +177,7 @@ public class LocalLLMEventBridge
                 _logger.LogInformation("🌊 Starting token streaming via event bridge: {Prompt}", 
                     promptStr.Substring(0, Math.Min(100, promptStr.Length)));
                 
-                _ = Task.Run(async () =>
+                await Task.Run(async () =>
                 {
                     try
                     {
@@ -228,13 +229,13 @@ public class LocalLLMEventBridge
         }
     }
 
-    private Task OnUnloadModel(CxEventPayload cxEvent)
+    private async Task OnUnloadModel(CxEventPayload cxEvent)
     {
         try
         {
             _logger.LogInformation("🔄 Model unload request via GPU Local LLM");
             
-            _ = Task.Run(async () =>
+            await Task.Run(async () =>
             {
                 try
                 {
@@ -266,13 +267,13 @@ public class LocalLLMEventBridge
         }
     }
 
-    private Task OnStatusCheck(CxEventPayload cxEvent)
+    private async Task OnStatusCheck(CxEventPayload cxEvent)
     {
         try
         {
             _logger.LogDebug("🔍 Checking GPU Local LLM status via event bridge");
             
-            _ = Task.Run(() =>
+            await Task.Run(() =>
             {
                 try
                 {
@@ -308,7 +309,7 @@ public class LocalLLMEventBridge
         }
     }
 
-    private Task OnModelInfo(CxEventPayload cxEvent)
+    private async Task OnModelInfo(CxEventPayload cxEvent)
     {
         try
         {
@@ -317,7 +318,7 @@ public class LocalLLMEventBridge
             var modelInfo = _localLLMService.ModelInfo;
             var isLoaded = _localLLMService.IsModelLoaded;
             
-            _ = _eventBus.EmitAsync("local.llm.model.info.result", new Dictionary<string, object>
+            await _eventBus.EmitAsync("local.llm.model.info.result", new Dictionary<string, object>
             {
                 ["isModelLoaded"] = isLoaded,
                 ["modelName"] = modelInfo?.Name ?? "none",

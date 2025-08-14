@@ -28,7 +28,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _localLLMService = localLLMService;
             _vectorStore = vectorStore;
 
-            _eventBus.Subscribe("ai.infer.request", OnInferRequest);
+            _eventBus.Subscribe("ai.infer.request", async (sender, eventName, data) => { await OnInferRequest(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
             _logger.LogInformation("✅ InferService (GPU-CUDA) initialized and subscribed to 'ai.infer.request'");
         }
 
@@ -47,6 +47,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                     _logger.LogError(ex, "❌ Unhandled exception in ProcessInferRequestAsync.");
                 }
             });
+            return Task.CompletedTask;
         }
 
         private async Task ProcessInferRequestAsync(CxEventPayload cxEvent)

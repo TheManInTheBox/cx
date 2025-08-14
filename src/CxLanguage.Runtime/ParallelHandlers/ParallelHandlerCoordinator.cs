@@ -124,7 +124,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 // Emit performance achievement event
                 if (performanceImprovement >= 2.0) // 200%+ improvement achieved
                 {
-                    _ = _eventBus.EmitAsync("parallel.performance.achievement", new Dictionary<string, object?>
+                    _ = _eventBus.EmitAsync("parallel.performance.achievement", new Dictionary<string, object>
                     {
                         ["executionId"] = executionId,
                         ["improvement"] = performanceImprovement,
@@ -143,12 +143,12 @@ namespace CxLanguage.Runtime.ParallelHandlers
                     executionId, stopwatch.ElapsedMilliseconds);
                 
                 // Emit failure event for monitoring
-                _ = _eventBus.EmitAsync("parallel.execution.failed", new
+                _ = _eventBus.EmitAsync("parallel.execution.failed", new Dictionary<string, object>
                 {
-                    executionId,
-                    error = ex.Message,
-                    handlerCount = handlerParameters.Count,
-                    elapsedMs = stopwatch.ElapsedMilliseconds
+                    ["executionId"] = executionId,
+                    ["error"] = ex.Message,
+                    ["handlerCount"] = handlerParameters.Count,
+                    ["elapsedMs"] = stopwatch.ElapsedMilliseconds
                 });
                 
                 throw;
@@ -186,10 +186,10 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 var resultEventName = $"{handlerEventName}.result.{parameterName}";
                 
                 // Register temporary result handler
-                CxEventHandler resultHandler = (payload) =>
+                Func<object?, string, IDictionary<string, object>?, Task<bool>> resultHandler = (sender, eventName, payload) =>
                 {
-                    resultTaskCompletionSource.TrySetResult(payload.Data ?? new object());
-                    return Task.CompletedTask;
+                    resultTaskCompletionSource.TrySetResult(payload ?? new Dictionary<string, object>());
+                    return Task.FromResult(true);
                 };
                 
                 _eventBus.Subscribe(resultEventName, resultHandler);
@@ -197,7 +197,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
                 try
                 {
                     // Emit the handler event
-                    await _eventBus.EmitAsync(handlerEventName, enhancedPayload);
+                    await _eventBus.EmitAsync(handlerEventName, ConvertObjectToDictionary(enhancedPayload));
                     
                     // Wait for result with timeout (handler should complete within reasonable time)
                     var timeoutTask = Task.Delay(TimeSpan.FromSeconds(30), cancellationToken);
@@ -291,6 +291,31 @@ namespace CxLanguage.Runtime.ParallelHandlers
         {
             _executionSemaphore?.Dispose();
             _logger.LogInformation("🧩 ParallelHandlerCoordinator disposed");
+        }
+        
+        /// <summary>
+        /// Convert object to IDictionary for event bus compatibility.
+        /// </summary>
+        private static IDictionary<string, object> ConvertObjectToDictionary(object obj)
+        {
+            if (obj is IDictionary<string, object> dict)
+                return dict;
+                
+            if (obj is IDictionary<string, object?> nullableDict)
+                return nullableDict.ToDictionary(kvp => kvp.Key, kvp => kvp.Value ?? new object());
+                
+            // Convert object properties to dictionary using reflection
+            var result = new Dictionary<string, object>();
+            if (obj != null)
+            {
+                var properties = obj.GetType().GetProperties();
+                foreach (var prop in properties)
+                {
+                    var value = prop.GetValue(obj);
+                    result[prop.Name] = value ?? new object();
+                }
+            }
+            return result;
         }
     }
     

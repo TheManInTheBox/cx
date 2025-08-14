@@ -64,7 +64,7 @@ namespace CxLanguage.Runtime
         /// <summary>
         /// Emit event with Aura Cognitive Framework processing
         /// </summary>
-        public async Task EmitAsync(string eventName, object payload)
+        public async Task<bool> EmitAsync(string eventName, IDictionary<string, object>? payload = null, object? sender = null)
         {
             try
             {
@@ -72,36 +72,32 @@ namespace CxLanguage.Runtime
                 _eventStatistics.AddOrUpdate(eventName, 1, (key, value) => value + 1);
                 
                 // Process through EventHub (decentralized)
-                await ProcessEventHub(eventName, payload);
+                await ProcessEventHub(eventName, payload, sender);
                 
                 // Process through NeuroHub (centralized coordination)
-                await ProcessNeuroHub(eventName, payload);
+                await ProcessNeuroHub(eventName, payload, sender);
                 
                 _logger.LogDebug("⚡ Aura event emitted: {EventName}", eventName);
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Aura event emission failed: {EventName}", eventName);
+                return false;
             }
         }
         
         /// <summary>
         /// Process event through EventHub (decentralized consciousness processing)
         /// </summary>
-        private async Task ProcessEventHub(string eventName, object payload)
+        private async Task ProcessEventHub(string eventName, IDictionary<string, object>? payload, object? sender)
         {
             if (_eventHandlers.TryGetValue(eventName, out var handlers))
             {
                 // Biological neural timing simulation (5-15ms for LTP)
                 await Task.Delay(Random.Shared.Next(5, 16));
 
-                var eventPayload = new CxEventPayload
-                {
-                    EventName = eventName,
-                    Data = payload,
-                    Timestamp = DateTime.UtcNow,
-                    Source = "AuraCognitiveEventBus.EventHub"
-                };
+                var eventPayload = new CxEventPayload(eventName, payload ?? new Dictionary<string, object>());
                 
                 // Execute handlers in parallel for decentralized processing
                 var tasks = handlers.Select(handler => ExecuteHandlerSafely(handler, eventPayload));
@@ -115,7 +111,7 @@ namespace CxLanguage.Runtime
         /// <summary>
         /// Process event through NeuroHub (centralized coordination)
         /// </summary>
-        private async Task ProcessNeuroHub(string eventName, object payload)
+        private async Task ProcessNeuroHub(string eventName, IDictionary<string, object>? payload, object? sender)
         {
             // Centralized coordination for consciousness events
             if (eventName.StartsWith("consciousness."))
@@ -124,7 +120,7 @@ namespace CxLanguage.Runtime
                 await Task.Delay(Random.Shared.Next(10, 26));
                 
                 // Update consciousness entities
-                await UpdateConsciousnessEntities(eventName, payload);
+                await UpdateConsciousnessEntities(eventName, payload ?? new Dictionary<string, object>());
                 
                 _logger.LogDebug("🎯 NeuroHub coordinated: {EventName}", eventName);
             }
@@ -215,7 +211,7 @@ namespace CxLanguage.Runtime
         /// </summary>
         public void Emit(string eventName, object payload)
         {
-            _ = EmitAsync(eventName, payload);
+            _ = EmitAsync(eventName, ConvertToDictionary(payload));
         }
 
         /// <summary>
@@ -268,6 +264,47 @@ namespace CxLanguage.Runtime
                 _consciousnessEntities.Clear();
                 _logger.LogInformation("🧹 Aura Cognitive Framework cleared");
             }
+        }
+
+        /// <summary>
+        /// Subscribe with new interface signature (ICxEventBus implementation)
+        /// </summary>
+        public bool Subscribe(string eventName, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler)
+        {
+            try
+            {
+                // Convert new handler signature to old CxEventHandler signature
+                CxEventHandler cxHandler = async (payload) =>
+                {
+                    try
+                    {
+                        var payloadDict = payload.Data as IDictionary<string, object> ?? ConvertToDictionary(payload.Data);
+                        await handler(null, payload.EventName, payloadDict);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Handler error for event: {EventName}", eventName);
+                    }
+                };
+
+                Subscribe(eventName, cxHandler);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Unsubscribe with new interface signature (ICxEventBus implementation)
+        /// </summary>
+        public bool Unsubscribe(string eventName, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler)
+        {
+            // Note: Cannot easily map back from converted handler, so this is a no-op for now
+            // In a production system, you'd need to track handler mappings
+            _logger.LogWarning("Unsubscribe with new signature not fully implemented - use old signature");
+            return false;
         }
         
         /// <summary>

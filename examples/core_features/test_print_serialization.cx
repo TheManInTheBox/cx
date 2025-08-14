@@ -1,0 +1,44 @@
+// Test the fixed print serialization with Dictionary objects
+
+// Test class to verify event handling and print serialization
+conscious TestPrintSerialization
+{
+    realize(self: concious)
+    {
+            learn self;
+        
+        // Test simple dictionary
+            print("🧪 Testing direct dictionary print:");
+            var simpleDict = { message: "Hello", count: 42, active: true };
+            print(simpleDict);
+        
+        // Test nested dictionary 
+            print("🧪 Testing nested dictionary print:");
+            var nestedDict = { 
+            user: { name: "Alice", age: 30 },
+            settings: { theme: "dark", notifications: true },
+            scoreCount: 3
+        };
+        print(nestedDict);
+        
+        // Test event-based dictionary processing
+        print("🧪 Testing learn service with dictionary data:");
+        learn { data: { content: "Advanced test", complexity: "high", featureCount: 2 } };
+        
+        // Add a small delay to let async processing complete
+        await { reason: "Let async processing complete", minDurationMs: 2000, maxDurationMs: 3000 };
+    }
+
+
+    // Test event handler for learn completion
+    on learn.debug.complete (event)
+    {
+        print("🎉 Received learn completion event");
+        print("📊 Event data object:");
+        print(event.data);
+        print("✅ Vector stored status:");
+        print(event.vectorStored);
+    }
+}
+
+var c = new TestPrintSerialization({name:"testing print"});

@@ -144,13 +144,7 @@ public class NamespacedEventBusService
     /// </summary>
     public async Task EmitAsync(string eventName, object? data = null, string source = "System")
     {
-        var payload = new CxEventPayload
-        {
-            EventName = eventName,
-            Data = data,
-            Timestamp = DateTime.UtcNow,
-            Source = source
-        };
+        var payload = new CxEventPayload(eventName, data ?? new object());
 
         _logger?.LogDebug("Emitting namespaced event: {EventName} from {Source}", eventName, source);
 

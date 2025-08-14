@@ -65,11 +65,11 @@ namespace CxLanguage.LocalLLM
                     
                     _logger.LogInformation("✅ CUDA consciousness engine ready - Test result: {Result}", result.ToSingle());
                     
-                    await _eventBus.EmitAsync("gpu.consciousness.initialized", new
+                    await _eventBus.EmitAsync("gpu.consciousness.initialized", new Dictionary<string, object>
                     {
-                        device = _device.ToString(),
-                        cuda_available = true,
-                        timestamp = DateTime.UtcNow
+                        ["device"] = _device.ToString(),
+                        ["cuda_available"] = true,
+                        ["timestamp"] = DateTime.UtcNow
                     });
                 }
                 else
@@ -108,11 +108,11 @@ namespace CxLanguage.LocalLLM
                 
                 _logger.LogInformation("✅ Consciousness model loaded: {ModelPath}", modelPath);
                 
-                await _eventBus.EmitAsync("model.loaded", new
+                await _eventBus.EmitAsync("model.loaded", new Dictionary<string, object>
                 {
-                    model_path = modelPath,
-                    device = _device.ToString(),
-                    timestamp = DateTime.UtcNow
+                    ["model_path"] = modelPath,
+                    ["device"] = _device.ToString(),
+                    ["timestamp"] = DateTime.UtcNow
                 });
 
                 return true;
@@ -154,13 +154,13 @@ namespace CxLanguage.LocalLLM
                 var duration = DateTime.UtcNow - startTime;
                 _logger.LogDebug("✅ Consciousness response generated in {DurationMs}ms", duration.TotalMilliseconds);
                 
-                await _eventBus.EmitAsync("inference.complete", new
+                await _eventBus.EmitAsync("inference.complete", new Dictionary<string, object>
                 {
-                    prompt = prompt.Length > 100 ? prompt.Substring(0, 100) + "..." : prompt,
-                    response = response,
-                    duration_ms = duration.TotalMilliseconds,
-                    device = _device.ToString(),
-                    timestamp = DateTime.UtcNow
+                    ["prompt"] = prompt.Length > 100 ? prompt.Substring(0, 100) + "..." : prompt,
+                    ["response"] = response,
+                    ["duration_ms"] = duration.TotalMilliseconds,
+                    ["device"] = _device.ToString(),
+                    ["timestamp"] = DateTime.UtcNow
                 });
 
                 return response;
@@ -219,9 +219,9 @@ namespace CxLanguage.LocalLLM
                     
                     _logger.LogInformation("✅ Consciousness model unloaded");
                     
-                    await _eventBus.EmitAsync("model.unloaded", new
+                    await _eventBus.EmitAsync("model.unloaded", new Dictionary<string, object>
                     {
-                        timestamp = DateTime.UtcNow
+                        ["timestamp"] = DateTime.UtcNow
                     });
                 }
             }

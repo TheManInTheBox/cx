@@ -274,10 +274,10 @@ namespace CxLanguage.Runtime
                 await InitializeStreamMonitoring();
                 
                 _logger.LogInformation("✅ Consciousness Stream Engine: All streams operational");
-                await _eventBus.EmitAsync("consciousness.stream.engine.ready", new
+                await _eventBus.EmitAsync("consciousness.stream.engine.ready", new Dictionary<string, object>
                 {
-                    StreamCount = _streamRegistry.GetActiveStreams().Count(),
-                    Timestamp = DateTime.UtcNow
+                    { "StreamCount", _streamRegistry.GetActiveStreams().Count() },
+                    { "Timestamp", DateTime.UtcNow }
                 });
             }
             catch (Exception ex)
@@ -335,13 +335,13 @@ namespace CxLanguage.Runtime
                             _streamRegistry.UpdateStreamActivity(streamEvent.StreamId, streamEvent);
                             
                             // Emit processed stream event
-                            await _eventBus.EmitAsync("consciousness.stream.processed", new
+                            await _eventBus.EmitAsync("consciousness.stream.processed", new Dictionary<string, object>
                             {
-                                StreamId = streamEvent.StreamId,
-                                EventType = streamEvent.EventType,
-                                Source = streamEvent.Source,
-                                Timestamp = streamEvent.Timestamp,
-                                ProcessedAt = DateTime.UtcNow
+                                { "StreamId", streamEvent.StreamId },
+                                { "EventType", streamEvent.EventType },
+                                { "Source", streamEvent.Source },
+                                { "Timestamp", streamEvent.Timestamp },
+                                { "ProcessedAt", DateTime.UtcNow }
                             });
                         }
                     }
@@ -364,20 +364,20 @@ namespace CxLanguage.Runtime
             _logger.LogInformation("🔧 Registering consciousness stream event handlers");
             
             // Register handlers for various consciousness events
-            _eventBus.Subscribe("consciousness.stream.input", async (CxEventPayload payload) => 
+            _eventBus.Subscribe("consciousness.stream.input", async (sender, eventName, payload) => 
             {
-                var data = payload.Data as Dictionary<string, object>;
-                if (data != null) await HandleStreamInput(data);
+                if (payload != null) await HandleStreamInput(new Dictionary<string, object>(payload));
+                return true;
             });
-            _eventBus.Subscribe("consciousness.stream.fusion", async (CxEventPayload payload) => 
+            _eventBus.Subscribe("consciousness.stream.fusion", async (sender, eventName, payload) => 
             {
-                var data = payload.Data as Dictionary<string, object>;
-                if (data != null) await HandleStreamFusion(data);
+                if (payload != null) await HandleStreamFusion(new Dictionary<string, object>(payload));
+                return true;
             });
-            _eventBus.Subscribe("consciousness.stream.status", async (CxEventPayload payload) => 
+            _eventBus.Subscribe("consciousness.stream.status", async (sender, eventName, payload) => 
             {
-                var data = payload.Data as Dictionary<string, object>;
-                if (data != null) await HandleStreamStatus(data);
+                if (payload != null) await HandleStreamStatus(new Dictionary<string, object>(payload));
+                return true;
             });
             
             await Task.CompletedTask;
@@ -433,7 +433,9 @@ namespace CxLanguage.Runtime
             try
             {
                 var statistics = _streamRegistry.GetStreamStatistics();
-                await _eventBus.EmitAsync("consciousness.stream.status.response", statistics);
+                var statisticsDict = statistics as IDictionary<string, object> ?? 
+                    new Dictionary<string, object> { { "statistics", statistics } };
+                await _eventBus.EmitAsync("consciousness.stream.status.response", statisticsDict);
                 _logger.LogDebug("📊 Stream status provided");
             }
             catch (Exception ex)
@@ -457,7 +459,9 @@ namespace CxLanguage.Runtime
                     try
                     {
                         var statistics = _streamRegistry.GetStreamStatistics();
-                        await _eventBus.EmitAsync("consciousness.stream.metrics", statistics);
+                        var statisticsDict = statistics as IDictionary<string, object> ?? 
+                            new Dictionary<string, object> { { "statistics", statistics } };
+                        await _eventBus.EmitAsync("consciousness.stream.metrics", statisticsDict);
                         await Task.Delay(TimeSpan.FromMinutes(1), _cancellationTokenSource.Token);
                     }
                     catch (OperationCanceledException)
@@ -521,9 +525,9 @@ namespace CxLanguage.Runtime
                 _cancellationTokenSource.Cancel();
                 _streamChannel.Writer.Complete();
                 
-                await _eventBus.EmitAsync("consciousness.stream.engine.shutdown", new
+                await _eventBus.EmitAsync("consciousness.stream.engine.shutdown", new Dictionary<string, object>
                 {
-                    Timestamp = DateTime.UtcNow
+                    { "Timestamp", DateTime.UtcNow }
                 });
                 
                 _logger.LogInformation("✅ Consciousness Stream Engine shut down gracefully");

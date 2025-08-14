@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using CxLanguage.Core.Events;
 using CxLanguage.StandardLibrary.Services.VectorStore;
@@ -28,7 +29,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _localLLMService = localLLMService;
             _vectorStore = vectorStore;
 
-            _eventBus.Subscribe("ai.learn.request", OnLearnRequest);
+            _eventBus.Subscribe("ai.learn.request", async (sender, eventName, data) => { await OnLearnRequest(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
             _logger.LogInformation("✅ LearnService (GPU-CUDA) initialized and subscribed to 'ai.learn.request'");
         }
 
@@ -47,6 +48,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                     _logger.LogError(ex, "❌ Unhandled exception in ProcessLearnRequestAsync.");
                 }
             });
+            return Task.CompletedTask;
         }
 
         private async Task ProcessLearnRequestAsync(CxEventPayload cxEvent)
@@ -62,16 +64,25 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                     return;
                 }
 
-                var data = payload.TryGetValue("data", out var dataValue) ? dataValue?.ToString() : "No data provided";
+                var data = payload.TryGetValue("data", out var dataValue) ? dataValue : "No data provided";
                 var category = payload.TryGetValue("category", out var categoryValue) ? categoryValue?.ToString() : "general";
                 var source = payload.TryGetValue("source", out var sourceValue) ? sourceValue?.ToString() : "unknown";
 
-                _logger.LogInformation($"📚 Learning data: {data}");
+                // Properly serialize data for logging
+                string dataForLogging = data switch
+                {
+                    Dictionary<string, object> dict => JsonSerializer.Serialize(dict, new JsonSerializerOptions { WriteIndented = true }),
+                    string str => str,
+                    null => "No data provided",
+                    _ => data.ToString() ?? "No data provided"
+                };
+
+                _logger.LogInformation($"📚 Learning data: {dataForLogging}");
                 _logger.LogInformation($"🏷️ Category: {category}");
                 _logger.LogInformation($"📍 Source: {source}");
 
                 // Generate a simple embedding (for now, use hash-based approach)
-                var embedding = GenerateSimpleEmbedding(data ?? string.Empty);
+                var embedding = GenerateSimpleEmbedding(data?.ToString() ?? string.Empty);
                 _logger.LogInformation($"🔢 Generated embedding with {embedding.Length} dimensions");
 
                 // Create vector record
@@ -81,7 +92,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                     Vector = embedding,
                     Metadata = new Dictionary<string, object>
                     {
-                        ["data"] = data ?? string.Empty,
+                        ["data"] = data ?? "No data provided",
                         ["category"] = category ?? "general",
                         ["source"] = source ?? "unknown",
                         ["timestamp"] = DateTime.UtcNow,
@@ -101,9 +112,9 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                         if (handler is string handlerName)
                         {
                             _logger.LogInformation($"🔗 Emitting handler event: {handlerName}");
-                            _eventBus.EmitAsync(handlerName, new Dictionary<string, object>
+                            await _eventBus.EmitAsync(handlerName, new Dictionary<string, object>
                             {
-                                ["data"] = data ?? string.Empty,
+                                ["data"] = data ?? "No data provided",  // Preserve original object or fallback
                                 ["category"] = category ?? "general",
                                 ["source"] = source ?? "unknown",
                                 ["vectorStored"] = true,
@@ -118,9 +129,9 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                 else
                 {
                     // Default handler
-                    _eventBus.EmitAsync("learning.complete", new Dictionary<string, object>
+                    await _eventBus.EmitAsync("learning.complete", new Dictionary<string, object>
                     {
-                        ["data"] = data ?? string.Empty,
+                        ["data"] = data ?? "No data provided",  // Preserve original object or fallback
                         ["category"] = category ?? "general",
                         ["source"] = source ?? "unknown",
                         ["vectorStored"] = true,
@@ -136,7 +147,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                 _logger.LogError(ex, "❌ Error processing learn request");
                 
                 // Emit error event
-                _eventBus.EmitAsync("learning.error", new Dictionary<string, object>
+                await _eventBus.EmitAsync("learning.error", new Dictionary<string, object>
                 {
                     ["error"] = ex.Message,
                     ["timestamp"] = DateTime.UtcNow,

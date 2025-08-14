@@ -163,7 +163,7 @@ public class CxCompiler : IAstVisitor<object>
             // Create Run method
             var runMethod = _programTypeBuilder.DefineMethod(
                 "Run",
-                MethodAttributes.Public,
+                MethodAttributes.Public | MethodAttributes.Static,
                 typeof(object),
                 Type.EmptyTypes);
             
@@ -3910,19 +3910,16 @@ public class CxCompiler : IAstVisitor<object>
         // NOTE: Removed automatic field initialization to null - let realize declaration body handle field assignments
         // This fixes the bug where realize assignments were being overwritten by null initialization
         
-        // Compile the realize declaration body
-        CxDebugTracing.TraceDebug("Compiler", $"Compiling realize declaration body for class {className}");
-        realizeDecl.Body.Accept(this);
-        CxDebugTracing.TraceDebug("Compiler", $"Realize declaration body compilation complete for class {className}");
-        
-        // Register event handlers for this class instance
-        CxDebugTracing.TraceDebug("Compiler", $"Registering {eventHandlers.Count} event handlers for class {className}");
+        // Register event handlers for this class instance BEFORE compiling realize body
+        // This ensures handlers are subscribed before any emit statements in the constructor execute
+        CxDebugTracing.TraceDebug("Compiler", $"Registering {eventHandlers.Count} event handlers for class {className} BEFORE realize body");
         foreach (var eventHandler in eventHandlers)
         {
             var eventName = eventHandler.EventName.FullName;
             var handlerMethodName = _eventHandlerMethodNames[eventHandler];
             
-            CxDebugTracing.TraceEvent(eventName, $"Registering instance handler", new { ClassName = className, HandlerMethod = handlerMethodName });
+            Console.WriteLine($"[DEBUG] Registering handler for {eventName} with ICxEventBus BEFORE realize body");
+            CxDebugTracing.TraceEvent(eventName, $"Registering instance handler BEFORE realize body", new { ClassName = className, HandlerMethod = handlerMethodName });
             
             // Call CxRuntimeHelper.RegisterInstanceEventHandler(this, eventName, methodName)
             _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this' instance
@@ -3936,7 +3933,16 @@ public class CxCompiler : IAstVisitor<object>
             }
             _currentIl.Emit(OpCodes.Call, registerMethod);
         }
-        Console.WriteLine($"[DEBUG] Event handler registration complete for class {className}");
+        Console.WriteLine($"[DEBUG] Event handler registration BEFORE realize body complete for class {className}");
+        
+        // Compile the realize declaration body
+        CxDebugTracing.TraceDebug("Compiler", $"Compiling realize declaration body for class {className}");
+        realizeDecl.Body.Accept(this);
+        CxDebugTracing.TraceDebug("Compiler", $"Realize declaration body compilation complete for class {className}");
+        
+        // NOTE: Event handlers were already registered BEFORE the realize body executes
+        // This ensures any emit statements in the constructor have active handlers
+        Console.WriteLine($"[DEBUG] Event handlers already registered before realize body - skipping duplicate registration");
         
         // Return from constructor
         _currentIl.Emit(OpCodes.Ret);

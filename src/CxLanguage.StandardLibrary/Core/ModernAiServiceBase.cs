@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Threading;
 using Microsoft.Extensions.AI;
 using CxLanguage.Core.Events;
+using CxLanguage.Runtime;
 
 namespace CxLanguage.StandardLibrary.Core;
 
@@ -93,7 +94,7 @@ public abstract class ModernAiServiceBase
                 return null;
             }
 
-            _logger.LogDebug("📦 Extracting payload from event: {EventName}", eventData.name);
+            _logger.LogDebug("📦 Extracting payload from event: {EventName}", eventData.EventName);
             return eventData.Data;
         }
         catch (Exception ex)

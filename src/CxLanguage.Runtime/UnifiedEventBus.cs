@@ -213,15 +213,25 @@ namespace CxLanguage.Runtime
             // Also emit to ICxEventBus-specific handlers
             if (_icxHandlers.TryGetValue(eventName, out var handlers))
             {
-                var eventPayload = new CxEventPayload
-                {
-                    EventName = eventName,
-                    Data = payload,
-                    Timestamp = DateTime.UtcNow,
-                    Source = "UnifiedEventBus"
-                };
+                var eventPayload = new CxEventPayload(eventName, payload ?? new Dictionary<string, object>());
                 var tasks = handlers.Select(h => h(eventPayload));
                 await Task.WhenAll(tasks);
+            }
+        }
+
+        /// <summary>
+        /// Emit async with new interface signature (ICxEventBus implementation)
+        /// </summary>
+        public async Task<bool> EmitAsync(string eventName, IDictionary<string, object>? payload = null, object? sender = null)
+        {
+            try
+            {
+                await EmitAsync(eventName, (object)(payload ?? new Dictionary<string, object>()));
+                return true;
+            }
+            catch
+            {
+                return false;
             }
         }
 
@@ -237,6 +247,47 @@ namespace CxLanguage.Runtime
             {
                 handlers.Remove(handler);
             }
+        }
+
+        /// <summary>
+        /// Subscribe with new interface signature (ICxEventBus implementation)
+        /// </summary>
+        public bool Subscribe(string eventName, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler)
+        {
+            try
+            {
+                // Convert new handler signature to old CxEventHandler signature
+                CxEventHandler cxHandler = async (payload) =>
+                {
+                    try
+                    {
+                        var payloadDict = payload.Data as IDictionary<string, object> ?? new Dictionary<string, object>();
+                        await handler(null, payload.EventName, payloadDict);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger?.LogError(ex, "Handler error for event: {EventName}", eventName);
+                    }
+                };
+
+                Subscribe(eventName, cxHandler);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Unsubscribe with new interface signature (ICxEventBus implementation)
+        /// </summary>
+        public bool Unsubscribe(string eventName, Func<object?, string, IDictionary<string, object>?, Task<bool>> handler)
+        {
+            // Note: Cannot easily map back from converted handler, so this is a no-op for now
+            // In a production system, you'd need to track handler mappings
+            _logger?.LogWarning("Unsubscribe with new signature not fully implemented - use old signature");
+            return false;
         }
 
         #endregion

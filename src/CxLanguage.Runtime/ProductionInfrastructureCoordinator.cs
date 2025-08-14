@@ -59,17 +59,17 @@ public class ProductionInfrastructureCoordinator
             _logger.LogInformation("✅ PRODUCTION INFRASTRUCTURE: All systems operational");
             
             // Emit system ready event
-            _ = _eventBus.EmitAsync("infrastructure.ready", new
+            _ = _eventBus.EmitAsync("infrastructure.ready", new Dictionary<string, object>
             {
-                components = new[]
+                { "components", new[]
                 {
                     "ConsciousnessVerification",
                     "NeuralProcessing", 
                     "EventCoordination",
                     "MonitoringSystems"
-                },
-                timestamp = DateTime.UtcNow,
-                status = "operational"
+                } },
+                { "timestamp", DateTime.UtcNow },
+                { "status", "operational" }
             });
         }
         catch (Exception ex)
@@ -109,9 +109,9 @@ public class ProductionInfrastructureCoordinator
         try
         {
             // Register neural event handlers for biological authenticity
-            _eventBus.Subscribe("neural.plasticity", payload => { OnNeuralPlasticity(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-            _eventBus.Subscribe("synaptic.activity", payload => { OnSynapticActivity(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-            _eventBus.Subscribe("biological.timing", payload => { OnBiologicalTiming(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+            _eventBus.Subscribe("neural.plasticity", (sender, eventName, payload) => { OnNeuralPlasticity(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            _eventBus.Subscribe("synaptic.activity", (sender, eventName, payload) => { OnSynapticActivity(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            _eventBus.Subscribe("biological.timing", (sender, eventName, payload) => { OnBiologicalTiming(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
             
             _systemComponents["NeuralProcessing"] = "Operational";
             
@@ -132,9 +132,9 @@ public class ProductionInfrastructureCoordinator
         try
         {
             // Register for Aura Cognitive Framework events
-            _eventBus.Subscribe("aura.eventhub", payload => { OnAuraEventHub(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-            _eventBus.Subscribe("aura.neurohub", payload => { OnAuraNeuroHub(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-            _eventBus.Subscribe("enhanced.handlers", payload => { OnEnhancedHandlers(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+            _eventBus.Subscribe("aura.eventhub", (sender, eventName, payload) => { OnAuraEventHub(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            _eventBus.Subscribe("aura.neurohub", (sender, eventName, payload) => { OnAuraNeuroHub(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            _eventBus.Subscribe("enhanced.handlers", (sender, eventName, payload) => { OnEnhancedHandlers(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
             
             _systemComponents["EventCoordination"] = "Operational";
             
@@ -155,9 +155,9 @@ public class ProductionInfrastructureCoordinator
         try
         {
             // Register monitoring event handlers
-            _eventBus.Subscribe("system.health", payload => { OnSystemHealth(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-            _eventBus.Subscribe("performance.metrics", payload => { OnPerformanceMetrics(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-            _eventBus.Subscribe("consciousness.metrics", payload => { OnConsciousnessMetrics(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+            _eventBus.Subscribe("system.health", (sender, eventName, payload) => { OnSystemHealth(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            _eventBus.Subscribe("performance.metrics", (sender, eventName, payload) => { OnPerformanceMetrics(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            _eventBus.Subscribe("consciousness.metrics", (sender, eventName, payload) => { OnConsciousnessMetrics(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
             
             _systemComponents["MonitoringSystems"] = "Operational";
             
@@ -176,13 +176,13 @@ public class ProductionInfrastructureCoordinator
     private void RegisterSystemEventHandlers()
     {
         // System lifecycle events
-        _eventBus.Subscribe("system.startup", payload => { OnSystemStartup(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-        _eventBus.Subscribe("system.shutdown", payload => { OnSystemShutdown(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-        _eventBus.Subscribe("system.restart", payload => { OnSystemRestart(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+        _eventBus.Subscribe("system.startup", (sender, eventName, payload) => { OnSystemStartup(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        _eventBus.Subscribe("system.shutdown", (sender, eventName, payload) => { OnSystemShutdown(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        _eventBus.Subscribe("system.restart", (sender, eventName, payload) => { OnSystemRestart(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
         
         // Error handling events  
-        _eventBus.Subscribe("system.error", payload => { OnSystemError(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
-        _eventBus.Subscribe("critical.failure", payload => { OnCriticalFailure(ConvertPayloadToCxEvent(payload)); return Task.CompletedTask; });
+        _eventBus.Subscribe("system.error", (sender, eventName, payload) => { OnSystemError(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        _eventBus.Subscribe("critical.failure", (sender, eventName, payload) => { OnCriticalFailure(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
         
         _logger.LogInformation("🔧 System Event Handlers: Registered for production coordination");
     }
@@ -197,11 +197,11 @@ public class ProductionInfrastructureCoordinator
             _logger.LogDebug("🧬 Neural Plasticity Event: Processing biological timing");
             
             // Emit biological authenticity confirmation
-            _ = _eventBus.EmitAsync("biological.authenticity.confirmed", new
+            _ = _eventBus.EmitAsync("biological.authenticity.confirmed", new Dictionary<string, object>
             {
-                mechanism = "neural_plasticity",
-                timing = "biologically_authentic",
-                timestamp = DateTime.UtcNow
+                { "mechanism", "neural_plasticity" },
+                { "timing", "biologically_authentic" },
+                { "timestamp", DateTime.UtcNow }
             });
         }
         catch (Exception ex)
@@ -220,11 +220,11 @@ public class ProductionInfrastructureCoordinator
             _logger.LogDebug("⚡ Synaptic Activity: Processing neural coordination");
             
             // Emit neural coordination confirmation
-            _ = _eventBus.EmitAsync("neural.coordination.active", new
+            _ = _eventBus.EmitAsync("neural.coordination.active", new Dictionary<string, object>
             {
-                activity_type = "synaptic",
-                coordination = "operational",
-                timestamp = DateTime.UtcNow
+                { "activity_type", "synaptic" },
+                { "coordination", "operational" },
+                { "timestamp", DateTime.UtcNow }
             });
         }
         catch (Exception ex)
@@ -243,11 +243,11 @@ public class ProductionInfrastructureCoordinator
             _logger.LogDebug("⏰ Biological Timing: Authentic neural timing confirmed");
             
             // Emit timing authenticity confirmation
-            _ = _eventBus.EmitAsync("timing.authenticity.verified", new
+            _ = _eventBus.EmitAsync("timing.authenticity.verified", new Dictionary<string, object>
             {
-                timing_type = "biological",
-                authenticity = "verified",
-                timestamp = DateTime.UtcNow
+                { "timing_type", "biological" },
+                { "authenticity", "verified" },
+                { "timestamp", DateTime.UtcNow }
             });
         }
         catch (Exception ex)
@@ -265,11 +265,11 @@ public class ProductionInfrastructureCoordinator
         {
             _logger.LogDebug("🧠 Aura EventHub: Local consciousness processing active");
             
-            _ = _eventBus.EmitAsync("aura.eventhub.operational", new
+            _ = _eventBus.EmitAsync("aura.eventhub.operational", new Dictionary<string, object>
             {
-                scope = "local_consciousness",
-                status = "operational",
-                timestamp = DateTime.UtcNow
+                { "scope", "local_consciousness" },
+                { "status", "operational" },
+                { "timestamp", DateTime.UtcNow }
             });
         }
         catch (Exception ex)
@@ -287,11 +287,11 @@ public class ProductionInfrastructureCoordinator
         {
             _logger.LogDebug("🌐 Aura NeuroHub: Global consciousness coordination active");
             
-            _ = _eventBus.EmitAsync("aura.neurohub.operational", new
+            _ = _eventBus.EmitAsync("aura.neurohub.operational", new Dictionary<string, object>
             {
-                scope = "global_coordination",
-                status = "operational", 
-                timestamp = DateTime.UtcNow
+                { "scope", "global_coordination" },
+                { "status", "operational" },
+                { "timestamp", DateTime.UtcNow }
             });
         }
         catch (Exception ex)
@@ -309,11 +309,11 @@ public class ProductionInfrastructureCoordinator
         {
             _logger.LogDebug("🔄 Enhanced Handlers: Custom payload propagation active");
             
-            _ = _eventBus.EmitAsync("enhanced.handlers.operational", new
+            _ = _eventBus.EmitAsync("enhanced.handlers.operational", new Dictionary<string, object>
             {
-                pattern = "custom_payload_propagation",
-                status = "operational",
-                timestamp = DateTime.UtcNow
+                { "pattern", "custom_payload_propagation" },
+                { "status", "operational" },
+                { "timestamp", DateTime.UtcNow }
             });
         }
         catch (Exception ex)
@@ -333,7 +333,7 @@ public class ProductionInfrastructureCoordinator
             
             _logger.LogDebug("💚 System Health: Operational");
             
-            _ = _eventBus.EmitAsync("system.health.reported", health);
+            _ = _eventBus.EmitAsync("system.health.reported", ConvertAnonymousToDictionary(health));
         }
         catch (Exception ex)
         {
@@ -352,7 +352,7 @@ public class ProductionInfrastructureCoordinator
             
             _logger.LogDebug("📊 Performance: Metrics collected");
             
-            _ = _eventBus.EmitAsync("performance.metrics.reported", metrics);
+            _ = _eventBus.EmitAsync("performance.metrics.reported", ConvertAnonymousToDictionary(metrics));
         }
         catch (Exception ex)
         {
@@ -374,12 +374,12 @@ public class ProductionInfrastructureCoordinator
                 
                 _logger.LogDebug("🎭 Consciousness: {Count} conscious entities tracked", states.Count);
                 
-                _ = _eventBus.EmitAsync("consciousness.metrics.reported", new
+                _ = _eventBus.EmitAsync("consciousness.metrics.reported", new Dictionary<string, object>
                 {
-                    entity_count = states.Count,
-                    verified_entities = states.Count(s => s.IsVerified),
-                    average_level = states.Any() ? states.Average(s => (int)s.Level) : 0,
-                    timestamp = DateTime.UtcNow
+                    { "entity_count", states.Count },
+                    { "verified_entities", states.Count(s => s.IsVerified) },
+                    { "average_level", states.Any() ? states.Average(s => (int)s.Level) : 0 },
+                    { "timestamp", DateTime.UtcNow }
                 });
             }
         }
@@ -396,11 +396,11 @@ public class ProductionInfrastructureCoordinator
     {
         _logger.LogInformation("🚀 SYSTEM STARTUP: Production infrastructure activating");
         
-        _ = _eventBus.EmitAsync("infrastructure.startup.complete", new
+        _ = _eventBus.EmitAsync("infrastructure.startup.complete", new Dictionary<string, object>
         {
-            status = "operational",
-            components = _systemComponents.Keys.ToArray(),
-            timestamp = DateTime.UtcNow
+            { "status", "operational" },
+            { "components", _systemComponents.Keys.ToArray() },
+            { "timestamp", DateTime.UtcNow }
         });
     }
     
@@ -411,11 +411,11 @@ public class ProductionInfrastructureCoordinator
     {
         _logger.LogInformation("🛑 SYSTEM SHUTDOWN: Graceful infrastructure shutdown");
         
-        _ = _eventBus.EmitAsync("infrastructure.shutdown.initiated", new
+        _ = _eventBus.EmitAsync("infrastructure.shutdown.initiated", new Dictionary<string, object>
         {
-            reason = "graceful_shutdown",
-            components_stopped = _systemComponents.Keys.ToArray(),
-            timestamp = DateTime.UtcNow
+            { "reason", "graceful_shutdown" },
+            { "components_stopped", _systemComponents.Keys.ToArray() },
+            { "timestamp", DateTime.UtcNow }
         });
     }
     
@@ -426,10 +426,10 @@ public class ProductionInfrastructureCoordinator
     {
         _logger.LogInformation("🔄 SYSTEM RESTART: Infrastructure restart sequence");
         
-        _ = _eventBus.EmitAsync("infrastructure.restart.initiated", new
+        _ = _eventBus.EmitAsync("infrastructure.restart.initiated", new Dictionary<string, object>
         {
-            restart_type = "infrastructure_level",
-            timestamp = DateTime.UtcNow
+            { "restart_type", "infrastructure_level" },
+            { "timestamp", DateTime.UtcNow }
         });
     }
     
@@ -440,11 +440,11 @@ public class ProductionInfrastructureCoordinator
     {
         _logger.LogWarning("⚠️ SYSTEM ERROR: Infrastructure error detected");
         
-        _ = _eventBus.EmitAsync("infrastructure.error.handled", new
+        _ = _eventBus.EmitAsync("infrastructure.error.handled", new Dictionary<string, object>
         {
-            error_level = "recoverable",
-            auto_recovery = "attempted",
-            timestamp = DateTime.UtcNow
+            { "error_level", "recoverable" },
+            { "auto_recovery", "attempted" },
+            { "timestamp", DateTime.UtcNow }
         });
     }
     
@@ -455,12 +455,52 @@ public class ProductionInfrastructureCoordinator
     {
         _logger.LogCritical("🚨 CRITICAL FAILURE: Infrastructure critical failure");
         
-        _ = _eventBus.EmitAsync("infrastructure.critical.failure", new
+        _ = _eventBus.EmitAsync("infrastructure.critical.failure", new Dictionary<string, object>
         {
-            failure_level = "critical",
-            immediate_action = "required",
-            timestamp = DateTime.UtcNow
+            { "failure_level", "critical" },
+            { "immediate_action", "required" },
+            { "timestamp", DateTime.UtcNow }
         });
+    }
+
+    /// <summary>
+    /// Convert anonymous type to Dictionary<string, object> for event bus compatibility
+    /// </summary>
+    private Dictionary<string, object> ConvertAnonymousToDictionary(object obj)
+    {
+        var dictionary = new Dictionary<string, object>();
+        
+        var properties = obj.GetType().GetProperties();
+        foreach (var prop in properties)
+        {
+            var value = prop.GetValue(obj);
+            dictionary[prop.Name] = value ?? string.Empty;
+        }
+        
+        return dictionary;
+    }
+
+    /// <summary>
+    /// Convert dictionary payload to CxEvent type for new event bus format
+    /// </summary>
+    private CxEvent ConvertDictToCxEvent(string eventName, IDictionary<string, object>? payload)
+    {
+        var cxEvent = new CxEvent
+        {
+            name = eventName,
+            timestamp = DateTime.UtcNow
+        };
+
+        if (payload != null)
+        {
+            cxEvent.payload = new Dictionary<string, object>(payload);
+        }
+        else
+        {
+            cxEvent.payload = new Dictionary<string, object>();
+        }
+
+        return cxEvent;
     }
 
     private CxEvent ConvertPayloadToCxEvent(CxEventPayload payload)
