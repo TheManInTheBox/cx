@@ -1,15 +1,13 @@
-name: Deploy Website to Azure
+name: Deploy Website to Azure (Client Secret Fallback)
 
 on:
-  push:
-    branches: [ master, main ]
-    paths:
-      - 'website/**'
-  pull_request:
-    branches: [ master, main ]
-    paths:
-      - 'website/**'
   workflow_dispatch:
+    inputs:
+      use_client_secret:
+        description: 'Use client secret authentication instead of federated identity'
+        required: true
+        default: true
+        type: boolean
 
 env:
   AZURE_SUBSCRIPTION_ID: '0ae2be9a-f470-4dfe-b2e0-b7e9726acdfb'
@@ -30,11 +28,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
       
-    - name: Setup Node.js (optional)
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        
     - name: Build website
       working-directory: ./website
       run: |
@@ -47,10 +40,16 @@ jobs:
         # Copy assets
         cp -r assets dist/
         
-        # Basic optimization without requiring npm packages
         echo "✅ Website files copied to dist/"
         
-    - name: Login to Azure
+    - name: Login to Azure (Client Secret)
+      if: github.event.inputs.use_client_secret == 'true'
+      uses: azure/login@v2
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+        
+    - name: Login to Azure (Federated Identity)
+      if: github.event.inputs.use_client_secret != 'true'
       uses: azure/login@v2
       with:
         client-id: ${{ secrets.AZURE_CLIENT_ID }}
@@ -61,6 +60,7 @@ jobs:
       run: |
         echo "Testing Azure authentication..."
         az account show
+        echo "Available subscriptions:"
         az account list --output table
         
     - name: Create Azure Resources
@@ -128,28 +128,6 @@ jobs:
           --origin-host-header $ORIGIN_URL \
           --subscription $AZURE_SUBSCRIPTION_ID || true
           
-    - name: Purge CDN Cache
-      run: |
-        # Purge CDN cache to ensure latest content is served
-        az cdn endpoint purge \
-          --name $AZURE_CDN_ENDPOINT \
-          --profile-name $AZURE_CDN_PROFILE \
-          --resource-group $AZURE_RESOURCE_GROUP \
-          --content-paths "/*" \
-          --subscription $AZURE_SUBSCRIPTION_ID || true
-          
-    - name: Configure Custom Domain
-      if: env.CUSTOM_DOMAIN
-      run: |
-        # Add custom domain if CUSTOM_DOMAIN is set
-        az cdn custom-domain create \
-          --endpoint-name $AZURE_CDN_ENDPOINT \
-          --name agilecloud-custom-domain \
-          --profile-name $AZURE_CDN_PROFILE \
-          --resource-group $AZURE_RESOURCE_GROUP \
-          --hostname $CUSTOM_DOMAIN \
-          --subscription $AZURE_SUBSCRIPTION_ID || true
-          
     - name: Get Website URLs
       run: |
         # Get the primary web endpoint
@@ -170,72 +148,8 @@ jobs:
         echo "🌐 Website URL: $WEBSITE_URL"
         echo "⚡ CDN URL: https://$CDN_URL"
         echo "🚀 Deployment completed successfully!"
-        
-        # Save URLs to GitHub environment
-        echo "WEBSITE_URL=$WEBSITE_URL" >> $GITHUB_ENV
-        echo "CDN_URL=https://$CDN_URL" >> $GITHUB_ENV
-        
-    - name: Comment on PR
-      if: github.event_name == 'pull_request'
-      uses: actions/github-script@v7
-      with:
-        script: |
-          const websiteUrl = process.env.WEBSITE_URL;
-          const cdnUrl = process.env.CDN_URL;
-          
-          const comment = `## 🚀 Website Deployment Preview
-          
-          Your website has been deployed and is available at:
-          
-          - **Primary URL**: ${websiteUrl}
-          - **CDN URL**: ${cdnUrl}
-          
-          The deployment includes:
-          - ✅ Static website hosting on Azure Storage
-          - ✅ Azure CDN for global distribution
-          - ✅ Automatic cache purging
-          - ✅ Optimized assets (minified CSS/JS/HTML)
-          
-          **Deployment Details:**
-          - Subscription: \`${process.env.AZURE_SUBSCRIPTION_ID}\`
-          - Resource Group: \`${process.env.AZURE_RESOURCE_GROUP}\`
-          - Storage Account: \`${process.env.AZURE_STORAGE_ACCOUNT}\`
-          `;
-          
-          github.rest.issues.createComment({
-            issue_number: context.issue.number,
-            owner: context.repo.owner,
-            repo: context.repo.repo,
-            body: comment
-          });
-
-  security-scan:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Run security scan
-      run: |
-        # Basic security checks for web files
-        echo "🔍 Running security scan..."
-        
-        # Check for common security issues in HTML/JS files
-        find website -type f \( -name "*.html" -o -name "*.js" \) -exec grep -l "eval\|innerHTML\|document.write" {} \; > security-issues.txt || true
-        
-        if [ -s security-issues.txt ]; then
-          echo "⚠️ Potential security issues found:"
-          cat security-issues.txt
-          exit 1
-        else
-          echo "✅ No obvious security issues detected"
-        fi
-        
-    - name: Validate HTML
-      run: |
-        # Basic HTML validation
-        echo "🔍 Validating HTML structure..."
-        find website/public -name "*.html" -exec echo "Checking {}" \; -exec grep -q "<!DOCTYPE html>" {} \; || echo "Missing DOCTYPE in {}"
-        echo "✅ HTML validation completed"
+        echo ""
+        echo "📋 Next Steps:"
+        echo "1. Configure DNS CNAME: agilecloud.ai -> $CDN_URL"
+        echo "2. Enable HTTPS certificate in Azure CDN"
+        echo "3. Test the website at all URLs"
