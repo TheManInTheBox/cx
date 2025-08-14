@@ -10,6 +10,26 @@ You have already set up a federated credential for GitHub Actions. This is the m
 - **Federated Credential**: `WebSite`
 - **Subscription ID**: `0ae2be9a-f470-4dfe-b2e0-b7e9726acdfb`
 
+### ⚠️ IMPORTANT: Federated Credential Configuration
+
+The federated credential must be configured with these exact settings:
+
+1. **Issuer**: `https://token.actions.githubusercontent.com`
+2. **Subject**: `repo:TheManInTheBox/cx:ref:refs/heads/master`
+3. **Audience**: `api://AzureADTokenExchange`
+
+### To verify/update your federated credential:
+
+1. Go to Azure Portal → Azure Active Directory → App registrations
+2. Find your application: `291122ee-4f43-4b21-a337-c4d6e2382c8e`
+3. Go to **Certificates & secrets** → **Federated credentials**
+4. Edit the "WebSite" credential and ensure it has:
+   - **Federated credential scenario**: GitHub Actions deploying Azure resources
+   - **Organization**: `TheManInTheBox`
+   - **Repository**: `cx`
+   - **Entity type**: Branch
+   - **GitHub branch name**: `master`
+
 ### Required GitHub Secrets for Federated Identity:
 
 Instead of AZURE_CREDENTIALS, you need these individual secrets:
@@ -82,12 +102,51 @@ az ad sp create-for-rbac --name "github-actions-agilecloud" \
 
 ### Troubleshooting
 
-If the deployment fails with authentication errors:
+If the deployment fails with "No subscriptions found" or login errors:
 
-1. Verify the JSON format is correct in the GitHub secret
-2. Check that the service principal has not expired
-3. Ensure the subscription ID matches
-4. Verify the tenant ID is correct
+1. **Check Federated Credential Configuration**:
+   - Verify the subject claim matches exactly: `repo:TheManInTheBox/cx:ref:refs/heads/master`
+   - Ensure the issuer is: `https://token.actions.githubusercontent.com`
+   - Confirm the audience is: `api://AzureADTokenExchange`
+
+2. **Verify Service Principal Permissions**:
+   ```bash
+   # Check if the service principal has access to the subscription
+   az role assignment list --assignee 291122ee-4f43-4b21-a337-c4d6e2382c8e --subscription 0ae2be9a-f470-4dfe-b2e0-b7e9726acdfb
+   ```
+
+3. **Add Subscription Access**:
+   ```bash
+   # Grant Contributor role to the service principal
+   az role assignment create \
+     --assignee 291122ee-4f43-4b21-a337-c4d6e2382c8e \
+     --role Contributor \
+     --subscription 0ae2be9a-f470-4dfe-b2e0-b7e9726acdfb
+   ```
+
+4. **Common Issues**:
+   - The application must have permission to the specific subscription
+   - The federated credential entity type must match (Branch vs Environment)
+   - GitHub repository name and organization must be exact matches
+   - Branch name in federated credential must match the branch the workflow runs on
+
+### Manual Fix for Current Error:
+
+Run these commands in Azure CLI to fix the permission issue:
+
+```bash
+# Login to Azure
+az login
+
+# Set the subscription
+az account set --subscription 0ae2be9a-f470-4dfe-b2e0-b7e9726acdfb
+
+# Grant Contributor role to your service principal
+az role assignment create \
+  --assignee 291122ee-4f43-4b21-a337-c4d6e2382c8e \
+  --role Contributor \
+  --subscription 0ae2be9a-f470-4dfe-b2e0-b7e9726acdfb
+```
 
 ### Manual Alternative
 
