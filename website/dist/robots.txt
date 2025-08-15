@@ -1,0 +1,22 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://agilecloud.ai/sitemap.xml
+
+# Crawl delay for respectful crawling
+Crawl-delay: 1
+
+# Allow indexing of main content
+Allow: /index.html
+Allow: /assets/
+Allow: /*.css
+Allow: /*.js
+Allow: /*.html
+
+# Block sensitive areas (none for static site)
+# Disallow: /admin/
+# Disallow: /private/
+
+# AgileCloud.ai - Consciousness Computing Platform
+# Contact: github.com/TheManInTheBox/cx

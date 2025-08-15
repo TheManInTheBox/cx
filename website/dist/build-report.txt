@@ -1,0 +1,21 @@
+AgileCloud.ai Website Build Report 
+Generated: Fri 08/15/2025  1:20:37.70 
+ 
+Files in build: 14 total files 
+ 
+HTML Pages: 
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\404.html
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\index.html
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\solutions\data-ingestion.html
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\solutions\enterprise-ai.html
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\solutions\global-vector-db.html
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\solutions\intelligent-automation.html
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\solutions\rapid-prototyping.html
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\solutions\scalable-architecture.html
+ 
+Assets: 
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\assets\css
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\assets\images
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\assets\js
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\assets\css\styles.css
+C:\Users\a7qBIOyPiniwRue6UVvF\cx\website\dist\assets\js\main.js
