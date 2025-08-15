@@ -139,16 +139,21 @@ jobs:
           --subscription $AZURE_SUBSCRIPTION_ID || true
           
     - name: Configure Custom Domain
-      if: env.CUSTOM_DOMAIN
+      if: false  # Temporarily disabled due to DNS configuration
       run: |
         # Add custom domain if CUSTOM_DOMAIN is set
-        az cdn custom-domain create \
-          --endpoint-name $AZURE_CDN_ENDPOINT \
-          --name agilecloud-custom-domain \
-          --profile-name $AZURE_CDN_PROFILE \
-          --resource-group $AZURE_RESOURCE_GROUP \
-          --hostname $CUSTOM_DOMAIN \
-          --subscription $AZURE_SUBSCRIPTION_ID || true
+        # Temporarily disabled - DNS records need to be configured first
+        echo "Custom domain configuration skipped - DNS setup required"
+        echo "Please configure DNS records as shown in DNS_SETUP_GUIDE.md"
+        echo "Then re-enable this step by changing 'if: false' to 'if: env.CUSTOM_DOMAIN'"
+        
+        # az cdn custom-domain create \
+        #   --endpoint-name $AZURE_CDN_ENDPOINT \
+        #   --name agilecloud-custom-domain \
+        #   --profile-name $AZURE_CDN_PROFILE \
+        #   --resource-group $AZURE_RESOURCE_GROUP \
+        #   --hostname $CUSTOM_DOMAIN \
+        #   --subscription $AZURE_SUBSCRIPTION_ID || true
           
     - name: Get Website URLs
       run: |
