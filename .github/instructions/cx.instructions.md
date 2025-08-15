@@ -217,6 +217,25 @@ The following rules are mandatory for all CX Language code:
 - **Dictionary Iteration**: Use `for (var item in event.payload)` to iterate over event data
 - **KeyValuePair Properties**: Access dictionary entries with `item.Key` and `item.Value`
 
+### Handlers Syntax Rules
+- **Unquoted Identifiers**: Event handler names are unquoted identifiers using dot notation
+- **Correct Format**: `handlers: [ event.name, another.event, third.event ]`
+- **Custom Payloads**: `handlers: [ event.name { custom: "value" }, another.event ]`
+- **NO Quotes on Names**: ❌ WRONG: `handlers: [ "event.name" ]` - event names are never quoted
+- **Values May Be Quoted**: ✅ CORRECT: `handlers: [ event.name { text: "quoted string" } ]` - payload values can be quoted
+- **Mixed Arrays**: `handlers: [ plain.event, custom.event { data: "value" } ]` - combine plain and custom payload handlers
+- **Examples**:
+  ```cx
+  // ✅ CORRECT: Unquoted handler identifiers
+  handlers: [ data.ingestion.complete, vector.storage.complete ]
+  
+  // ✅ CORRECT: Handler with custom payload
+  handlers: [ task.complete { status: "success", priority: "high" } ]
+  
+  // ❌ WRONG: Quoted handler names
+  handlers: [ "data.ingestion.complete", "vector.storage.complete" ]
+  ```
+
 ### Service Integration
 - **Automatic Injection**: All cognitive services are automatically injected into the program's global scope at runtime. There is no need to declare or import them.
 - **Global Availability**: Services are available as globally accessible functions throughout the application.
@@ -496,32 +515,66 @@ conscious VoiceAgent
         print("✅ Voice response received: " + event.content);
         print("  Complete: " + event.isComplete);
         
-        if (event.isComplete)
-        {
-            print("🎉 Voice interaction complete!");
-        }
+        // ✅ Cognitive decision about completion status
+        is {
+            context: "Is voice interaction complete?",
+            evaluate: "Voice response completion status check",
+            data: { isComplete: event.isComplete },
+            handlers: [ voice.interaction.complete ]
+        };
+    }
+    
+    on voice.interaction.complete (event)
+    {
+        print("🎉 Voice interaction complete!");
+    }
     }
     
     // ✅ FIXED: Real-time audio response handler with proper type safety
     // CRITICAL: Safe property access for audio data to prevent InvalidCastException
     on realtime.audio.response (event)
     {
-        // ✅ FIXED: Safe audio data check without .length property access
-        if (event.audioData != null)
-        {
-            print("🔊 Audio response received - data available");
-            print("📊 Audio data type: " + typeof(event.audioData));
-        }
-        else
-        {
-            print("🔊 Audio response received - no data");
-        }
+        // ✅ Cognitive decision about audio data availability
+        is {
+            context: "Is audio data available for processing?",
+            evaluate: "Audio data presence check",
+            data: { audioData: event.audioData },
+            handlers: [ audio.data.available ]
+        };
         
-        if (event.isComplete)
-        {
-            print("🎵 Voice audio synthesis complete!");
-        }
+        // ✅ Cognitive decision for null audio data
+        not {
+            context: "Is audio data unavailable?",
+            evaluate: "Audio data absence check",
+            data: { audioData: event.audioData },
+            handlers: [ audio.data.null ]
+        };
     }
+    
+    on audio.data.available (event)
+    {
+        print("🔊 Audio response received - data available");
+        print("📊 Audio data type: " + typeof(event.audioData));
+    }
+    
+    on audio.data.null (event)
+    {
+        print("🔊 Audio response received - no data");
+        
+        // ✅ Cognitive decision about completion status
+        is {
+            context: "Is voice audio synthesis complete?",
+            evaluate: "Audio synthesis completion check",
+            data: { isComplete: event.isComplete },
+            handlers: [ voice.synthesis.complete ]
+        };
+    }
+    
+    on voice.synthesis.complete (event)
+    {
+        print("🎵 Voice audio synthesis complete!");
+    }
+}
 }
 
 // ✅ PRODUCTION USAGE: Create and start voice agent
@@ -630,18 +683,34 @@ conscious DataProcessor
 // ✅ For...in loop with PowerShell results
 on powershell.results (payload) 
 {
-    if (payload.outputs && payload.outputs.length > 0) 
+    // ✅ Cognitive decision about outputs availability
+    is {
+        context: "Are PowerShell outputs available for processing?",
+        evaluate: "PowerShell outputs presence check",
+        data: { outputs: payload.outputs },
+        handlers: [ powershell.outputs.available ]
+    };
+}
+
+on powershell.outputs.available (payload)
+{
+    for (var output in payload.outputs) 
     {
-        for (var output in payload.outputs) 
-        {
-            print("PowerShell Output: " + output);
-            
-            if (typeof(output) == "string") 
-            {
-                print("Length: " + output.length);
-            }
-        }
+        print("PowerShell Output: " + output);
+        
+        // ✅ Cognitive decision about output type
+        is {
+            context: "Is output a string type?",
+            evaluate: "Output type string check",
+            data: { output: output, outputType: typeof(output) },
+            handlers: [ output.string.type ]
+        };
     }
+}
+
+on output.string.type (event)
+{
+    print("Length: " + event.output.length);
 }
 ```
 
@@ -1045,19 +1114,33 @@ conscious ComplexEventHandler
 {
     on api.response (event)
     {
-        // Access nested conscious entity properties
-        if (event.response && event.response.data)
-        {
-            print("Status: " + event.response.status);
-            print("Data: " + event.response.data.content);
-        }
+        // ✅ Cognitive decision about response data availability
+        is {
+            context: "Is API response data available?",
+            evaluate: "API response data presence check",
+            data: { response: event.response },
+            handlers: [ api.response.data.available ]
+        };
         
-        // Safe property access with type checking
-        if (typeof(event.user) == "conscious")
-        {
-            print("User ID: " + event.user.id);
-            print("User Name: " + event.user.name);
-        }
+        // ✅ Cognitive decision about user type
+        is {
+            context: "Is user a conscious entity?",
+            evaluate: "User entity type verification",
+            data: { user: event.user, userType: typeof(event.user) },
+            handlers: [ user.conscious.confirmed ]
+        };
+    }
+    
+    on api.response.data.available (event)
+    {
+        print("Status: " + event.response.status);
+        print("Data: " + event.response.data.content);
+    }
+    
+    on user.conscious.confirmed (event)
+    {
+        print("User ID: " + event.user.id);
+        print("User Name: " + event.user.name);
     }
 }
 ```
@@ -1416,12 +1499,20 @@ conscious DataAnalysisAgent
         // Check all analysis parameters
         for (var param in event.payload)
         {
-            if (param.Key == "complexity" && param.Value == "high")
-            {
-                print("High complexity analysis detected");
-                emit analysis.complexity.high { agent: event.agentName };
-            }
+            // ✅ Cognitive decision about complexity level
+            is {
+                context: "Is this a high complexity analysis?",
+                evaluate: "Analysis complexity level check",
+                data: { paramKey: param.Key, paramValue: param.Value },
+                handlers: [ analysis.complexity.high.detected ]
+            };
         }
+    }
+    
+    on analysis.complexity.high.detected (event)
+    {
+        print("High complexity analysis detected");
+        emit analysis.complexity.high { agent: event.agentName };
     }
 }
 
@@ -1434,11 +1525,20 @@ on system.any.ready (event)
     // Log all system events for monitoring
     for (var data in event.payload)
     {
-        if (data.Key == "critical" && data.Value == true)
-        {
-            print("Critical system event detected");
-        }
+        // ✅ Cognitive decision about critical data
+        is {
+            context: "Is this critical system data?",
+            evaluate: "Critical system data presence check",
+            data: { dataKey: data.Key, dataValue: data.Value },
+            handlers: [ system.critical.data.detected ]
+        };
     }
+}
+
+on system.critical.data.detected (event)
+{
+    print("Critical system event detected");
+}
 }
 
 // ❌ INCORRECT: Non-system handlers must be in conscious entity scope
@@ -1505,10 +1605,18 @@ conscious SmartAwaitAgent
     
     on realtime.audio.response (event)
     {
-        if (event.isComplete)
-        {
-            print("Audio complete for phase transition");
-        }
+        // ✅ Cognitive decision about audio completion
+        is {
+            context: "Is audio response complete for phase transition?",
+            evaluate: "Audio completion status check",
+            data: { isComplete: event.isComplete },
+            handlers: [ audio.completion.confirmed ]
+        };
+    }
+    
+    on audio.completion.confirmed (event)
+    {
+        print("Audio complete for phase transition");
     }
 }
 
@@ -1573,13 +1681,22 @@ conscious DebateAgent
     
     on realtime.audio.response (event)
     {
-        if (event.isComplete)
-        {
-            // Smart await for natural pause after speaking
-            await { 
-                reason: "post_turn_pause_" + event.agentName,
-                context: "Natural pause after " + event.agentName + " completes turn",
-                minDurationMs: 1500,
+        // ✅ Cognitive decision about audio completion
+        is {
+            context: "Is audio response complete for turn timing?",
+            evaluate: "Audio completion status for turn management",
+            data: { isComplete: event.isComplete, agentName: event.agentName },
+            handlers: [ audio.turn.complete ]
+        };
+    }
+    
+    on audio.turn.complete (event)
+    {
+        // Smart await for natural pause after speaking
+        await { 
+            reason: "post_turn_pause_" + event.agentName,
+            context: "Natural pause after " + event.agentName + " completes turn",
+            minDurationMs: 1500,
                 maxDurationMs: 2500,
                 handlers: [ turn.complete ]
             };
@@ -1991,11 +2108,20 @@ conscious AzureRealtimeHandler
     // Handle audio responses
     on realtime.audio.response (event)
     {
-        if (event.audioData && event.audioData.length)
-        {
-            print("Audio received: " + event.audioData.length + " bytes");
-        }
+        // ✅ Cognitive decision about audio data availability
+        is {
+            context: "Is audio data available with content?",
+            evaluate: "Audio data presence and length check",
+            data: { audioData: event.audioData },
+            handlers: [ audio.data.received ]
+        };
+        
         print("Complete: " + event.isComplete);
+    }
+    
+    on audio.data.received (event)
+    {
+        print("Audio received: " + event.audioData.length + " bytes");
     }
 }
 ```
@@ -2033,29 +2159,61 @@ conscious VoiceDemo
     
     on realtime.text.response (event)
     {
-        if (event.isComplete)
-        {
-            print("✅ Complete AI response: " + event.content);
-        }
+        // ✅ Cognitive decision about response completion
+        is {
+            context: "Is AI text response complete?",
+            evaluate: "Text response completion status check",
+            data: { isComplete: event.isComplete, content: event.content },
+            handlers: [ text.response.complete ]
+        };
+    }
+    
+    on text.response.complete (event)
+    {
+        print("✅ Complete AI response: " + event.content);
     }
     
     on realtime.audio.response (event)
     {
-        // ✅ FIXED: Safe audio data handling without byte array casting issues
-        if (event.audioData != null)
-        {
-            print("🔊 Voice audio data received");
-            print("📊 Data type: " + typeof(event.audioData));
-        }
-        else
-        {
-            print("🔊 Audio response - no data");
-        }
+        // ✅ Cognitive decision about audio data availability
+        is {
+            context: "Is voice audio data available?",
+            evaluate: "Audio data null check for voice processing",
+            data: { audioData: event.audioData },
+            handlers: [ voice.audio.available ]
+        };
         
-        if (event.isComplete)
-        {
-            print("🎵 Voice synthesis complete!");
-        }
+        // ✅ Cognitive decision for null audio data
+        not {
+            context: "Is voice audio data unavailable?",
+            evaluate: "Audio data null state check",
+            data: { audioData: event.audioData },
+            handlers: [ voice.audio.null ]
+        };
+        
+        // ✅ Cognitive decision about voice completion
+        is {
+            context: "Is voice audio synthesis complete?",
+            evaluate: "Voice completion status check",
+            data: { isComplete: event.isComplete },
+            handlers: [ voice.synthesis.finished ]
+        };
+    }
+    
+    on voice.audio.available (event)
+    {
+        print("🔊 Voice audio data received");
+        print("📊 Data type: " + typeof(event.audioData));
+    }
+    
+    on voice.audio.null (event)
+    {
+        print("🔊 Audio response - no data");
+    }
+    
+    on voice.synthesis.finished (event)
+    {
+        print("🎵 Voice synthesis complete!");
     }
 }
 
