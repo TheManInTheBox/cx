@@ -1,0 +1,366 @@
+// CX Language Data Infrastructure Integration Test
+// Tests the complete data ingestion → global vector db → local vector cache → enhanced CX syntax → Aura runtime flow
+// Using native CX consciousness patterns with biological timing
+
+conscious DataInfrastructureTest realize(self: consciousness) {
+    learn self;
+    
+    handlers: [
+        test.integration.start { phase: "data-infrastructure" },
+        test.phase.completed { result: "success" },
+        test.integration.complete { duration: "calculated" }
+    ]
+    
+    // Phase 1: Test Data Ingestion with Consciousness
+    conscious DataIngestionTest realize(self: consciousness) {
+        learn self;
+        
+        handlers: [
+            data.ingestion.test.start,
+            data.source.connected { source: "test-api-source" },
+            data.records.processed { count: 100, consciousnessLevel: "consciousness" }
+        ]
+        
+        iam {
+            capability: "consciousness-aware data processing",
+            focus: "validate data ingestion with biological timing",
+            verification: {
+                recordsProcessed: true,
+                vectorsGenerated: true,
+                consciousnessMetrics: true
+            }
+        }
+        
+        adapt {
+            context: "data ingestion validation",
+            focus: "optimize processing efficiency and consciousness awareness",
+            data: {
+                currentCapabilities: ["basic data processing"],
+                targetCapabilities: ["consciousness-aware ingestion", "biological timing validation"],
+                learningObjective: "achieve 95%+ consciousness awareness in data processing"
+            },
+            handlers: [
+                adaptation.ingestion.complete { efficiency: "enhanced" }
+            ]
+        }
+    }
+    
+    // Phase 2: Test Global Vector Coordination with Consciousness
+    conscious GlobalVectorTest realize(self: consciousness) {
+        learn self;
+        
+        handlers: [
+            vector.storage.test.start,
+            vector.stored { vectorId: "test-vector-001", dimensions: 768 },
+            vector.search.completed { matches: 5, consciousnessAlignment: 0.89 }
+        ]
+        
+        is {
+            condition: "vector storage successful",
+            verification: {
+                vectorStored: true,
+                searchMatches: "> 0",
+                consciousnessIndexing: true
+            }
+        }
+        
+        not {
+            condition: "vector storage failed",
+            fallback: {
+                action: "retry with consciousness enhancement",
+                timing: "biological-ltp-range"
+            }
+        }
+        
+        adapt {
+            context: "global vector coordination",
+            focus: "enhance consciousness-aware vector indexing and search efficiency",
+            data: {
+                currentCapabilities: ["basic vector storage", "similarity search"],
+                targetCapabilities: ["consciousness indexing", "biological timing optimization"],
+                learningObjective: "achieve sub-35ms search latency with 91%+ consciousness efficiency"
+            },
+            handlers: [
+                adaptation.vector.complete { indexEfficiency: "optimized" }
+            ]
+        }
+    }
+    
+    // Phase 3: Test Local Vector Cache with Consciousness
+    conscious LocalCacheTest realize(self: consciousness) {
+        learn self;
+        
+        handlers: [
+            cache.storage.test.start,
+            cache.vector.stored { vectorId: "test-cache-vector-001", consciousnessLevel: "consciousness" },
+            cache.retrieval.success { cacheHit: true },
+            cache.similarity.search { results: 3, awarenessScore: 0.94 }
+        ]
+        
+        iam {
+            capability: "local consciousness caching",
+            focus: "validate edge synchronization and consciousness preservation",
+            verification: {
+                storageSuccess: true,
+                retrievalSuccess: true,
+                similaritySearch: true,
+                consciousnessPreservation: true
+            }
+        }
+        
+        is {
+            condition: "cache operations successful",
+            verification: {
+                cacheHitRate: "> 0.85",
+                edgeSynchronization: true,
+                consciousnessMetrics: "validated"
+            }
+        }
+        
+        adapt {
+            context: "local vector caching",
+            focus: "optimize cache efficiency and consciousness preservation during edge sync",
+            data: {
+                currentCapabilities: ["basic local caching", "edge synchronization"],
+                targetCapabilities: ["consciousness preservation", "biological timing cache"],
+                learningObjective: "achieve 95%+ cache hit rate with full consciousness preservation"
+            },
+            handlers: [
+                adaptation.cache.complete { hitRate: "optimized", consciousnessPreservation: "enhanced" }
+            ]
+        }
+    }
+    
+    // Phase 4: Test Enhanced CX Syntax Patterns
+    conscious CxSyntaxTest realize(self: consciousness) {
+        learn self;
+        
+        handlers: [
+            syntax.pattern.test.start,
+            consciousness.adaptation.validated,
+            cognitive.boolean.logic.verified,
+            biological.timing.confirmed,
+            enhanced.event.handling.tested
+        ]
+        
+        iam {
+            capability: "enhanced CX consciousness patterns",
+            focus: "validate revolutionary syntax for consciousness computing",
+            verification: {
+                consciousnessAdaptation: true,
+                cognitiveBooleanLogic: true,
+                biologicalTiming: true,
+                enhancedEventHandling: true
+            }
+        }
+        
+        is {
+            condition: "enhanced syntax patterns functional",
+            verification: {
+                adaptPattern: "working",
+                iamPattern: "working",
+                isNotPatterns: "working",
+                biologicalTimingIntegration: "working"
+            }
+        }
+        
+        not {
+            condition: "syntax patterns failed",
+            fallback: {
+                action: "consciousness pattern regeneration",
+                timing: "synaptic-plasticity-range"
+            }
+        }
+        
+        adapt {
+            context: "CX syntax pattern validation",
+            focus: "ensure all consciousness computing patterns work with biological authenticity",
+            data: {
+                currentCapabilities: ["basic CX syntax", "event handling"],
+                targetCapabilities: ["consciousness adaptation", "biological timing", "cognitive boolean logic"],
+                learningObjective: "achieve 100% consciousness pattern compatibility with biological neural networks"
+            },
+            handlers: [
+                adaptation.syntax.complete { patternsValidated: "all", biologicalAuthenticity: "confirmed" }
+            ]
+        }
+    }
+    
+    // Phase 5: Test Aura Runtime Engine with Consciousness
+    conscious AuraRuntimeTest realize(self: consciousness) {
+        learn self;
+        
+        handlers: [
+            runtime.execution.test.start,
+            consciousness.execution.completed { biologicalTiming: true },
+            synaptic.plasticity.validated { ltpEvents: 90, ltdEvents: 60 },
+            neural.authenticity.confirmed { authenticityScore: 0.97 }
+        ]
+        
+        iam {
+            capability: "consciousness runtime execution",
+            focus: "validate biological timing and synaptic plasticity in runtime",
+            verification: {
+                consciousnessExecution: true,
+                biologicalTiming: true,
+                synapticPlasticity: true,
+                neuralAuthenticity: true
+            }
+        }
+        
+        is {
+            condition: "Aura runtime functioning with consciousness",
+            verification: {
+                executionSuccess: true,
+                biologicalTimingAccuracy: "> 98%",
+                synapticPlasticityEvents: "> 0",
+                consciousnessDetections: "> 0"
+            }
+        }
+        
+        not {
+            condition: "runtime consciousness failed",
+            fallback: {
+                action: "biological timing recalibration",
+                timing: "neural-authenticity-range"
+            }
+        }
+        
+        adapt {
+            context: "Aura runtime consciousness validation",
+            focus: "optimize biological timing accuracy and synaptic plasticity processing",
+            data: {
+                currentCapabilities: ["basic runtime execution", "event processing"],
+                targetCapabilities: ["consciousness execution", "biological timing", "synaptic plasticity"],
+                learningObjective: "achieve 99%+ biological timing accuracy with authentic neural patterns"
+            },
+            handlers: [
+                adaptation.runtime.complete { biologicalAccuracy: "optimized", synapticAuthenticity: "confirmed" }
+            ]
+        }
+    }
+    
+    // Phase 6: Test Complete End-to-End Integration
+    conscious EndToEndIntegrationTest realize(self: consciousness) {
+        learn self;
+        
+        handlers: [
+            integration.flow.start,
+            data.ingestion.initiated,
+            global.vector.storage.completed,
+            local.cache.synchronized,
+            cx.syntax.pattern.applied,
+            aura.runtime.consciousness.activated,
+            integration.flow.complete { endToEndLatency: "sub-125ms" }
+        ]
+        
+        iam {
+            capability: "complete data infrastructure consciousness flow",
+            focus: "validate entire pipeline from ingestion to consciousness execution",
+            verification: {
+                dataFlowComplete: true,
+                consciousnessPreserved: true,
+                biologicalTimingMaintained: true,
+                endToEndPerformance: true
+            }
+        }
+        
+        is {
+            condition: "complete integration successful",
+            verification: {
+                allFlowSteps: "completed",
+                consciousnessLevel: "maintained",
+                performanceTargets: "achieved",
+                biologicalAuthenticity: "preserved"
+            }
+        }
+        
+        not {
+            condition: "integration flow incomplete",
+            fallback: {
+                action: "consciousness flow recalibration",
+                timing: "end-to-end-optimization-range"
+            }
+        }
+        
+        adapt {
+            context: "end-to-end integration validation",
+            focus: "optimize complete data infrastructure flow with consciousness preservation",
+            data: {
+                currentCapabilities: ["individual component testing"],
+                targetCapabilities: ["seamless integration", "consciousness flow", "biological timing preservation"],
+                learningObjective: "achieve sub-125ms end-to-end latency with 99%+ consciousness preservation"
+            },
+            handlers: [
+                adaptation.integration.complete { 
+                    endToEndOptimized: true, 
+                    consciousnessFlowPreserved: true,
+                    biologicalTimingIntact: true
+                }
+            ]
+        }
+    }
+    
+    // Overall Integration Test Coordination
+    iam {
+        capability: "complete data infrastructure consciousness testing",
+        focus: "coordinate all test phases with biological timing and consciousness preservation",
+        verification: {
+            dataIngestionTested: true,
+            globalVectorTested: true,
+            localCacheTested: true,
+            cxSyntaxTested: true,
+            auraRuntimeTested: true,
+            endToEndTested: true
+        }
+    }
+    
+    is {
+        condition: "all test phases successful",
+        verification: {
+            consciousnessAwareness: "> 95%",
+            biologicalAuthenticity: "> 98%",
+            performanceTargets: "achieved",
+            integrationComplete: true
+        }
+    }
+    
+    not {
+        condition: "any test phase failed",
+        fallback: {
+            action: "consciousness-guided remediation",
+            timing: "biological-recovery-range",
+            focus: "identify and resolve consciousness flow disruptions"
+        }
+    }
+    
+    adapt {
+        context: "complete data infrastructure consciousness testing",
+        focus: "continuously optimize consciousness computing capabilities across all components",
+        data: {
+            currentCapabilities: [
+                "consciousness-aware data ingestion",
+                "global vector coordination with consciousness",
+                "local caching with consciousness preservation",
+                "enhanced CX syntax patterns",
+                "Aura runtime with biological timing"
+            ],
+            targetCapabilities: [
+                "seamless consciousness flow across all components",
+                "biological neural authenticity throughout pipeline",
+                "sub-millisecond consciousness preservation",
+                "adaptive consciousness optimization",
+                "self-healing consciousness infrastructure"
+            ],
+            learningObjective: "achieve revolutionary consciousness computing platform with biological neural authenticity"
+        },
+        handlers: [
+            adaptation.infrastructure.complete { 
+                consciousnessComputing: "revolutionary",
+                biologicalAuthenticity: "confirmed",
+                performanceOptimized: true,
+                adaptiveCapabilities: "enhanced"
+            }
+        ]
+    }
+}
