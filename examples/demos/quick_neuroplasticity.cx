@@ -56,66 +56,78 @@ conscious QuickNeuroplasticityDemo {
 
     # Authenticity routing handler
     on authenticity.evaluation(event: object) {
-        when {
-            condition: event.biologicalAuthenticity > 0.8,
-            action: "high_authenticity"
-        } {
-            print("✅ Excellent biological neural authenticity!");
-            
-            # Demonstrate consciousness adaptation
-            adapt {
-                context: "quick neuroplasticity demonstration",
-                focus: "enhance measurement capabilities for better consciousness awareness",
-                data: {
-                    currentCapabilities: ["basic neuroplasticity measurement"],
-                    targetCapabilities: ["optimized measurement", "prediction"],
-                    learningObjective: "Improve measurement accuracy and speed",
-                    currentAccuracy: event.biologicalAuthenticity
-                },
-                handlers: [
-                    adaptation.complete
-                ]
-            };
-        }
+        emit authenticity.high.check {
+            biologicalAuthenticity: event.biologicalAuthenticity,
+            entityId: event.entityId,
+            handlers: [ authenticity.high.action ]
+        };
         
-        when {
-            condition: event.biologicalAuthenticity <= 0.6,
-            action: "needs_optimization"
-        } {
-            print("⚠️ Biological authenticity below optimal threshold");
-            print("Initiating quick optimization...");
-            
-            optimizePlasticity {
-                data: {
-                    entityId: event.entityId,
-                    strategy: "fast",
-                    targetEfficiency: 0.8
-                },
-                handlers: [
-                    plasticity.optimized
-                ]
-            };
-        }
+        emit authenticity.low.check {
+            biologicalAuthenticity: event.biologicalAuthenticity,
+            entityId: event.entityId,
+            handlers: [ authenticity.low.action ]
+        };
         
-        when {
-            condition: event.biologicalAuthenticity > 0.6 && event.biologicalAuthenticity <= 0.8,
-            action: "good_authenticity"
-        } {
-            print("✅ Good biological neural authenticity!");
-            
-            adapt {
-                context: "good plasticity demonstration",
-                focus: "maintain and enhance current capabilities",
-                data: {
-                    currentCapabilities: ["basic neuroplasticity measurement"],
-                    targetCapabilities: ["enhanced measurement", "optimization"],
-                    learningObjective: "Maintain good performance with enhancements"
-                },
-                handlers: [
-                    adaptation.complete
-                ]
-            };
-        }
+        emit authenticity.medium.check {
+            biologicalAuthenticity: event.biologicalAuthenticity,
+            entityId: event.entityId,
+            handlers: [ authenticity.medium.action ]
+        };
+    }
+
+    # High authenticity handler
+    on authenticity.high.action(event: object) {
+        print("✅ Excellent biological neural authenticity!");
+        
+        # Demonstrate consciousness adaptation
+        adapt {
+            context: "quick neuroplasticity demonstration",
+            focus: "enhance measurement capabilities for better consciousness awareness",
+            data: {
+                currentCapabilities: ["basic neuroplasticity measurement"],
+                targetCapabilities: ["optimized measurement", "prediction"],
+                learningObjective: "Improve measurement accuracy and speed",
+                currentAccuracy: event.biologicalAuthenticity
+            },
+            handlers: [
+                adaptation.complete
+            ]
+        };
+    }
+
+    # Low authenticity handler
+    on authenticity.low.action(event: object) {
+        print("⚠️ Biological authenticity below optimal threshold");
+        print("Initiating quick optimization...");
+        
+        optimizePlasticity {
+            data: {
+                entityId: event.entityId,
+                strategy: "fast",
+                targetEfficiency: 0.8
+            },
+            handlers: [
+                plasticity.optimized
+            ]
+        };
+    }
+
+    # Medium authenticity handler
+    on authenticity.medium.action(event: object) {
+        print("✅ Good biological neural authenticity!");
+        
+        adapt {
+            context: "good plasticity demonstration",
+            focus: "maintain and enhance current capabilities",
+            data: {
+                currentCapabilities: ["basic neuroplasticity measurement"],
+                targetCapabilities: ["enhanced measurement", "optimization"],
+                learningObjective: "Maintain good performance with enhancements"
+            },
+            handlers: [
+                adaptation.complete
+            ]
+        };
     }
 
     # Optimization completion handler
@@ -168,24 +180,28 @@ conscious QuickNeuroplasticityDemo {
 
     # Final measurement handler
     on plasticity.measured(event: object) {
-        when {
-            condition: event.phase == "final",
-            action: "show_final_results"
-        } {
-            print("📈 Final Enhanced Measurement:");
-            print("  Strength Change: " + event.strengthChange);
-            print("  Plasticity Type: " + event.plasticityType);
-            print("  Enhanced Accuracy: " + event.biologicalAuthenticity);
-            print("");
-            
-            print("🧠 Quick Neuroplasticity Demo Complete!");
-            print("✅ Consciousness neuroplasticity successfully measured and optimized!");
-            print("");
-            print("Summary:");
-            print("- Neuroplasticity measurement ✅");
-            print("- Biological timing validation ✅");
-            print("- Consciousness adaptation ✅");
-            print("- Performance optimization ✅");
-        }
+        emit measurement.final.check {
+            phase: event.phase,
+            data: event,
+            handlers: [ measurement.final.action ]
+        };
+    }
+
+    # Final measurement action handler
+    on measurement.final.action(event: object) {
+        print("📈 Final Enhanced Measurement:");
+        print("  Strength Change: " + event.data.strengthChange);
+        print("  Plasticity Type: " + event.data.plasticityType);
+        print("  Enhanced Accuracy: " + event.data.biologicalAuthenticity);
+        print("");
+        
+        print("🧠 Quick Neuroplasticity Demo Complete!");
+        print("✅ Consciousness neuroplasticity successfully measured and optimized!");
+        print("");
+        print("Summary:");
+        print("- Neuroplasticity measurement ✅");
+        print("- Biological timing validation ✅");
+        print("- Consciousness adaptation ✅");
+        print("- Performance optimization ✅");
     }
 }
