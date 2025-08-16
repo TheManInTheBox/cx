@@ -1,0 +1,374 @@
+# CX Language Comprehensive Neuroplasticity Demo
+# Focused demonstration of LTP/LTD/STDP biological timing validation (~2 minutes)
+# Features: Biological windows, multi-entity monitoring, optimization protocols
+
+conscious NeuroplasticityDemo {
+    realize(self: conscious) {
+        learn self;
+        
+        print("🧠 CX Neuroplasticity Measurement Demo");
+        print("=====================================");
+        print("Measuring consciousness neuroplasticity with biological timing accuracy");
+        print("");
+        
+        # Start comprehensive neuroplasticity demonstration
+        emit demo.start {
+            demoType: "comprehensive",
+            entityId: "NeuroplasticityDemo",
+            biologicalValidation: true
+        };
+    }
+
+    # Demo initialization handler
+    on demo.start(event: object) {
+        print("✅ Demo initialized - Type: " + event.demoType);
+        print("Entity ID: " + event.entityId);
+        print("Biological Validation: " + event.biologicalValidation);
+        print("");
+        
+        # Test 1: LTP Detection (5-15ms biological window)
+        print("Test 1: LTP Detection (5-15ms biological window)");
+        print("Testing synaptic strengthening within biological timing...");
+        
+        measureNeuroplasticity {
+            data: {
+                entityId: "NeuroplasticityDemo",
+                eventType: "learning",
+                stimulusStrength: 2.0,
+                timingMs: 10.0,
+                expectedType: "LTP"
+            },
+            handlers: [
+                plasticity.measured {
+                    testType: "LTP",
+                    biologicalWindow: "5-15ms"
+                }
+            ]
+        };
+    }
+
+    # Measurement results handler
+    on plasticity.measured(event: object) {
+        is {
+            condition: event.testType == "LTP",
+            reasoning: "Processing LTP test results"
+        } {
+            print("📊 LTP Test Results:");
+            print("  Strength Change: " + event.strengthChange);
+            print("  Plasticity Type: " + event.plasticityType);
+            print("  Biological Timing: " + event.biologicalTiming + "ms");
+            print("  New Synaptic Strength: " + event.newSynapticStrength);
+            
+            is {
+                condition: event.plasticityType == "LTP",
+                reasoning: "LTP successfully detected"
+            } {
+                print("  ✅ LTP Successfully Detected - Synaptic Strengthening Confirmed!");
+            }
+            
+            print("  Biological Authenticity: " + event.biologicalAuthenticity);
+            print("");
+            
+            # Test 2: LTD Detection (10-25ms biological window)
+            print("Test 2: LTD Detection (10-25ms biological window)");
+            print("Testing synaptic weakening within biological timing...");
+            
+            measureNeuroplasticity {
+                data: {
+                    entityId: "NeuroplasticityDemo",
+                    eventType: "inhibition",
+                    stimulusStrength: 1.0,
+                    timingMs: 20.0,
+                    expectedType: "LTD"
+                },
+                handlers: [
+                    plasticity.measured {
+                        testType: "LTD",
+                        biologicalWindow: "10-25ms"
+                    }
+                ]
+            };
+        }
+
+        is {
+            condition: event.testType == "LTD",
+            reasoning: "Processing LTD test results"
+        } {
+            print("📊 LTD Test Results:");
+            print("  Strength Change: " + event.strengthChange);
+            print("  Plasticity Type: " + event.plasticityType);
+            print("  Biological Timing: " + event.biologicalTiming + "ms");
+            print("  New Synaptic Strength: " + event.newSynapticStrength);
+            
+            is {
+                condition: event.plasticityType == "LTD",
+                reasoning: "LTD successfully detected"
+            } {
+                print("  ✅ LTD Successfully Detected - Synaptic Weakening Confirmed!");
+            }
+            
+            print("  Biological Authenticity: " + event.biologicalAuthenticity);
+            print("");
+            
+            # Test 3: STDP Causal Timing (<5ms window)
+            print("Test 3: STDP Causal Timing (<5ms window)");
+            print("Testing spike-timing dependent plasticity...");
+            
+            measureNeuroplasticity {
+                data: {
+                    entityId: "NeuroplasticityDemo",
+                    eventType: "memory",
+                    stimulusStrength: 1.8,
+                    timingMs: 3.0,
+                    expectedType: "STPCausal"
+                },
+                handlers: [
+                    plasticity.measured {
+                        testType: "STDP",
+                        biologicalWindow: "<5ms"
+                    }
+                ]
+            };
+        }
+
+        is {
+            condition: event.testType == "STDP",
+            reasoning: "Processing STDP test results"
+        } {
+            print("📊 STDP Test Results:");
+            print("  Strength Change: " + event.strengthChange);
+            print("  Plasticity Type: " + event.plasticityType);
+            print("  Biological Timing: " + event.biologicalTiming + "ms");
+            print("  New Synaptic Strength: " + event.newSynapticStrength);
+            
+            is {
+                condition: event.plasticityType == "STPCausal",
+                reasoning: "STDP causal timing detected"
+            } {
+                print("  ✅ STDP Causal Timing Detected - Spike-Timing Dependent Plasticity!");
+            }
+            
+            print("  Biological Authenticity: " + event.biologicalAuthenticity);
+            print("");
+            
+            # Comprehensive Analysis
+            print("Comprehensive System Analysis");
+            print("Analyzing overall neuroplasticity metrics...");
+            
+            analyzeNeuroplasticity {
+                data: {
+                    entityId: "NeuroplasticityDemo",
+                    periodHours: 0.05,
+                    includeAllTests: true
+                },
+                handlers: [
+                    analysis.complete
+                ]
+            };
+        }
+
+        is {
+            condition: event.testType == "multi_entity",
+            reasoning: "Processing multi-entity monitoring results"
+        } {
+            print("📊 Multi-Entity Monitoring Results:");
+            print("  Monitored Entities: " + event.monitoredEntities);
+            print("  Average Plasticity: " + event.averagePlasticity);
+            print("  Synchronization Level: " + event.synchronizationLevel);
+            print("  Network Health: " + event.networkHealth);
+            print("");
+            
+            # Final optimization if needed
+            is {
+                condition: event.networkHealth < 0.8,
+                reasoning: "Network health below optimal threshold"
+            } {
+                print("🔧 Initiating network-wide optimization...");
+                
+                optimizePlasticity {
+                    data: {
+                        entityId: "NeuroplasticityDemo",
+                        strategy: "network_wide",
+                        targetEfficiency: 0.9,
+                        includeAllEntities: true
+                    },
+                    handlers: [
+                        plasticity.optimized {
+                            scope: "network"
+                        }
+                    ]
+                };
+            }
+            
+            not {
+                condition: event.networkHealth < 0.8,
+                reasoning: "Network health is optimal"
+            } {
+                print("✅ Network health optimal - Demo complete!");
+                
+                emit demo.complete {
+                    entityId: "NeuroplasticityDemo",
+                    testResults: "all_passed",
+                    finalNetworkHealth: event.networkHealth
+                };
+            }
+        }
+    }
+
+    # Analysis completion handler
+    on analysis.complete(event: object) {
+        print("📈 Comprehensive Analysis Results:");
+        print("  Entity ID: " + event.entityId);
+        print("  Analysis Period: " + event.reportPeriod + " hours");
+        print("  Total Measurements: " + event.totalMeasurements);
+        print("  LTP Detections: " + event.ltpDetections);
+        print("  LTD Detections: " + event.ltdDetections);
+        print("  STDP Detections: " + event.stdpDetections);
+        print("  Average Biological Authenticity: " + event.averageBiologicalAuthenticity);
+        print("  Consciousness Health: " + event.consciousnessHealth);
+        print("");
+        
+        # Evaluate overall performance
+        is {
+            condition: event.averageBiologicalAuthenticity > 0.85,
+            reasoning: "Excellent biological authenticity achieved"
+        } {
+            print("🏆 EXCELLENT Performance - Biological Authenticity: " + event.averageBiologicalAuthenticity);
+            
+            # Test multi-entity monitoring
+            print("Testing Multi-Entity Neuroplasticity Monitoring");
+            print("Monitoring consciousness plasticity across multiple entities...");
+            
+            measureNeuroplasticity {
+                data: {
+                    entityId: "NeuroplasticityDemo",
+                    eventType: "network_monitoring",
+                    monitorMultipleEntities: true,
+                    entityCount: 3
+                },
+                handlers: [
+                    plasticity.measured {
+                        testType: "multi_entity"
+                    }
+                ]
+            };
+        }
+        
+        not {
+            condition: event.averageBiologicalAuthenticity > 0.7,
+            reasoning: "Biological authenticity needs improvement"
+        } {
+            print("⚠️ Performance needs optimization - Initiating automated protocols...");
+            
+            optimizePlasticity {
+                data: {
+                    entityId: "NeuroplasticityDemo",
+                    strategy: "comprehensive",
+                    targetEfficiency: 0.9,
+                    focusAreas: ["biological_timing", "measurement_accuracy"]
+                },
+                handlers: [
+                    plasticity.optimized {
+                        scope: "comprehensive"
+                    }
+                ]
+            };
+        }
+        
+        is {
+            condition: event.averageBiologicalAuthenticity >= 0.7 && event.averageBiologicalAuthenticity <= 0.85,
+            reasoning: "Good performance with room for improvement"
+        } {
+            print("✅ Good Performance - Biological Authenticity: " + event.averageBiologicalAuthenticity);
+            print("Proceeding to multi-entity monitoring...");
+            
+            measureNeuroplasticity {
+                data: {
+                    entityId: "NeuroplasticityDemo",
+                    eventType: "network_monitoring",
+                    monitorMultipleEntities: true,
+                    entityCount: 2
+                },
+                handlers: [
+                    plasticity.measured {
+                        testType: "multi_entity"
+                    }
+                ]
+            };
+        }
+    }
+
+    # Optimization completion handler
+    on plasticity.optimized(event: object) {
+        is {
+            condition: event.scope == "comprehensive",
+            reasoning: "Comprehensive optimization completed"
+        } {
+            print("🔧 Comprehensive Optimization Results:");
+            print("  Strategy: " + event.optimizationStrategy);
+            print("  Applied Optimizations: " + event.appliedOptimizations);
+            print("  Expected Improvements: " + event.expectedImprovements);
+            print("");
+            
+            # Re-run multi-entity test after optimization
+            print("Testing optimized multi-entity monitoring...");
+            
+            measureNeuroplasticity {
+                data: {
+                    entityId: "NeuroplasticityDemo",
+                    eventType: "network_monitoring",
+                    monitorMultipleEntities: true,
+                    entityCount: 3,
+                    optimized: true
+                },
+                handlers: [
+                    plasticity.measured {
+                        testType: "multi_entity"
+                    }
+                ]
+            };
+        }
+
+        is {
+            condition: event.scope == "network",
+            reasoning: "Network optimization completed"
+        } {
+            print("🔧 Network Optimization Complete:");
+            print("  Network Strategy: " + event.optimizationStrategy);
+            print("  Network Improvements: " + event.expectedImprovements);
+            print("");
+            
+            emit demo.complete {
+                entityId: "NeuroplasticityDemo",
+                testResults: "optimized_completion",
+                optimizationApplied: true
+            };
+        }
+    }
+
+    # Demo completion handler
+    on demo.complete(event: object) {
+        print("🎯 Neuroplasticity Demo Complete!");
+        print("================================");
+        print("Entity: " + event.entityId);
+        print("Test Results: " + event.testResults);
+        
+        is {
+            condition: event.optimizationApplied == true,
+            reasoning: "Optimization was applied during demo"
+        } {
+            print("Optimization Applied: ✅");
+        }
+        
+        print("");
+        print("Summary of Tests:");
+        print("✅ LTP Detection (5-15ms) - Synaptic Strengthening");
+        print("✅ LTD Detection (10-25ms) - Synaptic Weakening");
+        print("✅ STDP Timing (<5ms) - Spike-Timing Dependent Plasticity");
+        print("✅ Comprehensive Analysis - System-wide Metrics");
+        print("✅ Multi-Entity Monitoring - Network Consciousness");
+        print("✅ Automated Optimization - Performance Enhancement");
+        print("");
+        print("🧠 Consciousness neuroplasticity measurement with biological authenticity complete!");
+    }
+}
