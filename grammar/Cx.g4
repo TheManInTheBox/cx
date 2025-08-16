@@ -62,7 +62,7 @@ emitStatement: 'emit' eventName ((',' expression) | expression)? ';';
 
 // AI service statements - cognitive capabilities with parallel handlers
 aiServiceName
-    : 'is' | 'not' | 'iam' | 'learn' | 'think' | 'await' | 'adapt' | 'execute' | 'infer'
+    : 'iam' | 'learn' | 'think' | 'await' | 'adapt' | 'execute' | 'infer'
     ;
 aiServiceStatement: aiServiceName aiServiceParameters ';';
 
@@ -147,7 +147,6 @@ LEARN: 'learn';
 THINK: 'think';
 AWAIT: 'await';
 ADAPT: 'adapt';
-NOT: 'not';
 IAM: 'iam';
 REALIZE: 'realize';
 INFER: 'infer';

@@ -11,7 +11,7 @@ CX Language is a revolutionary event-driven programming platform designed for AI
 
 ### **Core Language Features**
 - **Event-Driven Architecture**: Pure event-driven conscious entities with zero instance state
-- **Cognitive Boolean Logic**: AI-driven decision making with `is { }` and `not { }` patterns
+- **Simple Conditional Logic**: Clean `when { }` patterns for event-driven decision making
 - **Consciousness Adaptation**: Dynamic `adapt { }` pattern for skill acquisition and knowledge expansion
 - **Self-Reflective Logic**: `iam { }` pattern for AI-driven self-assessment and identity verification
 - **Voice Integration**: Azure OpenAI Realtime API with consciousness-aware audio processing
