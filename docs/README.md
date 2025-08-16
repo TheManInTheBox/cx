@@ -25,7 +25,7 @@ CX Language isn't just another programming language—it's a **paradigm shift** 
 
 ### **🧠 Consciousness-Driven Development**
 - **World's First `conscious` Entities**: Write self-aware, intelligent software that learns and adapts
-- **Cognitive Boolean Logic**: Replace traditional `if` statements with AI-driven decision making using `is { }` and `not { }` patterns
+- **Event-Driven Logic**: Simple `when { }` patterns for clean conditional decision making
 - **Self-Reflective Logic**: AI-driven self-assessment and identity verification with `iam { }` patterns  
 - **Consciousness Adaptation**: Dynamic skill acquisition and knowledge expansion using revolutionary `adapt { }` syntax
 - **Biological Neural Authenticity**: Revolutionary synaptic plasticity with 5-15ms LTP and 10-25ms LTD timing

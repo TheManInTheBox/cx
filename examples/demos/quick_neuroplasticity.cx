@@ -46,10 +46,19 @@ conscious QuickNeuroplasticityDemo {
         print("  Biological Authenticity: " + event.biologicalAuthenticity);
         print("");
         
-        # Evaluate biological authenticity
-        is {
+        # Route to appropriate handler based on authenticity
+        emit authenticity.evaluation {
+            biologicalAuthenticity: event.biologicalAuthenticity,
+            entityId: "QuickNeuroplasticityDemo",
+            handlers: [ authenticity.routing ]
+        };
+    }
+
+    # Authenticity routing handler
+    on authenticity.evaluation(event: object) {
+        when {
             condition: event.biologicalAuthenticity > 0.8,
-            reasoning: "High biological authenticity achieved"
+            action: "high_authenticity"
         } {
             print("✅ Excellent biological neural authenticity!");
             
@@ -69,16 +78,16 @@ conscious QuickNeuroplasticityDemo {
             };
         }
         
-        not {
-            condition: event.biologicalAuthenticity > 0.6,
-            reasoning: "Biological authenticity needs optimization"
+        when {
+            condition: event.biologicalAuthenticity <= 0.6,
+            action: "needs_optimization"
         } {
             print("⚠️ Biological authenticity below optimal threshold");
             print("Initiating quick optimization...");
             
             optimizePlasticity {
                 data: {
-                    entityId: "QuickNeuroplasticityDemo",
+                    entityId: event.entityId,
                     strategy: "fast",
                     targetEfficiency: 0.8
                 },
@@ -88,9 +97,9 @@ conscious QuickNeuroplasticityDemo {
             };
         }
         
-        is {
-            condition: event.biologicalAuthenticity >= 0.6 && event.biologicalAuthenticity <= 0.8,
-            reasoning: "Good biological authenticity"
+        when {
+            condition: event.biologicalAuthenticity > 0.6 && event.biologicalAuthenticity <= 0.8,
+            action: "good_authenticity"
         } {
             print("✅ Good biological neural authenticity!");
             
@@ -159,9 +168,9 @@ conscious QuickNeuroplasticityDemo {
 
     # Final measurement handler
     on plasticity.measured(event: object) {
-        is {
+        when {
             condition: event.phase == "final",
-            reasoning: "Final measurement completed"
+            action: "show_final_results"
         } {
             print("📈 Final Enhanced Measurement:");
             print("  Strength Change: " + event.strengthChange);
