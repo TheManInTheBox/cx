@@ -32,22 +32,40 @@ on event.name(event: object) {
 }
 ```
 
-### **Cognitive Boolean Logic**
+### **Event Routing Logic**
 ```cx
-# Positive Logic
-is {
-    condition: value > threshold,
-    reasoning: "Explain why this condition matters"
-} {
-    # Action when condition is true
+# Event-based decision making
+emit condition.check {
+    value: checkValue,
+    threshold: thresholdValue,
+    context: "decision context",
+    handlers: [condition.evaluate]
+};
+
+on condition.evaluate(event: object) {
+    emit condition.positive.check {
+        value: event.value,
+        threshold: event.threshold,
+        handlers: [condition.positive.action]
+    };
+    
+    emit condition.negative.check {
+        value: event.value,
+        threshold: event.threshold,
+        handlers: [condition.negative.action]
+    };
 }
 
-# Negative Logic
-not {
-    condition: value > threshold,
-    reasoning: "Explain why this matters"
-} {
-    # Action when condition is false
+# Positive condition handler
+on condition.positive.action(event: object) {
+    # Action when condition is met
+    print("Condition satisfied: " + event.value);
+}
+
+# Negative condition handler
+on condition.negative.action(event: object) {
+    # Action when condition is not met
+    print("Condition not met: " + event.value);
 }
 ```
 

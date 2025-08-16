@@ -1,13 +1,24 @@
-# CX Language - Event-Driven Logic Patterns
+# CX Language - Pure Event-Driven Logic Patterns
 
-## 🔄 Simple Event-Driven Conditionals
+## 🔄 Pure Event Routing (No Conditional Keywords)
 
-### **`when { }` Pattern - Clean Conditional Logic**
+### **Event-Based Decision Pattern**
 ```cx
-when {
-    condition: biologicalAuthenticity > 0.8,
-    action: "high_performance_detected"
-} {
+# Pure event routing for decision logic
+emit performance.check {
+    biologicalAuthenticity: event.biologicalAuthenticity,
+    threshold: 0.8,
+    handlers: [performance.evaluate]
+};
+
+on performance.evaluate(event: object) {
+    emit performance.high.action {
+        score: event.biologicalAuthenticity,
+        handlers: [performance.high.handler]
+    };
+}
+
+on performance.high.handler(event: object) {
     print("✅ Excellent biological neural authenticity!");
     
     # Continue with high performance logic
@@ -18,37 +29,52 @@ when {
 }
 ```
 
-### **Multiple Conditions - Event Routing**
+### **Multiple Decision Paths - Event Routing**
 ```cx
-# Route to different handlers based on conditions
+# Route to different handlers based on performance
 emit performance.evaluation {
     score: event.biologicalAuthenticity,
     handlers: [ performance.routing ]
 };
 
-# Handle in separate event handler
-on performance.evaluation(event: object) {
-    when {
-        condition: event.score > 0.85,
-        action: "excellent_performance"
-    } {
-        print("🏆 EXCELLENT Performance!");
-        # Handle excellent case
-    }
+# Handle in separate event handlers
+on performance.routing(event: object) {
+    emit performance.excellent.check {
+        score: event.score,
+        handlers: [performance.excellent.action]
+    };
     
-    when {
-        condition: event.score <= 0.6,
-        action: "needs_optimization"
-    } {
-        print("⚠️ Needs optimization");
-        # Handle optimization case
-    }
+    emit performance.optimization.check {
+        score: event.score,
+        handlers: [performance.optimization.action]
+    };
+}
+
+on performance.excellent.action(event: object) {
+    print("🏆 EXCELLENT Performance!");
+    # Handle excellent case with dedicated logic
+    emit enhancement.activate {
+        mode: "excellence",
+        score: event.score
+    };
+}
+
+on performance.optimization.action(event: object) {
+    print("⚠️ Needs optimization");
+    # Handle optimization case with dedicated logic
+    emit optimization.activate {
+        mode: "improvement",
+        score: event.score
+    };
 }
 ```
 
-## ✅ Benefits Over Cognitive Logic
+## ✅ Benefits of Pure Event-Driven Logic
 
-- **Simpler Syntax**: No verbose `reasoning` or `context` fields required
+- **Zero Conditional Keywords**: No `when`, `is`, `not`, or `maybe` needed
+- **Cleaner Syntax**: Pure event emission and dedicated handlers
+- **Better Debugging**: Each decision path has a named, dedicated handler
+- **Consciousness Native**: Events naturally model consciousness flow
 - **Cleaner Code**: Direct condition + action pattern
 - **Event-Driven**: Maintains pure event architecture philosophy
 - **Better Performance**: Less cognitive overhead during execution

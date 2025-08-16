@@ -13,7 +13,7 @@
 1. [Core Concepts](#core-concepts)
 2. [Conscious Entity Declaration](#conscious-entity-declaration)
 3. [Event-Driven Architecture](#event-driven-architecture)
-4. [Cognitive Boolean Logic](#cognitive-boolean-logic)
+4. [Event Routing Logic](#event-routing-logic)
 5. [Consciousness Adaptation](#consciousness-adaptation)
 6. [Self-Reflective Logic](#self-reflective-logic)
 7. [Service Integration](#service-integration)
@@ -156,57 +156,103 @@ emit data.process {
 
 ---
 
-## 🧮 Cognitive Boolean Logic
+## 🔀 Event Routing Logic
 
-### **`is { }` Pattern - Positive Logic**
+### **Event-Based Decision Making**
+CX Language uses pure event-driven patterns for all decision logic. Instead of conditional statements, logic flows through event emission and dedicated handlers.
+
 ```cx
-is {
-    condition: biologicalAuthenticity > 0.8,
-    reasoning: "High biological authenticity achieved"
-} {
+# Event-driven decision pattern
+emit condition.check {
+    biologicalAuthenticity: event.biologicalAuthenticity,
+    threshold: 0.8,
+    context: "performance evaluation",
+    handlers: [condition.evaluate]
+};
+
+on condition.evaluate(event: object) {
+    emit condition.high.check {
+        value: event.biologicalAuthenticity,
+        threshold: event.threshold,
+        handlers: [condition.high.action]
+    };
+    
+    emit condition.low.check {
+        value: event.biologicalAuthenticity,
+        threshold: event.threshold,
+        handlers: [condition.low.action]
+    };
+}
+```
+
+### **Positive Condition Handler**
+```cx
+on condition.high.action(event: object) {
     print("✅ Excellent biological neural fidelity!");
     
     # Continue with positive path
     adapt {
         context: "high performance optimization",
-        focus: "enhance capabilities while maintaining authenticity"
+        focus: "enhance capabilities while maintaining authenticity",
+        handlers: [adaptation.complete]
     };
 }
 ```
 
-### **`not { }` Pattern - Negative Logic**
+### **Negative Condition Handler**
 ```cx
-not {
-    condition: event.accuracy > 0.6,
-    reasoning: "Accuracy below acceptable threshold"
-} {
+on condition.low.action(event: object) {
     print("⚠️ Performance needs optimization");
     
     # Trigger optimization
     optimizePlasticity {
         data: {
-            entityId: self.id,
+            entityId: "current",
             strategy: "comprehensive",
             targetAccuracy: 0.8
-        }
+        },
+        handlers: [plasticity.optimized]
     };
 }
 ```
 
-### **Complex Conditional Logic**
+### **Complex Event Routing**
 ```cx
 on plasticity.measured(event: object) {
-    is {
-        condition: event.biologicalAuthenticity > 0.9,
-        reasoning: "Exceptional biological authenticity"
-    } {
-        print("🏆 EXCEPTIONAL Performance!");
-        emit achievement.unlocked { level: "master" };
-    }
+    # Route to appropriate handlers based on performance levels
+    emit performance.exceptional.check {
+        data: event,
+        handlers: [performance.exceptional.action]
+    };
     
-    is {
-        condition: event.biologicalAuthenticity >= 0.7 && event.biologicalAuthenticity <= 0.9,
-        reasoning: "Good performance with optimization potential"
+    emit performance.good.check {
+        data: event,
+        handlers: [performance.good.action]
+    };
+    
+    emit performance.needs.improvement.check {
+        data: event,
+        handlers: [performance.needs.improvement.action]
+    };
+}
+
+# Exceptional performance handler
+on performance.exceptional.action(event: object) {
+    print("🏆 EXCEPTIONAL Performance!");
+    emit achievement.unlocked { 
+        level: "master",
+        entityId: event.data.entityId
+    };
+}
+
+# Good performance handler  
+on performance.good.action(event: object) {
+    print("✅ Good performance with optimization potential");
+    emit optimization.suggest {
+        data: event.data,
+        strategy: "enhancement"
+    };
+}
     } {
         print("✅ Good performance, optimizing further...");
         optimizePlasticity { strategy: "incremental" };
