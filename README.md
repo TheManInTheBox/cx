@@ -59,20 +59,40 @@ wiki/                           → Static documentation (timeless reference mat
 ```
 
 ### **🎮 Quick Start**
+
+#### **🏆 Flagship Demo - Complete Showcase**
+```powershell
+# Run the comprehensive flagship demonstration (RECOMMENDED)
+.\run-flagship-demo.ps1
+
+# Or run directly:
+dotnet build CxLanguage.sln
+dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/production/flagship_consciousness_demo.cx
+```
+
+#### **🧪 Individual Feature Demos**
 ```powershell
 # Build the solution
 dotnet build CxLanguage.sln
 
-# Run a neuroplasticity demo
+# Quick neuroplasticity demo (~30 seconds)
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/demos/quick_neuroplasticity.cx
 
-# Run the comprehensive showcase
+# Comprehensive neuroplasticity showcase (~5 minutes)
 dotnet run --project src/CxLanguage.CLI/CxLanguage.CLI.csproj run examples/demos/neuroplasticity_showcase.cx
 ```
 
 ### **🧪 Demonstration Programs**
 
-#### Neuroplasticity Measurement
+#### **🏆 Flagship Demo** *(NEW - Comprehensive Showcase)*
+- **`flagship_consciousness_demo.cx`** - **Complete platform demonstration with all features** (~3-5 minutes)
+  - Pure event-driven architecture mastery
+  - Biological neural authenticity validation  
+  - Consciousness adaptation & dynamic learning
+  - Multi-agent coordination excellence
+  - Real-time optimization & peak performance
+
+#### **🧬 Neuroplasticity Measurement**
 - **`quick_neuroplasticity.cx`** - Essential features demo (~30 seconds)
 - **`neuroplasticity_demo.cx`** - Comprehensive LTP/LTD/STDP validation (~2 minutes)
 - **`neuroplasticity_showcase.cx`** - Full system showcase with optimization and adaptation (~5 minutes)
