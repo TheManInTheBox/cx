@@ -8,6 +8,7 @@ conscious MinimalTest {
         
         // Just test if the model responds at all
         infer {
+            context: "simple test",
             data: "Hello",
             handlers: [minimal.result]
         };

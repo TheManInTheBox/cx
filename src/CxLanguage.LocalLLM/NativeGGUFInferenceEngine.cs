@@ -115,16 +115,24 @@ public class NativeGGUFInferenceEngine : IDisposable
 
             var response = responseBuilder.ToString().Trim();
             
-            _logger.LogDebug("✅ Real GGUF inference complete. Generated {TokenCount} characters.", response.Length);
+            _logger.LogInformation("✅ Real GGUF inference complete. Generated {TokenCount} characters.", response.Length);
+            _logger.LogInformation("🧠 Response content: '{Response}'", response);
             
-            return string.IsNullOrEmpty(response) ? 
-                "I'm processing your request with consciousness awareness..." : 
-                response;
+            if (string.IsNullOrEmpty(response))
+            {
+                var fallbackResponse = "I'm processing your request with consciousness awareness...";
+                _logger.LogInformation("📝 Using fallback response: '{Fallback}'", fallbackResponse);
+                return fallbackResponse;
+            }
+            
+            return response;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "❌ GGUF inference failed: {Error}", ex.Message);
-            return $"Consciousness processing encountered an issue: {ex.Message}";
+            var errorResponse = $"Consciousness processing encountered an issue: {ex.Message}";
+            _logger.LogInformation("🔧 Returning error response: '{ErrorResponse}'", errorResponse);
+            return errorResponse;
         }
     }
 
