@@ -11,8 +11,9 @@ using System.Runtime.CompilerServices;
 namespace CxLanguage.LocalLLM
 {
     /// <summary>
-    /// GPU-accelerated Local LLM Service using TorchSharp for CUDA optimization
-    /// Provides high-performance, consciousness-aware local inference without cloud dependencies
+    /// GPU-accelerated Local LLM Service with real GGUF model support - REAL LLM ONLY MODE.
+    /// Provides high-performance, consciousness-aware local inference without cloud dependencies.
+    /// REAL LLM ONLY: No simulation fallbacks - authentic local model inference or clear errors.
     /// </summary>
     public class GpuLocalLLMService : ILocalLLMService, IDisposable
     {
@@ -21,19 +22,20 @@ namespace CxLanguage.LocalLLM
         private readonly Channel<string> _tokenChannel;
         private readonly ChannelWriter<string> _tokenWriter;
         private readonly ChannelReader<string> _tokenReader;
+        private readonly NativeGGUFInferenceEngine? _ggufEngine;
+        
         private bool _modelLoaded = false;
+        private bool _realModelMode = false;
         private ModelInfo? _modelInfo;
         
         /// <summary>
-        /// Initializes a new instance of the GPU-accelerated Local LLM Service
+        /// Initializes a new instance of the GPU-accelerated Local LLM Service with real model support
         /// </summary>
         public GpuLocalLLMService(ILogger<GpuLocalLLMService> logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             
-            // Check for GPU availability using TorchSharp
-            // We won't directly call TorchSharp here to avoid lint errors
-            // In a real implementation, this would use torch.cuda.is_available()
+            // Check for GPU availability
             _gpuAvailable = CheckGpuAvailability();
             
             // Create streaming token channel for real-time generation
@@ -45,11 +47,29 @@ namespace CxLanguage.LocalLLM
             
             _tokenWriter = _tokenChannel.Writer;
             _tokenReader = _tokenChannel.Reader;
+
+            // Try to initialize real GGUF model
+            var modelPath = FindBestAvailableModel();
+            if (!string.IsNullOrEmpty(modelPath))
+            {
+                // Create logger for GGUF engine - simplified approach
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var ggufLogger = loggerFactory.CreateLogger<NativeGGUFInferenceEngine>();
+                _ggufEngine = new NativeGGUFInferenceEngine(ggufLogger, modelPath);
+                _logger.LogInformation("🧠 Found GGUF model: {ModelPath}", modelPath);
+                
+                // Don't initialize in constructor to avoid blocking - defer to first use
+                _logger.LogInformation("📝 Model will be initialized on first inference request");
+            }
+            else
+            {
+                _logger.LogWarning("🚫 REAL LLM ONLY MODE: No GGUF models found. Simulation removed.");
+                _logger.LogInformation("📥 Required: Download a real GGUF model for authentic inference");
+            }
             
             _logger.LogInformation("🚀 GpuLocalLLMService initialized - GPU available: {GpuAvailable}", _gpuAvailable);
             if (_gpuAvailable)
             {
-                // Get CUDA details
                 var deviceCount = GetGpuDeviceCount();
                 _logger.LogInformation("📊 CUDA Details: {DeviceCount} devices available", deviceCount);
             }
@@ -92,28 +112,139 @@ namespace CxLanguage.LocalLLM
         }
 
         /// <summary>
-        /// Initializes the consciousness-aware LLM service
+        /// Find the best available GGUF model from the models directory.
+        /// Priority: Phi-3-mini (primary), 1B model (lightweight), 3B model (production).
+        /// </summary>
+        private string? FindBestAvailableModel()
+        {
+            try
+            {
+                // Get the base directory (workspace root)
+                var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                var workspaceRoot = FindWorkspaceRoot(baseDir);
+                
+                if (string.IsNullOrEmpty(workspaceRoot))
+                {
+                    _logger.LogWarning("⚠️ Could not find workspace root directory");
+                    return null;
+                }
+
+                var modelsDir = Path.Combine(workspaceRoot, "models");
+                
+                // Priority order: Llama models (primary), then Phi-3 fallback
+                var candidatePaths = new[]
+                {
+                    Path.Combine(modelsDir, "local_llm", "llama-3.2-3b-instruct-q4_k_m.gguf"), // Production Llama (primary)
+                    Path.Combine(modelsDir, "llama-3.2-1b-instruct-q4_k_m.gguf"),          // Lightweight Llama
+                    Path.Combine(modelsDir, "local_llm", "Phi-3-mini-4k-instruct-q4.gguf"), // Phi-3 fallback
+                    Path.Combine(modelsDir, "phi-3-mini-4k-instruct-q4.gguf")              // Alternative Phi-3 location
+                };
+
+                foreach (var path in candidatePaths)
+                {
+                    if (File.Exists(path))
+                    {
+                        var fileInfo = new FileInfo(path);
+                        var modelName = Path.GetFileName(path).Contains("llama") && Path.GetFileName(path).Contains("3b") ? "Llama 3.2 3B" :
+                                       Path.GetFileName(path).Contains("llama") && Path.GetFileName(path).Contains("1b") ? "Llama 3.2 1B" : 
+                                       "Phi-3-mini-4k-instruct";
+                        
+                        _logger.LogInformation("🎯 Found GGUF model: {ModelName} at {Path} ({Size:F1} MB)", 
+                            modelName, path, fileInfo.Length / (1024.0 * 1024.0));
+                        return path;
+                    }
+                }
+
+                _logger.LogInformation("🧩 No GGUF models found in {ModelsDir}. REAL LLM ONLY MODE:", modelsDir);
+                _logger.LogInformation("   🚀 Required: Download Phi-3-mini model for authentic consciousness processing");
+                _logger.LogInformation("   📥 PowerShell: Invoke-WebRequest -Uri 'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf' -OutFile 'models/phi-3-mini-4k-instruct-q4.gguf'");
+                _logger.LogInformation("   � NO SIMULATION FALLBACK: Real LLM required for operation");
+                
+                return null;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Error searching for GGUF models: {Error}", ex.Message);
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Find the workspace root by looking for characteristic files.
+        /// </summary>
+        private string? FindWorkspaceRoot(string startPath)
+        {
+            var current = new DirectoryInfo(startPath);
+            
+            while (current != null)
+            {
+                // Look for workspace indicators
+                if (File.Exists(Path.Combine(current.FullName, "CxLanguage.sln")) ||
+                    File.Exists(Path.Combine(current.FullName, "README.md")) ||
+                    Directory.Exists(Path.Combine(current.FullName, "models")))
+                {
+                    return current.FullName;
+                }
+                
+                current = current.Parent;
+            }
+            
+            return null;
+        }
+
+        /// <summary>
+        /// Initializes the consciousness-aware LLM service with real model support
         /// </summary>
         public async Task<bool> InitializeAsync()
         {
             try
             {
-                _logger.LogInformation("🚀 Initializing GPU-accelerated LLM service");
+                _logger.LogInformation("🚀 Initializing GPU-accelerated LLM service...");
                 
-                // Simulate initialization
-                await Task.Delay(500);
+                // Try to initialize real GGUF model first
+                if (_ggufEngine != null)
+                {
+                    _logger.LogInformation("🧠 Attempting to load real GGUF model...");
+                    _realModelMode = await _ggufEngine.InitializeAsync();
+                    
+                    if (_realModelMode)
+                    {
+                        _logger.LogInformation("✅ Real LLM Mode activated - using GGUF model inference");
+                        _modelInfo = new ModelInfo(
+                            Name: "Real GGUF Model", 
+                            Version: "Llama 3.2",
+                            SizeBytes: 0, // Will be determined by model file
+                            Architecture: "GGUF + GPU-CUDA",
+                            LoadedAt: DateTime.UtcNow,
+                            Path: _ggufEngine?.GetModelInfo()
+                        );
+                    }
+                    else
+                    {
+                        _logger.LogError("❌ REAL LLM ONLY MODE: Failed to load GGUF model - NO SIMULATION FALLBACK");
+                        return false;
+                    }
+                }
+                else
+                {
+                    _logger.LogError("❌ REAL LLM ONLY MODE: No GGUF engine available - NO SIMULATION FALLBACK");
+                    return false;
+                }
+                
+                _modelLoaded = true;
+                _logger.LogInformation("✅ LLM Service initialized successfully - Real GGUF Model Only");
                 
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to initialize GPU-accelerated LLM service");
+                _logger.LogError(ex, "❌ Failed to initialize LLM service: {Error}", ex.Message);
                 return false;
             }
         }
         
         /// <summary>
-        /// Loads a specific LLM model for consciousness-aware processing
+        /// Loads a specific LLM model for consciousness-aware processing - REAL LLM ONLY
         /// </summary>
         public async Task<bool> LoadModelAsync(string modelName, CancellationToken cancellationToken = default)
         {
@@ -121,10 +252,15 @@ namespace CxLanguage.LocalLLM
             {
                 _logger.LogInformation("📥 Loading model: {ModelName}", modelName);
                 
-                // Simulate model loading
-                await Task.Delay(1000, cancellationToken);
+                // REAL LLM ONLY MODE: No simulation fallback
+                if (_ggufEngine == null || !await _ggufEngine.InitializeAsync())
+                {
+                    _logger.LogError("❌ REAL LLM ONLY MODE: Failed to load model {ModelName} - NO SIMULATION FALLBACK", modelName);
+                    return false;
+                }
                 
                 _modelLoaded = true;
+                _realModelMode = true;
                 _modelInfo = new ModelInfo(
                     modelName,
                     "1.0",
@@ -139,7 +275,7 @@ namespace CxLanguage.LocalLLM
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Failed to load model: {ModelName}", modelName);
+                _logger.LogError(ex, "❌ Failed to load model: {ModelName} - REAL LLM ONLY MODE", modelName);
                 _modelLoaded = false;
                 _modelInfo = null;
                 return false;
@@ -176,63 +312,73 @@ namespace CxLanguage.LocalLLM
         }
         
         /// <summary>
-        /// Generate text using local GPU-accelerated model
+        /// Generate text using real GGUF model - REAL LLM ONLY MODE
         /// </summary>
         public async Task<string> GenerateAsync(string prompt, CancellationToken cancellationToken = default)
         {
             try
             {
-                if (!_modelLoaded)
+                // Ensure model is initialized
+                if (!_modelLoaded || !_realModelMode)
                 {
-                    _logger.LogWarning("⚠️ No model is loaded, loading default model");
-                    await LoadModelAsync("llama-2-7b-chat.Q4_K_M.gguf", cancellationToken);
+                    _logger.LogInformation("🚀 Initializing GGUF model for first inference...");
+                    if (!await InitializeAsync())
+                    {
+                        throw new InvalidOperationException("❌ REAL LLM ONLY MODE: Failed to initialize service - NO SIMULATION FALLBACK");
+                    }
                 }
                 
-                _logger.LogInformation("🧠 Generating with prompt: {PromptStart}...", 
+                _logger.LogInformation("🧠 Generating with prompt: {PromptStart}... (REAL LLM ONLY)", 
                     prompt.Length > 50 ? prompt.Substring(0, 50) + "..." : prompt);
                 
-                if (_gpuAvailable)
+                // REAL LLM ONLY: Use real GGUF model or fail
+                if (_realModelMode && _ggufEngine != null)
                 {
-                    return await Task.Run(() => GenerateWithGpu(prompt), cancellationToken);
+                    return await _ggufEngine.GenerateAsync(prompt, cancellationToken);
                 }
-                else
-                {
-                    _logger.LogWarning("⚠️ GPU not available, falling back to CPU processing");
-                    return await Task.Run(() => GenerateWithCpu(prompt), cancellationToken);
-                }
+                
+                // NO SIMULATION FALLBACK
+                throw new InvalidOperationException("❌ REAL LLM ONLY MODE: No GGUF model loaded - NO SIMULATION FALLBACK");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error during generation");
+                _logger.LogError(ex, "❌ Error during generation - REAL LLM ONLY MODE");
                 throw;
             }
         }
         
         /// <summary>
-        /// Streams consciousness-aware text generation in real-time
+        /// Streams consciousness-aware text generation in real-time - REAL LLM ONLY
         /// </summary>
         public async IAsyncEnumerable<string> StreamAsync(string prompt, [EnumeratorCancellation] CancellationToken cancellationToken = default)
         {
             if (!_modelLoaded)
             {
                 _logger.LogWarning("⚠️ No model is loaded, loading default model");
-                await LoadModelAsync("llama-2-7b-chat.Q4_K_M.gguf", cancellationToken);
+                if (!await LoadModelAsync("llama-3.2-3b-instruct-q4_k_m.gguf", cancellationToken))
+                {
+                    throw new InvalidOperationException("❌ REAL LLM ONLY MODE: Failed to load model - NO SIMULATION FALLBACK");
+                }
             }
             
-            _logger.LogInformation("🧠 Streaming with prompt: {PromptStart}...", 
+            _logger.LogInformation("🧠 Streaming with prompt: {PromptStart}... (REAL LLM ONLY)", 
                 prompt.Length > 50 ? prompt.Substring(0, 50) + "..." : prompt);
+            
+            // REAL LLM ONLY: No simulation fallback
+            if (!_realModelMode || _ggufEngine == null)
+            {
+                throw new InvalidOperationException("❌ REAL LLM ONLY MODE: No GGUF model available for streaming - NO SIMULATION FALLBACK");
+            }
             
             // Clear any existing tokens in the channel
             while (_tokenReader.TryRead(out _)) { }
             
-            // Start generation in a background task
+            // Start generation in a background task using real GGUF model
             _ = Task.Run(async () => 
             {
                 try
                 {
-                    string result = _gpuAvailable 
-                        ? GenerateWithGpu(prompt) 
-                        : GenerateWithCpu(prompt);
+                    string result = await _ggufEngine.GenerateAsync(prompt, cancellationToken);
                     
                     // Split result into tokens for streaming
                     var tokens = result.Split(' ');
@@ -247,7 +393,7 @@ namespace CxLanguage.LocalLLM
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Error during streaming generation");
+                    _logger.LogError(ex, "❌ Error during streaming generation - REAL LLM ONLY");
                     _tokenWriter.Complete(ex);
                 }
             }, cancellationToken);
@@ -278,55 +424,31 @@ namespace CxLanguage.LocalLLM
         /// <returns>True if GPU is available, false otherwise</returns>
         public bool IsGpuAvailable() => _gpuAvailable;
         
-        /// <summary>
-        /// Generate text using GPU acceleration
-        /// </summary>
-        private string GenerateWithGpu(string prompt)
-        {
-            // TorchSharp GPU implementation would go here
-            // In a production implementation, this would load and run a GGUF model with TorchSharp
-            // This is a placeholder that would be replaced with actual model loading and inference
-            
-            // Simulate GPU processing
-            _logger.LogInformation("⚡ Processing with GPU acceleration");
-            
-            var result = $"GPU-accelerated result for: {prompt}\n\n" +
-                         "Consciousness is a complex phenomenon emerging from neural activity patterns. " +
-                         "It involves self-awareness, subjective experience, and integrated information processing. " +
-                         "Modern theories suggest consciousness arises from global workspace activation and information integration across brain regions.";
-            
-            _logger.LogInformation("✅ Generation complete with GPU acceleration");
-            return result;
-        }
+        // 🚫 ALL SIMULATION METHODS REMOVED - REAL LLM ONLY MODE
+        // GenerateWithGpu and GenerateWithCpu simulation methods have been
+        // completely removed to ensure only real LLM inference is used
         
         /// <summary>
-        /// Generate text using CPU fallback
-        /// </summary>
-        private string GenerateWithCpu(string prompt)
-        {
-            // CPU fallback implementation
-            // This is a placeholder that would be replaced with actual model loading and inference
-            _logger.LogInformation("💻 Processing with CPU fallback");
-            
-            var result = $"CPU fallback result for: {prompt}\n\n" +
-                         "Consciousness emerges from integrated neural activity across distributed brain networks. " +
-                         "It enables subjective experience, self-reflection, and awareness of one's surroundings. " +
-                         "The neural correlates of consciousness likely involve synchronization between thalamo-cortical systems.";
-            
-            _logger.LogInformation("✅ Generation complete with CPU fallback");
-            return result;
-        }
-        
-        /// <summary>
-        /// Dispose of resources
+        /// Dispose of resources including real GGUF model
         /// </summary>
         public void Dispose()
         {
-            _logger.LogInformation("🧹 GpuLocalLLMService disposed");
-            // Cleanup TorchSharp resources if needed
+            _logger.LogInformation("🧹 GpuLocalLLMService disposing resources...");
             
-            // Cleanup the token channel
-            _tokenWriter.Complete();
+            try
+            {
+                // Dispose real GGUF model if loaded
+                _ggufEngine?.Dispose();
+                
+                // Cleanup the token channel
+                _tokenWriter.Complete();
+                
+                _logger.LogInformation("✅ GpuLocalLLMService disposed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Warning during GpuLocalLLMService disposal: {Error}", ex.Message);
+            }
         }
     }
 }

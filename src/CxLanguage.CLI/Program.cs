@@ -205,16 +205,63 @@ class Program
             // Register built-in functions for namespace event system
             CxLanguage.Compiler.Modules.RuntimeFunctionRegistry.RegisterBuiltInFunctions();
 
-            // Execute the compiled assembly
+            // Execute the compiled assembly and wait for shutdown
             var runMethod = compilationResult.ProgramType!.GetMethod("Run");
             if (runMethod != null)
             {
                 try
                 {
+                    // Create a shutdown signal source
+                    var shutdownTaskSource = new TaskCompletionSource<bool>();
+                    var cancellationTokenSource = new CancellationTokenSource();
+                    
+                    // Subscribe to system.shutdown event
+                    if (eventBusService != null)
+                    {
+                        Console.WriteLine("🔄 Waiting for system.shutdown event or Ctrl+C to exit...");
+                        
+                        eventBusService.Subscribe("system.shutdown", (sender, eventName, payload) =>
+                        {
+                            Console.WriteLine("🛑 Received system.shutdown event - shutting down gracefully");
+                            shutdownTaskSource.TrySetResult(true);
+                            return Task.FromResult(true);
+                        });
+                        
+                        // Handle Ctrl+C gracefully
+                        Console.CancelKeyPress += async (sender, e) =>
+                        {
+                            e.Cancel = true; // Prevent immediate termination
+                            Console.WriteLine("\n🛑 Ctrl+C received - emitting system.shutdown event...");
+                            await eventBusService.EmitAsync("system.shutdown", new Dictionary<string, object>
+                            {
+                                ["reason"] = "user_interrupt",
+                                ["source"] = "cli"
+                            });
+                        };
+                    }
+                    
+                    // Execute the script
                     var task = (Task?)runMethod.Invoke(null, null);
                     if (task != null)
                     {
                         await task;
+                    }
+                    
+                    // Wait for shutdown signal (or timeout after 5 minutes for safety)
+                    if (eventBusService != null)
+                    {
+                        using (cancellationTokenSource)
+                        {
+                            var timeoutTask = Task.Delay(TimeSpan.FromMinutes(5), cancellationTokenSource.Token);
+                            var completedTask = await Task.WhenAny(shutdownTaskSource.Task, timeoutTask);
+                            
+                            if (completedTask == timeoutTask && !cancellationTokenSource.Token.IsCancellationRequested)
+                            {
+                                Console.WriteLine("⏰ Application timeout - shutting down after 5 minutes");
+                            }
+                            
+                            cancellationTokenSource.Cancel(); // Cancel the timeout task
+                        }
                     }
                 }
                 catch (System.Reflection.TargetInvocationException ex) when (ex.InnerException != null)

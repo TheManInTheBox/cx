@@ -1,0 +1,30 @@
+// Debug Llama Model Test
+// Test to isolate the generation issue
+
+conscious DebugLlamaTest {
+    realize(self: conscious) {
+        learn self;
+        
+        print("🔍 Debug Llama Model Test");
+        print("========================");
+        
+        // Very simple test - just ask for a number
+        infer {
+            context: "simple math",
+            data: "4",
+            handlers: [debug.result]
+        };
+    }
+
+    on debug.result(event) {
+        print("📊 Debug Result:");
+        print("  • Result: " + (event.result || "NULL"));
+        print("  • Error: " + (event.error || "NO ERROR"));
+        print("  • Source: " + (event.source || "UNKNOWN"));
+        
+        emit system.shutdown {
+            reason: "debug_completed",
+            success: true
+        };
+    }
+}
