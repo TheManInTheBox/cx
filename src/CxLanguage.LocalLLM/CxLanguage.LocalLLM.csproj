@@ -52,6 +52,11 @@
     <!-- TorchSharp for GPU/CUDA acceleration - ENABLED for GPU-FIRST processing -->
     <PackageReference Include="TorchSharp" Version="0.102.5" />
     
+    <!-- LlamaSharp for real GGUF model inference -->
+    <PackageReference Include="LLamaSharp" Version="0.15.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cpu" Version="0.15.0" />
+    <PackageReference Include="LLamaSharp.Backend.Cuda12" Version="0.15.0" />
+    
     <!-- Memory and performance optimization -->
     <PackageReference Include="System.Memory" Version="4.5.5" />
     <PackageReference Include="System.Buffers" Version="4.5.1" />

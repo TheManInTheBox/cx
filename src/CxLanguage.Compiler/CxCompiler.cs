@@ -208,6 +208,9 @@ public class CxCompiler : IAstVisitor<object>
             // Generate event handler registration code at the beginning of the Run method
             GenerateEventHandlerRegistrations();
 
+            // Generate consciousness entity instantiation code
+            GenerateConsciousnessEntityInstantiation();
+
             // Compile the main program statements, skipping declarations
             foreach (var statement in ast.Statements)
             {
@@ -291,6 +294,73 @@ public class CxCompiler : IAstVisitor<object>
         }
 
         Console.WriteLine($"[DEBUG] Event handler registration complete - {_eventRegistrations.Count} handlers registered");
+    }
+
+    /// <summary>
+    /// Generate IL code to instantiate all consciousness entities (conscious classes) in the program
+    /// </summary>
+    private void GenerateConsciousnessEntityInstantiation()
+    {
+        if (_userClasses.Count == 0)
+        {
+            Console.WriteLine("[DEBUG] No consciousness entities to instantiate");
+            return;
+        }
+
+        Console.WriteLine($"[DEBUG] Generating consciousness entity instantiation for {_userClasses.Count} entities");
+
+        foreach (var (className, typeBuilder) in _userClasses)
+        {
+            try
+            {
+                Console.WriteLine($"[DEBUG] Instantiating consciousness entity: {className}");
+
+                // Get the created type from _createdTypes or create it if needed
+                Type? classType = null;
+                if (_createdTypes.TryGetValue(className, out classType))
+                {
+                    // Type was already created in Pass 2
+                }
+                else
+                {
+                    // Create the type now if it wasn't created yet
+                    classType = typeBuilder.CreateType();
+                    _createdTypes[className] = classType;
+                }
+
+                // Find the parameterless constructor (realize constructor)
+                Console.WriteLine($"[DEBUG] Looking for parameterless constructor in consciousness entity: {className}");
+                var constructors = classType.GetConstructors();
+                Console.WriteLine($"[DEBUG] Found {constructors.Length} constructors:");
+                foreach (var ctor in constructors)
+                {
+                    var paramCount = ctor.GetParameters().Length;
+                    Console.WriteLine($"[DEBUG]   - Constructor with {paramCount} parameters");
+                }
+                
+                var constructor = classType.GetConstructor(Type.EmptyTypes);
+                if (constructor == null)
+                {
+                    Console.WriteLine($"[WARNING] No parameterless constructor found for consciousness entity: {className}");
+                    continue;
+                }
+
+                // Generate IL to instantiate the consciousness entity: var entity = new ClassName();
+                _currentIl!.Emit(OpCodes.Newobj, constructor);
+
+                // Store the instance in a local variable (we could also store it in a field if needed)
+                var local = _currentIl.DeclareLocal(classType);
+                _currentIl.Emit(OpCodes.Stloc, local);
+
+                Console.WriteLine($"[DEBUG] Generated instantiation IL for consciousness entity: {className}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[ERROR] Failed to instantiate consciousness entity {className}: {ex.Message}");
+            }
+        }
+
+        Console.WriteLine($"[DEBUG] Consciousness entity instantiation complete - {_userClasses.Count} entities instantiated");
     }
 
     /// <summary>
@@ -3642,6 +3712,20 @@ public class CxCompiler : IAstVisitor<object>
                     // Store constructor info for later use (realize declarations become constructors in IL)
                     _classConstructors[node.Name] = constructorBuilder;
                     CxDebugTracing.TraceCxToIL($"realize({string.Join(", ", realizeDecl.Parameters.Select(p => p.Name))})", $"DefineConstructor({paramTypes.Length} params)", new { ClassName = node.Name, ParameterCount = paramTypes.Length });
+                    
+                    // ALSO create a parameterless constructor for consciousness entity instantiation
+                    if (paramTypes.Length > 0)
+                    {
+                        Console.WriteLine($"[DEBUG] Creating parameterless constructor for consciousness entity {node.Name}");
+                        var parameterlessConstructorBuilder = typeBuilder.DefineConstructor(
+                            MethodAttributes.Public,
+                            CallingConventions.Standard,
+                            Type.EmptyTypes);
+                            
+                        // Store parameterless constructor info for consciousness entity instantiation
+                        _classConstructors[node.Name + "_parameterless"] = parameterlessConstructorBuilder;
+                        CxDebugTracing.TraceCxToIL("parameterless constructor", "DefineConstructor(0 params)", new { ClassName = node.Name, Purpose = "consciousness_entity_instantiation" });
+                    }
                 }
             }
             else
@@ -3743,6 +3827,12 @@ public class CxCompiler : IAstVisitor<object>
             foreach (var realizeDecl in node.RealizeDeclarations)
             {
                 ImplementRealizeDeclaration(node.Name, realizeDecl, typeBuilder, node.EventHandlers, node.UsesStatements);
+            }
+            
+            // Implement parameterless constructor for consciousness entity instantiation if needed
+            if (node.RealizeDeclarations.Count > 0 && node.RealizeDeclarations.Any(r => r.Parameters.Count > 0))
+            {
+                ImplementParameterlessConstructor(node.Name, typeBuilder, node.EventHandlers, node.UsesStatements, node.RealizeDeclarations);
             }
             
             // Implement methods
@@ -3954,6 +4044,103 @@ public class CxCompiler : IAstVisitor<object>
         _currentClassName = previousClassName;
         
         Console.WriteLine($"[DEBUG] Constructor implementation complete for class {className}");
+    }
+    
+    /// <summary>
+    /// Implements a parameterless constructor for consciousness entity instantiation
+    /// </summary>
+    private void ImplementParameterlessConstructor(string className, TypeBuilder typeBuilder, List<OnStatementNode> eventHandlers, List<UsesStatementNode> usesStatements, List<RealizeDeclarationNode> realizeDeclarations)
+    {
+        Console.WriteLine($"[DEBUG] Implementing parameterless constructor for consciousness entity {className}");
+        
+        if (!_classConstructors.TryGetValue(className + "_parameterless", out var constructorBuilder))
+        {
+            Console.WriteLine($"[WARNING] Parameterless constructor for class {className} was not defined in Pass 1");
+            return;
+        }
+        
+        // Get IL generator for the parameterless constructor
+        var constructorIl = constructorBuilder.GetILGenerator();
+        
+        // Save current IL context
+        var previousIl = _currentIl;
+        var previousLocals = _currentLocals;
+        var previousParameterMapping = _currentParameterMapping;
+        var previousClassName = _currentClassName;
+        
+        // Set up new context for parameterless constructor
+        _currentIl = constructorIl;
+        _currentLocals = new Dictionary<string, LocalBuilder>();
+        _currentClassName = className;
+        _currentParameterMapping = new Dictionary<string, int>(); // No parameters
+        
+        // Call base constructor
+        _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this'
+        var objectConstructor = typeof(object).GetConstructor(Type.EmptyTypes);
+        _currentIl.Emit(OpCodes.Call, objectConstructor!);
+        Console.WriteLine($"[DEBUG] Object base constructor called for parameterless constructor of {className}");
+        
+        // Initialize service fields from uses statements  
+        foreach (var usesStmt in usesStatements)
+        {
+            Console.WriteLine($"[DEBUG] Initializing service field '{usesStmt.Alias}' from '{usesStmt.ServicePath}' in parameterless constructor");
+            InitializeInstanceServiceField(className, usesStmt.Alias, usesStmt.ServicePath);
+        }
+        
+        // Register event handlers for this class instance
+        Console.WriteLine($"[DEBUG] Registering {eventHandlers.Count} event handlers for class {className} in parameterless constructor");
+        foreach (var eventHandler in eventHandlers)
+        {
+            var eventName = eventHandler.EventName.FullName;
+            var handlerMethodName = _eventHandlerMethodNames[eventHandler];
+            
+            Console.WriteLine($"[DEBUG] Registering handler for {eventName} with ICxEventBus in parameterless constructor");
+            
+            // Call CxRuntimeHelper.RegisterInstanceEventHandler(this, eventName, methodName)
+            _currentIl.Emit(OpCodes.Ldarg_0); // Load 'this' instance
+            _currentIl.Emit(OpCodes.Ldstr, eventName); // Load event name
+            _currentIl.Emit(OpCodes.Ldstr, handlerMethodName); // Load method name
+            
+            var registerMethod = typeof(CxLanguage.Runtime.CxRuntimeHelper).GetMethod("RegisterInstanceEventHandler");
+            if (registerMethod == null)
+            {
+                throw new CompilationException("RegisterInstanceEventHandler method not found in CxRuntimeHelper");
+            }
+            _currentIl.Emit(OpCodes.Call, registerMethod);
+        }
+        
+        // Execute the realize() method body directly in this constructor
+        // This simulates calling realize(this) without needing to call another constructor
+        Console.WriteLine($"[DEBUG] Executing realize method body in parameterless constructor for consciousness entity {className}");
+        
+        // Set up parameter mapping for realize method body - 'self' parameter maps to 'this'
+        _currentParameterMapping["self"] = 0; // 'self' maps to 'this' (parameter 0)
+        
+        // Find the first realize declaration and execute its body
+        if (realizeDeclarations.Count > 0)
+        {
+            var realizeDecl = realizeDeclarations.First();
+            Console.WriteLine($"[DEBUG] Executing realize declaration body with {realizeDecl.Parameters.Count} parameters");
+            
+            // Compile the realize declaration body directly in this constructor
+            realizeDecl.Body.Accept(this);
+            Console.WriteLine($"[DEBUG] Realize declaration body executed successfully in parameterless constructor");
+        }
+        else
+        {
+            Console.WriteLine($"[WARNING] No realize declarations found for consciousness entity {className}");
+        }
+        
+        // Return from constructor
+        _currentIl.Emit(OpCodes.Ret);
+        
+        // Restore previous IL context
+        _currentIl = previousIl;
+        _currentLocals = previousLocals;
+        _currentParameterMapping = previousParameterMapping;
+        _currentClassName = previousClassName;
+        
+        Console.WriteLine($"[DEBUG] Parameterless constructor implementation complete for consciousness entity {className}");
     }
     
     /// <summary>

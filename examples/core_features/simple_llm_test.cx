@@ -1,0 +1,33 @@
+// Simple Local LLM Test
+// Direct test of real model inference
+
+conscious SimpleLLMTest {
+    realize(self: conscious) {
+        learn self;
+        
+        print("🧠 Testing Real LLM Inference");
+        print("============================");
+        
+        // Simple direct inference test
+        infer {
+            context: "test calculation",
+            data: "What is 2 + 2?",
+            handlers: [test.result]
+        };
+    }
+
+    on test.result(event) {
+        print("📊 LLM Test Result:");
+        print("  • Response: " + (event.result || "No result"));
+        print("  • Source: " + (event.source || "unknown"));
+        print("  • Confidence: " + (event.confidence || 0));
+        print("  • Error: " + (event.error || false));
+        print("✅ Test Complete!");
+        
+        // Emit shutdown signal to end the program
+        emit system.shutdown {
+            reason: "test_completed",
+            success: true
+        };
+    }
+}
