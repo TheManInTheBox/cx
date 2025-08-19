@@ -496,3 +496,4 @@ internal class SimpleStreamResponse : AiStreamResponse
         // Nothing to dispose for this simple implementation
     }
 }
+

@@ -21,3 +21,4 @@ public interface IRealtimeChat
     /// </summary>
     IAsyncEnumerable<ChatMessage> StreamAsync(string message, CancellationToken cancellationToken = default);
 }
+

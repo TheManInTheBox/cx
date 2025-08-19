@@ -119,3 +119,4 @@ public class CustomEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<fl
         _logger.LogInformation("🧹 CustomEmbeddingGenerator disposed");
     }
 }
+

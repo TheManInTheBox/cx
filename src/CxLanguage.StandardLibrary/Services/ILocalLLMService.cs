@@ -32,3 +32,4 @@ namespace CxLanguage.StandardLibrary.Services
         Task<string> GenerateAsync(string prompt, CancellationToken cancellationToken = default);
     }
 }
+

@@ -686,3 +686,4 @@ public class BiologicalNeuralProcessor
         _logger.LogInformation("🧬 Biological Neural Processor: Disposed");
     }
 }
+

@@ -85,3 +85,4 @@ public interface IFullAICapabilities :
     // Composite marker interface for all specialized AI capabilities
     // Basic capabilities (GenerateAsync, ChatAsync, ThinkAsync, etc.) are inherited by default
 }
+

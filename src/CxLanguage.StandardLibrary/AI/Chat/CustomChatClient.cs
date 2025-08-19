@@ -228,3 +228,4 @@ public class CustomChatClient : IChatClient
         _logger.LogInformation("🧹 CustomChatClient disposed");
     }
 }
+

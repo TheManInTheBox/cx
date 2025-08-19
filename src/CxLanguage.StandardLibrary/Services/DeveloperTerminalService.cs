@@ -92,8 +92,7 @@ namespace CxLanguage.StandardLibrary.Services
             Console.WriteLine("   /help          - Show all commands");
             Console.WriteLine("   /run <script>  - Execute CX script");
             Console.WriteLine("   /compile       - Compile current workspace");
-            Console.WriteLine("   /debug         - Enable debug mode");
-            Console.WriteLine("   /events        - Show event bus status");
+                        Console.WriteLine("   /events        - Show event bus status");
             Console.WriteLine("   /clear         - Clear terminal");
             Console.WriteLine("   /exit          - Exit terminal");
             Console.WriteLine();
@@ -350,8 +349,7 @@ namespace CxLanguage.StandardLibrary.Services
 
                 case "/debug":
                     _eventBus.EmitAsync("developer.debug.toggle", new Dictionary<string, object> { ["enabled"] = true });
-                    Console.WriteLine("🐛 Debug mode enabled");
-                    break;
+                                        break;
 
                 case "/events":
                     _eventBus.EmitAsync("developer.events.status", new Dictionary<string, object> { ["request"] = "show_status" });
@@ -429,13 +427,11 @@ namespace CxLanguage.StandardLibrary.Services
                 // Clear the current line, print the question, and re-display the new prompt.
                 if (Console.IsOutputRedirected)
                 {
-                    Console.WriteLine($"🤔 AI needs more info: {question}");
-                }
+                                    }
                 else
                 {
                     Console.Write("\r" + new string(' ', Console.BufferWidth > 0 ? Console.BufferWidth - 1 : 0) + "\r");
-                    Console.WriteLine($"🤔 AI needs more info: {question}");
-                    Console.Write(_currentPrompt);
+                                        Console.Write(_currentPrompt);
                 }
             }
             return Task.CompletedTask;
@@ -471,8 +467,7 @@ namespace CxLanguage.StandardLibrary.Services
             Console.WriteLine("   /help                     - Show this help");
             Console.WriteLine("   /run <script>             - Execute CX script file");
             Console.WriteLine("   /compile                  - Compile current workspace");
-            Console.WriteLine("   /debug                    - Toggle debug mode");
-            Console.WriteLine("   /events                   - Show event bus status");
+                        Console.WriteLine("   /events                   - Show event bus status");
             Console.WriteLine("   /clear                    - Clear terminal screen");
             Console.WriteLine("   /exit                     - Exit terminal and shutdown");
             Console.WriteLine();
@@ -481,10 +476,11 @@ namespace CxLanguage.StandardLibrary.Services
             Console.WriteLine("   - Real-time consciousness processing");
             Console.WriteLine("   - Event-driven architecture");
             Console.WriteLine("   - Hot reload capability");
-            Console.WriteLine("   - Live debugging integration");
-            Console.WriteLine("   - Voice-driven development");
+            // Developer service output removedConsole.WriteLine("   - Voice-driven development");
             Console.WriteLine();
         }
     }
 }
+
+
 

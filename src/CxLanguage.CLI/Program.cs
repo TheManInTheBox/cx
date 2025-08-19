@@ -111,31 +111,31 @@ class Program
             var thinkService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.ThinkService>();
             if (thinkService != null)
             {
-                Console.WriteLine("✅ ThinkService instantiated and event subscriptions active");
+                // Service registration output removed
             }
             else
             {
-                Console.WriteLine("⚠️ Warning: ThinkService not available");
+                // Service warning output removed
             }
             
             var inferService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.InferService>();
             if (inferService != null)
             {
-                Console.WriteLine("✅ InferService instantiated and event subscriptions active");
+                // Service registration output removed
             }
             else
             {
-                Console.WriteLine("⚠️ Warning: InferService not available");
+                // Service warning output removed
             }
             
             var learnService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.LearnService>();
             if (learnService != null)
             {
-                Console.WriteLine("✅ LearnService instantiated and event subscriptions active");
+                // Service registration output removed
             }
             else
             {
-                Console.WriteLine("⚠️ Warning: LearnService not available");
+                // Service warning output removed
             }
             
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
@@ -604,3 +604,4 @@ public class AstPrinter
         _indentLevel--;
     }
 }
+

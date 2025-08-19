@@ -508,3 +508,4 @@ public class ConsciousnessVerificationSystem
         return _indicators.TryGetValue(entityId, out var indicators) ? indicators : Enumerable.Empty<ConsciousnessIndicator>();
     }
 }
+

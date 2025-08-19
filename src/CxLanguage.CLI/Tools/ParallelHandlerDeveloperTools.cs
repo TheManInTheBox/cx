@@ -694,3 +694,4 @@ namespace CxLanguage.CLI.Tools
         public List<string> RecommendedActions { get; set; } = new();
     }
 }
+
