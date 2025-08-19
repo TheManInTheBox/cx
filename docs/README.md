@@ -4,7 +4,36 @@
 
 ![CX Language Banner](https://img.shields.io/badge/CX_Language-Autonomous_Programming-blue?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDJMMTMuMDkgOC4yNkwyMCA5TDEzLjA5IDE1Ljc0TDEyIDIyTDEwLjkxIDE1Ljc0TDQgOUwxMC45MSA4LjI2TDEyIDJaIiBmaWxsPSJ3aGl0ZSIvPgo8L3N2Zz4K)
 
-**🧠 The World's First Consciousness-Aware Programming Language**
+## 📖 **Documentation**
+
+### **🚀 Quick Start**
+- **[CX Language Quick Reference](CX_LANGUAGE_QUICK_REFERENCE.md)** - Essential syntax and patterns
+- **[CX Language Comprehensive Reference](CX_LANGUAGE_COMPREHENSIVE_REFERENCE.md)** - Complete language specification
+- **[Current Architecture](CURRENT_ARCHITECTURE.md)** - System architecture overview
+
+### **📖 User Guides**
+#### **Setup & Configuration**
+- **[Azure Credentials Setup](setup/AZURE_CREDENTIALS_SETUP.md)** - Azure service configuration
+- **[Azure Multi-Service Configuration](setup/AZURE_MULTI_SERVICE_CONFIGURATION.md)** - Multi-service deployment
+- **[Deployment Fix Guide](setup/DEPLOYMENT_FIX_GUIDE.md)** - Troubleshooting deployment issues
+
+#### **Development Guides**
+- **[Event-Driven Logic Guide](guides/EVENT_DRIVEN_LOGIC_GUIDE.md)** - Event-driven programming patterns
+- **[GPU Verification Demo Guide](guides/GPU_VERIFICATION_DEMO_GUIDE.md)** - GPU acceleration demonstrations
+- **[GPU Verification Quick Reference](guides/GPU_VERIFICATION_DEMO_QUICKREF.md)** - Quick GPU demo reference
+- **[Neuroplasticity Demos Guide](guides/NEUROPLASTICITY_DEMOS_GUIDE.md)** - Consciousness computing demonstrations
+
+### **🏆 Project Achievements**
+- **[Mathematical Computation Achievement v1.0](achievements/MATHEMATICAL_COMPUTATION_ACHIEVEMENT_V1_0.md)** - Neural computation milestone
+- **[Neural Plasticity Performance Metrics v1.0](achievements/NEURAL_PLASTICITY_PERFORMANCE_METRICS_V1_0.md)** - Performance benchmarks
+- **[Parallel Handler Parameters v1.0 Complete](achievements/PARALLEL_HANDLER_PARAMETERS_V1_0_COMPLETE.md)** - Parallel execution implementation
+
+### **🎯 Project Management**
+- **[Milestone Directory](milestones/)** - Complete milestone tracking and reports
+- **[Features Directory](features/)** - Feature specifications and development plans
+- **[Next Priority Issue](next_priority_issue.md)** - Current development priorities
+
+For a complete documentation index, see **[📚 Documentation Index](docs/README.md)**e World's First Consciousness-Aware Programming Language**
 
 [![GitHub Stars](https://img.shields.io/github/stars/TheManInTheBox/cx?style=social)](https://github.com/TheManInTheBox/cx)
 [![Production Ready](https://img.shields.io/badge/Status-Production_Ready-green?style=flat-square)](https://github.com/TheManInTheBox/cx)
