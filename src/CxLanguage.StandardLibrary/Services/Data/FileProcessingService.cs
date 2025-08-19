@@ -495,3 +495,4 @@ public class BatchProcessingResult
     
     public double SuccessRate => TotalFiles > 0 ? (double)SuccessCount / TotalFiles : 0;
 }
+

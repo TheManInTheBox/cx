@@ -49,3 +49,4 @@ public abstract class CxAiOptions
     /// </summary>
     public Dictionary<string, object> Parameters { get; set; } = new();
 }
+

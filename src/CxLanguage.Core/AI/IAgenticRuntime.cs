@@ -159,3 +159,4 @@ public class ReasoningState
     public int IterationCount { get; set; } = 0;
     public int MaxIterations { get; set; } = 3;
 }
+

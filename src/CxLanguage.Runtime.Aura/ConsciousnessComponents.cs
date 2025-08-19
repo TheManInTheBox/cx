@@ -511,3 +511,4 @@ namespace CxLanguage.Runtime.Aura
         public DateTime Timestamp { get; set; } = DateTime.UtcNow;
     }
 }
+

@@ -22,8 +22,7 @@ public class AzureOpenAIServiceTest
         var azureOpenAIService = new AzureOpenAIService(config, logger);
 
         // Test the service
-        Console.WriteLine("Testing Azure OpenAI Service...");
-        
+                
         try
         {
             var result = await azureOpenAIService.GenerateTextAsync("Hello, Azure OpenAI! Please respond with a short greeting.");
@@ -37,3 +36,4 @@ public class AzureOpenAIServiceTest
         }
     }
 }
+

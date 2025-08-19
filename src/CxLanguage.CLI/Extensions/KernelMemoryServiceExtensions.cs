@@ -22,8 +22,7 @@ public static class KernelMemoryServiceExtensions
     {
         try
         {
-            Console.WriteLine("Vector Database: Starting service registration with KernelMemory 0.98.x");
-            
+                        
             // Get Azure OpenAI configuration
             var azureOpenAISection = configuration.GetSection("AzureOpenAI");
             if (!azureOpenAISection.Exists())
@@ -55,8 +54,7 @@ public static class KernelMemoryServiceExtensions
                         endpoint = serviceSection["Endpoint"] ?? string.Empty;
                         embeddingDeployment = serviceSection.GetSection("Models")["TextEmbedding"] ?? string.Empty;
                         chatDeployment = serviceSection.GetSection("Models")["ChatCompletion"] ?? string.Empty;
-                        Console.WriteLine($"Vector Database: Using embedding service '{embeddingService}' with deployment '{embeddingDeployment}'");
-                        break;
+                                                break;
                     }
                 }
             }
@@ -116,3 +114,4 @@ namespace CxLanguage.CLI.Extensions
 {
     // NEURAL SYSTEM: Empty placeholder for legacy Kernel Memory extensions
 }
+

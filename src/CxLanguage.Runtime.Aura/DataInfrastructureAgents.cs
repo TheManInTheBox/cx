@@ -618,3 +618,4 @@ namespace CxLanguage.Runtime.Aura
         public double ConsciousnessIndexEfficiency { get; set; }
     }
 }
+

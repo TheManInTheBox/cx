@@ -168,3 +168,4 @@ namespace CxLanguage.Runtime.Peering
         public double ConsciousnessCoherence { get; set; }
     }
 }
+

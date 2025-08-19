@@ -732,3 +732,4 @@ namespace CxLanguage.Runtime.Consciousness
         Critical
     }
 }
+

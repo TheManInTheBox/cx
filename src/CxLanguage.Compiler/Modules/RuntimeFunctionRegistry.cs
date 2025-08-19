@@ -121,9 +121,7 @@ public static class RuntimeFunctionRegistry
         {
             try
             {
-                Console.WriteLine($"🔧 INSTANCE: Found assembly info for {assemblyName}");
-                Console.WriteLine($"📋 INSTANCE: Program type: {assemblyInfo.ProgramType.Name}");
-                
+                                                
                 var instance = Activator.CreateInstance(assemblyInfo.ProgramType, console, aiService, aiFunctions);
                 assemblyInfo.ProgramInstance = instance;
                 
@@ -138,8 +136,7 @@ public static class RuntimeFunctionRegistry
             }
         }
         
-        Console.WriteLine($"❌ INSTANCE: No assembly info found for {assemblyName}");
-        return null;
+                return null;
     }
     
     /// <summary>
@@ -181,17 +178,14 @@ public static class RuntimeFunctionRegistry
                 var assemblyInfo = _registeredAssemblies.Values.FirstOrDefault(a => a.AvailableFunctions.Contains(functionName));
                 if (assemblyInfo != null)
                 {
-                    Console.WriteLine($"🏗️ EXECUTION: Found assembly {assemblyInfo.AssemblyName} containing function {functionName}");
-                    
+                                        
                     // Create instance if needed
                     if (assemblyInfo.ProgramInstance == null)
                     {
-                        Console.WriteLine($"🔧 EXECUTION: Creating program instance for {assemblyInfo.AssemblyName}");
-                        assemblyInfo.ProgramInstance = CreateProgramInstance(assemblyInfo.AssemblyName, new object(), null, null);
+                                                assemblyInfo.ProgramInstance = CreateProgramInstance(assemblyInfo.AssemblyName, new object(), null, null);
                         if (assemblyInfo.ProgramInstance == null)
                         {
-                            Console.WriteLine($"❌ EXECUTION: Failed to create program instance for {assemblyInfo.AssemblyName}");
-                            return null;
+                                                        return null;
                         }
                         Console.WriteLine($"✅ EXECUTION: Program instance created successfully");
                     }
@@ -238,8 +232,7 @@ public static class RuntimeFunctionRegistry
     /// </summary>
     public static void RegisterBuiltInFunction(string functionName, MethodInfo method)
     {
-        Console.WriteLine($"🔧 REGISTRY: Registering built-in function: {functionName}");
-        _registeredMethods.TryAdd(functionName, method);
+                _registeredMethods.TryAdd(functionName, method);
     }
 
     /// <summary>
@@ -375,3 +368,4 @@ public static class RuntimeFunctionRegistry
         return convertedArgs;
     }
 }
+

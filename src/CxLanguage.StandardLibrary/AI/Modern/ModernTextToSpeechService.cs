@@ -205,3 +205,4 @@ public class TextToSpeechOptions : CxAiOptions
     /// </summary>
     public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(30);
 }
+

@@ -180,3 +180,4 @@ public class CoreAiStreamResponseAdapter : CxCoreAI.AiStreamResponse
         // No disposal needed for Azure AiStreamResponse
     }
 }
+

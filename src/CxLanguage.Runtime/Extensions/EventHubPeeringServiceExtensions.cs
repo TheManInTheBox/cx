@@ -99,3 +99,4 @@ namespace CxLanguage.Runtime.Extensions
         public bool EnableConsciousnessSynchronization { get; set; } = true;
     }
 }
+

@@ -1,0 +1,274 @@
+? GpuLocalLLMService registered successfully.
+? InMemoryVectorStoreService registered successfully.
+? ThinkService (GPU-CUDA) with consciousness integration registered successfully.
+? InferService (GPU-CUDA) with inference capabilities registered successfully.
+? LearnService (GPU-CUDA) with vector storage capabilities registered successfully.
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\a7qBIOyPiniwRue6UVvF\cx
+info: CxLanguage.LocalLLM.GpuLocalLLMService[0]
+      ?? Found GGUF model: Llama 3.2 3B at C:\Users\a7qBIOyPiniwRue6UVvF\cx\models\local_llm\llama-3.2-3b-instruct-q4_k_m.gguf (1925.8 MB)
+info: CxLanguage.LocalLLM.GpuLocalLLMService[0]
+      ?? Found GGUF model: C:\Users\a7qBIOyPiniwRue6UVvF\cx\models\local_llm\llama-3.2-3b-instruct-q4_k_m.gguf
+info: CxLanguage.LocalLLM.GpuLocalLLMService[0]
+      ?? Model will be initialized on first inference request
+info: CxLanguage.LocalLLM.GpuLocalLLMService[0]
+      ?? GpuLocalLLMService initialized - GPU available: True
+info: CxLanguage.LocalLLM.GpuLocalLLMService[0]
+      ?? CUDA Details: 1 devices available
+? GPU-FIRST LocalLLMService registered for static access in consciousness processing
+info: CxLanguage.Runtime.UnifiedEventBus[0]
+      Unified Event Bus initialized
+? ICxEventBus registered for static access in event emission
+info: CxLanguage.StandardLibrary.Services.VectorStore.InMemoryVectorStoreService[0]
+      ?? Dr. Marcus 'MemoryLayer' Sterling's InMemoryVectorStoreService initialized.
+? ThinkService instantiated and event subscriptions active
+info: CxLanguage.StandardLibrary.Services.Ai.ThinkService[0]
+      ? ThinkService (GPU-CUDA) initialized and subscribed to 'ai.think.request'
+? InferService instantiated and event subscriptions active
+info: CxLanguage.StandardLibrary.Services.Ai.InferService[0]
+      ? InferService (GPU-CUDA) initialized and subscribed to 'ai.infer.request'
+? LearnService instantiated and event subscriptions active
+info: CxLanguage.StandardLibrary.Services.Ai.LearnService[0]
+      ? LearnService (GPU-CUDA) initialized and subscribed to 'ai.learn.request'
+info: CxLanguage.CLI.Program[0]
+      Running Cx script: instant_handler_test.cx
+Warning: AI service not available: No service for type 'CxLanguage.Core.AI.IAiService' has been registered.
+Neural system will continue with basic event functionality.
+[DEBUG] Pass 1: Defining class InstantValidator
+[DEBUG] AiServiceBase type not found in StandardLibrary. Using object as base.
+[DEBUG] Class InstantValidator will inherit from: Object
+[INFO] Class event handler registered: InstantValidator.validation.one -> EventHandler_validation_one_0
+[INFO] Class event handler registered: InstantValidator.validation.two -> EventHandler_validation_two_1
+[INFO] Class event handler registered: InstantValidator.validation.three -> EventHandler_validation_three_2
+[DEBUG] Stored 3 event handlers for class InstantValidator
+[DEBUG] Processing expression statement in Pass 1
+[DEBUG] Processing expression statement in Pass 1
+[DEBUG] Pass 1: Skipping call expression to print
+[DEBUG] Pass 2: Implementing class InstantValidator
+[DEBUG] Object base constructor called for class InstantValidator
+[DEBUG] Base constructor called successfully
+[DEBUG] Registering handler for validation.one with ICxEventBus BEFORE realize body
+[DEBUG] Registering handler for validation.two with ICxEventBus BEFORE realize body
+[DEBUG] Registering handler for validation.three with ICxEventBus BEFORE realize body
+[DEBUG] Event handler registration BEFORE realize body complete for class InstantValidator
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Compiling 'emit' event statement - Event: validation.one
+[DEBUG] Current IL generator is null: False
+[DEBUG] Current class name: InstantValidator
+[DEBUG] Compiling object literal with 2 properties
+[DEBUG] Found EmitEvent method: EmitEvent
+[DEBUG] Event emission code generated for: validation.one
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Compiling 'emit' event statement - Event: validation.two
+[DEBUG] Current IL generator is null: False
+[DEBUG] Current class name: InstantValidator
+[DEBUG] Compiling object literal with 2 properties
+[DEBUG] Found EmitEvent method: EmitEvent
+[DEBUG] Event emission code generated for: validation.two
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Compiling 'emit' event statement - Event: validation.three
+[DEBUG] Current IL generator is null: False
+[DEBUG] Current class name: InstantValidator
+[DEBUG] Compiling object literal with 2 properties
+[DEBUG] Found EmitEvent method: EmitEvent
+[DEBUG] Event emission code generated for: validation.three
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Compiling AI service statement - Service: await
+[DEBUG] Converting AI service call to event: ai.await.request
+[DEBUG] Evaluating payload for AI service
+[DEBUG] Compiling object literal with 3 properties
+[DEBUG] Using source identifier: InstantValidator
+[DEBUG] Emitting call to CxRuntimeHelper.EmitEvent
+[DEBUG] AI service statement compiled successfully as event emission: ai.await.request
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Event handlers already registered before realize body - skipping duplicate registration
+[DEBUG] Constructor implementation complete for class InstantValidator
+[DEBUG] Implementing event handler EventHandler_validation_one_0 for class InstantValidator (IsAsync: False)
+[DEBUG] Implementing sync event handler EventHandler_validation_one_0
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Local variable property access: event.message
+[IL-EMIT] Emitting Ldstr 'message' for property name parameter
+[IL-EMIT] Found GetObjectProperty method: System.Object GetObjectProperty(System.Object, System.String)
+[IL-EMIT] Stack before Call: [object, propertyName]
+[IL-EMIT] Emitting Call to GetObjectProperty
+[IL-EMIT] Stack after Call: [property_value] (returns object)
+[DEBUG] Using runtime property access for local variable: event.message
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Local variable property access: event.source
+[IL-EMIT] Emitting Ldstr 'source' for property name parameter
+[IL-EMIT] Found GetObjectProperty method: System.Object GetObjectProperty(System.Object, System.String)
+[IL-EMIT] Stack before Call: [object, propertyName]
+[IL-EMIT] Emitting Call to GetObjectProperty
+[IL-EMIT] Stack after Call: [property_value] (returns object)
+[DEBUG] Using runtime property access for local variable: event.source
+[DEBUG] Event handler EventHandler_validation_one_0 implementation complete for class InstantValidator
+[DEBUG] Implementing event handler EventHandler_validation_two_1 for class InstantValidator (IsAsync: False)
+[DEBUG] Implementing sync event handler EventHandler_validation_two_1
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Local variable property access: event.message
+[IL-EMIT] Emitting Ldstr 'message' for property name parameter
+[IL-EMIT] Found GetObjectProperty method: System.Object GetObjectProperty(System.Object, System.String)
+[IL-EMIT] Stack before Call: [object, propertyName]
+[IL-EMIT] Emitting Call to GetObjectProperty
+[IL-EMIT] Stack after Call: [property_value] (returns object)
+[DEBUG] Using runtime property access for local variable: event.message
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Local variable property access: event.source
+[IL-EMIT] Emitting Ldstr 'source' for property name parameter
+[IL-EMIT] Found GetObjectProperty method: System.Object GetObjectProperty(System.Object, System.String)
+[IL-EMIT] Stack before Call: [object, propertyName]
+[IL-EMIT] Emitting Call to GetObjectProperty
+[IL-EMIT] Stack after Call: [property_value] (returns object)
+[DEBUG] Using runtime property access for local variable: event.source
+[DEBUG] Event handler EventHandler_validation_two_1 implementation complete for class InstantValidator
+[DEBUG] Implementing event handler EventHandler_validation_three_2 for class InstantValidator (IsAsync: False)
+[DEBUG] Implementing sync event handler EventHandler_validation_three_2
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Local variable property access: event.message
+[IL-EMIT] Emitting Ldstr 'message' for property name parameter
+[IL-EMIT] Found GetObjectProperty method: System.Object GetObjectProperty(System.Object, System.String)
+[IL-EMIT] Stack before Call: [object, propertyName]
+[IL-EMIT] Emitting Call to GetObjectProperty
+[IL-EMIT] Stack after Call: [property_value] (returns object)
+[DEBUG] Using runtime property access for local variable: event.message
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Local variable property access: event.source
+[IL-EMIT] Emitting Ldstr 'source' for property name parameter
+[IL-EMIT] Found GetObjectProperty method: System.Object GetObjectProperty(System.Object, System.String)
+[IL-EMIT] Stack before Call: [object, propertyName]
+[IL-EMIT] Emitting Call to GetObjectProperty
+[IL-EMIT] Stack after Call: [property_value] (returns object)
+[DEBUG] Using runtime property access for local variable: event.source
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+[DEBUG] Event handler EventHandler_validation_three_2 implementation complete for class InstantValidator
+[DEBUG] Class InstantValidator created successfully: InstantValidator
+[DEBUG] No event handlers to register
+[DEBUG] Generating consciousness entity instantiation for 1 entities
+[DEBUG] Instantiating consciousness entity: InstantValidator
+[DEBUG] Looking for parameterless constructor in consciousness entity: InstantValidator
+[DEBUG] Found 1 constructors:
+[DEBUG]   - Constructor with 0 parameters
+[DEBUG] Generated instantiation IL for consciousness entity: InstantValidator
+[DEBUG] Consciousness entity instantiation complete - 1 entities instantiated
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Creating new instance of class: InstantValidator
+[DEBUG] Found user-defined class: InstantValidator
+[IL-EMIT] Loading 0 constructor arguments
+[DEBUG] Calling constructor: Void .ctor()
+[DEBUG] Constructor parameter count: 0
+[IL-EMIT] Constructor signature: InstantValidator..ctor()
+[IL-EMIT] Stack before Newobj: 0 constructor arguments
+[DEBUG] IL-EMIT: About to emit Newobj for constructor
+[DEBUG] IL-EMIT: Current IL stack should have 0 arguments
+[IL-EMIT] Newobj emitted successfully - object instance now on stack
+[DEBUG] IL-EMIT: Newobj emitted successfully
+[DEBUG] Successfully created instance of InstantValidator
+[DEBUG] Processing expression statement in Pass 2
+[DEBUG] Pass 2: Processing call expression to print
+[DEBUG] Found built-in function: print
+? COMPILATION RESULT: Success - Assembly: instant_handler_test, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null, Type: Program
+?? REGISTRY: Starting registration for assembly: instant_handler_test
+?? REGISTRY: Found 5 total methods in program type
+? REGISTRY: Successfully registered 0 functions from assembly instant_handler_test
+?? REGISTRY: Total registered functions: 0
+?? REGISTRY: Registering built-in function: RegisterNamespacedAgent
+? REGISTRY: Built-in function registered: RegisterNamespacedAgent
+?? REGISTRY: Registering built-in function: UnregisterNamespacedAgent
+? REGISTRY: Built-in function registered: UnregisterNamespacedAgent
+?? REGISTRY: Registering built-in function: SubscribeToNamespacedEvent
+? REGISTRY: Built-in function registered: SubscribeToNamespacedEvent
+?? REGISTRY: Registering built-in function: AutoSubscribeNamespacedAgent
+? REGISTRY: Built-in function registered: AutoSubscribeNamespacedAgent
+?? REGISTRY: Registering built-in function: EmitNamespacedEvent
+? REGISTRY: Built-in function registered: EmitNamespacedEvent
+?? REGISTRY: Registering built-in function: GetNamespacedBusStatistics
+? REGISTRY: Built-in function registered: GetNamespacedBusStatistics
+?? REGISTRY: Registering built-in function: typeof
+? REGISTRY: Built-in function registered: typeof -> GetTypeOf
+?? Waiting for system.shutdown event or Ctrl+C to exit...
+[DEBUG] Registered handler for validation.one with ICxEventBus
+[DEBUG] Registered handler for validation.two with ICxEventBus
+[DEBUG] Registered handler for validation.three with ICxEventBus
+?? INSTANT HANDLER EXECUTION TEST
+=================================
+? Emitting validation.one...
+? Emitting validation.two...
+? Emitting validation.three...
+?? All events emitted - checking for handler responses...
+?? Test completed
+[DEBUG] RUNTIME: About to create new InstantValidator
+[DEBUG] Registered handler for validation.one with ICxEventBus
+[DEBUG] Registered handler for validation.two with ICxEventBus
+[DEBUG] Registered handler for validation.three with ICxEventBus
+?? INSTANT HANDLER EXECUTION TEST
+=================================
+? Emitting validation.one...
+? Emitting validation.two...
+? Emitting validation.three...
+?? All events emitted - checking for handler responses...
+?? Test completed
+Press any key to exit...
+? HANDLER TWO EXECUTED: Instant test 2
+? HANDLER TWO EXECUTED: Instant test 2
+? HANDLER THREE EXECUTED: Instant test 3
+  ?? Source: direct
+  ?? Source: direct
+? HANDLER ONE EXECUTED: Instant test 1
+? HANDLER THREE EXECUTED: Instant test 3
+  ?? Source: direct
+?? ALL HANDLERS WORKING PERFECTLY!
+  ?? Source: direct
+  ?? Source: direct
+? HANDLER TWO EXECUTED: Instant test 2
+  ?? Source: direct
+?? ALL HANDLERS WORKING PERFECTLY!
+? HANDLER ONE EXECUTED: Instant test 1
+? HANDLER TWO EXECUTED: Instant test 2
+  ?? Source: direct
+  ?? Source: direct
+? HANDLER ONE EXECUTED: Instant test 1
+? HANDLER ONE EXECUTED: Instant test 1
+  ?? Source: direct
+  ?? Source: direct
+? HANDLER THREE EXECUTED: Instant test 3
+  ?? Source: direct
+?? ALL HANDLERS WORKING PERFECTLY!
+? HANDLER THREE EXECUTED: Instant test 3
+  ?? Source: direct
+?? ALL HANDLERS WORKING PERFECTLY!
+info: Microsoft.Hosting.Lifetime[0]
+      Application is shutting down...

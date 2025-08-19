@@ -68,7 +68,7 @@ namespace CxLanguage.Core.IL
                 ilGen.Emit(OpCodes.Ldnull);
             }
             
-            Console.WriteLine("🎯 Zero-allocation event access IL generated");
+            // IL Optimizer output removed
         }
         
         private void EmitConsciousnessAwareBranching(ILGenerator ilGen, ConsciousnessEventInfo eventInfo)
@@ -94,7 +94,7 @@ namespace CxLanguage.Core.IL
             
             ilGen.MarkLabel(endLabel);
             
-            Console.WriteLine("🧠 Consciousness-aware branching IL generated");
+            // IL Optimizer output removed
         }
         
         private void EmitHardwareAccelerationHints(ILGenerator ilGen, ConsciousnessEventInfo eventInfo)
@@ -118,7 +118,7 @@ namespace CxLanguage.Core.IL
                     ilGen.Emit(OpCodes.Call, dispatchKernelMethod);
                 }
                 
-                Console.WriteLine("⚡ Hardware acceleration hints emitted to IL");
+                // IL Optimizer output removed
             }
         }
         
@@ -142,7 +142,7 @@ namespace CxLanguage.Core.IL
                 ilGen.Emit(OpCodes.Call, forceInliningMethod);
             }
             
-            Console.WriteLine("🚀 JIT optimization directives emitted");
+            // IL Optimizer output removed
         }
         
         private void EmitFastProcessingPath(ILGenerator ilGen)
@@ -190,7 +190,7 @@ namespace CxLanguage.Core.IL
     {
         public static void DispatchConsciousnessKernel(object context)
         {
-            Console.WriteLine("🎮 GPU consciousness kernel dispatched");
+            // IL Optimizer output removed
         }
     }
     
@@ -223,3 +223,4 @@ namespace CxLanguage.Core.IL
         }
     }
 }
+
