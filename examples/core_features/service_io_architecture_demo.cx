@@ -1,0 +1,288 @@
+// Service-Based I/O Architecture Demo
+// Demonstrates the new event-driven I/O services with consciousness integration
+
+import { io } from "StandardLibrary.Modules.IO";
+
+conscious entity ServiceIODemo {
+    realize(self: conscious) {
+        learn self;
+        
+        emit demo.start { 
+            description: "Service-based I/O architecture demonstration",
+            timestamp: now()
+        };
+    }
+    
+    on demo.start {
+        print("🚀 SERVICE-BASED I/O ARCHITECTURE DEMO");
+        print("=====================================");
+        print("Demonstrating consciousness-aware file operations");
+        print("using event-driven services and CX modules");
+        
+        emit file.operations.demo;
+    }
+    
+    on file.operations.demo {
+        print("\n📁 File System Service Operations:");
+        print("----------------------------------");
+        
+        // Create test content
+        var testFile = "service_io_test.txt";
+        var content = "This is content created by the FileSystemService.\nIt demonstrates event-driven file operations.\nEach operation emits events for consciousness awareness.";
+        
+        // Write file using service
+        io.writeFile(testFile, content, "utf-8", true, "write_demo_1");
+        print("📤 Emitted file.write.request for: " + testFile);
+        
+        // Check if file exists using service
+        io.fileExists(testFile, "exists_demo_1");
+        print("📋 Emitted file.exists.request for: " + testFile);
+        
+        // Get file info using service
+        io.getFileInfo(testFile, "info_demo_1");
+        print("📊 Emitted file.info.request for: " + testFile);
+        
+        // Read file using service
+        io.readFile(testFile, "utf-8", "read_demo_1");
+        print("📖 Emitted file.read.request for: " + testFile);
+    }
+    
+    // Handle file operation responses
+    on file.write.completed {
+        print("✅ File write completed:");
+        print("  - Path: " + event.path);
+        print("  - Size: " + event.size + " bytes");
+        print("  - Last modified: " + event.lastModified);
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on file.exists.response {
+        print("📋 File exists response:");
+        print("  - Path: " + event.path);
+        print("  - Exists: " + event.exists);
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on file.info.response {
+        print("📊 File info response:");
+        print("  - Path: " + event.path);
+        print("  - Size: " + event.size + " bytes");
+        print("  - Created: " + event.created);
+        print("  - Last modified: " + event.lastModified);
+        print("  - Extension: " + event.extension);
+        print("  - Is read-only: " + event.isReadOnly);
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on file.read.completed {
+        print("📖 File read completed:");
+        print("  - Path: " + event.path);
+        print("  - Size: " + event.size + " bytes");
+        print("  - Encoding: " + event.encoding);
+        print("  - Content preview: " + event.content.substring(0, 100) + "...");
+        print("  - Request ID: " + event.requestId);
+        
+        emit directory.operations.demo;
+    }
+    
+    on directory.operations.demo {
+        print("\n📁 Directory Service Operations:");
+        print("--------------------------------");
+        
+        var testDir = "service_io_demo_dir";
+        
+        // Create directory using service
+        io.createDirectory(testDir, true, "create_dir_1");
+        print("📁 Emitted directory.create.request for: " + testDir);
+        
+        // Check if directory exists
+        io.directoryExists(testDir, "exists_dir_1");
+        print("📋 Emitted directory.exists.request for: " + testDir);
+        
+        // Get current path
+        io.getCurrentPath("current_path_1");
+        print("🏠 Emitted path.current.request");
+        
+        // List directory contents
+        io.listDirectory(".", "*", true, true, false, "list_dir_1");
+        print("📂 Emitted directory.list.request for current directory");
+    }
+    
+    on directory.create.completed {
+        print("✅ Directory created:");
+        print("  - Path: " + event.path);
+        print("  - Created: " + event.created);
+        print("  - Recursive: " + event.recursive);
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on directory.exists.response {
+        print("📋 Directory exists response:");
+        print("  - Path: " + event.path);
+        print("  - Exists: " + event.exists);
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on path.current.response {
+        print("🏠 Current path response:");
+        print("  - Current path: " + event.currentPath);
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on directory.list.response {
+        print("📂 Directory listing response:");
+        print("  - Path: " + event.path);
+        print("  - Pattern: " + event.pattern);
+        print("  - Total items: " + event.totalCount);
+        print("  - Files: " + event.fileCount);
+        print("  - Directories: " + event.directoryCount);
+        print("  - Request ID: " + event.requestId);
+        
+        // Show first few items
+        var itemsToShow = Math.min(5, event.items.length);
+        print("  - First " + itemsToShow + " items:");
+        for (var i = 0; i < itemsToShow; i++) {
+            var item = event.items[i];
+            print("    " + item.type + ": " + item.name);
+        }
+        
+        emit json.operations.demo;
+    }
+    
+    on json.operations.demo {
+        print("\n🔧 JSON Service Operations:");
+        print("---------------------------");
+        
+        var jsonFile = "service_io_demo.json";
+        var jsonData = {
+            application: "CX Language",
+            version: "1.0",
+            features: ["Service-based I/O", "Event-driven", "Consciousness-aware"],
+            demo: {
+                type: "Service I/O Architecture",
+                timestamp: now(),
+                operations: ["file", "directory", "json"]
+            },
+            metadata: {
+                author: "CX Language Team",
+                description: "Demonstration of service-based I/O operations"
+            }
+        };
+        
+        // Write JSON using service
+        io.writeJSON(jsonFile, jsonData, true, true, "write_json_1");
+        print("💾 Emitted json.write.request for: " + jsonFile);
+        
+        // Validate JSON
+        io.validateJSON(null, jsonFile, "validate_json_1");
+        print("🔍 Emitted json.validate.request for: " + jsonFile);
+        
+        // Read JSON using service
+        io.readJSON(jsonFile, "read_json_1");
+        print("📖 Emitted json.read.request for: " + jsonFile);
+    }
+    
+    on json.write.completed {
+        print("✅ JSON write completed:");
+        print("  - Path: " + event.path);
+        print("  - Size: " + event.size + " bytes");
+        print("  - Indented: " + event.indented);
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on json.validate.completed {
+        print("🔍 JSON validation completed:");
+        print("  - Path: " + event.path);
+        print("  - Is valid: " + event.isValid);
+        if (event.isValid) {
+            print("  - Value kind: " + event.details.valueKind);
+            print("  - Size: " + event.details.size + " characters");
+            if (event.details.propertyCount) {
+                print("  - Properties: " + event.details.propertyCount);
+            }
+        }
+        print("  - Request ID: " + event.requestId);
+    }
+    
+    on json.read.completed {
+        print("📖 JSON read completed:");
+        print("  - Path: " + event.path);
+        print("  - Size: " + event.size + " bytes");
+        print("  - Data loaded successfully");
+        print("  - Application: " + event.data.application);
+        print("  - Version: " + event.data.version);
+        print("  - Features count: " + event.data.features.length);
+        print("  - Request ID: " + event.requestId);
+        
+        emit cleanup.demo;
+    }
+    
+    on cleanup.demo {
+        print("\n🧹 Cleanup Operations:");
+        print("----------------------");
+        
+        // Delete test files
+        io.deleteFile("service_io_test.txt", "delete_file_1");
+        io.deleteFile("service_io_demo.json", "delete_file_2");
+        print("🗑️ Emitted file delete requests");
+        
+        // Delete test directory
+        io.deleteDirectory("service_io_demo_dir", false, "delete_dir_1");
+        print("🗑️ Emitted directory delete request");
+    }
+    
+    on file.delete.completed {
+        print("🗑️ File deleted: " + event.path + " (Request: " + event.requestId + ")");
+        
+        // Check if this is the last file deletion to trigger completion
+        if (event.requestId == "delete_file_2") {
+            emit demo.complete;
+        }
+    }
+    
+    on directory.delete.completed {
+        print("🗑️ Directory deleted: " + event.path + " (Request: " + event.requestId + ")");
+    }
+    
+    on demo.complete {
+        print("\n🎉 SERVICE-BASED I/O ARCHITECTURE DEMO COMPLETE!");
+        print("================================================");
+        print("Successfully demonstrated:");
+        print("- Event-driven file operations through services");
+        print("- Consciousness-aware I/O with request/response patterns");
+        print("- CX module imports for structured I/O operations");
+        print("- JSON operations with validation and transformation");
+        print("- Directory operations with metadata retrieval");
+        print("- Complete async request/response handling");
+        print("");
+        print("The new service-based I/O architecture provides:");
+        print("✅ Consciousness integration through events");
+        print("✅ Async operation support with request tracking");
+        print("✅ Comprehensive error handling");
+        print("✅ Modular design with CX imports");
+        print("✅ Rich metadata and operation details");
+        
+        emit system.shutdown;
+    }
+    
+    // Error handling for all I/O operations
+    on file.read.error {
+        print("❌ File read error: " + event.error + " (Path: " + event.path + ")");
+    }
+    
+    on file.write.error {
+        print("❌ File write error: " + event.error + " (Path: " + event.path + ")");
+    }
+    
+    on directory.create.error {
+        print("❌ Directory create error: " + event.error + " (Path: " + event.path + ")");
+    }
+    
+    on json.read.error {
+        print("❌ JSON read error: " + event.error + " (Path: " + event.path + ")");
+    }
+    
+    on json.write.error {
+        print("❌ JSON write error: " + event.error + " (Path: " + event.path + ")");
+    }
+}

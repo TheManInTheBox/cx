@@ -1,0 +1,208 @@
+// CX Language I/O Module - Service-Based File Operations
+// This module provides consciousness-aware file I/O through event-driven services
+
+module io {
+    // File System Operations
+    function readFile(path: string, encoding: string = "utf-8", requestId: string = null) {
+        emit file.read.request {
+            path: path,
+            encoding: encoding,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function writeFile(path: string, content: string, encoding: string = "utf-8", createDirectories: bool = true, requestId: string = null) {
+        emit file.write.request {
+            path: path,
+            content: content,
+            encoding: encoding,
+            createDirectories: createDirectories,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function fileExists(path: string, requestId: string = null) {
+        emit file.exists.request {
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function deleteFile(path: string, requestId: string = null) {
+        emit file.delete.request {
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function copyFile(sourcePath: string, destinationPath: string, overwrite: bool = false, requestId: string = null) {
+        emit file.copy.request {
+            sourcePath: sourcePath,
+            destinationPath: destinationPath,
+            overwrite: overwrite,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function moveFile(sourcePath: string, destinationPath: string, requestId: string = null) {
+        emit file.move.request {
+            sourcePath: sourcePath,
+            destinationPath: destinationPath,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function appendFile(path: string, content: string, encoding: string = "utf-8", requestId: string = null) {
+        emit file.append.request {
+            path: path,
+            content: content,
+            encoding: encoding,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function getFileInfo(path: string, requestId: string = null) {
+        emit file.info.request {
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    // Directory Operations
+    function createDirectory(path: string, recursive: bool = true, requestId: string = null) {
+        emit directory.create.request {
+            path: path,
+            recursive: recursive,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function deleteDirectory(path: string, recursive: bool = false, requestId: string = null) {
+        emit directory.delete.request {
+            path: path,
+            recursive: recursive,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function directoryExists(path: string, requestId: string = null) {
+        emit directory.exists.request {
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function listDirectory(path: string, pattern: string = "*", includeFiles: bool = true, includeDirectories: bool = true, recursive: bool = false, requestId: string = null) {
+        emit directory.list.request {
+            path: path,
+            pattern: pattern,
+            includeFiles: includeFiles,
+            includeDirectories: includeDirectories,
+            recursive: recursive,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function getDirectoryInfo(path: string, requestId: string = null) {
+        emit directory.info.request {
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function copyDirectory(sourcePath: string, destinationPath: string, recursive: bool = true, requestId: string = null) {
+        emit directory.copy.request {
+            sourcePath: sourcePath,
+            destinationPath: destinationPath,
+            recursive: recursive,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function moveDirectory(sourcePath: string, destinationPath: string, requestId: string = null) {
+        emit directory.move.request {
+            sourcePath: sourcePath,
+            destinationPath: destinationPath,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    // Path Operations
+    function getCurrentPath(requestId: string = null) {
+        emit path.current.request {
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function joinPath(paths: string[], requestId: string = null) {
+        emit path.join.request {
+            paths: paths,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function getPathInfo(path: string, requestId: string = null) {
+        emit path.info.request {
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    // JSON Operations
+    function writeJSON(path: string, data: object, indented: bool = true, createDirectories: bool = true, requestId: string = null) {
+        emit json.write.request {
+            path: path,
+            data: data,
+            indented: indented,
+            createDirectories: createDirectories,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function readJSON(path: string, requestId: string = null) {
+        emit json.read.request {
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function validateJSON(json: string = null, path: string = null, requestId: string = null) {
+        emit json.validate.request {
+            json: json,
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function transformJSON(data: object, transformations: object[], requestId: string = null) {
+        emit json.transform.request {
+            data: data,
+            transformations: transformations,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function mergeJSON(objects: object[], strategy: string = "merge", requestId: string = null) {
+        emit json.merge.request {
+            objects: objects,
+            strategy: strategy,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    function queryJSON(data: object, path: string, requestId: string = null) {
+        emit json.query.request {
+            data: data,
+            path: path,
+            requestId: requestId ?? generateId()
+        };
+    }
+    
+    // Utility Functions
+    function generateId() {
+        return "io_" + Date.now() + "_" + Math.random().toString(36).substring(2, 15);
+    }
+}
+
+// Module Export
+export { io };
