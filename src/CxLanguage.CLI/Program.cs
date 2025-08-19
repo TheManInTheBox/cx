@@ -14,6 +14,7 @@ using CxLanguage.Core.Ast;
 using CxLanguage.Runtime;
 using CxLanguage.StandardLibrary.Services;
 using CxLanguage.StandardLibrary.Services.VectorStore;
+using CxLanguage.StandardLibrary.Services.IO;
 using CxLanguage.Core.Events;
 using CxLanguage.LocalLLM;
 using CxCoreAI = CxLanguage.Core.AI;
@@ -539,6 +540,38 @@ class Program
                 catch (Exception ex)
                 {
                     Console.WriteLine($"⚠️ Warning: LearnService could not be registered: {ex.Message}");
+                }
+
+                // Register Service-Based I/O Architecture
+                try
+                {
+                    services.AddSingleton<FileSystemService>(provider =>
+                    {
+                        var eventBus = provider.GetRequiredService<ICxEventBus>();
+                        var logger = provider.GetRequiredService<ILogger<FileSystemService>>();
+                        return new FileSystemService(provider, eventBus, logger);
+                    });
+                    Console.WriteLine("🗂️ FileSystemService registered successfully.");
+
+                    services.AddSingleton<DirectoryService>(provider =>
+                    {
+                        var eventBus = provider.GetRequiredService<ICxEventBus>();
+                        var logger = provider.GetRequiredService<ILogger<DirectoryService>>();
+                        return new DirectoryService(provider, eventBus, logger);
+                    });
+                    Console.WriteLine("📁 DirectoryService registered successfully.");
+
+                    services.AddSingleton<JsonService>(provider =>
+                    {
+                        var eventBus = provider.GetRequiredService<ICxEventBus>();
+                        var logger = provider.GetRequiredService<ILogger<JsonService>>();
+                        return new JsonService(provider, eventBus, logger);
+                    });
+                    Console.WriteLine("🔧 JsonService registered successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Warning: I/O Services could not be registered: {ex.Message}");
                 }
 
                 // Register VoiceServiceInitializer as hosted service for automatic voice initialization

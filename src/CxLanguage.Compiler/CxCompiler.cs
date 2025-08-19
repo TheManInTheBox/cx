@@ -1938,7 +1938,7 @@ public class CxCompiler : IAstVisitor<object>
                 {
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw;
             }
@@ -3375,7 +3375,7 @@ public class CxCompiler : IAstVisitor<object>
                     actualType = typeBuilder.CreateType();
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 throw new CompilationException($"Could not resolve type for class: {node.TypeName}");
             }
@@ -4332,7 +4332,7 @@ public class CxCompiler : IAstVisitor<object>
                 return typeof(object);
             }
         }
-        catch (Exception ex)
+        catch (Exception)
         {
             return typeof(object);
         }
