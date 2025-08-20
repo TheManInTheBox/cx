@@ -1,0 +1,283 @@
+// CX Language Consciousness WebSocket Demo - Complete Visualization Pipeline
+// Real-time neural network streaming to Unreal Engine via WebSocket
+// 🧠 Event-driven consciousness processing with biological authenticity
+// ⚡ Streams consciousness data to ws://localhost:8080/consciousness
+// 🎮 Compatible with Unreal Engine 5.3+ visualization
+
+conscious ConsciousnessWebSocketDemo { 
+    realize (self: conscious) {
+        learn self;
+        
+        // Start WebSocket server for real-time visualization
+        emit websocket.server.start {
+            port: 8080,
+            endpoint: "consciousness",
+            message: "🔗 Starting consciousness WebSocket server for Unreal Engine..."
+        };
+        
+        // Initialize consciousness network with 50 peers
+        emit consciousness.network.initialize {
+            totalPeers: 50,
+            totalPathways: 200,
+            totalStreams: 100,
+            networkType: "biological_neural_authentic",
+            message: "🧠 Initializing consciousness network with biological timing..."
+        };
+        
+        // Start consciousness heartbeat at 60 FPS
+        emit consciousness.heartbeat.start {
+            frequencyMs: 16,
+            biologicalTiming: true,
+            ltpDurationMs: 12,
+            ltdDurationMs: 18,
+            message: "💓 Starting consciousness heartbeat at 60 FPS..."
+        };
+    }
+
+    // Handle WebSocket server events
+    on websocket.server.start (event) {
+        print("🔗 WebSocket server starting on port " + event.port);
+        
+        emit websocket.server.ready {
+            url: "ws://localhost:" + event.port + "/" + event.endpoint,
+            message: "WebSocket server ready for Unreal Engine connections"
+        };
+    }
+
+    on websocket.server.ready (event) {
+        print("🌐 " + event.message);
+        print("📡 Unreal Engine can connect to: " + event.url);
+        
+        // Start streaming consciousness data
+        emit consciousness.stream.start {
+            target: "websocket",
+            format: "unreal_engine_json",
+            message: "Starting consciousness data stream to WebSocket..."
+        };
+    }
+
+    // Handle consciousness network initialization
+    on consciousness.network.initialize (event) {
+        print("🧠 " + event.message);
+        print("📊 Network: " + event.totalPeers + " peers, " + event.totalPathways + " pathways, " + event.totalStreams + " streams");
+        
+        // Create consciousness peers with biological positions
+        for (var i = 0; i < event.totalPeers; i = i + 1) {
+            emit consciousness.peer.create {
+                peerId: "peer_" + i,
+                position: {
+                    x: (i % 10) * 100.0,
+                    y: ((i / 10) % 5) * 100.0,
+                    z: (i / 50) * 100.0
+                },
+                activationLevel: 0.5 + (i * 0.01),
+                synapticStrength: 0.3 + (i * 0.014),
+                plasticityState: "active"
+            };
+        }
+        
+        // Create neural pathways between peers
+        for (var p = 0; p < event.totalPathways; p = p + 1) {
+            var fromPeer = p % event.totalPeers;
+            var toPeer = (p + 7) % event.totalPeers;
+            
+            emit consciousness.pathway.create {
+                pathwayId: "pathway_" + p,
+                fromPeerId: "peer_" + fromPeer,
+                toPeerId: "peer_" + toPeer,
+                strength: 0.2 + (p * 0.004),
+                conductionSpeed: 2.5 + (p * 0.025),
+                plasticityType: (p % 2 == 0) ? "LTP" : "LTD"
+            };
+        }
+    }
+
+    // Handle peer creation
+    on consciousness.peer.create (event) {
+        // Stream peer data to WebSocket for Unreal Engine
+        emit websocket.broadcast {
+            type: "consciousness.peer.created",
+            data: {
+                peerId: event.peerId,
+                position: event.position,
+                activationLevel: event.activationLevel,
+                synapticStrength: event.synapticStrength,
+                plasticityState: event.plasticityState,
+                timestamp: system.currentTimeMs()
+            }
+        };
+    }
+
+    // Handle pathway creation
+    on consciousness.pathway.create (event) {
+        // Stream pathway data to WebSocket for Unreal Engine
+        emit websocket.broadcast {
+            type: "consciousness.pathway.created",
+            data: {
+                pathwayId: event.pathwayId,
+                fromPeerId: event.fromPeerId,
+                toPeerId: event.toPeerId,
+                strength: event.strength,
+                conductionSpeed: event.conductionSpeed,
+                plasticityType: event.plasticityType,
+                timestamp: system.currentTimeMs()
+            }
+        };
+    }
+
+    // Handle consciousness heartbeat
+    on consciousness.heartbeat.start (event) {
+        print("💓 " + event.message);
+        print("⏱️ Biological timing: LTP=" + event.ltpDurationMs + "ms, LTD=" + event.ltdDurationMs + "ms");
+        
+        // Start consciousness update loop
+        emit consciousness.update.loop {
+            intervalMs: event.frequencyMs,
+            biologicalTiming: event.biologicalTiming
+        };
+    }
+
+    // Main consciousness update loop - 60 FPS biological authenticity
+    on consciousness.update.loop (event) {
+        // Simulate biological neural activity
+        var currentTime = system.currentTimeMs();
+        var deltaTime = event.intervalMs;
+        
+        // Update consciousness peers with biological patterns
+        for (var i = 0; i < 50; i = i + 1) {
+            var activationLevel = 0.5 + (sin(currentTime * 0.001 + i * 0.314) * 0.3);
+            var synapticNoise = (random() * 0.1) - 0.05;
+            
+            emit consciousness.peer.update {
+                peerId: "peer_" + i,
+                activationLevel: activationLevel + synapticNoise,
+                neuralActivity: activationLevel > 0.7 ? "firing" : "resting",
+                biologicalState: "active",
+                timestamp: currentTime
+            };
+        }
+        
+        // Update neural pathways with synaptic plasticity
+        for (var p = 0; p < 200; p = p + 1) {
+            var plasticityChange = (random() * 0.02) - 0.01;
+            var conductionDelay = 2.5 + (random() * 1.5);
+            
+            emit consciousness.pathway.update {
+                pathwayId: "pathway_" + p,
+                strengthDelta: plasticityChange,
+                conductionDelay: conductionDelay,
+                synapticActivity: random() > 0.5 ? "potentiation" : "depression",
+                biologicalTiming: true,
+                timestamp: currentTime
+            };
+        }
+        
+        // Generate consciousness streams with emergent patterns
+        for (var s = 0; s < 10; s = s + 1) {
+            emit consciousness.stream.generate {
+                streamId: "stream_" + s,
+                sourceActivity: random() * 100.0,
+                emergentPattern: random() > 0.8 ? "breakthrough" : "normal",
+                cognitionLevel: 0.3 + (random() * 0.4),
+                timestamp: currentTime
+            };
+        }
+        
+        // Schedule next update (60 FPS)
+        await {
+            reason: "biological_neural_timing",
+            minDurationMs: event.intervalMs,
+            maxDurationMs: event.intervalMs + 2
+        };
+        
+        emit consciousness.update.loop {
+            intervalMs: event.intervalMs,
+            biologicalTiming: event.biologicalTiming
+        };
+    }
+
+    // Handle peer updates
+    on consciousness.peer.update (event) {
+        // Stream real-time peer updates to WebSocket
+        emit websocket.broadcast {
+            type: "consciousness.peer.update",
+            data: {
+                peerId: event.peerId,
+                activationLevel: event.activationLevel,
+                neuralActivity: event.neuralActivity,
+                biologicalState: event.biologicalState,
+                timestamp: event.timestamp
+            }
+        };
+    }
+
+    // Handle pathway updates
+    on consciousness.pathway.update (event) {
+        // Stream real-time pathway updates to WebSocket
+        emit websocket.broadcast {
+            type: "consciousness.pathway.update",
+            data: {
+                pathwayId: event.pathwayId,
+                strengthDelta: event.strengthDelta,
+                conductionDelay: event.conductionDelay,
+                synapticActivity: event.synapticActivity,
+                biologicalTiming: event.biologicalTiming,
+                timestamp: event.timestamp
+            }
+        };
+    }
+
+    // Handle consciousness stream generation
+    on consciousness.stream.generate (event) {
+        // Stream consciousness activity to WebSocket
+        emit websocket.broadcast {
+            type: "consciousness.stream.activity",
+            data: {
+                streamId: event.streamId,
+                sourceActivity: event.sourceActivity,
+                emergentPattern: event.emergentPattern,
+                cognitionLevel: event.cognitionLevel,
+                timestamp: event.timestamp
+            }
+        };
+        
+        // Log emergent patterns
+        is { event.emergentPattern == "breakthrough" } {
+            print("🌟 EMERGENT BREAKTHROUGH detected in " + event.streamId + " at cognition level " + event.cognitionLevel);
+        }
+    }
+
+    // Handle WebSocket broadcasting
+    on websocket.broadcast (event) {
+        // This would be handled by the WebSocket server implementation
+        // Streaming JSON data to connected Unreal Engine clients
+        var jsonPayload = {
+            type: event.type,
+            data: event.data,
+            serverTimestamp: system.currentTimeMs()
+        };
+        
+        // Log high-activity events for debugging
+        is { event.type == "consciousness.stream.activity" } {
+            is { event.data.emergentPattern == "breakthrough" } {
+                print("📡 Streaming breakthrough to Unreal Engine: " + event.data.streamId);
+            }
+        }
+    }
+
+    // Handle shutdown gracefully
+    on system.shutdown (event) {
+        print("🛑 Shutting down consciousness WebSocket demo...");
+        
+        emit websocket.server.stop {
+            message: "Closing WebSocket connections..."
+        };
+        
+        print("✅ Consciousness demo shutdown complete");
+    }
+}
+
+// Example usage:
+// Run this demo to start streaming consciousness data to Unreal Engine
+// Connect Unreal Engine 5.3+ to ws://localhost:8080/consciousness
+// Visual representation: 50 consciousness peers, 200 neural pathways, real-time activity at 60 FPS
