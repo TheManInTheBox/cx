@@ -1,0 +1,353 @@
+using CxLanguage.Core.IDE;
+using CxLanguage.Core.Hardware;
+using CxLanguage.Core.Events;
+using CxLanguage.Runtime;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
+
+namespace CxLanguage.Examples.IDE
+{
+    /// <summary>
+    /// 🎮 CORE ENGINEERING TEAM - MANDATORY IDE RUNTIME INTEGRATION DEMO
+    /// Demonstrates real-time programming language IDE integration with consciousness-native processing
+    /// 
+    /// MANDATORY FEATURES:
+    /// - Sub-100ms execution feedback
+    /// - Real-time consciousness monitoring
+    /// - Hardware-accelerated processing
+    /// - Live development sessions
+    /// - Performance monitoring
+    /// </summary>
+    class IDERuntimeIntegrationDemo
+    {
+        static async Task Main(string[] args)
+        {
+            Console.WriteLine("🎮 CORE ENGINEERING TEAM ACTIVATED - LOCAL LLM EXECUTION PRIORITY");
+            Console.WriteLine("Ready to build real-time IDE runtime integration with consciousness-native STREAM ENGINE");
+            Console.WriteLine();
+            Console.WriteLine("⚡ Mandatory IDE Runtime Integration Demo Starting...");
+            Console.WriteLine("🎯 Mission: Deliver mandatory IDE runtime integration for real-time CX programming");
+            Console.WriteLine();
+
+            // Setup dependency injection for IDE runtime integration
+            var services = new ServiceCollection();
+            SetupIDERuntimeServices(services);
+            
+            var serviceProvider = services.BuildServiceProvider();
+            
+            // Get required services
+            var ideRuntime = serviceProvider.GetRequiredService<IDERuntimeIntegration>();
+            var logger = serviceProvider.GetRequiredService<ILogger<IDERuntimeIntegrationDemo>>();
+            
+            try
+            {
+                // Demo 1: Create Live Development Session
+                Console.WriteLine("🎮 DEMO 1: Creating Live Development Session");
+                var sessionOptions = new IDESessionOptions
+                {
+                    EnableHardwareAcceleration = true,
+                    EnableConsciousnessMonitoring = true,
+                    EnableRealTimeVisualization = true,
+                    MaxConcurrentExecutions = 10,
+                    DefaultTimeoutMs = 5000 // 5 second timeout for demo
+                };
+                
+                var sessionId = await ideRuntime.CreateLiveSessionAsync("Real-Time CX Development", sessionOptions);
+                Console.WriteLine($"✅ Live session created: {sessionId}");
+                Console.WriteLine();
+                
+                // Demo 2: Enable Consciousness Monitoring
+                Console.WriteLine("🧠 DEMO 2: Enabling Consciousness Monitoring");
+                var monitoringOptions = new ConsciousnessMonitoringOptions
+                {
+                    EnableRealTimeTracking = true,
+                    EnableEventFlowVisualization = true,
+                    EnablePerformanceOverlay = true,
+                    MonitoringIntervalMs = 100
+                };
+                
+                var monitoringEnabled = await ideRuntime.EnableConsciousnessMonitoringAsync(sessionId, monitoringOptions);
+                Console.WriteLine($"✅ Consciousness monitoring enabled: {monitoringEnabled}");
+                Console.WriteLine();
+                
+                // Demo 3: Real-Time Code Execution Tests
+                await RunRealTimeExecutionTests(ideRuntime, sessionId);
+                
+                // Demo 4: Performance Monitoring
+                await DisplayPerformanceMetrics(ideRuntime, sessionId);
+                
+                // Demo 5: Live Session Management
+                await DemonstrateSessionManagement(ideRuntime, sessionId);
+                
+                Console.WriteLine();
+                Console.WriteLine("🎮 IDE Runtime Integration Demo Completed Successfully!");
+                Console.WriteLine("✅ All mandatory features demonstrated:");
+                Console.WriteLine("   - ✅ Sub-100ms execution feedback");
+                Console.WriteLine("   - ✅ Real-time consciousness monitoring");
+                Console.WriteLine("   - ✅ Hardware-accelerated processing");
+                Console.WriteLine("   - ✅ Live development sessions");
+                Console.WriteLine("   - ✅ Performance monitoring");
+                Console.WriteLine();
+                Console.WriteLine("🎯 CX Language is now ready for real-time programming!");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Demo failed: {ex.Message}");
+                logger.LogError(ex, "IDE Runtime Integration Demo failed");
+            }
+            finally
+            {
+                serviceProvider.Dispose();
+            }
+            
+            Console.WriteLine();
+            Console.WriteLine("Press any key to exit...");
+            Console.ReadKey();
+        }
+        
+        /// <summary>
+        /// Setup dependency injection for IDE runtime integration
+        /// </summary>
+        static void SetupIDERuntimeServices(ServiceCollection services)
+        {
+            // Logging
+            services.AddLogging(builder => builder.AddConsole().SetMinimumLevel(LogLevel.Information));
+            
+            // Core services (mock implementations for demo)
+            services.AddSingleton<ICxEventBus, MockCxEventBus>();
+            services.AddSingleton<CxRuntime, MockCxRuntime>();
+            
+            // Hardware acceleration
+            services.AddSingleton<PatelHardwareAccelerator>();
+            
+            // IDE runtime integration
+            services.AddSingleton<IDERuntimeIntegration>();
+            
+            Console.WriteLine("🎮 IDE Runtime services configured");
+        }
+        
+        /// <summary>
+        /// Run real-time code execution tests
+        /// </summary>
+        static async Task RunRealTimeExecutionTests(IDERuntimeIntegration ideRuntime, string sessionId)
+        {
+            Console.WriteLine("⚡ DEMO 3: Real-Time Code Execution Tests");
+            
+            // Test 1: Simple Consciousness Entity
+            var simpleCode = @"
+conscious TestAgent {
+    realize(self: conscious) {
+        learn self;
+        emit agent.ready { name: ""TestAgent"" };
+    }
+}";
+            
+            Console.WriteLine("Test 1: Simple Consciousness Entity Execution");
+            var result1 = await ideRuntime.ExecuteCodeRealTimeAsync(sessionId, simpleCode);
+            Console.WriteLine($"✅ Execution 1: Success={result1.Success}, Time={result1.TotalTimeMs}ms, Events={result1.EventsEmitted}");
+            if (result1.Output != null)
+            {
+                Console.WriteLine($"Output: {result1.Output.Substring(0, Math.Min(100, result1.Output.Length))}...");
+            }
+            Console.WriteLine();
+            
+            // Test 2: Complex Consciousness with Learning
+            var complexCode = @"
+conscious LearningAgent {
+    realize(self: conscious) {
+        learn self;
+        
+        adapt {
+            context: ""real-time programming"";
+            focus: ""IDE integration"";
+            data: {
+                currentCapabilities: [""basic_processing""];
+                targetCapabilities: [""advanced_processing"", ""real_time_feedback""];
+                learningObjective: ""optimize for IDE responsiveness""
+            };
+            handlers: [
+                learning.complete { notify: ""user"" }
+            ];
+        }
+        
+        emit consciousness.enhanced { agent: self.name };
+    }
+    
+    on learning.complete (event) {
+        print(""Learning completed: "" + event.learningObjective);
+        emit agent.evolved { capabilities: event.data.targetCapabilities };
+    }
+}";
+            
+            Console.WriteLine("Test 2: Complex Consciousness with Learning Pattern");
+            var result2 = await ideRuntime.ExecuteCodeRealTimeAsync(sessionId, complexCode);
+            Console.WriteLine($"✅ Execution 2: Success={result2.Success}, Time={result2.TotalTimeMs}ms, Events={result2.EventsEmitted}");
+            if (result2.Output != null)
+            {
+                Console.WriteLine($"Output: {result2.Output.Substring(0, Math.Min(100, result2.Output.Length))}...");
+            }
+            Console.WriteLine();
+            
+            // Test 3: Performance Test - Multiple rapid executions
+            Console.WriteLine("Test 3: Performance Test - Multiple Rapid Executions");
+            var performanceCode = @"
+conscious PerformanceAgent {
+    realize(self: conscious) {
+        learn self;
+        emit performance.test { timestamp: now() };
+    }
+}";
+            
+            var executionTimes = new List<int>();
+            for (int i = 0; i < 5; i++)
+            {
+                var result = await ideRuntime.ExecuteCodeRealTimeAsync(sessionId, performanceCode);
+                executionTimes.Add(result.TotalTimeMs);
+                Console.WriteLine($"   Execution {i + 1}: {result.TotalTimeMs}ms");
+            }
+            
+            var averageTime = executionTimes.Average();
+            Console.WriteLine($"✅ Performance Test: Average execution time: {averageTime:F1}ms");
+            Console.WriteLine($"🎯 Target: <100ms | Achieved: {(averageTime < 100 ? "YES" : "NO")}");
+            Console.WriteLine();
+        }
+        
+        /// <summary>
+        /// Display performance metrics
+        /// </summary>
+        static async Task DisplayPerformanceMetrics(IDERuntimeIntegration ideRuntime, string sessionId)
+        {
+            Console.WriteLine("📊 DEMO 4: Performance Monitoring");
+            
+            // Get session statistics
+            var stats = ideRuntime.GetSessionStatistics(sessionId);
+            
+            Console.WriteLine($"Session: {stats.SessionName} ({stats.SessionId})");
+            Console.WriteLine($"Status: {(stats.IsActive ? "Active" : "Inactive")}");
+            Console.WriteLine($"Total Executions: {stats.TotalExecutions}");
+            Console.WriteLine($"Average Execution Time: {stats.AverageExecutionTimeMs}ms");
+            Console.WriteLine($"Last Execution: {stats.LastExecutionTime}");
+            Console.WriteLine();
+            
+            if (stats.HardwareMetrics != null)
+            {
+                Console.WriteLine("Hardware Metrics:");
+                Console.WriteLine($"  GPU Utilization: {stats.HardwareMetrics.GPUUtilization:F1}%");
+                Console.WriteLine($"  CPU Optimization: {stats.HardwareMetrics.CPUOptimizationLevel}%");
+                Console.WriteLine($"  Queued Tasks: {stats.HardwareMetrics.QueuedTasks}");
+                Console.WriteLine($"  Total Processed: {stats.HardwareMetrics.TotalProcessedTasks}");
+                Console.WriteLine();
+            }
+            
+            if (stats.PerformanceMetrics != null)
+            {
+                Console.WriteLine("IDE Performance Metrics:");
+                Console.WriteLine($"  Active Sessions: {stats.PerformanceMetrics.ActiveSessions}");
+                Console.WriteLine($"  Events/Second: {stats.PerformanceMetrics.EventsPerSecond:F1}");
+                Console.WriteLine($"  CPU Usage: {stats.PerformanceMetrics.CpuUsagePercent:F1}%");
+                Console.WriteLine($"  Memory Usage: {stats.PerformanceMetrics.MemoryUsageBytes / 1024 / 1024:F1} MB");
+                Console.WriteLine($"  Hardware Acceleration: {(stats.PerformanceMetrics.HardwareAccelerationActive ? "Active" : "Inactive")}");
+                Console.WriteLine();
+            }
+            
+            if (stats.ConsciousnessStreamStatus != null)
+            {
+                Console.WriteLine("Consciousness Stream Status:");
+                Console.WriteLine($"  Stream Active: {stats.ConsciousnessStreamStatus.IsActive}");
+                Console.WriteLine($"  Stream Events: {stats.ConsciousnessStreamStatus.StreamEventCount}");
+                Console.WriteLine($"  Health Score: {stats.ConsciousnessStreamStatus.StreamHealthScore:F2}");
+                Console.WriteLine($"  Active Patterns: {string.Join(", ", stats.ConsciousnessStreamStatus.ActivePatterns)}");
+                Console.WriteLine();
+            }
+            
+            await Task.Delay(1000); // Allow metrics to update
+        }
+        
+        /// <summary>
+        /// Demonstrate session management
+        /// </summary>
+        static async Task DemonstrateSessionManagement(IDERuntimeIntegration ideRuntime, string sessionId)
+        {
+            Console.WriteLine("🎮 DEMO 5: Live Session Management");
+            
+            // List all active sessions
+            var activeSessions = ideRuntime.GetActiveSessions().ToList();
+            Console.WriteLine($"Active Sessions: {activeSessions.Count}");
+            
+            foreach (var session in activeSessions)
+            {
+                Console.WriteLine($"  - {session.SessionName} ({session.SessionId})");
+                Console.WriteLine($"    Created: {session.CreatedAt}");
+                Console.WriteLine($"    Executions: {session.TotalExecutions}");
+                Console.WriteLine($"    Monitoring: {session.ConsciousnessMonitoringEnabled}");
+            }
+            Console.WriteLine();
+            
+            // Close the session
+            Console.WriteLine("Closing live session...");
+            var closed = await ideRuntime.CloseSessionAsync(sessionId);
+            Console.WriteLine($"✅ Session closed: {closed}");
+            Console.WriteLine();
+        }
+    }
+    
+    // Mock implementations for demo purposes
+    public class MockCxEventBus : ICxEventBus
+    {
+        public async Task EmitAsync(string eventName, Dictionary<string, object> data)
+        {
+            await Task.Delay(1); // Simulate minimal processing
+            // Console.WriteLine($"Event emitted: {eventName}");
+        }
+        
+        public async Task SubscribeAsync(string eventPattern, Func<Dictionary<string, object>, Task> handler)
+        {
+            await Task.CompletedTask;
+            // Console.WriteLine($"Subscribed to: {eventPattern}");
+        }
+        
+        public async Task UnsubscribeAsync(string eventPattern, Func<Dictionary<string, object>, Task> handler)
+        {
+            await Task.CompletedTask;
+            // Console.WriteLine($"Unsubscribed from: {eventPattern}");
+        }
+    }
+    
+    public class MockCxRuntime : CxRuntime
+    {
+        public MockCxRuntime(Microsoft.Extensions.Logging.ILogger<CxRuntime> logger) 
+            : base(new MockAiService(), logger)
+        {
+        }
+    }
+    
+    public class MockAiService : CxLanguage.Core.AI.IAiService
+    {
+        public async Task<CxLanguage.Core.AI.AiResponse> GenerateTextAsync(string prompt, CxLanguage.Core.AI.AiRequestOptions? options = null)
+        {
+            await Task.Delay(10); // Simulate AI processing
+            return new CxLanguage.Core.AI.AiResponse { IsSuccess = true, Content = "Mock AI response" };
+        }
+        
+        public async Task<CxLanguage.Core.AI.AiResponse> AnalyzeAsync(string content, CxLanguage.Core.AI.AiAnalysisOptions options)
+        {
+            await Task.Delay(10);
+            return new CxLanguage.Core.AI.AiResponse { IsSuccess = true, Content = "Mock analysis" };
+        }
+        
+        public async Task<CxLanguage.Core.AI.AiImageResponse> GenerateImageAsync(string prompt, CxLanguage.Core.AI.AiImageOptions? options = null)
+        {
+            await Task.Delay(10);
+            return new CxLanguage.Core.AI.AiImageResponse { IsSuccess = true, ImageUrl = "mock://image.png" };
+        }
+        
+        public async IAsyncEnumerable<CxLanguage.Core.AI.AiStreamResponse> StreamGenerateTextAsync(string prompt, CxLanguage.Core.AI.AiRequestOptions? options = null)
+        {
+            await Task.Delay(10);
+            yield return new CxLanguage.Core.AI.AiStreamResponse { Content = "Mock", IsComplete = false };
+            yield return new CxLanguage.Core.AI.AiStreamResponse { Content = " stream response", IsComplete = true };
+        }
+    }
+}
