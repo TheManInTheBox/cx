@@ -61,21 +61,32 @@ namespace CxLanguage.LocalLLM
                 bool useGpu = useGpuObj is bool b ? b : true;
                 string modelName = modelNameObj?.ToString() ?? "default-model.gguf";
 
-                // In a real implementation, this would actually load the model
-                // For now, we'll just emit the initialized event
-                await Task.Delay(500); // Simulate initialization time
+                // REAL IMPLEMENTATION: Actually initialize the LLM service
+                bool initializationSuccess = await _llmService.InitializeAsync();
 
-                // Create result payload
-                var resultPayload = new Dictionary<string, object>
+                if (initializationSuccess)
                 {
-                    { "gpuAvailable", true }, // In a real implementation, this would come from _llmService
-                    { "modelName", modelName },
-                    { "useGpu", useGpu }
-                };
+                    _logger.LogInformation("✅ LocalLLM service initialized successfully");
+                    
+                    // Create result payload
+                    var resultPayload = new Dictionary<string, object>
+                    {
+                        { "gpuAvailable", _llmService.IsGpuAvailable() },
+                        { "modelName", modelName },
+                        { "useGpu", useGpu },
+                        { "modelLoaded", _llmService.IsModelLoaded }
+                    };
 
-                // Emit initialized event
-                await _eventBus.EmitAsync("llm.initialized", resultPayload);
-                return true;
+                    // Emit initialized event
+                    await _eventBus.EmitAsync("llm.initialized", resultPayload);
+                    return true;
+                }
+                else
+                {
+                    _logger.LogError("❌ LocalLLM service initialization failed");
+                    await EmitErrorAsync("Failed to initialize LocalLLM service", "Service initialization returned false");
+                    return false;
+                }
             }
             catch (Exception ex)
             {

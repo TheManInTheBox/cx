@@ -58,8 +58,8 @@ namespace CxLanguage.LocalLLM
                 _ggufEngine = new NativeGGUFInferenceEngine(ggufLogger, modelPath);
                 _logger.LogInformation("🧠 Found GGUF model: {ModelPath}", modelPath);
                 
-                // Don't initialize in constructor to avoid blocking - defer to first use
-                _logger.LogInformation("📝 Model will be initialized on first inference request");
+                // Initialize immediately
+                _ = Task.Run(async () => await InitializeAsync());
             }
             else
             {
@@ -82,9 +82,11 @@ namespace CxLanguage.LocalLLM
         {
             try
             {
-                // In a real implementation, this would use torch.cuda.is_available()
-                // For now, we'll just assume GPU is available for demonstration
-                return true;
+                // Check for NVIDIA GPU availability through system queries
+                // This could be enhanced with actual CUDA availability checks
+                return Environment.GetEnvironmentVariable("CUDA_VISIBLE_DEVICES") != null ||
+                       System.IO.Directory.Exists(@"C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA") ||
+                       System.IO.Directory.Exists(@"C:\Program Files\NVIDIA Corporation\NVSMI");
             }
             catch (Exception ex)
             {
@@ -100,9 +102,13 @@ namespace CxLanguage.LocalLLM
         {
             try
             {
-                // In a real implementation, this would use torch.cuda.device_count()
-                // For now, we'll just return a placeholder value
-                return 1;
+                // Basic GPU device count estimation
+                // This could be enhanced with actual CUDA device queries
+                if (CheckGpuAvailability())
+                {
+                    return 1; // Assume at least 1 GPU if available
+                }
+                return 0;
             }
             catch (Exception ex)
             {
@@ -134,7 +140,8 @@ namespace CxLanguage.LocalLLM
                 // Priority order: Llama models (primary), then Phi-3 fallback
                 var candidatePaths = new[]
                 {
-                    Path.Combine(modelsDir, "local_llm", "llama-3.2-3b-instruct-q4_k_m.gguf"), // Production Llama (primary)
+                    Path.Combine(modelsDir, "local_llm", "Llama-3.2-3B-Instruct-Q4_K_M.gguf"), // Production Llama (actual filename)
+                    Path.Combine(modelsDir, "local_llm", "llama-3.2-3b-instruct-q4_k_m.gguf"), // Production Llama (lowercase)
                     Path.Combine(modelsDir, "llama-3.2-1b-instruct-q4_k_m.gguf"),          // Lightweight Llama
                     Path.Combine(modelsDir, "local_llm", "Phi-3-mini-4k-instruct-q4.gguf"), // Phi-3 fallback
                     Path.Combine(modelsDir, "phi-3-mini-4k-instruct-q4.gguf")              // Alternative Phi-3 location
@@ -218,6 +225,8 @@ namespace CxLanguage.LocalLLM
                             LoadedAt: DateTime.UtcNow,
                             Path: _ggufEngine?.GetModelInfo()
                         );
+                        _modelLoaded = true; // Set this flag explicitly when real model is ready
+                        _logger.LogInformation("🔧 DEBUG: Set _modelLoaded=true, _realModelMode=true");
                     }
                     else
                     {
@@ -231,8 +240,8 @@ namespace CxLanguage.LocalLLM
                     return false;
                 }
                 
-                _modelLoaded = true;
                 _logger.LogInformation("✅ LLM Service initialized successfully - Real GGUF Model Only");
+                _logger.LogInformation("🔧 DEBUG: Final status - _modelLoaded={ModelLoaded}, _realModelMode={RealModelMode}", _modelLoaded, _realModelMode);
                 
                 return true;
             }
@@ -252,6 +261,23 @@ namespace CxLanguage.LocalLLM
             {
                 _logger.LogInformation("📥 Loading model: {ModelName}", modelName);
                 
+                // Find the actual path for the requested model
+                var modelsDir = Path.Combine(Directory.GetCurrentDirectory(), "models");
+                var requestedModelPath = Path.Combine(modelsDir, "local_llm", modelName);
+                
+                // If the specific model doesn't exist, use the best available model
+                if (!File.Exists(requestedModelPath))
+                {
+                    _logger.LogWarning("⚠️ Requested model {ModelName} not found, using best available model", modelName);
+                    requestedModelPath = FindBestAvailableModel();
+                    
+                    if (string.IsNullOrEmpty(requestedModelPath))
+                    {
+                        _logger.LogError("❌ REAL LLM ONLY MODE: No GGUF models available - NO SIMULATION FALLBACK");
+                        return false;
+                    }
+                }
+                
                 // REAL LLM ONLY MODE: No simulation fallback
                 if (_ggufEngine == null || !await _ggufEngine.InitializeAsync())
                 {
@@ -261,10 +287,18 @@ namespace CxLanguage.LocalLLM
                 
                 _modelLoaded = true;
                 _realModelMode = true;
+                
+                // Get actual file size if model path is available
+                long fileSize = 0;
+                if (File.Exists(requestedModelPath))
+                {
+                    fileSize = new FileInfo(requestedModelPath).Length;
+                }
+                
                 _modelInfo = new ModelInfo(
                     modelName,
                     "1.0",
-                    1024 * 1024 * 1024, // 1GB simulated size
+                    fileSize,
                     _gpuAvailable ? "CUDA" : "CPU",
                     DateTime.UtcNow,
                     $"/models/{modelName}"
@@ -285,29 +319,31 @@ namespace CxLanguage.LocalLLM
         /// <summary>
         /// Unloads the currently loaded model to free memory
         /// </summary>
-        public async Task UnloadModelAsync(CancellationToken cancellationToken = default)
+        public Task UnloadModelAsync(CancellationToken cancellationToken = default)
         {
             try
             {
                 if (!_modelLoaded)
                 {
                     _logger.LogInformation("⚠️ No model is currently loaded");
-                    return;
+                    return Task.CompletedTask;
                 }
                 
                 _logger.LogInformation("📤 Unloading model: {ModelName}", _modelInfo?.Name);
                 
-                // Simulate model unloading
-                await Task.Delay(500, cancellationToken);
+                // Properly dispose GGUF engine resources
+                _ggufEngine?.Dispose();
                 
                 _modelLoaded = false;
                 _modelInfo = null;
                 
                 _logger.LogInformation("✅ Model unloaded successfully");
+                return Task.CompletedTask;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "❌ Failed to unload model");
+                return Task.FromException(ex);
             }
         }
         
@@ -321,6 +357,7 @@ namespace CxLanguage.LocalLLM
                 // Ensure model is initialized
                 if (!_modelLoaded || !_realModelMode)
                 {
+                    _logger.LogInformation("🚀 Model not ready - Status: modelLoaded={ModelLoaded}, realModelMode={RealModelMode}", _modelLoaded, _realModelMode);
                     _logger.LogInformation("🚀 Initializing GGUF model for first inference...");
                     if (!await InitializeAsync())
                     {
@@ -355,7 +392,7 @@ namespace CxLanguage.LocalLLM
             if (!_modelLoaded)
             {
                 _logger.LogWarning("⚠️ No model is loaded, loading default model");
-                if (!await LoadModelAsync("llama-3.2-3b-instruct-q4_k_m.gguf", cancellationToken))
+                if (!await LoadModelAsync("Llama-3.2-3B-Instruct-Q4_K_M.gguf", cancellationToken))
                 {
                     throw new InvalidOperationException("❌ REAL LLM ONLY MODE: Failed to load model - NO SIMULATION FALLBACK");
                 }
@@ -385,7 +422,7 @@ namespace CxLanguage.LocalLLM
                     foreach (var token in tokens)
                     {
                         await _tokenWriter.WriteAsync(token + " ", cancellationToken);
-                        await Task.Delay(50, cancellationToken); // Simulate token generation delay
+                        // Real-time streaming without artificial delays
                     }
                     
                     // Complete the channel

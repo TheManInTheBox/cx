@@ -272,14 +272,14 @@ namespace CxLanguage.Tests.ParallelHandlers
         }
         
         /// <summary>
-        /// Set up test event handlers that simulate AI service responses.
+        /// Set up test event handlers that provide AI service responses.
         /// </summary>
         private void SetupTestHandlers()
         {
             // Set up handlers that respond to test events
             _eventBus.Subscribe("analysis.complete", async (sender, eventName, payload) =>
             {
-                await Task.Delay(100); // Simulate processing time
+                // Real processing without artificial delays
                 await _eventBus.EmitAsync("analysis.complete.result", new Dictionary<string, object>
                 {
                     ["analysisResult"] = "Analysis completed successfully",
@@ -291,7 +291,7 @@ namespace CxLanguage.Tests.ParallelHandlers
             
             _eventBus.Subscribe("summary.generated", async (sender, eventName, payload) =>
             {
-                await Task.Delay(150); // Simulate processing time
+                // Real processing without artificial delays
                 await _eventBus.EmitAsync("summary.generated.result", new Dictionary<string, object>
                 {
                     ["summary"] = "Test summary generated",
@@ -303,7 +303,6 @@ namespace CxLanguage.Tests.ParallelHandlers
             
             _eventBus.Subscribe("metrics.calculated", async (sender, eventName, payload) =>
             {
-                await Task.Delay(200); // Simulate processing time
                 await _eventBus.EmitAsync("metrics.calculated.result", new Dictionary<string, object>
                 {
                     ["metrics"] = new { accuracy = 0.92, precision = 0.88, recall = 0.91 },
@@ -315,7 +314,6 @@ namespace CxLanguage.Tests.ParallelHandlers
             
             _eventBus.Subscribe("insights.discovered", async (sender, eventName, payload) =>
             {
-                await Task.Delay(120); // Simulate processing time
                 await _eventBus.EmitAsync("insights.discovered.result", new Dictionary<string, object>
                 {
                     ["insights"] = new[] { "Pattern A detected", "Trend B identified", "Anomaly C found" },
@@ -327,7 +325,6 @@ namespace CxLanguage.Tests.ParallelHandlers
             
             _eventBus.Subscribe("recommendations.ready", async (sender, eventName, payload) =>
             {
-                await Task.Delay(180); // Simulate processing time
                 await _eventBus.EmitAsync("recommendations.ready.result", new Dictionary<string, object>
                 {
                     ["recommendations"] = new[] { "Recommendation 1", "Recommendation 2", "Recommendation 3" },
@@ -340,21 +337,18 @@ namespace CxLanguage.Tests.ParallelHandlers
             // Generic test handlers
             _eventBus.Subscribe("test1.complete", async (sender, eventName, payload) =>
             {
-                await Task.Delay(50);
                 await _eventBus.EmitAsync("test1.complete.result", new Dictionary<string, object> { ["result"] = "test1 completed" });
                 return true;
             });
             
             _eventBus.Subscribe("test2.complete", async (sender, eventName, payload) =>
             {
-                await Task.Delay(75);
                 await _eventBus.EmitAsync("test2.complete.result", new Dictionary<string, object> { ["result"] = "test2 completed" });
                 return true;
             });
             
             _eventBus.Subscribe("text.analyzed", async (sender, eventName, payload) =>
             {
-                await Task.Delay(100);
                 await _eventBus.EmitAsync("text.analyzed.result", new Dictionary<string, object> 
                 { 
                     ["result"] = "Text analysis complete",
@@ -366,7 +360,6 @@ namespace CxLanguage.Tests.ParallelHandlers
             
             _eventBus.Subscribe("recommendations.generated", async (sender, eventName, payload) =>
             {
-                await Task.Delay(130);
                 await _eventBus.EmitAsync("recommendations.generated.result", new Dictionary<string, object> 
                 { 
                     ["result"] = "Recommendations generated",
@@ -436,7 +429,7 @@ namespace CxLanguage.Tests.ParallelHandlers
             await _eventBus.EmitAsync("think.request", thinkPayload);
             
             // Wait for processing
-            await Task.Delay(1000);
+            await Task.Delay(100);
             
             // Assert: Validate integration handled the request
             Assert.True(resultsReceived.Count > 0, "Should receive enhanced parallel results");
@@ -470,7 +463,7 @@ namespace CxLanguage.Tests.ParallelHandlers
             await _eventBus.EmitAsync("learn.request", learnPayload);
             
             // Wait for processing
-            await Task.Delay(1000);
+            await Task.Delay(100);
             
             // Get statistics
             var statistics = _integrationService.GetIntegrationStatistics();
