@@ -87,16 +87,16 @@ namespace CxLanguage.Core.IDE
                 return new IDEExecutionResult
                 {
                     Success = executionResult.Success,
-                    Output = executionResult.Output,
+                    Output = executionResult.Output ?? string.Empty,
                     ErrorMessage = executionResult.ErrorMessage,
                     ExecutionId = executionId,
                     SessionId = sessionId,
                     CompilationTimeMs = compilationTime,
                     ExecutionTimeMs = executionTime,
                     TotalTimeMs = totalTime,
-                    EventsEmitted = executionResult.EventsEmitted,
+                    EventsEmitted = new string[] { $"events.emitted.{executionResult.EventsEmitted}" },
                     HardwareAccelerated = executionResult.HardwareAccelerated,
-                    PerformanceMetrics = executionResult.PerformanceMetrics
+                    PerformanceMetrics = LiveCodeExecutorExtensions.ConvertToIDEPerformanceMetrics(executionResult.PerformanceMetrics)
                 };
             }
             catch (Exception ex)
@@ -212,10 +212,18 @@ namespace CxLanguage.Core.IDE
                 var executionData = PrepareExecutionData(compilation, ideEvent);
                 
                 // Use Patel Hardware Accelerator for consciousness-aware processing
+                var preferredHardware = ideEvent.Options?.PreferredHardware ?? "Auto";
+                var hardwareTarget = preferredHardware switch
+                {
+                    "GPU" => PatelHardwareAccelerator.HardwareTarget.GPU,
+                    "CPU" => PatelHardwareAccelerator.HardwareTarget.CPU,
+                    _ => PatelHardwareAccelerator.HardwareTarget.Auto
+                };
+                
                 var hardwareResult = await _hardwareAccelerator.AccelerateConsciousnessProcessing(
                     PatelHardwareAccelerator.ConsciousnessOperation.RealTimeResponse,
                     executionData,
-                    ideEvent.Options?.PreferredHardware ?? PatelHardwareAccelerator.HardwareTarget.Auto,
+                    hardwareTarget,
                     priority: 9 // High priority for IDE responsiveness
                 );
                 
@@ -481,5 +489,34 @@ namespace CxLanguage.Core.IDE
         public bool HasEventEmission { get; set; }
         public bool HasEventHandlers { get; set; }
         public int EstimatedComplexity { get; set; }
+    }
+}
+
+namespace CxLanguage.Core.IDE
+{
+    /// <summary>
+    /// Helper extensions for Live Code Executor
+    /// </summary>
+    public static class LiveCodeExecutorExtensions
+    {
+        /// <summary>
+        /// Helper method to convert Dictionary to IDEPerformanceMetrics
+        /// </summary>
+        public static IDEPerformanceMetrics? ConvertToIDEPerformanceMetrics(Dictionary<string, object>? dict)
+        {
+            if (dict == null) return null;
+            
+            return new IDEPerformanceMetrics
+            {
+                Timestamp = DateTime.UtcNow,
+                MemoryUsageBytes = dict.TryGetValue("MemoryUsageMB", out var mem) ? (long)(Convert.ToDouble(mem) * 1024 * 1024) : 0L,
+                CpuUsagePercent = dict.TryGetValue("CpuUsagePercent", out var cpu) ? Convert.ToDouble(cpu) : 0.0,
+                AverageExecutionTime = dict.TryGetValue("ExecutionTimeMs", out var time) ? Convert.ToDouble(time) : 0.0,
+                ActiveSessions = 1,
+                TotalExecutions = 1,
+                EventsPerSecond = 1.0,
+                HardwareAccelerationActive = true
+            };
+        }
     }
 }

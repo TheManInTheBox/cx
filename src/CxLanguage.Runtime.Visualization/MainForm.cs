@@ -38,7 +38,6 @@ public partial class MainForm : Form
     // --- CX IDE (Preview) controls ---
     private RichTextBox? _codeEditor;
     private Button? _completeCodeButton;
-    private Button? _initLlmButton;
     private Button? _generateCodeButton;
     private Button? _executeCodeButton;
     private TextBox? _promptTextBox;
@@ -58,13 +57,16 @@ public partial class MainForm : Form
         
         InitializeComponent();
         InitializeVisualization();
+        
+        // Initialize LLM automatically on startup
+        _ = Task.Run(async () => await InitializeLocalLlm());
     }
 
     private void InitializeComponent()
     {
         // Form properties
         Text = "CX IDE";
-        Size = new Size(1200, 700); // expanded to fit IDE panel
+        Size = new Size(1200, 720); // expanded to fit new docked layout
         StartPosition = FormStartPosition.CenterScreen;
         BackColor = Color.FromArgb(30, 30, 50);
         ForeColor = Color.White;
@@ -91,10 +93,9 @@ public partial class MainForm : Form
 
         // Run menu
         var runMenu = new ToolStripMenuItem("Run");
-        var miInitLlm = new ToolStripMenuItem("Initialize LLM", null, async (s, e) => await InitializeLocalLlm());
         var miComplete = new ToolStripMenuItem("Complete Code", null, async (s, e) => await TriggerCodeCompletion()) { ShortcutKeys = Keys.Control | Keys.Space };
         var miExecute = new ToolStripMenuItem("Execute Program", null, async (s, e) => await ExecuteCurrentCode());
-        runMenu.DropDownItems.AddRange(new ToolStripItem[] { miInitLlm, miComplete, new ToolStripSeparator(), miExecute });
+        runMenu.DropDownItems.AddRange(new ToolStripItem[] { miComplete, new ToolStripSeparator(), miExecute });
 
         // Help menu (placeholder)
         var helpMenu = new ToolStripMenuItem("Help");
@@ -116,15 +117,61 @@ public partial class MainForm : Form
         _statusStrip.Items.AddRange(new ToolStripItem[] { _fileStatusLabel, _runtimeStatusLabel });
         Controls.Add(_statusStrip);
 
+        // --- CX IDE (Primary) UI - LEFT DOCKED ---
+        var ideLabel = new Label
+        {
+            Text = "� CX IDE (Primary)",
+            Font = new Font("Segoe UI", 10, FontStyle.Bold),
+            ForeColor = Color.FromArgb(200, 220, 255),
+            Location = new Point(20, 50),
+            Size = new Size(560, 25),
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        Controls.Add(ideLabel);
+
+        _codeEditor = new RichTextBox
+        {
+            Location = new Point(20, 80),
+            Size = new Size(560, 400),
+            BackColor = Color.FromArgb(20, 20, 30),
+            ForeColor = Color.FromArgb(230, 230, 230),
+            Font = new Font("Consolas", 10, FontStyle.Regular),
+            BorderStyle = BorderStyle.FixedSingle,
+            DetectUrls = false,
+            AcceptsTab = true,
+            WordWrap = false
+        };
+        // Basic starter text with correct CX syntax
+        _codeEditor.Text = "// Type CX code here and press Ctrl+Space or click Complete\n" +
+                           "conscious Calculator {\n" +
+                           "    realize(self: conscious) {\n" +
+                           "        learn self;\n" +
+                           "    }\n" +
+                           "    \n" +
+                           "    on calculate(event) {\n" +
+                           "        emit calculation.result { value: 42 }\n" +
+                           "    }\n" +
+                           "}";
+        _codeEditor.KeyDown += async (s, e) =>
+        {
+            if (e.Control && e.KeyCode == Keys.Space)
+            {
+                e.SuppressKeyPress = true;
+                await TriggerCodeCompletion();
+            }
+        };
+        Controls.Add(_codeEditor);
+
+        // --- RUNTIME ENVIRONMENT DATA - RIGHT DOCKED ---
         // Title label
         _titleLabel = new Label
         {
-            Text = "🧠 CX CONSCIOUSNESS VISUALIZATION",
-            Font = new Font("Segoe UI", 16, FontStyle.Bold),
+            Text = "🧠 CX RUNTIME ENVIRONMENT",
+            Font = new Font("Segoe UI", 14, FontStyle.Bold),
             ForeColor = Color.FromArgb(100, 200, 255),
-            Location = new Point(20, 20),
-            Size = new Size(750, 40),
-            TextAlign = ContentAlignment.MiddleCenter
+            Location = new Point(600, 50),
+            Size = new Size(580, 30),
+            TextAlign = ContentAlignment.MiddleLeft
         };
         Controls.Add(_titleLabel);
 
@@ -132,10 +179,10 @@ public partial class MainForm : Form
         _statusLabel = new Label
         {
             Text = "🟢 Consciousness System: ACTIVE",
-            Font = new Font("Segoe UI", 12, FontStyle.Regular),
+            Font = new Font("Segoe UI", 10, FontStyle.Regular),
             ForeColor = Color.FromArgb(100, 255, 100),
-            Location = new Point(20, 80),
-            Size = new Size(750, 30),
+            Location = new Point(600, 80),
+            Size = new Size(580, 25),
             TextAlign = ContentAlignment.MiddleLeft
         };
         Controls.Add(_statusLabel);
@@ -143,85 +190,21 @@ public partial class MainForm : Form
         // Events label
         _eventsLabel = new Label
         {
-            Text = "📊 Real-time Event Processing: 0 events (0.0s runtime)",
-            Font = new Font("Segoe UI", 10, FontStyle.Regular),
+            Text = "� Real-time Event Processing: 0 events (0.0s runtime)",
+            Font = new Font("Segoe UI", 9, FontStyle.Regular),
             ForeColor = Color.FromArgb(200, 200, 200),
-            Location = new Point(20, 120),
-            Size = new Size(750, 25),
+            Location = new Point(600, 105),
+            Size = new Size(520, 20),
             TextAlign = ContentAlignment.MiddleLeft
         };
         Controls.Add(_eventsLabel);
-
-        // Event log text box
-        _eventLogTextBox = new TextBox
-        {
-            Multiline = true,
-            ScrollBars = ScrollBars.Vertical,
-            ReadOnly = true,
-            BackColor = Color.FromArgb(20, 20, 30),
-            ForeColor = Color.FromArgb(200, 200, 200),
-            Font = new Font("Consolas", 9, FontStyle.Regular),
-            Location = new Point(20, 160),
-            Size = new Size(750, 320),
-            Text = "🚀 CX Consciousness Visualization Starting...\r\n" +
-                   "🔗 Event bus connection established\r\n" +
-                   "✨ Neural pathways initialized\r\n" +
-                   "🎯 Ready for consciousness monitoring\r\n\r\n"
-        };
-        Controls.Add(_eventLogTextBox);
-
-        // Developer input textbox
-        var inputLabel = new Label
-        {
-            Text = "🔧 Developer Input:",
-            Font = new Font("Segoe UI", 9, FontStyle.Regular),
-            ForeColor = Color.FromArgb(150, 150, 150),
-            Location = new Point(20, 490),
-            Size = new Size(120, 20),
-            TextAlign = ContentAlignment.MiddleLeft
-        };
-        Controls.Add(inputLabel);
-
-        _developerInputTextBox = new TextBox
-        {
-            BackColor = Color.FromArgb(40, 40, 60),
-            ForeColor = Color.FromArgb(255, 255, 255),
-            Font = new Font("Consolas", 9, FontStyle.Regular),
-            Location = new Point(20, 510),
-            Size = new Size(590, 25),
-            PlaceholderText = "Enter event name (e.g., system.shutdown, test.event)"
-        };
-        Controls.Add(_developerInputTextBox);
-
-        // Send button for developer input
-        _sendButton = new Button
-        {
-            Text = "📤 Send",
-            Size = new Size(80, 25),
-            Location = new Point(620, 510),
-            BackColor = Color.FromArgb(0, 150, 100),
-            ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
-        };
-        _sendButton.Click += async (s, e) => await SendDeveloperInput();
-        Controls.Add(_sendButton);
-
-        // Handle Enter key in textbox
-        _developerInputTextBox.KeyDown += async (s, e) =>
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.Handled = true;
-                await SendDeveloperInput();
-            }
-        };
 
         // Test button for debugging
         var testButton = new Button
         {
             Text = "🧪 Test Event",
-            Size = new Size(120, 30),
-            Location = new Point(650, 120),
+            Size = new Size(100, 25),
+            Location = new Point(1080, 105),
             BackColor = Color.FromArgb(0, 100, 200),
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
@@ -253,74 +236,92 @@ public partial class MainForm : Form
         };
         Controls.Add(testButton);
 
-        // --- CX IDE (Preview) UI ---
-        var ideLabel = new Label
+        // Event log text box
+        _eventLogTextBox = new TextBox
         {
-            Text = "🧩 CX IDE (Primary)",
-            Font = new Font("Segoe UI", 10, FontStyle.Bold),
-            ForeColor = Color.FromArgb(200, 220, 255),
-            Location = new Point(800, 120),
-            Size = new Size(360, 25),
+            Multiline = true,
+            ScrollBars = ScrollBars.Vertical,
+            ReadOnly = true,
+            BackColor = Color.FromArgb(20, 20, 30),
+            ForeColor = Color.FromArgb(200, 200, 200),
+            Font = new Font("Consolas", 9, FontStyle.Regular),
+            Location = new Point(600, 135),
+            Size = new Size(580, 280),
+            Text = "🚀 CX Consciousness Visualization Starting...\r\n" +
+                   "🔗 Event bus connection established\r\n" +
+                   "✨ Neural pathways initialized\r\n" +
+                   "🎯 Ready for consciousness monitoring\r\n\r\n"
+        };
+        Controls.Add(_eventLogTextBox);
+
+        // Developer input textbox
+        var inputLabel = new Label
+        {
+            Text = "🔧 Developer Input:",
+            Font = new Font("Segoe UI", 9, FontStyle.Regular),
+            ForeColor = Color.FromArgb(150, 150, 150),
+            Location = new Point(600, 425),
+            Size = new Size(120, 20),
             TextAlign = ContentAlignment.MiddleLeft
         };
-        Controls.Add(ideLabel);
+        Controls.Add(inputLabel);
 
-        _codeEditor = new RichTextBox
+        _developerInputTextBox = new TextBox
         {
-            Location = new Point(800, 160),
-            Size = new Size(360, 320),
-            BackColor = Color.FromArgb(20, 20, 30),
-            ForeColor = Color.FromArgb(230, 230, 230),
-            Font = new Font("Consolas", 10, FontStyle.Regular),
-            BorderStyle = BorderStyle.FixedSingle,
-            DetectUrls = false,
-            AcceptsTab = true,
-            WordWrap = false
+            BackColor = Color.FromArgb(40, 40, 60),
+            ForeColor = Color.FromArgb(255, 255, 255),
+            Font = new Font("Consolas", 9, FontStyle.Regular),
+            Location = new Point(600, 450),
+            Size = new Size(490, 25),
+            PlaceholderText = "Enter event name (e.g., system.shutdown, test.event)"
         };
-        // Basic starter text
-        _codeEditor.Text = "// Type CX code here and press Ctrl+Space or click Complete\n" +
-                           "realize(self: conscious) {\n    learn self;\n}\n";
-        _codeEditor.KeyDown += async (s, e) =>
+        Controls.Add(_developerInputTextBox);
+
+        // Send button for developer input
+        _sendButton = new Button
         {
-            if (e.Control && e.KeyCode == Keys.Space)
+            Text = "📤 Send",
+            Size = new Size(80, 25),
+            Location = new Point(1100, 450),
+            BackColor = Color.FromArgb(0, 150, 100),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
+        _sendButton.Click += async (s, e) => await SendDeveloperInput();
+        Controls.Add(_sendButton);
+
+        // Handle Enter key in textbox
+        _developerInputTextBox.KeyDown += async (s, e) =>
+        {
+            if (e.KeyCode == Keys.Enter)
             {
-                e.SuppressKeyPress = true;
-                await TriggerCodeCompletion();
+                e.Handled = true;
+                await SendDeveloperInput();
             }
         };
-        Controls.Add(_codeEditor);
 
+        // --- IDE CONTROLS BOTTOM LEFT ---
         _completeCodeButton = new Button
         {
             Text = "✨ Complete",
             Size = new Size(120, 30),
-            Location = new Point(1040, 490),
+            Location = new Point(20, 490),
             BackColor = Color.FromArgb(90, 60, 200),
             ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
+            FlatStyle = FlatStyle.Flat,
+            Enabled = false // Disabled until LLM is initialized
         };
         _completeCodeButton.Click += async (s, e) => await TriggerCodeCompletion();
         Controls.Add(_completeCodeButton);
 
-        // Initialize LLM button
-        _initLlmButton = new Button
-        {
-            Text = "⚙️ Init LLM",
-            Size = new Size(120, 30),
-            Location = new Point(800, 490),
-            BackColor = Color.FromArgb(0, 140, 140),
-            ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
-        };
-        _initLlmButton.Click += async (s, e) => await InitializeLocalLlm();
-        Controls.Add(_initLlmButton);
+        // LLM is now automatically initialized on startup, no button needed
 
         // Generate Code button  
         _generateCodeButton = new Button
         {
             Text = "🤖 Generate",
             Size = new Size(120, 30),
-            Location = new Point(920, 490),
+            Location = new Point(280, 490),
             BackColor = Color.FromArgb(200, 60, 90),
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
@@ -333,7 +334,7 @@ public partial class MainForm : Form
         {
             Text = "▶️ Execute",
             Size = new Size(120, 30),
-            Location = new Point(1040, 520),
+            Location = new Point(410, 490),
             BackColor = Color.FromArgb(0, 180, 60),
             ForeColor = Color.White,
             FlatStyle = FlatStyle.Flat
@@ -347,7 +348,7 @@ public partial class MainForm : Form
             Text = "💭 Prompt:",
             Font = new Font("Segoe UI", 9, FontStyle.Regular),
             ForeColor = Color.FromArgb(150, 150, 150),
-            Location = new Point(800, 520),
+            Location = new Point(20, 530),
             Size = new Size(60, 20),
             TextAlign = ContentAlignment.MiddleLeft
         };
@@ -358,8 +359,8 @@ public partial class MainForm : Form
             BackColor = Color.FromArgb(40, 40, 60),
             ForeColor = Color.FromArgb(255, 255, 255),
             Font = new Font("Consolas", 9, FontStyle.Regular),
-            Location = new Point(860, 520),
-            Size = new Size(170, 25),
+            Location = new Point(85, 530),
+            Size = new Size(495, 25),
             PlaceholderText = "Describe CX code to generate..."
         };
         Controls.Add(_promptTextBox);
@@ -370,7 +371,7 @@ public partial class MainForm : Form
             Text = "📊 Execution Results:",
             Font = new Font("Segoe UI", 9, FontStyle.Regular),
             ForeColor = Color.FromArgb(150, 150, 150),
-            Location = new Point(800, 550),
+            Location = new Point(20, 565),
             Size = new Size(120, 20),
             TextAlign = ContentAlignment.MiddleLeft
         };
@@ -378,8 +379,8 @@ public partial class MainForm : Form
 
         _executionResultsTextBox = new RichTextBox
         {
-            Location = new Point(800, 570),
-            Size = new Size(360, 100),
+            Location = new Point(20, 590),
+            Size = new Size(560, 80),
             BackColor = Color.FromArgb(25, 25, 35),
             ForeColor = Color.FromArgb(200, 255, 200),
             Font = new Font("Consolas", 9, FontStyle.Regular),
@@ -487,6 +488,12 @@ public partial class MainForm : Form
                 bool llmInitSubscribed = _eventBus.Subscribe("llm.initialized", OnLlmInitializedEvent);
                 LogEvent($"🤖 LLM event subscriptions: generated={llmGenSubscribed}, error={llmErrSubscribed}, initialized={llmInitSubscribed}");
                 
+                // Subscribe to CX execution events for IDE results
+                bool execStartSubscribed = _eventBus.Subscribe("cx.runtime.execution.started", OnCxExecutionEvent);
+                bool execCompleteSubscribed = _eventBus.Subscribe("cx.runtime.execution.completed", OnCxExecutionEvent);
+                bool execErrorSubscribed = _eventBus.Subscribe("cx.compiler.compilation.error", OnCxExecutionEvent);
+                LogEvent($"⚡ CX execution subscriptions: started={execStartSubscribed}, completed={execCompleteSubscribed}, error={execErrorSubscribed}");
+                
                 if (anySubscribed)
                 {
                     LogEvent("✅ Connected to CX Runtime Event Bus");
@@ -593,6 +600,26 @@ public partial class MainForm : Form
                     LogEvent($"⚠️ Failed to initialize CX compiler: {ex.Message}");
                 }
                 
+                // Initialize LocalLLM service directly
+                try
+                {
+                    var llmLogger = loggerFactory.CreateLogger<CxLanguage.LocalLLM.GpuLocalLLMService>();
+                    var localLLMService = new CxLanguage.LocalLLM.GpuLocalLLMService(llmLogger);
+                    
+                    // Register the local LLM service for static access
+                    CxLanguage.Runtime.CxRuntimeHelper.RegisterService("LocalLLMService", localLLMService);
+                    LogEvent("✅ LocalLLM service initialized and registered directly");
+                    
+                    // Also create and register event handler for the LLM service
+                    var handlerLogger = loggerFactory.CreateLogger<CxLanguage.LocalLLM.LocalLlmEventHandler>();
+                    var handler = new CxLanguage.LocalLLM.LocalLlmEventHandler(handlerLogger, _eventBus, localLLMService);
+                    LogEvent("✅ LocalLLM event handler initialized and registered");
+                }
+                catch (Exception ex)
+                {
+                    LogEvent($"⚠️ Failed to initialize LocalLLM service: {ex.Message}");
+                }
+                
                 // Initialize AuraCxReferenceIngestor
                 if (vectorStoreService != null)
                 {
@@ -630,7 +657,7 @@ public partial class MainForm : Form
                 try
                 {
                     var generatorLogger = loggerFactory.CreateLogger<IntelligentCxCodeGenerator>();
-                    var llmService = CxLanguage.Runtime.CxRuntimeHelper.GetService("ILocalLLMService") as ILocalLLMService;
+                    var llmService = CxLanguage.Runtime.CxRuntimeHelper.GetService("LocalLLMService") as ILocalLLMService;
                     if (llmService != null && vectorStoreService != null)
                     {
                         _codeGenerator = new IntelligentCxCodeGenerator(generatorLogger, _eventBus, llmService, vectorStoreService);
@@ -789,33 +816,120 @@ public partial class MainForm : Form
         return Task.FromResult(true);
     }
 
-    // --- LLM event handlers for IDE completion ---
-    private Task<bool> OnLlmGeneratedEvent(object? sender, string eventName, IDictionary<string, object>? payload)
+    private Task<bool> OnCxExecutionEvent(object? sender, string eventName, IDictionary<string, object>? payload)
     {
         try
         {
-            var text = payload != null && payload.TryGetValue("result", out var resultObj)
-                ? (resultObj?.ToString() ?? string.Empty)
-                : string.Empty;
-
             this.Invoke(() =>
             {
-                if (!string.IsNullOrEmpty(text) && _codeEditor != null)
+                switch (eventName)
                 {
-                    var pos = _codeEditor.SelectionStart;
-                    _codeEditor.Select(pos, 0);
-                    _codeEditor.SelectedText = text;
-                    LogEvent("🧩 Code completion inserted");
-                }
-                else
-                {
-                    LogEvent("⚠️ LLM returned empty result or editor unavailable");
+                    case "cx.runtime.execution.started":
+                        LogEvent("⚡ CX execution started");
+                        if (payload != null && payload.ContainsKey("executionId"))
+                        {
+                            LogEvent($"🆔 Execution ID: {payload["executionId"]}");
+                        }
+                        break;
+                        
+                    case "cx.runtime.execution.completed":
+                        LogEvent("✅ CX execution completed successfully!");
+                        if (payload != null)
+                        {
+                            var eventsEmitted = payload.ContainsKey("eventsEmitted") ? payload["eventsEmitted"] : "unknown";
+                            var outputLength = payload.ContainsKey("outputLength") ? payload["outputLength"] : "unknown";
+                            LogEvent($"📊 Results: {eventsEmitted} events emitted, {outputLength} chars output");
+                            
+                            // Update execution results with success message
+                            var currentText = _executionResultsTextBox?.Text ?? "";
+                            var newText = currentText + $"\n\n✅ Execution completed via events!\n📊 Events emitted: {eventsEmitted}\n📄 Output length: {outputLength} characters";
+                            UpdateExecutionResults(newText);
+                        }
+                        break;
+                        
+                    case "cx.compiler.compilation.error":
+                        LogEvent("❌ CX compilation/execution error!");
+                        if (payload != null && payload.ContainsKey("error"))
+                        {
+                            var error = payload["error"].ToString();
+                            LogEvent($"🚨 Error details: {error}");
+                            
+                            // Update execution results with error message
+                            var currentText = _executionResultsTextBox?.Text ?? "";
+                            var newText = currentText + $"\n\n❌ Execution failed!\n🚨 Error: {error}";
+                            UpdateExecutionResults(newText);
+                        }
+                        break;
+                        
+                    default:
+                        LogEvent($"⚡ CX execution event: {eventName}");
+                        break;
                 }
             });
         }
         catch (Exception ex)
         {
-            this.Invoke(() => LogEvent($"⚠️ Error handling LLM result: {ex.Message}"));
+            this.Invoke(() => LogEvent($"⚠️ Error processing CX execution event {eventName}: {ex.Message}"));
+        }
+        
+        return Task.FromResult(true);
+    }
+
+    // --- LLM event handlers for IDE completion ---
+    private Task<bool> OnLlmGeneratedEvent(object? sender, string eventName, IDictionary<string, object>? payload)
+    {
+        try
+        {
+            if (payload == null)
+            {
+                this.Invoke(() => LogEvent("⚠️ LLM generated event received with null payload"));
+                return Task.FromResult(false);
+            }
+
+            if (!payload.TryGetValue("result", out var resultObj) || resultObj == null)
+            {
+                this.Invoke(() => LogEvent("⚠️ LLM generated event missing result field"));
+                return Task.FromResult(false);
+            }
+
+            var text = resultObj.ToString() ?? string.Empty;
+
+            this.Invoke(() =>
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(text))
+                    {
+                        LogEvent("⚠️ LLM returned empty result");
+                        return;
+                    }
+
+                    if (_codeEditor == null)
+                    {
+                        LogEvent("⚠️ Code editor not available for completion insertion");
+                        return;
+                    }
+
+                    // Insert the completion text at current cursor position
+                    var pos = _codeEditor.SelectionStart;
+                    _codeEditor.Select(pos, 0);
+                    _codeEditor.SelectedText = text;
+                    LogEvent("🧩 Code completion inserted successfully");
+                }
+                catch (Exception ex)
+                {
+                    LogEvent($"⚠️ Error inserting completion text: {ex.Message}");
+                    ShowConsciousnessProcessingError("Code completion insertion", ex);
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            this.Invoke(() => 
+            {
+                LogEvent($"⚠️ Error handling LLM result: {ex.Message}");
+                ShowConsciousnessProcessingError("LLM result handling", ex);
+            });
         }
         return Task.FromResult(true);
     }
@@ -824,8 +938,21 @@ public partial class MainForm : Form
     {
         try
         {
-            var message = payload != null && payload.TryGetValue("errorMessage", out var msg) ? msg?.ToString() : "Unknown";
-            var details = payload != null && payload.TryGetValue("errorDetails", out var det) ? det?.ToString() : null;
+            if (payload == null)
+            {
+                this.Invoke(() => LogEvent("⚠️ LLM error event received with null payload"));
+                return Task.FromResult(false);
+            }
+
+            if (!payload.TryGetValue("errorMessage", out var msg))
+            {
+                this.Invoke(() => LogEvent("⚠️ LLM error event missing errorMessage field"));
+                return Task.FromResult(false);
+            }
+
+            var message = msg?.ToString() ?? "Unknown error";
+            var details = payload.TryGetValue("errorDetails", out var det) ? det?.ToString() : null;
+
             this.Invoke(() =>
             {
                 LogEvent($"❌ LLM error: {message}");
@@ -833,11 +960,18 @@ public partial class MainForm : Form
                 {
                     LogEvent($"   ↳ Details: {details}");
                 }
+                
+                // Show error to user for better feedback
+                MessageBox.Show(
+                    $"The LLM encountered an error: {message}\n\nPlease check the log for details.",
+                    "LLM Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
             });
         }
         catch (Exception ex)
         {
-            this.Invoke(() => LogEvent($"⚠️ Error handling LLM error: {ex.Message}"));
+            this.Invoke(() => LogEvent($"⚠️ Error handling LLM error event: {ex.Message}"));
         }
         return Task.FromResult(true);
     }
@@ -846,16 +980,41 @@ public partial class MainForm : Form
     {
         try
         {
+            if (payload == null)
+            {
+                this.Invoke(() => LogEvent("⚠️ LLM initialized event received with null payload"));
+                return Task.FromResult(false);
+            }
+
             this.Invoke(() =>
             {
-                var model = payload != null && payload.TryGetValue("modelName", out var m) ? m?.ToString() : "unknown";
-                var gpu = payload != null && payload.TryGetValue("gpuAvailable", out var g) ? g?.ToString() : "?";
-                LogEvent($"✅ Local LLM initialized (model: {model}, gpuAvailable: {gpu})");
+                payload.TryGetValue("modelName", out var m);
+                payload.TryGetValue("gpuAvailable", out var g);
+                payload.TryGetValue("modelLoaded", out var ml);
+                
+                var model = m?.ToString() ?? "unknown";
+                var gpu = g?.ToString() ?? "unknown";
+                var modelLoaded = ml != null && ml is bool b && b;
+                
+                LogEvent($"✅ Local LLM initialized successfully");
+                LogEvent($"   ↳ Model: {model}");
+                LogEvent($"   ↳ GPU Available: {gpu}");
+                LogEvent($"   ↳ Model Loaded: {modelLoaded}");
+                
+                // Enable UI elements that depend on LLM being initialized
+                if (_completeCodeButton != null)
+                {
+                    _completeCodeButton.Enabled = true;
+                }
             });
         }
         catch (Exception ex)
         {
-            this.Invoke(() => LogEvent($"⚠️ Error handling LLM initialized: {ex.Message}"));
+            this.Invoke(() => 
+            {
+                LogEvent($"⚠️ Error handling LLM initialized event: {ex.Message}");
+                // Don't show error dialog here as this is background processing
+            });
         }
         return Task.FromResult(true);
     }
@@ -907,6 +1066,11 @@ public partial class MainForm : Form
                 _eventBus.Unsubscribe("llm.generated", OnLlmGeneratedEvent);
                 _eventBus.Unsubscribe("llm.error", OnLlmErrorEvent);
                 _eventBus.Unsubscribe("llm.initialized", OnLlmInitializedEvent);
+                
+                // Unsubscribe from CX execution events
+                _eventBus.Unsubscribe("cx.runtime.execution.started", OnCxExecutionEvent);
+                _eventBus.Unsubscribe("cx.runtime.execution.completed", OnCxExecutionEvent);
+                _eventBus.Unsubscribe("cx.compiler.compilation.error", OnCxExecutionEvent);
                 
                 LogEvent("🔌 Disconnected from CX Event Bus");
             }
@@ -983,18 +1147,91 @@ public partial class MainForm : Form
         _developerInputTextBox.Text = "";
     }
 
+    // --- Status message utilities ---
+    private enum StatusMessageType
+    {
+        Info,
+        Warning,
+        Error,
+        Success
+    }
+    
+    private void ShowStatusMessage(string message, StatusMessageType type)
+    {
+        if (InvokeRequired)
+        {
+            Invoke(new Action(() => ShowStatusMessage(message, type)));
+            return;
+        }
+        
+        // Update status bar
+        if (_runtimeStatusLabel != null)
+        {
+            _runtimeStatusLabel.Text = message;
+            
+            // Set color based on message type
+            switch (type)
+            {
+                case StatusMessageType.Info:
+                    _runtimeStatusLabel.ForeColor = Color.DarkBlue;
+                    break;
+                case StatusMessageType.Warning:
+                    _runtimeStatusLabel.ForeColor = Color.DarkOrange;
+                    break;
+                case StatusMessageType.Error:
+                    _runtimeStatusLabel.ForeColor = Color.DarkRed;
+                    break;
+                case StatusMessageType.Success:
+                    _runtimeStatusLabel.ForeColor = Color.DarkGreen;
+                    break;
+            }
+        }
+        
+        // Log the message as well
+        LogEvent($"Status: {message}");
+    }
+
     // --- CX IDE: trigger code completion via Local LLM events ---
     private async Task TriggerCodeCompletion()
     {
         if (_eventBus == null)
         {
-            LogEvent("⚠️ No event bus connection - cannot request completion");
-            return;
+            LogEvent("⚠️ No event bus connection - attempting to reinitialize event bus");
+            InitializeCxEventConnection(); // Try to reinitialize event bus connection
+            
+            if (_eventBus == null)
+            {
+                LogEvent("❌ Event bus still unavailable - cannot request completion");
+                ShowStatusMessage("Event bus unavailable. Cannot perform code completion.", StatusMessageType.Error);
+                return;
+            }
+            LogEvent("✅ Event bus reinitialized successfully");
         }
+        
         if (_codeEditor == null)
         {
-            LogEvent("⚠️ Code editor not ready");
+            LogEvent("❌ Code editor not ready - cannot perform code completion");
             return;
+        }
+
+        // Check if the LLM service is ready
+        bool isInitialized = IsLlmInitialized();
+        if (!isInitialized)
+        {
+            LogEvent("⚠️ LLM service not initialized - attempting automatic initialization");
+            ShowStatusMessage("Initializing LLM service...", StatusMessageType.Info);
+            
+            await InitializeLocalLlm();
+            
+            // Check again after attempting initialization
+            isInitialized = IsLlmInitialized();
+            if (!isInitialized)
+            {
+                LogEvent("❌ LLM service initialization failed - cannot perform code completion");
+                ShowStatusMessage("LLM initialization failed. Cannot perform code completion.", StatusMessageType.Error);
+                return;
+            }
+            LogEvent("✅ LLM service initialized successfully");
         }
 
         try
@@ -1010,41 +1247,390 @@ public partial class MainForm : Form
             {
                 ["prompt"] = prompt,
                 ["maxTokens"] = 128,
+                ["temperature"] = 0.2, // Lower temperature for more focused completions
                 ["source"] = "cx.ide",
                 ["mode"] = "completion"
             };
 
             LogEvent("🔮 Requesting CX code completion from Local LLM...");
+            ShowStatusMessage("Generating code completion...", StatusMessageType.Info);
             await _eventBus.EmitAsync("llm.generate", payload);
         }
         catch (Exception ex)
         {
             LogEvent($"❌ Failed to request completion: {ex.Message}");
+            if (ex.InnerException != null)
+            {
+                LogEvent($"   ↳ Inner exception: {ex.InnerException.Message}");
+            }
+            ShowConsciousnessProcessingError("Code completion failed", ex);
         }
+    }
+    
+    // Helper method to check if LLM is initialized
+    private bool IsLlmInitialized()
+    {
+        try
+        {
+            // Access the LocalLLM service through the runtime helper
+            var localLLMService = CxLanguage.Runtime.CxRuntimeHelper.GetService("LocalLLMService") as CxLanguage.LocalLLM.ILocalLLMService;
+            
+            // Log detailed status for debugging
+            if (localLLMService == null)
+            {
+                LogEvent("⚠️ LLM service not found in runtime helper");
+                return false;
+            }
+            
+            // Check if model is loaded and log status
+            var modelLoaded = localLLMService.IsModelLoaded;
+            LogEvent($"📊 LLM status check: Service available, Model loaded: {modelLoaded}");
+            
+            if (!modelLoaded)
+            {
+                // If model isn't loaded, try to initialize it now
+                LogEvent("🔄 Model not loaded, attempting immediate initialization");
+                _ = Task.Run(async () => await InitializeLocalLlm());
+            }
+            
+            return modelLoaded;
+        }
+        catch (Exception ex)
+        {
+            LogEvent($"⚠️ Error checking LLM initialization status: {ex.Message}");
+            return false;
+        }
+    }
+    
+    // Helper method to show a standardized error message
+    private void ShowConsciousnessProcessingError(string operation, Exception ex)
+    {
+        LogEvent($"❌ Consciousness processing encountered an issue: {ex.Message}");
+        LogEvent($"Stack trace: {ex.StackTrace}");
+        
+        MessageBox.Show(
+            $"Consciousness processing encountered an issue: {ex.Message}\n\nPlease check the log for details.",
+            "Consciousness Processing Error",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Error);
     }
 
     private async Task InitializeLocalLlm()
     {
         if (_eventBus == null)
         {
-            LogEvent("⚠️ No event bus connection - cannot initialize LLM");
-            return;
+            LogEvent("⚠️ No event bus connection - attempting to reinitialize event bus");
+            InitializeCxEventConnection(); // Try to reinitialize event bus connection
+            
+            if (_eventBus == null)
+            {
+                LogEvent("❌ Event bus connection still unavailable - cannot initialize LLM");
+                return;
+            }
         }
 
         try
         {
+            LogEvent("🚀 Automatically initializing LLM service...");
+            
+            // Check for LocalLLM service availability in runtime
+            var localLLMService = CxLanguage.Runtime.CxRuntimeHelper.GetService("LocalLLMService") as CxLanguage.LocalLLM.ILocalLLMService;
+            if (localLLMService == null)
+            {
+                LogEvent("⚠️ LocalLLM service not found in runtime - attempting to create it now");
+                
+                // Create a new LocalLLM service instance
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var llmLogger = loggerFactory.CreateLogger<CxLanguage.LocalLLM.GpuLocalLLMService>();
+                
+                try 
+                {
+                    localLLMService = new CxLanguage.LocalLLM.GpuLocalLLMService(llmLogger);
+                    
+                    // Register it for static access
+                    CxLanguage.Runtime.CxRuntimeHelper.RegisterService("LocalLLMService", localLLMService);
+                    LogEvent("✅ Created and registered new LocalLLM service instance");
+                    
+                    // Also create and register event handler for the LLM service
+                    var handlerLogger = loggerFactory.CreateLogger<CxLanguage.LocalLLM.LocalLlmEventHandler>();
+                    try 
+                    {
+                        var handler = new CxLanguage.LocalLLM.LocalLlmEventHandler(handlerLogger, _eventBus, (CxLanguage.LocalLLM.GpuLocalLLMService)localLLMService);
+                        LogEvent("✅ Created LocalLLM event handler");
+                    }
+                    catch (Exception ex)
+                    {
+                        LogEvent($"⚠️ Failed to create LocalLLM event handler: {ex.Message}");
+                        LogEvent($"   ↳ Creating event handler manually...");
+                        
+                        // Subscribe to events manually if handler creation fails
+                        _eventBus.Subscribe("llm.initialize", async (sender, eventName, data) => {
+                            try {
+                                await localLLMService.InitializeAsync();
+                                var resultPayload = new Dictionary<string, object> {
+                                    { "gpuAvailable", ((CxLanguage.LocalLLM.GpuLocalLLMService)localLLMService).IsGpuAvailable() },
+                                    { "modelName", localLLMService.ModelInfo?.Name ?? "unknown" },
+                                    { "modelLoaded", localLLMService.IsModelLoaded }
+                                };
+                                await _eventBus.EmitAsync("llm.initialized", resultPayload);
+                                return true;
+                            } catch (Exception initEx) {
+                                LogEvent($"❌ LLM initialization failed: {initEx.Message}");
+                                return false;
+                            }
+                        });
+                        
+                        _eventBus.Subscribe("llm.generate", async (sender, eventName, data) => {
+                            try {
+                                if (data?.TryGetValue("prompt", out var promptObj) == true) {
+                                    string prompt = promptObj?.ToString() ?? "";
+                                    string result = await localLLMService.GenerateAsync(prompt);
+                                    var resultPayload = new Dictionary<string, object> { { "result", result } };
+                                    await _eventBus.EmitAsync("llm.generated", resultPayload);
+                                }
+                                return true;
+                            } catch (Exception genEx) {
+                                LogEvent($"❌ LLM generation failed: {genEx.Message}");
+                                return false;
+                            }
+                        });
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogEvent($"❌ Failed to create LocalLLM service: {ex.Message}");
+                    return;
+                }
+            }
+            else
+            {
+                LogEvent("✅ LocalLLM service found in runtime");
+            }
+
+            // Send event to initialize the LLM service
             var payload = new Dictionary<string, object>
             {
                 ["useGpu"] = true,
                 ["modelName"] = "Llama-3.2-3B-Instruct-Q4_K_M.gguf",
                 ["source"] = "cx.ide"
             };
-            LogEvent("⚙️ Initializing Local LLM (GPU, Llama-3.2-3B-Instruct-Q4_K_M.gguf)...");
+            LogEvent("⚙️ Initializing Local LLM via events (GPU, Llama-3.2-3B-Instruct-Q4_K_M.gguf)...");
             await _eventBus.EmitAsync("llm.initialize", payload);
+            
+            // Also try loading model directly if service is available
+            if (localLLMService != null)
+            {
+                LogEvent("🔄 Attempting direct LLM initialization...");
+                bool initResult = false;
+                
+                try
+                {
+                    // First try to find the model paths directly
+                    var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                    var workspaceRoot = Path.GetFullPath(Path.Combine(baseDir, ".."));
+                    var parentDir = Directory.GetParent(workspaceRoot);
+                    
+                    // Log current directory information for debugging
+                    LogEvent($"🔍 Current directory: {Environment.CurrentDirectory}");
+                    LogEvent($"🔍 Base directory: {baseDir}");
+                    LogEvent($"🔍 Initial workspace root: {workspaceRoot}");
+                    
+                    // Try to find workspace root by looking for characteristic files/folders
+                    int searchDepth = 0;
+                    const int maxDepth = 5;
+                    
+                    while (!Directory.Exists(Path.Combine(workspaceRoot, "models")) && 
+                           !File.Exists(Path.Combine(workspaceRoot, "CxLanguage.sln")) &&
+                           parentDir != null && searchDepth < maxDepth)
+                    {
+                        workspaceRoot = parentDir.FullName;
+                        parentDir = Directory.GetParent(workspaceRoot);
+                        searchDepth++;
+                    }
+                    
+                    LogEvent($"🔍 Found workspace root: {workspaceRoot} (search depth: {searchDepth})");
+                    
+                    // If we still don't have a good path, try some hardcoded paths
+                    if (!Directory.Exists(Path.Combine(workspaceRoot, "models")) &&
+                        !File.Exists(Path.Combine(workspaceRoot, "CxLanguage.sln")))
+                    {
+                        string[] potentialRoots = {
+                            @"C:\Users\a7qBIOyPiniwRue6UVvF\cx",
+                            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cx")
+                        };
+                        
+                        foreach (var root in potentialRoots)
+                        {
+                            LogEvent($"🔍 Trying hardcoded path: {root}");
+                            if (Directory.Exists(root) && 
+                                (Directory.Exists(Path.Combine(root, "models")) || 
+                                 File.Exists(Path.Combine(root, "CxLanguage.sln"))))
+                            {
+                                workspaceRoot = root;
+                                LogEvent($"✅ Using hardcoded workspace root: {workspaceRoot}");
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Check multiple model locations
+                    var possibleModelPaths = new List<string>
+                    {
+                        Path.Combine(workspaceRoot, "models", "local_llm", "Llama-3.2-3B-Instruct-Q4_K_M.gguf"),
+                        Path.Combine(workspaceRoot, "models", "local_llm", "Phi-3-mini-4k-instruct-q4.gguf"),
+                        Path.Combine(workspaceRoot, "models", "Llama-3.2-3B-Instruct-Q4_K_M.gguf"),
+                        Path.Combine(workspaceRoot, "models", "Phi-3-mini-4k-instruct-q4.gguf")
+                    };
+                    
+                    string? modelPath = null;
+                    
+                    // Check each possible path
+                    foreach (var path in possibleModelPaths)
+                    {
+                        LogEvent($"🔍 Checking model path: {path} - Exists: {File.Exists(path)}");
+                        if (File.Exists(path))
+                        {
+                            modelPath = path;
+                            LogEvent($"✅ Found GGUF model file: {modelPath}");
+                            break;
+                        }
+                    }
+                    
+                    // If we didn't find any of our specific models, look for any .gguf file
+                    if (modelPath == null)
+                    {
+                        try
+                        {
+                            var modelsDir = Path.Combine(workspaceRoot, "models");
+                            if (Directory.Exists(modelsDir))
+                            {
+                                var ggufFiles = Directory.GetFiles(modelsDir, "*.gguf", SearchOption.AllDirectories);
+                                if (ggufFiles.Length > 0)
+                                {
+                                    modelPath = ggufFiles[0];
+                                    LogEvent($"✅ Found GGUF model file (search): {modelPath}");
+                                }
+                                else
+                                {
+                                    LogEvent($"⚠️ No .gguf files found in {modelsDir}");
+                                }
+                            }
+                            else
+                            {
+                                // Try searching from current directory
+                                var ggufFiles = Directory.GetFiles(Environment.CurrentDirectory, "*.gguf", SearchOption.AllDirectories);
+                                if (ggufFiles.Length > 0)
+                                {
+                                    modelPath = ggufFiles[0];
+                                    LogEvent($"✅ Found GGUF model file (current dir search): {modelPath}");
+                                }
+                                else
+                                {
+                                    LogEvent($"⚠️ No .gguf files found anywhere");
+                                }
+                            }
+                        }
+                        catch (Exception searchEx)
+                        {
+                            LogEvent($"⚠️ Error searching for GGUF files: {searchEx.Message}");
+                        }
+                    }
+                    
+                    // Set the model path directly when initializing
+                    if (modelPath != null)
+                    {
+                        LogEvent($"🔄 Initializing with direct model path: {modelPath}");
+                        
+                        // Use reflection to call a LoadModelAsync method if available
+                        var methodInfo = localLLMService.GetType().GetMethod("LoadModelAsync", new[] { typeof(string), typeof(CancellationToken) });
+                        if (methodInfo != null)
+                        {
+                            LogEvent("🔧 Found LoadModelAsync method, calling directly...");
+                            var result = methodInfo.Invoke(localLLMService, new object[] { modelPath, CancellationToken.None });
+                            if (result is Task<bool> task)
+                            {
+                                initResult = await task;
+                            }
+                            else
+                            {
+                                LogEvent("⚠️ Method invocation didn't return expected Task<bool>");
+                                initResult = false;
+                            }
+                        }
+                        else
+                        {
+                            // Fall back to InitializeAsync
+                            initResult = await localLLMService.InitializeAsync();
+                        }
+                    }
+                    else
+                    {
+                        // Use standard initialization
+                        initResult = await localLLMService.InitializeAsync();
+                    }
+                    
+                    LogEvent($"📊 Direct LLM initialization result: {initResult}");
+                    
+                    if (initResult)
+                    {
+                        LogEvent("✅ LLM service initialized successfully via direct call");
+                        
+                        // Check if we need to explicitly register this again for code generator
+                        var codeGenService = CxLanguage.Runtime.CxRuntimeHelper.GetService("ILocalLLMService");
+                        if (codeGenService == null)
+                        {
+                            CxLanguage.Runtime.CxRuntimeHelper.RegisterService("ILocalLLMService", localLLMService);
+                            LogEvent("✅ Registered LLM service under ILocalLLMService interface name");
+                        }
+                        
+                        // Initialize code generator now that LLM is available
+                        if (_codeGenerator == null)
+                        {
+                            var vectorStoreService = CxLanguage.Runtime.CxRuntimeHelper.GetService("IVectorStoreService") as IVectorStoreService;
+                            if (vectorStoreService != null)
+                            {
+                                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                                var generatorLogger = loggerFactory.CreateLogger<IntelligentCxCodeGenerator>();
+                                _codeGenerator = new IntelligentCxCodeGenerator(generatorLogger, _eventBus, localLLMService, vectorStoreService);
+                                LogEvent("✅ Intelligent CX code generator initialized after LLM initialization");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    LogEvent($"⚠️ Direct LLM initialization error: {ex.Message}");
+                    LogEvent($"⚠️ Error type: {ex.GetType().Name}");
+                    
+                    if (ex.InnerException != null)
+                    {
+                        LogEvent($"⚠️ Inner exception: {ex.InnerException.Message}");
+                    }
+                    
+                    var fullPath = typeof(CxLanguage.LocalLLM.GpuLocalLLMService).Assembly.Location;
+                    LogEvent($"📋 LocalLLM assembly location: {fullPath}");
+                }
+            }
         }
         catch (Exception ex)
         {
-            LogEvent($"❌ Failed to initialize LLM: {ex.Message}");
+            LogEvent($"❌ Failed to automatically initialize LLM: {ex.Message}");
+            LogEvent($"❌ Error type: {ex.GetType().Name}");
+            
+            if (ex.InnerException != null)
+            {
+                LogEvent($"❌ Inner exception: {ex.InnerException.Message}");
+            }
+            
+            // Display error message to the user
+            Invoke(new Action(() => {
+                MessageBox.Show(
+                    $"Failed to initialize Local LLM: {ex.Message}\n\nCode completion and generation features will not be available.",
+                    "CX IDE",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning
+                );
+            }));
         }
     }
 
@@ -1206,12 +1792,14 @@ public partial class MainForm : Form
         if (_eventBus == null)
         {
             LogEvent("⚠️ No event bus connection - cannot execute code");
+            UpdateExecutionResults("❌ Cannot execute code: No event bus connection available.");
             return;
         }
         var code = _codeEditor?.Text ?? string.Empty;
         if (string.IsNullOrWhiteSpace(code))
         {
             LogEvent("⚠️ Nothing to execute - editor is empty");
+            UpdateExecutionResults("⚠️ Nothing to execute - editor is empty.");
             return;
         }
         try
@@ -1221,14 +1809,34 @@ public partial class MainForm : Form
                 ["source"] = "cx.ide",
                 ["code"] = code,
                 ["filePath"] = _currentFilePath ?? string.Empty,
-                ["timestamp"] = DateTime.Now.ToString("O")
+                ["timestamp"] = DateTime.Now.ToString("O"),
+                ["executionId"] = Guid.NewGuid().ToString()
             };
             LogEvent("🚀 Executing CX program via runtime events...");
+            UpdateExecutionResults("🚀 Executing CX program via runtime events...\n\nNote: This is event-based execution mode.\nFor full compilation features, initialize the CX compiler service.");
+            
+            // Create a simple execution result to track progress
+            _lastExecutionResult = new CxExecutionResult
+            {
+                Success = false,
+                Output = "Execution in progress...",
+                ExecutionTimeMs = 0,
+                CompilationTimeMs = 0,
+                EventsEmitted = 0,
+                ErrorMessage = null
+            };
+            
+            // Send the execution event
             await _eventBus.EmitAsync("cx.ide.execute", payload);
+            
+            // Update to indicate that event was sent
+            var currentText = _executionResultsTextBox?.Text ?? "";
+            UpdateExecutionResults(currentText + "\n\n✅ Event 'cx.ide.execute' sent to runtime.\nCheck the event log for processing results.");
         }
         catch (Exception ex)
         {
-            LogEvent($"❌ Failed to execute code: {ex.Message}");
+            LogEvent($"❌ Error executing code via events: {ex.Message}");
+            UpdateExecutionResults($"❌ Error executing code via events: {ex.Message}");
         }
     }
 
