@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "CxLanguage.IDE.WinUI (Package)": {
+      "commandName": "MsixPackage"
+    },
+    "CxLanguage.IDE.WinUI (Unpackaged)": {
+      "commandName": "Project"
+    }
+  }
+}
