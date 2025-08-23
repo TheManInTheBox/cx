@@ -599,7 +599,7 @@ namespace CxLanguage.Runtime
         /// </summary>
         private bool IsWildcardMatch(string eventName, string pattern)
         {
-            if (pattern == "*")
+            if (pattern == "any")
             {
                 return true;
             }

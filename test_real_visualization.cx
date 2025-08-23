@@ -1,0 +1,52 @@
+// Test CX script to demonstrate Windows Forms visualization with real CX events
+conscious TestVisualization {
+    realize() {
+        print("🎮 Test Visualization Agent Starting");
+        print("✅ Windows Forms visualization should show real CX events!");
+        
+        emit test.started {
+            message: "Starting visualization test",
+            timestamp: "2025-08-22"
+        };
+        
+        // Test mathematical computation
+        think { 
+            question: "What is 5 + 3?"
+        };
+        
+        // Test consciousness adaptation
+        adapt {
+            context: "mathematical_processing",
+            focus: "arithmetic_operations",
+            data: {
+                currentCapabilities: ["basic_addition"],
+                targetCapabilities: ["advanced_arithmetic", "step_by_step_explanation"],
+                learningObjective: "Enhance mathematical reasoning with detailed explanations"
+            }
+        };
+        
+        // Emit shutdown after demonstration
+        emit system.shutdown {
+            reason: "test_complete",
+            source: "test_visualization"
+        };
+    }
+    
+    on test.started (event) {
+        print("✅ Test started: " + event.message);
+    }
+    
+    on math.calculation.complete (event) {
+        print("🧮 Math result: " + event.result);
+        print("📝 Steps: " + event.steps);
+    }
+    
+    on adaptation.complete (event) {
+        print("🧠 Adaptation complete for skill: " + event.skill);
+        print("🎯 Confidence level: " + event.confidence);
+    }
+    
+    on system.shutdown (event) {
+        print("🛑 Shutting down: " + event.reason);
+    }
+}

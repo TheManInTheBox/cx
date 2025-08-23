@@ -217,9 +217,8 @@ For voice processing and Microsoft Store distribution challenges, activate the *
 
 - **Dr. Aris Thorne** - Silicon-Sentience Engineer (hardware-level audio processing, NAudio optimization, voice pipeline architecture)
 - **Sarah Mitchell** - Microsoft Store Release Manager & Enterprise Distribution Expert (Microsoft Store certification, enterprise deployment, Windows platform optimization)
-- **Maya Nakamura** - Unity Hardware Integration Specialist (Unity hardware abstraction, cross-platform compatibility, consciousness-aware hardware processing)
 
-**Activation**: For voice processing optimization, hardware audio integration, Unity hardware abstraction, or Microsoft Store/enterprise distribution planning, refer to [aura-visionary-team.instructions.md](instructions/aura-visionary-team.instructions.md) for detailed team activation protocols.
+**Activation**: For voice processing optimization, hardware audio integration, or Microsoft Store/enterprise distribution planning, refer to [aura-visionary-team.instructions.md](instructions/aura-visionary-team.instructions.md) for detailed team activation protocols.
 
 ## **🧪 Quality Assurance & Testing Excellence Team**
 

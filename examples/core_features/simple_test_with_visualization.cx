@@ -1,0 +1,24 @@
+// Simple test to verify visualization launches before script execution
+
+conscious SimpleTestAgent {
+    realize() {
+        print("🎮 Simple Test Agent Starting");
+        print("If you see this, the visualization should already be visible!");
+        
+        emit test.starting {
+            message: "Script execution has begun",
+            visualizationExpected: true
+        };
+    }
+    
+    on test.starting (event) {
+        print("Event received: test.starting");
+        print("Agent: Simple test completed successfully");
+        
+        // Emit shutdown to end gracefully
+        emit system.shutdown {
+            reason: "test_complete",
+            source: "simple_test_agent"
+        };
+    }
+}

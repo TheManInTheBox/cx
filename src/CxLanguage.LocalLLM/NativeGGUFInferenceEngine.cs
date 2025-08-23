@@ -137,24 +137,11 @@ public class NativeGGUFInferenceEngine : IDisposable
     }
 
     /// <summary>
-    /// Build consciousness-aware prompt with CX Language context.
+    /// Build simple prompt without hardcoded instructions.
     /// </summary>
     private string BuildConsciousnessPrompt(string userPrompt)
     {
-        return $@"You are a consciousness-aware AI assistant integrated with the CX Language platform.
-
-Context: CX Language is an event-driven programming platform designed for AI agent orchestration with built-in consciousness awareness.
-
-Key Capabilities:
-- Event-driven architecture with conscious entities
-- Real-time consciousness processing
-- Cognitive Boolean Logic with is{{}} and not{{}} patterns  
-- Consciousness adaptation through adapt{{}} patterns
-- Self-reflective logic via iam{{}} patterns
-
-User Request: {userPrompt}
-
-Response (be concise, consciousness-aware, and helpful):";
+        return userPrompt;
     }
 
     /// <summary>

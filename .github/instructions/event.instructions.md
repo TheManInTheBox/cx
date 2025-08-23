@@ -36,7 +36,7 @@ Imagine an event streaming platform so adaptive and distributed that it mimics s
 - Hybrid time-series + vector database
 - Plasticity module supporting read/write retention windows from seconds to years
 - Actuator Mesh
-- Bi-directional streams to IoT, dashboards, Unity-powered avatars
+- Bi-directional streams to IoT, dashboards, web-powered avatars
 - Plugin-based adapters for third-party services
 
 4. Key Features

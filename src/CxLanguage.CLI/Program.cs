@@ -8,7 +8,6 @@ using System.CommandLine;
 using CxLanguage.Parser;
 using CxLanguage.Compiler;
 using CxLanguage.Compiler.Modules;
-using CxLanguage.Azure.Services;
 using CxLanguage.CLI.Extensions;
 using CxLanguage.Core.Ast;
 using CxLanguage.Runtime;
@@ -241,7 +240,17 @@ class Program
                         };
                     }
                     
-                    // Execute the script
+                    // Launch CX Consciousness Visualization and wait for it to be ready
+                    Console.WriteLine("🎮 Starting CX Consciousness Visualization...");
+                    var visualizationReady = await LaunchVisualizationAndWaitForReadyAsync();
+                    
+                    if (!visualizationReady)
+                    {
+                        Console.WriteLine("⚠️ Warning: Visualization failed to start, continuing with script execution...");
+                    }
+                    
+                    // Execute the script after visualization is ready
+                    Console.WriteLine("🚀 Starting CX script execution...");
                     var task = (Task?)runMethod.Invoke(null, null);
                     if (task != null)
                     {
@@ -581,6 +590,150 @@ class Program
 
         return builder.Build();
     }
+
+    /// <summary>
+    /// Launch the Consciousness Visualization service in-process and wait for it to be ready
+    /// </summary>
+    private static async Task<bool> LaunchVisualizationAndWaitForReadyAsync()
+    {
+        try
+        {
+            Console.WriteLine("🎮 Starting CX Consciousness Visualization...");
+            
+            var visualizationReadySource = new TaskCompletionSource<bool>();
+            
+            // Get the event bus to pass to visualization via CxRuntimeHelper
+            ICxEventBus? eventBusService = null;
+            
+            try
+            {
+                var runtimeService = CxLanguage.Runtime.CxRuntimeHelper.GetService("ICxEventBus");
+                eventBusService = runtimeService as ICxEventBus;
+                Console.WriteLine($"🔍 Runtime helper resolution: {eventBusService?.GetType()?.Name ?? "null"}");
+                
+                if (eventBusService != null)
+                {
+                    Console.WriteLine($"✅ Successfully retrieved event bus: {eventBusService.GetType().FullName}");
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Event bus is null - visualization will run in standalone mode");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Runtime helper resolution failed: {ex.Message}");
+            }
+            
+            // Launch Windows Forms visualization in a separate thread
+            var visualizationTask = Task.Run(() =>
+            {
+                try
+                {
+                    // Set the application to use visual styles
+                    System.Windows.Forms.Application.EnableVisualStyles();
+                    System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
+                    
+                    // Create and initialize the main form with event bus
+                    var mainForm = new CxLanguage.Runtime.Visualization.MainForm(eventBusService);
+                    
+                    // Signal that the form is created and ready
+                    mainForm.Shown += (sender, e) =>
+                    {
+                        Console.WriteLine("✅ Visualization window is ready!");
+                        visualizationReadySource.TrySetResult(true);
+                    };
+                    
+                    // Handle form creation errors
+                    mainForm.Load += (sender, e) =>
+                    {
+                        try
+                        {
+                            // Ensure event bus connection is established
+                            Console.WriteLine("🔗 Establishing event bus connection...");
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine($"⚠️ Error establishing event bus connection: {ex.Message}");
+                        }
+                    };
+                    
+                    // Run the Windows Forms application
+                    System.Windows.Forms.Application.Run(mainForm);
+                    
+                    Console.WriteLine("✅ Windows Forms visualization window closed");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Error running Windows Forms visualization: {ex.Message}");
+                    visualizationReadySource.TrySetResult(false);
+                }
+            });
+            
+            // Wait for visualization to be ready (with timeout)
+            var timeoutTask = Task.Delay(TimeSpan.FromSeconds(10));
+            var completedTask = await Task.WhenAny(visualizationReadySource.Task, timeoutTask);
+            
+            if (completedTask == timeoutTask)
+            {
+                Console.WriteLine("⏰ Visualization startup timeout after 10 seconds");
+                return false;
+            }
+            
+            return await visualizationReadySource.Task;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Failed to launch Windows Forms visualization: {ex.Message}");
+            return false;
+        }
+    }
+    
+    /// <summary>
+    /// Attempts to build the visualization project
+    /// </summary>
+    private static async Task<bool> BuildVisualizationProjectAsync()
+    {
+        try
+        {
+            var projectPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory,
+                "..", "..", "..", "..", "CxLanguage.Runtime.Visualization", "CxLanguage.Runtime.Visualization.csproj");
+            
+            projectPath = Path.GetFullPath(projectPath);
+            
+            if (!File.Exists(projectPath))
+            {
+                Console.WriteLine($"⚠️ Visualization project not found at: {projectPath}");
+                return false;
+            }
+            
+            var processInfo = new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = "dotnet",
+                Arguments = $"build \"{projectPath}\"",
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                CreateNoWindow = true
+            };
+            
+            using var process = System.Diagnostics.Process.Start(processInfo);
+            if (process != null)
+            {
+                await process.WaitForExitAsync();
+                return process.ExitCode == 0;
+            }
+            
+            return false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"⚠️ Failed to build visualization project: {ex.Message}");
+            return false;
+        }
+    }
+    
 }
 
 /// <summary>

@@ -244,7 +244,6 @@
 ### **Aura Visionary Team Integration**
 - **Dr. Aris Thorne**: Hardware-aware optimization and performance tuning
 - **Sarah Mitchell**: Enterprise deployment and Microsoft Store integration for AI features
-- **Maya Nakamura**: Unity integration for consciousness-aware game development with AI assistance
 
 ### **Research & Innovation Support**
 - **Dr. Alexandria "StreamEthics" Rivera**: Ethical AI compilation and bias prevention
