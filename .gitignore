@@ -19,6 +19,21 @@ out/
 # Local configuration files with secrets
 appsettings.local.json
 appsettings.*.local.json
+appsettings.local.fixed.json
+appsettings.multiservice.example.json
+
+# Temporary/test files in root directory
+*.cx
+test_*.cx
+debate_*.cx
+simple_*.cx
+*_demo.cx
+IDE_*.md
+CX_SYNTAX_*.md
+
+# Windows installers and executables
+*.msi
+windowsappruntimeinstall-*.exe
 
 # Build results
 [Dd]ebug/

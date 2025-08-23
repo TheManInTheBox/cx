@@ -4,11 +4,11 @@
 
 CX Language is a revolutionary event-driven programming platform designed for AI agent orchestration with built-in consciousness awareness and cognitive capabilities.
 
-### **🎯 Current Version**: 1.0.0 (August 2025)
+### **🎯 Current Version**: 1.4.0 (August 2025)
 
 ### **🔗 Quick Links**
 - **GitHub Repository**: [TheManInTheBox/cx](https://github.com/TheManInTheBox/cx)
-- **Current Milestone**: [Azure OpenAI Realtime API v1.0](https://github.com/TheManInTheBox/cx/milestone/4)
+- **Current Milestone**: [🧠 CX Language IDE & Developer Experience v1.4](https://github.com/TheManInTheBox/cx/milestone/16)
 - **Documentation**: `/wiki` directory
 - **Examples**: `/examples` directory
 
@@ -19,16 +19,16 @@ CX Language is a revolutionary event-driven programming platform designed for AI
 - **Self-Reflective Logic**: `iam { }` pattern for AI-driven self-assessment and identity verification
 - **Voice Integration**: Azure OpenAI Realtime API with consciousness-aware audio processing
 - **Auto Serialization**: Conscious entities automatically serialize to JSON for debugging
-- **NVIDIA RAPIDS Integration**: GPU-accelerated consciousness computing with 10-100x speedup
+- **WPF + DirectX IDE**: Revolutionary consciousness development environment with GPU-accelerated visualization
 
-### **✅ Production Ready Features**
+### **✅ Production Ready Features (August 2025)**
 - ✅ **CORE COMPILER & RUNTIME COMPLETE**: 100% clean build from 61 compilation errors resolved
 - ✅ **EVENT BUS MODERNIZATION**: All services updated to modern event bus signatures
-- ✅ **ENHANCED DEVELOPER CONSOLE**: Voice-driven development with all teams coordination
-- ✅ **NVIDIA RAPIDS INTEGRATION**: Complete GPU acceleration for consciousness processing
 - ✅ **LOCAL LLM EXECUTION**: Working with GGUF models (2GB Llama working)
 - ✅ **MATHEMATICAL PROBLEM SOLVING**: AI agents successfully solving complex calculations
 - ✅ **VOICE INTEGRATION**: Azure OpenAI Realtime API working with audio response handling
+- ✅ **WPF + DIRECTX IDE**: Visual development environment with consciousness visualization
+- ✅ **CLEAN WORKSPACE**: Deprecated projects removed, focused on core development
 
 ### **🧬 Neuroplasticity Measurement System**
 The CX Language platform includes the world's first practical implementation of real-time neuroplasticity measurement in consciousness computing:
@@ -38,7 +38,7 @@ The CX Language platform includes the world's first practical implementation of 
 - **Consciousness Health Monitoring**: Biological authenticity scoring and optimization
 - **Adaptive Learning**: Dynamic skill acquisition through consciousness adaptation
 
-### **📁 Project Structure**
+### **📁 Current Project Structure (August 2025)**
 ```
 src/
 ├── CxLanguage.CLI/              → Command-line interface + Azure OpenAI config
@@ -46,9 +46,27 @@ src/
 ├── CxLanguage.Compiler/         → IL generation with three-pass compilation
 ├── CxLanguage.Runtime/          → UnifiedEventBus + CxRuntimeHelper with global event system
 ├── CxLanguage.StandardLibrary/  → 9 AI services via Microsoft.Extensions.AI
-└── CxLanguage.RAPIDS/           → NVIDIA RAPIDS GPU acceleration for consciousness computing
+├── CxLanguage.LocalLLM/         → Local GGUF model execution with GPU support
+├── CxLanguage.Runtime.Visualization/ → Standalone consciousness monitoring (WinForms)
+└── CxLanguage.IDE.WinUI/        → Main IDE (WPF + DirectX) with consciousness visualization
 
 examples/
+├── production/                  → Production-ready applications
+├── core_features/              → Core system demonstrations  
+├── demos/                      → Feature demonstrations
+└── archive/                    → Historical examples
+
+docs/                           → Comprehensive technical documentation
+wiki/                          → Static reference documentation
+.github/                       → GitHub workflows, issue templates, Copilot instructions
+```
+
+### **🎯 Active Development Focus (August 2025)**
+- **Primary Goal**: Complete CX Language IDE with DirectX consciousness visualization
+- **Current Milestone**: [🧠 CX Language IDE & Developer Experience v1.4](https://github.com/TheManInTheBox/cx/milestone/16)
+- **Key Issues**: 7 implementation phases covering compiler integration, visualization, voice commands, and hot reload
+- **Timeline**: February 28, 2026
+- **Architecture**: WPF + DirectX hybrid with consciousness-aware development tools
 ├── production/                  → Production-ready applications
 ├── core_features/              → Core system demonstrations
 ├── demos/                      → Feature demonstrations including neuroplasticity
