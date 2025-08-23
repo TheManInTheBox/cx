@@ -427,29 +427,78 @@ public class AstBuilder : CxBaseVisitor<AstNode>
 
     public override AstNode VisitHandlersList(HandlersListContext context)
     {
-        // HandlersList is '[' handlerItem (',' handlerItem)* ']'
+        // HandlersList is '[' (eventHandlerReference | handlerItem) (',' (eventHandlerReference | handlerItem))* ']'
         // We'll represent it as an ArrayLiteral of handler items
         var arrayLiteral = new ArrayLiteralNode();
         SetLocation(arrayLiteral, context);
         
-        // Parse handler items - each can be eventName or eventName { customPayload }
-        foreach (var handlerItemContext in context.handlerItem())
+        Console.WriteLine($"🔧 AST: VisitHandlersList called with context: {context.GetText()}");
+        Console.WriteLine($"🔧 AST: Children count: {context.ChildCount}");
+        
+        // Let's examine all children to understand the structure
+        for (int i = 0; i < context.ChildCount; i++)
         {
-            var handlerItem = VisitHandlerItem(handlerItemContext) as HandlerItemNode;
-            if (handlerItem != null)
+            var child = context.GetChild(i);
+            Console.WriteLine($"🔧 AST: Child {i}: {child.GetType().Name} = '{child.GetText()}'");
+            
+            // Try to visit the child if it's a rule context
+            if (child is ParserRuleContext ruleContext)
             {
-                // For now, convert HandlerItem to a simple string literal for compatibility
-                // Later we can enhance this to use the full HandlerItemNode
-                var eventNameText = handlerItem.EventName.FullName;
-                var stringLiteral = new LiteralNode { 
-                    Type = LiteralType.String, 
-                    Value = eventNameText 
-                };
-                SetLocation(stringLiteral, handlerItemContext);
-                arrayLiteral.Elements.Add(stringLiteral);
+                Console.WriteLine($"🔧 AST: Attempting to visit rule context: {ruleContext.GetType().Name}");
+                try
+                {
+                    var childResult = Visit(child);
+                    if (childResult != null)
+                    {
+                        Console.WriteLine($"🔧 AST: Visit result: {childResult.GetType().Name}");
+                        if (childResult is ExpressionNode expr)
+                        {
+                            arrayLiteral.Elements.Add(expr);
+                            Console.WriteLine($"✅ AST: Added expression as handler");
+                        }
+                        else if (childResult is LiteralNode literal)
+                        {
+                            arrayLiteral.Elements.Add(literal);
+                            Console.WriteLine($"✅ AST: Added literal as handler: '{literal.Value}'");
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ AST: Error visiting child: {ex.Message}");
+                }
             }
         }
         
+        // Fallback: if no elements were added, try to extract from the text directly
+        if (arrayLiteral.Elements.Count == 0)
+        {
+            var text = context.GetText();
+            Console.WriteLine($"🔧 AST: Fallback parsing of text: '{text}'");
+            
+            // Remove brackets and split by comma
+            if (text.StartsWith("[") && text.EndsWith("]"))
+            {
+                var content = text.Substring(1, text.Length - 2).Trim();
+                if (!string.IsNullOrEmpty(content))
+                {
+                    var handlers = content.Split(',').Select(h => h.Trim()).Where(h => !string.IsNullOrEmpty(h));
+                    foreach (var handler in handlers)
+                    {
+                        Console.WriteLine($"🔧 AST: Fallback creating literal for: '{handler}'");
+                        var literal = new LiteralNode
+                        {
+                            Type = LiteralType.String,
+                            Value = handler
+                        };
+                        arrayLiteral.Elements.Add(literal);
+                        Console.WriteLine($"✅ AST: Fallback added handler: '{handler}'");
+                    }
+                }
+            }
+        }
+        
+        Console.WriteLine($"🔧 AST: VisitHandlersList returning ArrayLiteral with {arrayLiteral.Elements.Count} elements");
         return arrayLiteral;
     }
 
@@ -587,16 +636,12 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         var consciousDecl = new ClassDeclarationNode(); // Reusing ClassDeclarationNode internally
         SetLocation(consciousDecl, context);
 
-        var consciousName = context.IDENTIFIER(0).GetText();
+        var consciousName = context.IDENTIFIER().GetText();
         ValidateIdentifierNotKeyword(consciousName, context, "conscious entity name");
         consciousDecl.Name = consciousName;
         consciousDecl.IsConsciousEntity = true; // Mark as intelligent conscious entity
         
-        // Parse base class if present (inheritance with : syntax)
-        if (context.IDENTIFIER().Length > 1)
-        {
-            consciousDecl.BaseClass = context.IDENTIFIER(1).GetText();
-        }
+        // No inheritance support in pure consciousness patterns
 
         // Parse conscious body (no fields, only realize and event handlers)
         if (context.consciousBody() != null)
@@ -634,19 +679,16 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         var realizeDecl = new RealizeDeclarationNode();
         SetLocation(realizeDecl, context);
 
-        // Parameters
-        if (context.parameterList() != null)
+        // Optional object parameter for consciousness initialization
+        if (context.realizeParameter() != null)
         {
-            foreach (var paramContext in context.parameterList().parameter())
+            var param = new ParameterNode
             {
-                var param = new ParameterNode
-                {
-                    Name = paramContext.IDENTIFIER().GetText(),
-                    Type = paramContext.type() != null ? ParseType(paramContext.type()) : CxType.Any
-                };
-                SetLocation(param, paramContext);
-                realizeDecl.Parameters.Add(param);
-            }
+                Name = context.realizeParameter().IDENTIFIER().GetText(),
+                Type = CxType.Object // Always object type for consciousness data
+            };
+            SetLocation(param, context.realizeParameter());
+            realizeDecl.Parameters.Add(param);
         }
 
         // Body
@@ -721,5 +763,46 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         }
 
         return aiServiceStmt;
+    }
+
+    public override AstNode VisitEventHandlerReference(CxParser.EventHandlerReferenceContext context)
+    {
+        // EventHandlerReference is IDENTIFIER ('.' IDENTIFIER)*
+        // This should be treated as a function call reference like math.calculation.complete
+        Console.WriteLine($"🔧 AST: VisitEventHandlerReference called with: '{context.GetText()}'");
+        
+        var identifiers = context.IDENTIFIER();
+        if (identifiers.Length == 1)
+        {
+            // Simple identifier - create an IdentifierNode
+            var identifier = new IdentifierNode
+            {
+                Name = identifiers[0].GetText()
+            };
+            SetLocation(identifier, context);
+            Console.WriteLine($"✅ AST: Created simple identifier: '{identifier.Name}'");
+            return identifier;
+        }
+        else
+        {
+            // Multiple identifiers separated by dots - create a MemberAccessNode chain
+            ExpressionNode current = new IdentifierNode { Name = identifiers[0].GetText() };
+            SetLocation(current, identifiers[0]);
+            
+            for (int i = 1; i < identifiers.Length; i++)
+            {
+                var memberAccess = new MemberAccessNode
+                {
+                    Object = current,
+                    Property = identifiers[i].GetText()
+                };
+                SetLocation(memberAccess, identifiers[i]);
+                current = memberAccess;
+                Console.WriteLine($"🔧 AST: Added member access: '{identifiers[i].GetText()}'");
+            }
+            
+            Console.WriteLine($"✅ AST: Created member access chain for: '{context.GetText()}'");
+            return current;
+        }
     }
 }

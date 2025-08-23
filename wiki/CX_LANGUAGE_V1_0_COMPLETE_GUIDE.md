@@ -555,16 +555,16 @@ conscious AzureIntegratedAgent
 }
 ```
 
-### **🎮 Unity Integration Preparation**
+### **🎮 Web Integration Preparation**
 ```cx
-conscious UnityAvatarAgent
+conscious WebAvatarAgent
 {
     realize(self: conscious)
     {
         learn self;
         emit avatar.ready { 
             name: self.name,
-            renderTarget: "UnityRenderTexture" 
+            renderTarget: "WebCanvas" 
         };
     }
     

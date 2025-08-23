@@ -298,69 +298,14 @@ public class CxCompiler : IAstVisitor<object>
 
     /// <summary>
     /// Generate IL code to instantiate all consciousness entities (conscious classes) in the program
+    /// DISABLED: Auto-instantiation disabled to prevent duplicate instances
     /// </summary>
     private void GenerateConsciousnessEntityInstantiation()
     {
-        if (_userClasses.Count == 0)
-        {
-            // Debug output removed
-            return;
-        }
-
-        // Debug output removed: [DEBUG] Generating consciousness entity instantiation for {_userClasses.Count} entities");
-
-        foreach (var (className, typeBuilder) in _userClasses)
-        {
-            try
-            {
-                // Debug output removed: [DEBUG] Instantiating consciousness entity: {className}");
-
-                // Get the created type from _createdTypes or create it if needed
-                Type? classType = null;
-                if (_createdTypes.TryGetValue(className, out classType))
-                {
-                    // Type was already created in Pass 2
-                }
-                else
-                {
-                    // Create the type now if it wasn't created yet
-                    classType = typeBuilder.CreateType();
-                    _createdTypes[className] = classType;
-                }
-
-                // Find the parameterless constructor (realize constructor)
-                // Debug output removed: [DEBUG] Looking for parameterless constructor in consciousness entity: {className}");
-                var constructors = classType.GetConstructors();
-                // Debug output removed: [DEBUG] Found {constructors.Length} constructors:");
-                foreach (var ctor in constructors)
-                {
-                    var paramCount = ctor.GetParameters().Length;
-                    // Debug output removed: [DEBUG]   - Constructor with {paramCount} parameters");
-                }
-                
-                var constructor = classType.GetConstructor(Type.EmptyTypes);
-                if (constructor == null)
-                {
-                    Console.WriteLine($"[WARNING] No parameterless constructor found for consciousness entity: {className}");
-                    continue;
-                }
-
-                // Generate IL to instantiate the consciousness entity: var entity = new ClassName();
-                _currentIl!.Emit(OpCodes.Newobj, constructor);
-
-                // Store the instance in a local variable (we could also store it in a field if needed)
-                var local = _currentIl.DeclareLocal(classType);
-                _currentIl.Emit(OpCodes.Stloc, local);
-
-                // Debug output removed: [DEBUG] Generated instantiation IL for consciousness entity: {className}");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[ERROR] Failed to instantiate consciousness entity {className}: {ex.Message}");
-            }
-        }
-
-        // Debug output removed: [DEBUG] Consciousness entity instantiation complete - {_userClasses.Count} entities instantiated");
+        // DISABLED: Auto-instantiation causes duplicate instances when user explicitly creates objects
+        // Users must use 'var instance = new ClassName();' to instantiate consciousness entities
+        Console.WriteLine($"🔄 Auto-instantiation disabled - Users must explicitly instantiate consciousness entities");
+        return;
     }
 
     /// <summary>
@@ -1103,8 +1048,11 @@ public class CxCompiler : IAstVisitor<object>
 
     public object VisitLiteral(LiteralNode node)
     {
+        Console.WriteLine($"🔧 COMPILER: VisitLiteral called with value: '{node.Value}' (type: {node.Value?.GetType()?.Name ?? "null"})");
+        
         if (node.Value == null)
         {
+            Console.WriteLine($"🔧 COMPILER: Emitting Ldnull for null value");
             _currentIl!.Emit(OpCodes.Ldnull);
         }
         else if (node.Value is int intValue)
@@ -1124,6 +1072,7 @@ public class CxCompiler : IAstVisitor<object>
         }
         else if (node.Value is string stringValue)
         {
+            Console.WriteLine($"🔧 COMPILER: Emitting Ldstr for string value: '{stringValue}'");
             _currentIl!.Emit(OpCodes.Ldstr, stringValue);
             // Don't box strings - they're already reference types
         }
@@ -1535,6 +1484,44 @@ public class CxCompiler : IAstVisitor<object>
         }
     }
 
+    /// <summary>
+    /// Determines if a MemberAccessNode should be treated as a handler reference string
+    /// rather than actual property access
+    /// </summary>
+    private bool IsHandlerReference(MemberAccessNode node)
+    {
+        // Get the base identifier from the member access chain
+        var baseIdentifier = GetBaseIdentifier(node);
+        if (baseIdentifier == null) return false;
+        
+        // Check if the base identifier exists as a known variable, parameter, or service
+        // If it doesn't exist, treat this as a handler reference
+        var identifierExists = 
+            _currentLocals.ContainsKey(baseIdentifier) ||
+            (_currentParameterMapping?.ContainsKey(baseIdentifier) ?? false) ||
+            _serviceFields.ContainsKey(baseIdentifier) ||
+            _scopes.Peek().IsDefined(baseIdentifier);
+            
+        // If the identifier doesn't exist, this is likely a handler reference
+        return !identifierExists;
+    }
+    
+    /// <summary>
+    /// Gets the base identifier from a member access chain
+    /// </summary>
+    private string? GetBaseIdentifier(MemberAccessNode node)
+    {
+        if (node.Object is IdentifierNode identifier)
+        {
+            return identifier.Name;
+        }
+        else if (node.Object is MemberAccessNode nestedAccess)
+        {
+            return GetBaseIdentifier(nestedAccess);
+        }
+        return null;
+    }
+
     public object VisitObjectLiteral(ObjectLiteralNode node)
     {
         if (_isFirstPass)
@@ -1638,6 +1625,8 @@ public class CxCompiler : IAstVisitor<object>
 
     public object VisitIdentifier(IdentifierNode node)
     {
+        Console.WriteLine($"🔧 COMPILER: VisitIdentifier called with name: '{node.Name}'");
+        
         // Special handling for 'this' keyword in class context
         if (node.Name == "this" && _currentClassName != null)
         {
@@ -2668,6 +2657,17 @@ public class CxCompiler : IAstVisitor<object>
     }
     public object VisitMemberAccess(MemberAccessNode node)
     {
+        // Check if this member access should be treated as a handler reference string
+        // This happens when we have something like math.calculation.complete in a handler array
+        if (IsHandlerReference(node))
+        {
+            // Convert the member access chain to a string literal
+            var handlerName = GetFullMemberAccessName(node);
+            Console.WriteLine($"🔧 COMPILER: Converting handler reference to string: '{handlerName}'");
+            _currentIl!.Emit(OpCodes.Ldstr, handlerName);
+            return new object();
+        }
+        
         // Check for array.length property access first
         if (node.Property == "length")
         {

@@ -1,0 +1,55 @@
+// Comprehensive AI Services Test - Think, Learn, Infer
+conscious AIServicesTest {
+    realize(self: object) {
+        print("🎯 AI Services Test Started");
+        
+        // Test 1: Think Service (GPU-CUDA consciousness processing)
+        print("🧠 Testing Think Service...");
+        think {
+            prompt: "What is 2 + 2? Please show your reasoning.",
+            handlers: [math.calculation.complete]
+        };
+    }
+    
+    on math.calculation.complete (event) {
+        print("✅ Think Service Result: " + event.result);
+        
+        // Test 2: Learn Service (store knowledge in vector memory)
+        print("� Testing Learn Service...");
+        learn {
+            data: "Mathematical fact: 2 + 2 = 4. This is basic arithmetic addition.",
+            context: "arithmetic operations",
+            handlers: [knowledge.stored]
+        };
+    }
+    
+    on knowledge.stored (event) {
+        print("✅ Learn Service Result: Knowledge stored successfully");
+        
+        // Test 3: Infer Service (reasoning and inference)
+        print("🔍 Testing Infer Service...");
+        infer {
+            context: "Given that we just learned 2 + 2 = 4",
+            question: "What would 4 + 4 equal?",
+            handlers: [inference.complete]
+        };
+    }
+    
+    on inference.complete (event) {
+        print("✅ Infer Service Result: " + event.result);
+        
+        // Test 4: Memory Search via Think (test vector storage retrieval)
+        print("🎯 Testing Memory Retrieval...");
+        think {
+            prompt: "What did we learn about arithmetic operations?",
+            handlers: [memory.retrieval.complete]
+        };
+    }
+    
+    on memory.retrieval.complete (event) {
+        print("✅ Memory Retrieval Result: " + event.result);
+        print("🎉 All AI Services Test Complete!");
+    }
+}
+
+var aiTest = new AIServicesTest({name: "comprehensive_ai_test"});

@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0</TargetFramework>
+    <TargetFramework>net9.0-windows</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>latest</LangVersion>
@@ -17,6 +17,7 @@
     <Authors>Aaron Hebert</Authors>
     <Copyright>Copyright © 2025 Aaron Hebert</Copyright>
     <Description>CX Language command-line interface for AI-native programming with Azure OpenAI integration</Description>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
@@ -38,8 +39,8 @@
     <ProjectReference Include="..\CxLanguage.Parser\CxLanguage.Parser.csproj" />
     <ProjectReference Include="..\CxLanguage.Compiler\CxLanguage.Compiler.csproj" />
     <ProjectReference Include="..\CxLanguage.StandardLibrary\CxLanguage.StandardLibrary.csproj" />
-    <ProjectReference Include="..\CxLanguage.Azure\CxLanguage.Azure.csproj" />
     <ProjectReference Include="..\CxLanguage.LocalLLM\CxLanguage.LocalLLM.csproj" />
+    <ProjectReference Include="..\CxLanguage.Runtime.Visualization\CxLanguage.Runtime.Visualization.csproj" />
   </ItemGroup>
 
   <ItemGroup>

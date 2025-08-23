@@ -14,7 +14,6 @@
   <ItemGroup>
     <ProjectReference Include="..\CxLanguage.Core\CxLanguage.Core.csproj" />
     <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
-    <ProjectReference Include="..\CxLanguage.Azure\CxLanguage.Azure.csproj" />
     <ProjectReference Include="..\CxLanguage.LocalLLM\CxLanguage.LocalLLM.csproj" />
   </ItemGroup>
 
