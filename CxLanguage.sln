@@ -25,6 +25,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CxLanguage.Runtime.Visualiz
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CxLanguage.IDE.WinUI", "src\CxLanguage.IDE.WinUI\CxLanguage.IDE.WinUI.csproj", "{3501E75E-F7A3-4F1E-BA88-ED15FA415CAC}"
 EndProject
+# RAPIDS project temporarily excluded due to GPU dependencies
+# Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CxLanguage.RAPIDS", "src\CxLanguage.RAPIDS\CxLanguage.RAPIDS.csproj", "{D4E5F6A7-8901-2345-CDEF-456789012345}"
+# EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
