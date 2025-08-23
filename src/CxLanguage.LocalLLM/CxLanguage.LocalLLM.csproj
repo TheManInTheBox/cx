@@ -26,11 +26,11 @@
 
   <ItemGroup>
     <!-- Core .NET 9 packages for local LLM execution -->
-    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.4" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.4" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.7" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
     
     <!-- PowerShell Management for consciousness-aware command execution -->
     <PackageReference Include="Microsoft.PowerShell.SDK" Version="7.5.0" />

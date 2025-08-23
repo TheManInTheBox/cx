@@ -22,7 +22,7 @@ namespace CxLanguage.LocalLLM
         private readonly Channel<string> _tokenChannel;
         private readonly ChannelWriter<string> _tokenWriter;
         private readonly ChannelReader<string> _tokenReader;
-        private readonly NativeGGUFInferenceEngine? _ggufEngine;
+        private NativeGGUFInferenceEngine? _ggufEngine; // Removed readonly to allow reassignment
         
         private bool _modelLoaded = false;
         private bool _realModelMode = false;
@@ -127,33 +127,88 @@ namespace CxLanguage.LocalLLM
             {
                 // Get the base directory (workspace root)
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
+                _logger.LogInformation("🔍 BaseDirectory: {BaseDir}", baseDir);
                 var workspaceRoot = FindWorkspaceRoot(baseDir);
                 
                 if (string.IsNullOrEmpty(workspaceRoot))
                 {
-                    _logger.LogWarning("⚠️ Could not find workspace root directory");
-                    return null;
+                    _logger.LogWarning("⚠️ Could not find workspace root directory from base path");
+                    
+                    // Try some alternative approaches to find the workspace root
+                    var currentDir = new DirectoryInfo(Environment.CurrentDirectory);
+                    _logger.LogInformation("🔍 CurrentDirectory: {CurrentDir}", currentDir.FullName);
+                    
+                    // Try finding workspace from current directory
+                    workspaceRoot = FindWorkspaceRoot(currentDir.FullName);
+                    
+                    if (string.IsNullOrEmpty(workspaceRoot))
+                    {
+                        // Last resort - try hardcoded paths that should work in this environment
+                        string[] potentialRoots = {
+                            @"c:\Users\a7qBIOyPiniwRue6UVvF\cx",
+                            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cx")
+                        };
+                        
+                        foreach (var root in potentialRoots)
+                        {
+                            _logger.LogInformation("🔍 Trying hardcoded path: {Path}", root);
+                            if (Directory.Exists(root))
+                            {
+                                workspaceRoot = root;
+                                _logger.LogInformation("✅ Using hardcoded workspace root: {Root}", workspaceRoot);
+                                break;
+                            }
+                        }
+                        
+                        if (string.IsNullOrEmpty(workspaceRoot))
+                        {
+                            _logger.LogWarning("⚠️ Could not find workspace root - falling back to current directory");
+                            workspaceRoot = Environment.CurrentDirectory;
+                        }
+                    }
                 }
 
+                _logger.LogInformation("✅ Using workspace root: {WorkspaceRoot}", workspaceRoot);
                 var modelsDir = Path.Combine(workspaceRoot, "models");
+                
+                // Check if models directory exists
+                if (!Directory.Exists(modelsDir))
+                {
+                    _logger.LogWarning("⚠️ Models directory does not exist: {ModelsDir}", modelsDir);
+                    
+                    // Try to create the directory structure for models
+                    try {
+                        Directory.CreateDirectory(Path.Combine(modelsDir, "local_llm"));
+                        _logger.LogInformation("✅ Created models directory structure");
+                    }
+                    catch (Exception ex) {
+                        _logger.LogError(ex, "❌ Failed to create models directory: {Error}", ex.Message);
+                    }
+                }
                 
                 // Priority order: Llama models (primary), then Phi-3 fallback
                 var candidatePaths = new[]
                 {
-                    Path.Combine(modelsDir, "local_llm", "Llama-3.2-3B-Instruct-Q4_K_M.gguf"), // Production Llama (actual filename)
-                    Path.Combine(modelsDir, "local_llm", "llama-3.2-3b-instruct-q4_k_m.gguf"), // Production Llama (lowercase)
-                    Path.Combine(modelsDir, "llama-3.2-1b-instruct-q4_k_m.gguf"),          // Lightweight Llama
-                    Path.Combine(modelsDir, "local_llm", "Phi-3-mini-4k-instruct-q4.gguf"), // Phi-3 fallback
-                    Path.Combine(modelsDir, "phi-3-mini-4k-instruct-q4.gguf")              // Alternative Phi-3 location
+                    Path.Combine(workspaceRoot, "models", "local_llm", "Llama-3.2-3B-Instruct-Q4_K_M.gguf"),
+                    Path.Combine(workspaceRoot, "models", "local_llm", "llama-3.2-3b-instruct-q4_k_m.gguf"),
+                    Path.Combine(workspaceRoot, "models", "Llama-3.2-3B-Instruct-Q4_K_M.gguf"),
+                    Path.Combine(workspaceRoot, "models", "llama-3.2-3b-instruct-q4_k_m.gguf"),
+                    Path.Combine(workspaceRoot, "models", "local_llm", "Phi-3-mini-4k-instruct-q4.gguf"),
+                    Path.Combine(workspaceRoot, "models", "Phi-3-mini-4k-instruct-q4.gguf")
                 };
 
+                _logger.LogInformation("🔍 Looking for GGUF models in paths:");
                 foreach (var path in candidatePaths)
                 {
+                    _logger.LogInformation("  • {Path} - Exists: {Exists}", path, File.Exists(path));
+                    
                     if (File.Exists(path))
                     {
                         var fileInfo = new FileInfo(path);
-                        var modelName = Path.GetFileName(path).Contains("llama") && Path.GetFileName(path).Contains("3b") ? "Llama 3.2 3B" :
-                                       Path.GetFileName(path).Contains("llama") && Path.GetFileName(path).Contains("1b") ? "Llama 3.2 1B" : 
+                        var modelName = Path.GetFileName(path).Contains("llama", StringComparison.OrdinalIgnoreCase) && 
+                                       Path.GetFileName(path).Contains("3b", StringComparison.OrdinalIgnoreCase) ? "Llama 3.2 3B" :
+                                       Path.GetFileName(path).Contains("llama", StringComparison.OrdinalIgnoreCase) && 
+                                       Path.GetFileName(path).Contains("1b", StringComparison.OrdinalIgnoreCase) ? "Llama 3.2 1B" : 
                                        "Phi-3-mini-4k-instruct";
                         
                         _logger.LogInformation("🎯 Found GGUF model: {ModelName} at {Path} ({Size:F1} MB)", 
@@ -162,9 +217,35 @@ namespace CxLanguage.LocalLLM
                     }
                 }
 
-                _logger.LogInformation("🧩 No GGUF models found in {ModelsDir}. REAL LLM ONLY MODE:", modelsDir);
+                // Also try explicitly looking for any .gguf file in the models directory and its subdirectories
+                try
+                {
+                    if (Directory.Exists(workspaceRoot))
+                    {
+                        var allGgufFiles = Directory.GetFiles(workspaceRoot, "*.gguf", SearchOption.AllDirectories);
+                        if (allGgufFiles.Length > 0)
+                        {
+                            _logger.LogInformation("🔍 Found {Count} .gguf files in workspace:", allGgufFiles.Length);
+                            foreach (var file in allGgufFiles)
+                            {
+                                _logger.LogInformation("  • {Path} - Size: {Size:F1} MB", 
+                                    file, new FileInfo(file).Length / (1024.0 * 1024.0));
+                            }
+                            
+                            // Use the first found file
+                            _logger.LogInformation("🎯 Using first found GGUF model: {Path}", allGgufFiles[0]);
+                            return allGgufFiles[0];
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "⚠️ Error during recursive file search: {Error}", ex.Message);
+                }
+
+                _logger.LogInformation("🧩 No GGUF models found in workspace. REAL LLM ONLY MODE:");
                 _logger.LogInformation("   🚀 Required: Download Phi-3-mini model for authentic consciousness processing");
-                _logger.LogInformation("   📥 PowerShell: Invoke-WebRequest -Uri 'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf' -OutFile 'models/phi-3-mini-4k-instruct-q4.gguf'");
+                _logger.LogInformation("   📥 PowerShell: Invoke-WebRequest -Uri 'https://huggingface.co/microsoft/Phi-3-mini-4k-instruct-gguf/resolve/main/Phi-3-mini-4k-instruct-q4.gguf' -OutFile 'models/local_llm/Phi-3-mini-4k-instruct-q4.gguf'");
                 _logger.LogInformation("   � NO SIMULATION FALLBACK: Real LLM required for operation");
                 
                 return null;
@@ -181,22 +262,123 @@ namespace CxLanguage.LocalLLM
         /// </summary>
         private string? FindWorkspaceRoot(string startPath)
         {
-            var current = new DirectoryInfo(startPath);
-            
-            while (current != null)
+            try
             {
-                // Look for workspace indicators
-                if (File.Exists(Path.Combine(current.FullName, "CxLanguage.sln")) ||
-                    File.Exists(Path.Combine(current.FullName, "README.md")) ||
-                    Directory.Exists(Path.Combine(current.FullName, "models")))
+                if (string.IsNullOrEmpty(startPath))
                 {
-                    return current.FullName;
+                    _logger.LogWarning("⚠️ Start path is null or empty");
+                    startPath = AppDomain.CurrentDomain.BaseDirectory;
                 }
                 
-                current = current.Parent;
+                _logger.LogInformation("🔍 Searching for workspace root from: {StartPath}", startPath);
+                
+                // Check if startPath exists
+                if (!Directory.Exists(startPath))
+                {
+                    _logger.LogWarning("⚠️ Start path doesn't exist: {StartPath}", startPath);
+                    startPath = Environment.CurrentDirectory;
+                    _logger.LogInformation("🔄 Falling back to current directory: {CurrentDir}", startPath);
+                }
+                
+                var current = new DirectoryInfo(startPath);
+                int maxDepth = 10; // Prevent infinite loops by limiting search depth
+                int currentDepth = 0;
+                
+                while (current != null && currentDepth < maxDepth)
+                {
+                    // Look for workspace indicators
+                    var solutionFile = Path.Combine(current.FullName, "CxLanguage.sln");
+                    var readmeFile = Path.Combine(current.FullName, "README.md");
+                    var modelsDir = Path.Combine(current.FullName, "models");
+                    var srcDir = Path.Combine(current.FullName, "src");
+                    var examplesDir = Path.Combine(current.FullName, "examples");
+                    
+                    _logger.LogDebug("👁️ Checking directory: {Path}", current.FullName);
+                    
+                    // Check various markers that indicate workspace root
+                    if (File.Exists(solutionFile))
+                    {
+                        _logger.LogInformation("✅ Found workspace root by solution file at: {Path}", current.FullName);
+                        return current.FullName;
+                    }
+                    
+                    if (File.Exists(readmeFile) && (Directory.Exists(srcDir) || Directory.Exists(modelsDir)))
+                    {
+                        _logger.LogInformation("✅ Found workspace root by README + src/models at: {Path}", current.FullName);
+                        return current.FullName;
+                    }
+                    
+                    if (Directory.Exists(modelsDir) && Directory.Exists(srcDir))
+                    {
+                        _logger.LogInformation("✅ Found workspace root by models + src directories at: {Path}", current.FullName);
+                        return current.FullName;
+                    }
+                    
+                    if (Directory.Exists(examplesDir) && Directory.Exists(srcDir))
+                    {
+                        _logger.LogInformation("✅ Found workspace root by examples + src directories at: {Path}", current.FullName);
+                        return current.FullName;
+                    }
+                    
+                    // Check if we've found a models directory with .gguf files
+                    if (Directory.Exists(modelsDir))
+                    {
+                        var hasGgufFiles = Directory.GetFiles(modelsDir, "*.gguf", SearchOption.AllDirectories).Length > 0;
+                        if (hasGgufFiles)
+                        {
+                            _logger.LogInformation("✅ Found workspace root by models directory with GGUF files at: {Path}", current.FullName);
+                            return current.FullName;
+                        }
+                    }
+                    
+                    current = current.Parent;
+                    currentDepth++;
+                }
+                
+                // If we couldn't find the workspace root through normal means, try a hardcoded path
+                string[] potentialRoots = {
+                    @"c:\Users\a7qBIOyPiniwRue6UVvF\cx",
+                    Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "cx"),
+                    // Specific path from logs
+                    @"C:\Users\a7qBIOyPiniwRue6UVvF\cx"
+                };
+                
+                foreach (var root in potentialRoots)
+                {
+                    _logger.LogInformation("🔍 Trying hardcoded path: {Path}", root);
+                    if (Directory.Exists(root))
+                    {
+                        bool isValid = File.Exists(Path.Combine(root, "CxLanguage.sln")) || 
+                                      Directory.Exists(Path.Combine(root, "models")) ||
+                                      Directory.Exists(Path.Combine(root, "src"));
+                                      
+                        if (isValid)
+                        {
+                            _logger.LogInformation("✅ Found workspace root from hardcoded path: {Path}", root);
+                            return root;
+                        }
+                    }
+                }
+                
+                // Last resort - use the Environment.CurrentDirectory
+                var currentDir = Environment.CurrentDirectory;
+                _logger.LogWarning("⚠️ Could not find workspace root through standard methods, using current directory: {CurrentDir}", currentDir);
+                return currentDir;
             }
-            
-            return null;
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Error finding workspace root: {Error}", ex.Message);
+                
+                // Last resort fallback to hardcoded path
+                string fallbackPath = @"C:\Users\a7qBIOyPiniwRue6UVvF\cx";
+                _logger.LogInformation("🔄 After error, falling back to hardcoded path: {Path}", fallbackPath);
+                if (Directory.Exists(fallbackPath))
+                {
+                    return fallbackPath;
+                }
+                
+                return Environment.CurrentDirectory;
+            }
         }
 
         /// <summary>
@@ -212,7 +394,48 @@ namespace CxLanguage.LocalLLM
                 if (_ggufEngine != null)
                 {
                     _logger.LogInformation("🧠 Attempting to load real GGUF model...");
-                    _realModelMode = await _ggufEngine.InitializeAsync();
+                    
+                    try
+                    {
+                        // Get the model path for debugging
+                        string modelPath = "unknown";
+                        var modelPathMethod = _ggufEngine.GetType().GetMethod("GetModelInfo");
+                        if (modelPathMethod != null)
+                        {
+                            modelPath = modelPathMethod.Invoke(_ggufEngine, null) as string ?? "unknown";
+                        }
+                        
+                        _logger.LogInformation("🔧 Using model path: {ModelPath}", modelPath);
+                        _logger.LogInformation("🔧 GGUFEngine type: {Type}", _ggufEngine.GetType().FullName);
+                        
+                        // Check if the model file exists
+                        if (modelPath != "unknown" && !modelPath.Contains("No GGUF model loaded") && File.Exists(modelPath))
+                        {
+                            _logger.LogInformation("✅ Confirmed model file exists at: {ModelPath}", modelPath);
+                            var fileInfo = new FileInfo(modelPath);
+                            _logger.LogInformation("📊 Model file size: {Size:F2} MB", fileInfo.Length / (1024.0 * 1024.0));
+                        }
+                        else
+                        {
+                            _logger.LogWarning("⚠️ Model file may not exist or path is unknown");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Error checking model path: {Error}", ex.Message);
+                    }
+                    
+                    // Initialize the model
+                    try
+                    {
+                        _realModelMode = await _ggufEngine.InitializeAsync();
+                        _logger.LogInformation("📊 GGUF initialization result: {Result}", _realModelMode);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "❌ Error during GGUF initialization: {Error}", ex.Message);
+                        _realModelMode = false;
+                    }
                     
                     if (_realModelMode)
                     {
@@ -231,12 +454,55 @@ namespace CxLanguage.LocalLLM
                     else
                     {
                         _logger.LogError("❌ REAL LLM ONLY MODE: Failed to load GGUF model - NO SIMULATION FALLBACK");
+                        
+                        // Try to determine why initialization failed
+                        var modelPath = _ggufEngine.GetModelInfo();
+                        _logger.LogInformation("🔍 Model path during failed init: {ModelPath}", modelPath);
+                        
+                        if (modelPath != null && modelPath.Contains("No GGUF model loaded"))
+                        {
+                            _logger.LogError("❌ GGUF model was not loaded - possible model file issue");
+                        }
+                        
+                        // Log additional details about the model path
+                        var ggufPath = modelPath;
+                        if (!string.IsNullOrEmpty(ggufPath) && !ggufPath.Contains("No GGUF model loaded"))
+                        {
+                            _logger.LogInformation("🔍 Checking model file details for: {Path}", ggufPath);
+                            
+                            if (File.Exists(ggufPath))
+                            {
+                                var fileInfo = new FileInfo(ggufPath);
+                                _logger.LogInformation("✅ Model file exists: {Path}, Size: {Size:F2} MB", 
+                                    ggufPath, fileInfo.Length / (1024.0 * 1024.0));
+                                    
+                                // File exists but initialization still failed - could be format issue
+                                _logger.LogError("❌ File exists but model initialization failed - possible GGUF format issue or LlamaSharp compatibility problem");
+                            }
+                            else
+                            {
+                                _logger.LogError("❌ Model file not found at path: {Path}", ggufPath);
+                            }
+                        }
+                        
                         return false;
                     }
                 }
                 else
                 {
                     _logger.LogError("❌ REAL LLM ONLY MODE: No GGUF engine available - NO SIMULATION FALLBACK");
+                    
+                    // Try to explain why the GGUF engine is not available
+                    var modelPath = FindBestAvailableModel();
+                    if (string.IsNullOrEmpty(modelPath))
+                    {
+                        _logger.LogError("❌ No model file found - please download a GGUF model");
+                    }
+                    else
+                    {
+                        _logger.LogError("❌ Model file found at {Path} but GGUF engine not created properly", modelPath);
+                    }
+                    
                     return false;
                 }
                 
@@ -261,24 +527,63 @@ namespace CxLanguage.LocalLLM
             {
                 _logger.LogInformation("📥 Loading model: {ModelName}", modelName);
                 
-                // Find the actual path for the requested model
-                var modelsDir = Path.Combine(Directory.GetCurrentDirectory(), "models");
-                var requestedModelPath = Path.Combine(modelsDir, "local_llm", modelName);
+                // Check if the input is already a full path
+                bool isFullPath = Path.IsPathRooted(modelName) && File.Exists(modelName);
+                string requestedModelPath;
                 
-                // If the specific model doesn't exist, use the best available model
-                if (!File.Exists(requestedModelPath))
+                if (isFullPath)
                 {
-                    _logger.LogWarning("⚠️ Requested model {ModelName} not found, using best available model", modelName);
-                    requestedModelPath = FindBestAvailableModel();
+                    // Use the direct path
+                    requestedModelPath = modelName;
+                    _logger.LogInformation("✅ Using direct model file path: {Path}", requestedModelPath);
+                }
+                else
+                {
+                    // Try to find the model in expected locations
+                    var workspaceRoot = FindWorkspaceRoot(AppDomain.CurrentDomain.BaseDirectory) ?? Environment.CurrentDirectory;
+                    _logger.LogInformation("🔍 Looking for model in workspace: {Root}", workspaceRoot);
                     
-                    if (string.IsNullOrEmpty(requestedModelPath))
+                    // First check models/local_llm directory
+                    requestedModelPath = Path.Combine(workspaceRoot, "models", "local_llm", modelName);
+                    if (!File.Exists(requestedModelPath))
                     {
-                        _logger.LogError("❌ REAL LLM ONLY MODE: No GGUF models available - NO SIMULATION FALLBACK");
-                        return false;
+                        // Then check models directory
+                        requestedModelPath = Path.Combine(workspaceRoot, "models", modelName);
+                        if (!File.Exists(requestedModelPath))
+                        {
+                            // Use FindBestAvailableModel as a fallback
+                            _logger.LogWarning("⚠️ Requested model {ModelName} not found in expected locations", modelName);
+                            var fallbackModel = FindBestAvailableModel();
+                            if (string.IsNullOrEmpty(fallbackModel))
+                            {
+                                _logger.LogError("❌ REAL LLM ONLY MODE: No GGUF models available - NO SIMULATION FALLBACK");
+                                return false;
+                            }
+                            requestedModelPath = fallbackModel;
+                        }
                     }
                 }
                 
-                // REAL LLM ONLY MODE: No simulation fallback
+                _logger.LogInformation("🔧 Loading model from path: {Path}", requestedModelPath);
+                
+                // If we've previously initialized a model, dispose it
+                if (_ggufEngine != null)
+                {
+                    try {
+                        _ggufEngine.Dispose();
+                    }
+                    catch (Exception ex) {
+                        _logger.LogWarning(ex, "⚠️ Warning during GGUF engine disposal: {Error}", ex.Message);
+                    }
+                }
+                
+                // Create a new GGUF engine with the requested model
+                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var ggufLogger = loggerFactory.CreateLogger<NativeGGUFInferenceEngine>();
+                // Create a new GGUF engine with the requested model
+                _ggufEngine = new NativeGGUFInferenceEngine(ggufLogger, requestedModelPath);
+                
+                // Initialize the model
                 if (_ggufEngine == null || !await _ggufEngine.InitializeAsync())
                 {
                     _logger.LogError("❌ REAL LLM ONLY MODE: Failed to load model {ModelName} - NO SIMULATION FALLBACK", modelName);
@@ -293,18 +598,19 @@ namespace CxLanguage.LocalLLM
                 if (File.Exists(requestedModelPath))
                 {
                     fileSize = new FileInfo(requestedModelPath).Length;
+                    _logger.LogInformation("📊 Model file size: {Size:F2} MB", fileSize / (1024.0 * 1024.0));
                 }
                 
                 _modelInfo = new ModelInfo(
-                    modelName,
+                    Path.GetFileName(requestedModelPath),
                     "1.0",
                     fileSize,
                     _gpuAvailable ? "CUDA" : "CPU",
                     DateTime.UtcNow,
-                    $"/models/{modelName}"
+                    requestedModelPath
                 );
                 
-                _logger.LogInformation("✅ Model loaded successfully: {ModelName}", modelName);
+                _logger.LogInformation("✅ Model loaded successfully: {ModelName}", Path.GetFileName(requestedModelPath));
                 return true;
             }
             catch (Exception ex)
