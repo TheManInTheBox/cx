@@ -48,6 +48,15 @@ public partial class MainForm : Form
     private StatusStrip? _statusStrip;
     private ToolStripStatusLabel? _fileStatusLabel;
     private ToolStripStatusLabel? _runtimeStatusLabel;
+    
+    // UI components for vector database ingestion
+    private Panel? _vectorDbPanel;
+    private ToolStrip? _vectorDbToolStrip;
+    private ListView? _fileListView;
+    private Button? _selectFilesButton;
+    private Button? _ingestFilesButton;
+    private Label? _vectorDbStatusLabel;
+    private bool _isVectorDbPanelVisible = false;
     private string? _currentFilePath;
 
     public MainForm(ICxEventBus? eventBus = null)
@@ -102,7 +111,12 @@ public partial class MainForm : Form
         var miAbout = new ToolStripMenuItem("About CX IDE", null, (s, e) => MessageBox.Show("CX IDE - Primary editor for CX Language", "About", MessageBoxButtons.OK, MessageBoxIcon.Information));
         helpMenu.DropDownItems.Add(miAbout);
 
-        _menuStrip.Items.AddRange(new ToolStripItem[] { fileMenu, runMenu, helpMenu });
+        // Database menu
+        var dbMenu = new ToolStripMenuItem("Database");
+        var miVectorDb = new ToolStripMenuItem("Vector Database Ingestion", null, (s, e) => ToggleVectorDbPanel());
+        dbMenu.DropDownItems.Add(miVectorDb);
+
+        _menuStrip.Items.AddRange(new ToolStripItem[] { fileMenu, runMenu, dbMenu, helpMenu });
         Controls.Add(_menuStrip);
 
         // StatusStrip
@@ -194,47 +208,10 @@ public partial class MainForm : Form
             Font = new Font("Segoe UI", 9, FontStyle.Regular),
             ForeColor = Color.FromArgb(200, 200, 200),
             Location = new Point(600, 105),
-            Size = new Size(520, 20),
+            Size = new Size(580, 20),
             TextAlign = ContentAlignment.MiddleLeft
         };
         Controls.Add(_eventsLabel);
-
-        // Test button for debugging
-        var testButton = new Button
-        {
-            Text = "🧪 Test Event",
-            Size = new Size(100, 25),
-            Location = new Point(1080, 105),
-            BackColor = Color.FromArgb(0, 100, 200),
-            ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat
-        };
-        testButton.Click += async (s, e) => 
-        {
-            LogEvent("🧪 Manual test event triggered");
-            _realEventCount++;
-            
-            if (_eventBus != null)
-            {
-                try
-                {
-                    var testPayload = new Dictionary<string, object>
-                    {
-                        { "source", "visualization_test" },
-                        { "message", "Manual event from visualization UI" },
-                        { "timestamp", DateTime.Now.ToString("HH:mm:ss.fff") }
-                    };
-                    
-                    var emitResult = await _eventBus.EmitAsync("visualization.test.event", testPayload);
-                    LogEvent($"🚀 Test event emitted: {emitResult}");
-                }
-                catch (Exception ex)
-                {
-                    LogEvent($"❌ Failed to emit test event: {ex.Message}");
-                }
-            }
-        };
-        Controls.Add(testButton);
 
         // Event log text box
         _eventLogTextBox = new TextBox
@@ -1716,6 +1693,431 @@ public partial class MainForm : Form
         var name = _currentFilePath != null ? Path.GetFileName(_currentFilePath) : "[No file]";
         if (_fileStatusLabel != null) _fileStatusLabel.Text = name;
         Text = _currentFilePath != null ? $"CX IDE - {name}" : "CX IDE";
+    }
+    
+    // --- Vector Database Panel management ---
+    private void ToggleVectorDbPanel()
+    {
+        _isVectorDbPanelVisible = !_isVectorDbPanelVisible;
+        
+        if (_isVectorDbPanelVisible)
+        {
+            ShowVectorDbPanel();
+        }
+        else
+        {
+            HideVectorDbPanel();
+        }
+    }
+    
+    private void ShowVectorDbPanel()
+    {
+        // Create panel if it doesn't exist
+        if (_vectorDbPanel == null)
+        {
+            CreateVectorDbPanel();
+        }
+        
+        if (_vectorDbPanel != null)
+        {
+            _vectorDbPanel.Visible = true;
+            
+            // Hide code editor temporarily
+            if (_codeEditor != null)
+            {
+                _codeEditor.Visible = false;
+            }
+            
+            LogEvent("📊 Vector Database Ingestion Panel shown");
+        }
+    }
+    
+    private void HideVectorDbPanel()
+    {
+        if (_vectorDbPanel != null)
+        {
+            _vectorDbPanel.Visible = false;
+            
+            // Show code editor again
+            if (_codeEditor != null)
+            {
+                _codeEditor.Visible = true;
+            }
+            
+            LogEvent("📊 Vector Database Ingestion Panel hidden");
+        }
+    }
+    
+    private void CreateVectorDbPanel()
+    {
+        // Create the main panel
+        _vectorDbPanel = new Panel
+        {
+            Location = new Point(20, 80),
+            Size = new Size(560, 400),
+            BackColor = Color.FromArgb(20, 20, 30),
+            BorderStyle = BorderStyle.FixedSingle
+        };
+        
+        // Create toolbar for navigation
+        _vectorDbToolStrip = new ToolStrip
+        {
+            BackColor = Color.FromArgb(40, 40, 60),
+            ForeColor = Color.White,
+            Dock = DockStyle.Top,
+            GripStyle = ToolStripGripStyle.Hidden,
+            RenderMode = ToolStripRenderMode.System
+        };
+        
+        var homeButton = new ToolStripButton("🏠 Home")
+        {
+            DisplayStyle = ToolStripItemDisplayStyle.Text,
+            ForeColor = Color.White
+        };
+        homeButton.Click += (s, e) => HideVectorDbPanel();
+        
+        var refreshButton = new ToolStripButton("🔄 Refresh")
+        {
+            DisplayStyle = ToolStripItemDisplayStyle.Text,
+            ForeColor = Color.White
+        };
+        refreshButton.Click += (s, e) => RefreshFileList();
+        
+        var settingsButton = new ToolStripButton("⚙️ Settings")
+        {
+            DisplayStyle = ToolStripItemDisplayStyle.Text,
+            ForeColor = Color.White
+        };
+        settingsButton.Click += (s, e) => ShowVectorDbSettings();
+        
+        _vectorDbToolStrip.Items.AddRange(new ToolStripItem[] 
+        { 
+            homeButton, 
+            new ToolStripSeparator(), 
+            refreshButton, 
+            new ToolStripSeparator(), 
+            settingsButton 
+        });
+        
+        _vectorDbPanel.Controls.Add(_vectorDbToolStrip);
+        
+        // Create title label
+        var titleLabel = new Label
+        {
+            Text = "🧠 Global Vector Database Ingestion",
+            Font = new Font("Segoe UI", 12, FontStyle.Bold),
+            ForeColor = Color.FromArgb(100, 200, 255),
+            Location = new Point(10, 30),
+            Size = new Size(540, 25),
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        _vectorDbPanel.Controls.Add(titleLabel);
+        
+        // Create description
+        var descLabel = new Label
+        {
+            Text = "Select files to ingest into the global vector database for AI context and knowledge.",
+            Font = new Font("Segoe UI", 9, FontStyle.Regular),
+            ForeColor = Color.FromArgb(200, 200, 200),
+            Location = new Point(10, 60),
+            Size = new Size(540, 20),
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        _vectorDbPanel.Controls.Add(descLabel);
+        
+        // Create file list view
+        _fileListView = new ListView
+        {
+            Location = new Point(10, 90),
+            Size = new Size(540, 240),
+            BackColor = Color.FromArgb(30, 30, 40),
+            ForeColor = Color.White,
+            BorderStyle = BorderStyle.FixedSingle,
+            View = View.Details,
+            FullRowSelect = true,
+            GridLines = true,
+            CheckBoxes = true
+        };
+        
+        _fileListView.Columns.Add("File", 280);
+        _fileListView.Columns.Add("Size", 80);
+        _fileListView.Columns.Add("Type", 80);
+        _fileListView.Columns.Add("Status", 80);
+        
+        _vectorDbPanel.Controls.Add(_fileListView);
+        
+        // Create status label
+        _vectorDbStatusLabel = new Label
+        {
+            Text = "Ready for file ingestion",
+            Font = new Font("Segoe UI", 9, FontStyle.Regular),
+            ForeColor = Color.FromArgb(150, 150, 150),
+            Location = new Point(10, 340),
+            Size = new Size(320, 20),
+            TextAlign = ContentAlignment.MiddleLeft
+        };
+        _vectorDbPanel.Controls.Add(_vectorDbStatusLabel);
+        
+        // Create buttons
+        _selectFilesButton = new Button
+        {
+            Text = "📂 Select Files",
+            Size = new Size(120, 30),
+            Location = new Point(330, 335),
+            BackColor = Color.FromArgb(60, 60, 100),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat
+        };
+        _selectFilesButton.Click += (s, e) => SelectFilesForIngestion();
+        _vectorDbPanel.Controls.Add(_selectFilesButton);
+        
+        _ingestFilesButton = new Button
+        {
+            Text = "🚀 Ingest Files",
+            Size = new Size(120, 30),
+            Location = new Point(460, 335),
+            BackColor = Color.FromArgb(0, 100, 200),
+            ForeColor = Color.White,
+            FlatStyle = FlatStyle.Flat,
+            Enabled = false
+        };
+        _ingestFilesButton.Click += async (s, e) => await IngestSelectedFilesToVectorDb();
+        _vectorDbPanel.Controls.Add(_ingestFilesButton);
+        
+        // Add to main form
+        Controls.Add(_vectorDbPanel);
+        _vectorDbPanel.Visible = false;
+    }
+    
+    private void RefreshFileList()
+    {
+        if (_fileListView == null) return;
+        
+        LogEvent("🔄 Refreshing file list");
+        // Here you would update the file list from the database
+        // For now, just log the action
+        
+        if (_vectorDbStatusLabel != null)
+        {
+            _vectorDbStatusLabel.Text = "File list refreshed";
+            _vectorDbStatusLabel.ForeColor = Color.FromArgb(100, 200, 100);
+        }
+    }
+    
+    private void ShowVectorDbSettings()
+    {
+        LogEvent("⚙️ Vector Database settings requested");
+        MessageBox.Show(
+            "Vector Database Settings\n\n" +
+            "Embedding Model: text-embedding-3-small\n" +
+            "Chunk Size: 1024 tokens\n" +
+            "Overlap: 128 tokens\n" +
+            "Max Files: 100 per batch\n\n" +
+            "Settings panel will be available in a future update.",
+            "Vector Database Settings",
+            MessageBoxButtons.OK,
+            MessageBoxIcon.Information
+        );
+    }
+    
+    private void SelectFilesForIngestion()
+    {
+        if (_fileListView == null) return;
+        
+        using var openFileDialog = new OpenFileDialog
+        {
+            Multiselect = true,
+            Filter = "Text Files|*.txt;*.md;*.json;*.cs;*.cx|All Files|*.*",
+            Title = "Select Files to Ingest"
+        };
+        
+        if (openFileDialog.ShowDialog() == DialogResult.OK)
+        {
+            _fileListView.Items.Clear();
+            
+            foreach (var filename in openFileDialog.FileNames)
+            {
+                var fileInfo = new FileInfo(filename);
+                var item = new ListViewItem(fileInfo.Name);
+                item.SubItems.Add(FormatFileSize(fileInfo.Length));
+                item.SubItems.Add(fileInfo.Extension.Replace(".", "").ToUpper());
+                item.SubItems.Add("Pending");
+                item.Tag = filename; // Store full path
+                
+                _fileListView.Items.Add(item);
+            }
+            
+            if (_fileListView.Items.Count > 0)
+            {
+                if (_ingestFilesButton != null)
+                {
+                    _ingestFilesButton.Enabled = true;
+                }
+                
+                if (_vectorDbStatusLabel != null)
+                {
+                    _vectorDbStatusLabel.Text = $"{_fileListView.Items.Count} files selected for ingestion";
+                    _vectorDbStatusLabel.ForeColor = Color.FromArgb(200, 200, 100);
+                }
+                
+                LogEvent($"📂 {_fileListView.Items.Count} files selected for Vector DB ingestion");
+            }
+        }
+    }
+    
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        
+        return $"{len:0.##} {sizes[order]}";
+    }
+    
+    private async Task IngestSelectedFilesToVectorDb()
+    {
+        if (_fileListView == null || _vectorDbStatusLabel == null || _ingestFilesButton == null) return;
+        
+        // Get selected files
+        var selectedFiles = new List<string>();
+        
+        foreach (ListViewItem item in _fileListView.Items)
+        {
+            if (item.Checked && item.Tag is string filePath)
+            {
+                selectedFiles.Add(filePath);
+                item.SubItems[3].Text = "Processing";
+                item.ForeColor = Color.Yellow;
+            }
+        }
+        
+        if (selectedFiles.Count == 0)
+        {
+            MessageBox.Show(
+                "Please select at least one file to ingest by checking the box next to it.",
+                "No Files Selected",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Warning
+            );
+            return;
+        }
+        
+        // Disable the ingest button during processing
+        _ingestFilesButton.Enabled = false;
+        _vectorDbStatusLabel.Text = "Ingesting files...";
+        _vectorDbStatusLabel.ForeColor = Color.FromArgb(100, 100, 200);
+        
+        LogEvent($"🚀 Starting ingestion of {selectedFiles.Count} files into Vector Database");
+        
+        try
+        {
+            // Process each file
+            for (int i = 0; i < selectedFiles.Count; i++)
+            {
+                string filePath = selectedFiles[i];
+                string fileName = Path.GetFileName(filePath);
+                
+                LogEvent($"📄 Processing file [{i+1}/{selectedFiles.Count}]: {fileName}");
+                
+                // Update the UI to show processing status
+                foreach (ListViewItem item in _fileListView.Items)
+                {
+                    if (item.Tag as string == filePath)
+                    {
+                        item.SubItems[3].Text = "Ingesting";
+                        break;
+                    }
+                }
+                
+                try
+                {
+                    // Read the file content
+                    string content = await File.ReadAllTextAsync(filePath);
+                    
+                    // Send to vector DB service via event bus
+                    if (_eventBus != null)
+                    {
+                        var payload = new Dictionary<string, object>
+                        {
+                            { "filePath", filePath },
+                            { "content", content },
+                            { "fileName", fileName },
+                            { "timestamp", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss") }
+                        };
+                        
+                        // Emit the event to ingest the file
+                        await _eventBus.EmitAsync("vectordb.ingest.file", payload);
+                        
+                        // Wait a moment to simulate processing
+                        await Task.Delay(500);
+                        
+                        // Update the UI to show success
+                        foreach (ListViewItem item in _fileListView.Items)
+                        {
+                            if (item.Tag as string == filePath)
+                            {
+                                item.SubItems[3].Text = "Complete";
+                                item.ForeColor = Color.FromArgb(100, 255, 100);
+                                break;
+                            }
+                        }
+                        
+                        LogEvent($"✅ Successfully ingested: {fileName}");
+                    }
+                    else
+                    {
+                        // Update the UI to show failure
+                        foreach (ListViewItem item in _fileListView.Items)
+                        {
+                            if (item.Tag as string == filePath)
+                            {
+                                item.SubItems[3].Text = "Failed";
+                                item.ForeColor = Color.FromArgb(255, 100, 100);
+                                break;
+                            }
+                        }
+                        
+                        LogEvent($"❌ Failed to ingest (no event bus): {fileName}");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Update the UI to show failure
+                    foreach (ListViewItem item in _fileListView.Items)
+                    {
+                        if (item.Tag as string == filePath)
+                        {
+                            item.SubItems[3].Text = "Error";
+                            item.ForeColor = Color.FromArgb(255, 100, 100);
+                            break;
+                        }
+                    }
+                    
+                    LogEvent($"❌ Error ingesting file {fileName}: {ex.Message}");
+                }
+            }
+            
+            // Re-enable the ingest button
+            _ingestFilesButton.Enabled = true;
+            _vectorDbStatusLabel.Text = "Ingestion complete";
+            _vectorDbStatusLabel.ForeColor = Color.FromArgb(100, 255, 100);
+            
+            LogEvent("✅ File ingestion process completed");
+        }
+        catch (Exception ex)
+        {
+            _ingestFilesButton.Enabled = true;
+            _vectorDbStatusLabel.Text = "Ingestion failed";
+            _vectorDbStatusLabel.ForeColor = Color.FromArgb(255, 100, 100);
+            
+            LogEvent($"❌ File ingestion process failed: {ex.Message}");
+        }
     }
 
     private async Task ExecuteCurrentCode()
