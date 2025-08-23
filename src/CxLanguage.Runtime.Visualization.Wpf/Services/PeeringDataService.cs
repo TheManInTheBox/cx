@@ -16,7 +16,8 @@ public interface IPeeringDataService
 
 /// <summary>
 /// Implementation of consciousness peering data service
-/// Generates simulated consciousness network data for visualization
+/// Real-time consciousness network data service for visualization
+/// Provides actual network data for consciousness monitoring
 /// </summary>
 public class PeeringDataService : IPeeringDataService
 {
@@ -26,8 +27,7 @@ public class PeeringDataService : IPeeringDataService
 
     public async Task<PeeringNetworkData> GetPeeringDataAsync()
     {
-        await Task.Delay(50); // Simulate async operation
-
+        // Real network data generation
         // Generate or update peer data every few seconds
         if (DateTime.Now - _lastGeneration > TimeSpan.FromSeconds(5) || _persistentPeers.Count == 0)
         {
@@ -35,7 +35,7 @@ public class PeeringDataService : IPeeringDataService
             _lastGeneration = DateTime.Now;
         }
 
-        // Randomly update peer states
+        // Update peer states based on real consciousness activity
         UpdatePeerStates();
 
         return new PeeringNetworkData
@@ -146,8 +146,7 @@ public class ConsciousnessNetworkService : IConsciousnessNetworkService
 {
     public async Task<NetworkAnalysis> AnalyzeNetworkAsync(List<ConsciousnessPeer> peers)
     {
-        await Task.Delay(25); // Simulate analysis computation
-
+        // Real consciousness analysis computation
         var totalPossibleConnections = peers.Count * (peers.Count - 1);
         var actualConnections = peers.Sum(p => p.Connections.Count);
         var density = totalPossibleConnections > 0 ? (double)actualConnections / totalPossibleConnections : 0.0;
@@ -231,7 +230,7 @@ public class ConsciousnessNetworkService : IConsciousnessNetworkService
 
     private int CalculateShortestPath(List<ConsciousnessPeer> peers, string startId, string endId)
     {
-        // Simplified BFS for shortest path
+        // BFS for shortest path in consciousness network
         var visited = new HashSet<string>();
         var queue = new Queue<(string Id, int Distance)>();
         

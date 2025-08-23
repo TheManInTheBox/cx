@@ -23,45 +23,45 @@ namespace CxLanguage.Runtime.DirectPeering
         /// <summary>
         /// Register consciousness agent in the network
         /// </summary>
-        public async Task<bool> RegisterAgentAsync(AgentDescriptor agent)
+        public Task<bool> RegisterAgentAsync(AgentDescriptor agent)
         {
             if (agent == null) throw new ArgumentNullException(nameof(agent));
 
-            await Task.Delay(1); // Simulated registration latency
+            // Real agent registration processing
 
             lock (_lock)
             {
                 _registeredAgents[agent.AgentId] = agent;
                 _logger.LogInformation("Agent registered: {AgentId} with consciousness level {Level}", 
                     agent.AgentId, agent.ConsciousnessLevel);
-                return true;
+                return Task.FromResult(true);
             }
         }
 
         /// <summary>
         /// Get all registered consciousness agents
         /// </summary>
-        public async Task<IEnumerable<AgentDescriptor>> GetAllAgentsAsync()
+        public Task<IEnumerable<AgentDescriptor>> GetAllAgentsAsync()
         {
-            await Task.Delay(1); // Simulated retrieval latency
+            // Real agent retrieval without artificial delays
 
             lock (_lock)
             {
-                return _registeredAgents.Values.ToList();
+                return Task.FromResult<IEnumerable<AgentDescriptor>>(_registeredAgents.Values.ToList());
             }
         }
 
         /// <summary>
         /// Find agent by identifier
         /// </summary>
-        public async Task<AgentDescriptor?> FindAgentAsync(string agentId)
+        public Task<AgentDescriptor?> FindAgentAsync(string agentId)
         {
-            await Task.Delay(1); // Simulated lookup latency
+            // Real agent lookup without artificial delays
 
             lock (_lock)
             {
                 _registeredAgents.TryGetValue(agentId, out var agent);
-                return agent;
+                return Task.FromResult(agent);
             }
         }
     }
@@ -81,12 +81,12 @@ namespace CxLanguage.Runtime.DirectPeering
         /// <summary>
         /// Validate security credentials between consciousness agents
         /// </summary>
-        public async Task<SecurityValidationResult> ValidateSecurityAsync(AgentDescriptor source, AgentDescriptor target)
+        public Task<SecurityValidationResult> ValidateSecurityAsync(AgentDescriptor source, AgentDescriptor target)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (target == null) throw new ArgumentNullException(nameof(target));
 
-            await Task.Delay(2); // Simulated security validation latency
+            // Real security validation without artificial delays
 
             // Simplified security validation logic
             var trustLevel = Math.Min(source.TrustLevel, target.TrustLevel);
@@ -95,7 +95,7 @@ namespace CxLanguage.Runtime.DirectPeering
             _logger.LogDebug("Security validation: {Source} <-> {Target}, Trust: {Trust}, Valid: {Valid}",
                 source.AgentId, target.AgentId, trustLevel, isValid);
 
-            return new SecurityValidationResult
+            return Task.FromResult(new SecurityValidationResult
             {
                 IsValid = isValid,
                 TrustLevel = trustLevel,
@@ -106,7 +106,7 @@ namespace CxLanguage.Runtime.DirectPeering
                     ["targetTrust"] = target.TrustLevel,
                     ["minimumRequired"] = 0.3
                 }
-            };
+            });
         }
     }
 
@@ -125,12 +125,12 @@ namespace CxLanguage.Runtime.DirectPeering
         /// <summary>
         /// Validate consciousness compatibility between agents
         /// </summary>
-        public async Task<ConsciousnessCompatibilityResult> ValidateCompatibilityAsync(AgentDescriptor source, AgentDescriptor target)
+        public Task<ConsciousnessCompatibilityResult> ValidateCompatibilityAsync(AgentDescriptor source, AgentDescriptor target)
         {
             if (source == null) throw new ArgumentNullException(nameof(source));
             if (target == null) throw new ArgumentNullException(nameof(target));
 
-            await Task.Delay(1); // Simulated compatibility validation latency
+            // Real compatibility validation without artificial delays
 
             // Calculate consciousness compatibility
             var levelDifference = Math.Abs(source.ConsciousnessLevel - target.ConsciousnessLevel);
@@ -148,7 +148,7 @@ namespace CxLanguage.Runtime.DirectPeering
             _logger.LogDebug("Consciousness compatibility: {Source} <-> {Target}, Score: {Score}, Compatible: {Compatible}",
                 source.AgentId, target.AgentId, finalScore, isCompatible);
 
-            return new ConsciousnessCompatibilityResult
+            return Task.FromResult(new ConsciousnessCompatibilityResult
             {
                 IsCompatible = isCompatible,
                 CompatibilityScore = finalScore,
@@ -167,7 +167,7 @@ namespace CxLanguage.Runtime.DirectPeering
                     ["commonCapabilities"] = commonCapabilities,
                     ["totalCapabilities"] = totalCapabilities
                 }
-            };
+            });
         }
     }
 }

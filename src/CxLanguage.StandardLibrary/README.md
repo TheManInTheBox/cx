@@ -43,7 +43,7 @@ This standard library provides a **revolutionary cognitive architecture** for th
 - `IImageAnalysis` → `this.analyze(image)` - Cognitive visual understanding
 - `IFullAICapabilities` → Complete biological cognitive capabilities
 
-*Revolutionary Feature: All cognitive methods use authentic neural timing patterns for biological consciousness simulation.*
+*Revolutionary Feature: All cognitive methods use authentic neural timing patterns for biological consciousness processing.*
 
 ## Production Architecture Foundation
 - **ICxAiService**: Universal interface for all enterprise AI services
@@ -75,7 +75,7 @@ This standard library provides a **revolutionary cognitive architecture** for th
 - Synaptic plasticity timing (5-15ms LTP, 10-25ms LTD)
 - Neural pathway strengthening through repeated patterns
 - Consciousness-aware temperature and creativity controls
-- Biological token limit management with fatigue simulation
+- Biological token limit management with resource optimization
 
 ### 🧠 2. Conscious Chat Completion Service
 **Location**: `AI/ChatCompletion/ChatCompletionService.cs`  

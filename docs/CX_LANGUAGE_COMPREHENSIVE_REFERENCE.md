@@ -104,23 +104,6 @@ on event.name(event: object) {
     # Single event handler
     print("Received: " + event.data);
 }
-
-on event.name(event: object) {
-    # Multiple conditional handlers using cognitive logic
-    is {
-        condition: event.type == "measurement",
-        reasoning: "Handle measurement events"
-    } {
-        print("Processing measurement: " + event.value);
-    }
-    
-    is {
-        condition: event.type == "analysis",
-        reasoning: "Handle analysis events"
-    } {
-        print("Processing analysis: " + event.result);
-    }
-}
 ```
 
 ### **Event Emission**
@@ -205,7 +188,7 @@ on condition.low.action(event: object) {
     print("⚠️ Performance needs optimization");
     
     # Trigger optimization
-    optimizePlasticity {
+    emit optimizePlasticity {
         data: {
             entityId: "current",
             strategy: "comprehensive",
@@ -253,19 +236,6 @@ on performance.good.action(event: object) {
         strategy: "enhancement"
     };
 }
-    } {
-        print("✅ Good performance, optimizing further...");
-        optimizePlasticity { strategy: "incremental" };
-    }
-    
-    not {
-        condition: event.biologicalAuthenticity > 0.5,
-        reasoning: "Performance significantly below standards"
-    } {
-        print("🔧 Major optimization required");
-        optimizePlasticity { strategy: "comprehensive" };
-    }
-}
 ```
 
 ---
@@ -304,7 +274,7 @@ on adaptation.complete(event: object) {
     print("Efficiency Gain: " + event.efficiencyGain + "%");
     
     # Demonstrate new capabilities
-    demonstrateNewCapabilities {
+    emit demonstrateNewCapabilities {
         capabilities: event.acquiredCapabilities,
         handlers: [demonstration.complete]
     };
@@ -351,19 +321,7 @@ iam {
         learningEfficiency: 0.78,
         adaptationCapability: 0.92
     }
-} {
-    print("🧠 Consciousness Health Assessment:");
-    print("Biological Authenticity: " + self.biologicalAuthenticity);
-    print("Learning Efficiency: " + self.learningEfficiency);
-    print("Adaptation Capability: " + self.adaptationCapability);
-    
-    is {
-        condition: self.overallHealth > 0.8,
-        reasoning: "Consciousness operating at optimal levels"
-    } {
-        print("✅ Consciousness operating optimally");
-    }
-}
+};
 ```
 
 ### **Self-Monitoring Pattern**
@@ -371,24 +329,6 @@ iam {
 iam {
     assessment: "capability inventory",
     focus: "evaluate current skills and identify growth areas"
-} {
-    print("📊 Current Capabilities:");
-    print("- Measurement: " + self.measurementCapability);
-    print("- Analysis: " + self.analysisCapability);
-    print("- Optimization: " + self.optimizationCapability);
-    
-    not {
-        condition: self.hasCapability("advanced_prediction"),
-        reasoning: "Advanced prediction capability missing"
-    } {
-        print("🎯 Initiating advanced prediction skill acquisition");
-        
-        adapt {
-            context: "capability gap resolution",
-            focus: "acquire advanced prediction capabilities",
-            targetCapabilities: ["advanced_prediction"]
-        };
-    }
 }
 ```
 
@@ -435,7 +375,7 @@ measureNeuroplasticity {
 };
 
 # Analysis service
-analyzeNeuroplasticity {
+emit analyzeNeuroplasticity {
     data: {
         entityId: "NeuroplasticityDemo",
         periodHours: 0.1,
@@ -447,7 +387,7 @@ analyzeNeuroplasticity {
 };
 
 # Optimization service
-optimizePlasticity {
+emit optimizePlasticity {
     data: {
         entityId: "NeuroplasticityDemo",
         strategy: "comprehensive",

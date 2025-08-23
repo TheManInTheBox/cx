@@ -19,8 +19,10 @@ namespace CxLanguage.LocalLLM
                 throw new ArgumentNullException(nameof(services));
             }
 
-            // Register GpuLocalLLMService as implementation of ILocalLLMService
-            services.AddSingleton<ILocalLLMService, GpuLocalLLMService>();
+            // Register concrete service so constructors can depend on GpuLocalLLMService
+            services.AddSingleton<GpuLocalLLMService>();
+            // Map interface to the same instance
+            services.AddSingleton<ILocalLLMService>(sp => sp.GetRequiredService<GpuLocalLLMService>());
             
             // Register event handler to integrate with CX event system
             services.AddSingleton<LocalLlmEventHandler>();

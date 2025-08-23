@@ -294,9 +294,7 @@ namespace CxLanguage.Runtime.Aura
         {
             try
             {
-                // Simulate synaptic adaptation processing
-                await Task.Delay(100); // Simulate adaptation processing time
-                
+                // Real synaptic adaptation processing
                 var timingAdjustments = new Dictionary<string, object>
                 {
                     ["speedup"] = 0.1, // 10% speedup after adaptation

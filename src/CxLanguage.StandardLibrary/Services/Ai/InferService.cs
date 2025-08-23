@@ -173,7 +173,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                 if (!_localLLMService.IsModelLoaded)
                 {
                     _logger.LogInformation("📥 Loading local LLM model for inference...");
-                    await _localLLMService.LoadModelAsync("llama-3.2-3b-instruct-q4_k_m.gguf");
+                    await _localLLMService.LoadModelAsync("Llama-3.2-3B-Instruct-Q4_K_M.gguf");
                 }
 
                 // Convert data to appropriate format for processing

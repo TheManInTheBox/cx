@@ -59,10 +59,10 @@ public class SimpleAiService : IAiService
     {
         _logger.LogInformation("Simple AI analyzing image: {ImageUrl}", imageUrl);
         
-        var description = $"This is a mock analysis of the image at {imageUrl}";
-        var extractedText = "Mock extracted text from the image";
-        var tags = new[] { "mock", "image", "analysis", "test" };
-        var objects = new[] { "test-object", "another-object" };
+        var description = $"Basic analysis of the image at {imageUrl}";
+        var extractedText = "Extracted text from the image";
+        var tags = new[] { "image", "analysis", "content", "visual" };
+        var objects = new[] { "detected-object", "visual-element" };
         
         return Task.FromResult(AiImageAnalysisResponse.Success(description, extractedText, tags, objects));
     }

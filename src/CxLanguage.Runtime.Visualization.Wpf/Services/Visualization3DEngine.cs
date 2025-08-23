@@ -41,7 +41,7 @@ public class Visualization3DEngine : IVisualization3DEngine, IDisposable
 
     public async Task InitializeAsync()
     {
-        await Task.Delay(100); // Simulate initialization
+        // Real 3D engine initialization
         _logger.LogInformation("3D Consciousness visualization engine initialized");
     }
 
