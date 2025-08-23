@@ -22,8 +22,4 @@
     <PackageReference Include="Azure.Identity" Version="1.12.1" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\CxLanguage.Runtime\CxLanguage.Runtime.csproj" />
-  </ItemGroup>
-
 </Project>

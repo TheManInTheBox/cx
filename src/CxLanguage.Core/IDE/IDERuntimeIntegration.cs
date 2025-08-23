@@ -6,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using CxLanguage.Core.Events;
 using CxLanguage.Core.Hardware;
-using CxLanguage.Runtime;
 using Microsoft.Extensions.Logging;
 using System.Text.Json;
 
@@ -22,7 +21,6 @@ namespace CxLanguage.Core.IDE
         private readonly ILogger<IDERuntimeIntegration> _logger;
         private readonly ICxEventBus _eventBus;
         private readonly PatelHardwareAccelerator _hardwareAccelerator;
-        private readonly CxRuntime _cxRuntime;
         private readonly Channel<IDEEvent> _ideEventChannel;
         private readonly ConcurrentDictionary<string, LiveSession> _liveSessions;
         private readonly LiveCodeExecutor _liveCodeExecutor;
@@ -32,13 +30,11 @@ namespace CxLanguage.Core.IDE
         public IDERuntimeIntegration(
             ILogger<IDERuntimeIntegration> logger,
             ICxEventBus eventBus,
-            PatelHardwareAccelerator hardwareAccelerator,
-            CxRuntime cxRuntime)
+            PatelHardwareAccelerator hardwareAccelerator)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _hardwareAccelerator = hardwareAccelerator ?? throw new ArgumentNullException(nameof(hardwareAccelerator));
-            _cxRuntime = cxRuntime ?? throw new ArgumentNullException(nameof(cxRuntime));
             
             // Initialize real-time processing channels
             var channelOptions = new BoundedChannelOptions(1000)
