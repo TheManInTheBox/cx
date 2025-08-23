@@ -244,9 +244,9 @@ namespace CxLanguage.Core.IDE
             Console.WriteLine("🧠 Consciousness stream processing started");
             
             // Subscribe to consciousness events
-            await _eventBus.SubscribeAsync("consciousness.*", ProcessConsciousnessEvent);
-            await _eventBus.SubscribeAsync("ide.execution.*", ProcessIDEExecutionEvent);
-            await _eventBus.SubscribeAsync("ide.session.*", ProcessIDESessionEvent);
+            _eventBus.Subscribe("consciousness", ProcessConsciousnessEvent);
+            _eventBus.Subscribe("ide.execution", ProcessIDEExecutionEvent);
+            _eventBus.Subscribe("ide.session", ProcessIDESessionEvent);
             
             // Start stream monitoring loop
             _ = Task.Run(() => MonitorConsciousnessStreamsAsync(_cancellationTokenSource.Token));
@@ -268,9 +268,9 @@ namespace CxLanguage.Core.IDE
             Console.WriteLine("🧠 Consciousness stream processing stopped");
             
             // Unsubscribe from events
-            await _eventBus.UnsubscribeAsync("consciousness.*", ProcessConsciousnessEvent);
-            await _eventBus.UnsubscribeAsync("ide.execution.*", ProcessIDEExecutionEvent);
-            await _eventBus.UnsubscribeAsync("ide.session.*", ProcessIDESessionEvent);
+            _eventBus.Unsubscribe("consciousness", ProcessConsciousnessEvent);
+            _eventBus.Unsubscribe("ide.execution", ProcessIDEExecutionEvent);
+            _eventBus.Unsubscribe("ide.session", ProcessIDESessionEvent);
             
             // Cleanup active streams
             lock (_streamsLock)
@@ -360,10 +360,12 @@ namespace CxLanguage.Core.IDE
         /// <summary>
         /// Process consciousness events
         /// </summary>
-        private async Task ProcessConsciousnessEvent(Dictionary<string, object> eventData)
+        private async Task<bool> ProcessConsciousnessEvent(object? sender, string eventName, IDictionary<string, object>? eventData)
         {
             try
             {
+                if (eventData == null) return true;
+                
                 var sessionId = eventData.TryGetValue("sessionId", out var sid) ? sid?.ToString() : null;
                 
                 if (sessionId != null)
@@ -373,57 +375,67 @@ namespace CxLanguage.Core.IDE
                 
                 // Emit processed consciousness event for IDE visualization
                 await _eventBus.EmitAsync("ide.consciousness.processed", eventData);
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process consciousness event");
+                return false;
             }
         }
         
         /// <summary>
         /// Process IDE execution events
         /// </summary>
-        private async Task ProcessIDEExecutionEvent(Dictionary<string, object> eventData)
+        private async Task<bool> ProcessIDEExecutionEvent(object? sender, string eventName, IDictionary<string, object>? eventData)
         {
             try
             {
+                if (eventData == null) return true;
+                
                 var sessionId = eventData.TryGetValue("sessionId", out var sid) ? sid?.ToString() : null;
                 
                 if (sessionId != null)
                 {
                     await UpdateConsciousnessStream(sessionId, "execution", eventData);
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process IDE execution event");
+                return false;
             }
         }
         
         /// <summary>
         /// Process IDE session events
         /// </summary>
-        private async Task ProcessIDESessionEvent(Dictionary<string, object> eventData)
+        private async Task<bool> ProcessIDESessionEvent(object? sender, string eventName, IDictionary<string, object>? eventData)
         {
             try
             {
+                if (eventData == null) return true;
+                
                 var sessionId = eventData.TryGetValue("sessionId", out var sid) ? sid?.ToString() : null;
                 
                 if (sessionId != null)
                 {
                     await UpdateConsciousnessStream(sessionId, "session", eventData);
                 }
+                return true;
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Failed to process IDE session event");
+                return false;
             }
         }
         
         /// <summary>
         /// Update consciousness stream with new event
         /// </summary>
-        private async Task UpdateConsciousnessStream(string sessionId, string eventType, Dictionary<string, object> eventData)
+        private async Task UpdateConsciousnessStream(string sessionId, string eventType, IDictionary<string, object> eventData)
         {
             lock (_streamsLock)
             {
