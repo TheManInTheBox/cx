@@ -8,8 +8,151 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Runtime.InteropServices;
 
 namespace CxLanguage.LocalLLM;
+
+/// <summary>
+/// Console suppression helper for native library output
+/// </summary>
+public static class ConsoleSuppressionHelper
+{
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr GetStdHandle(int nStdHandle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern bool SetStdHandle(int nStdHandle, IntPtr handle);
+
+    [DllImport("kernel32.dll", SetLastError = true)]
+    private static extern IntPtr CreateFile(
+        string fileName,
+        uint desiredAccess,
+        uint shareMode,
+        IntPtr securityAttributes,
+        uint creationDisposition,
+        uint flagsAndAttributes,
+        IntPtr templateFile);
+
+    private const int STD_OUTPUT_HANDLE = -11;
+    private const int STD_ERROR_HANDLE = -12;
+    private const uint GENERIC_WRITE = 0x40000000;
+    private const uint FILE_SHARE_WRITE = 0x00000002;
+    private const uint OPEN_EXISTING = 3;
+
+    public static IDisposable SuppressConsoleOutput()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            return new DisposableAction(() => { }); // No-op on non-Windows
+
+        try
+        {
+            var originalOut = GetStdHandle(STD_OUTPUT_HANDLE);
+            var originalErr = GetStdHandle(STD_ERROR_HANDLE);
+
+            // Redirect to NUL device to suppress native output
+            var nullHandle = CreateFile("NUL", GENERIC_WRITE, FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+
+            SetStdHandle(STD_OUTPUT_HANDLE, nullHandle);
+            SetStdHandle(STD_ERROR_HANDLE, nullHandle);
+
+            return new DisposableAction(() =>
+            {
+                // Restore original handles
+                SetStdHandle(STD_OUTPUT_HANDLE, originalOut);
+                SetStdHandle(STD_ERROR_HANDLE, originalErr);
+            });
+        }
+        catch
+        {
+            return new DisposableAction(() => { }); // Fallback to no-op
+        }
+    }
+
+    private class DisposableAction : IDisposable
+    {
+        private readonly Action _action;
+        private bool _disposed = false;
+
+        public DisposableAction(Action action) => _action = action;
+
+        public void Dispose()
+        {
+            if (!_disposed)
+            {
+                _action?.Invoke();
+                _disposed = true;
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Filtered console writer that suppresses verbose LLAMA model loader output
+/// </summary>
+public class LlamaModelLoaderFilter : TextWriter
+{
+    private readonly TextWriter _originalWriter;
+    
+    public LlamaModelLoaderFilter(TextWriter originalWriter)
+    {
+        _originalWriter = originalWriter;
+    }
+    
+    public override Encoding Encoding => _originalWriter.Encoding;
+    
+    public override void WriteLine(string? value)
+    {
+        // Suppress LLAMA model loader and other verbose output
+        if (value != null && (
+            value.StartsWith("llama_model_loader:") ||
+            value.StartsWith("llm_load_") ||
+            value.Contains("model params = ") ||
+            value.Contains("model size = ") ||
+            value.Contains("model desc = ") ||
+            value.Contains("model type = ") ||
+            value.Contains("model ftype = ") ||
+            value.Contains("model dims = ") ||
+            value.Contains("model parts count = ") ||
+            value.Contains("general.architecture") ||
+            value.Contains("general.type") ||
+            value.Contains("general.name") ||
+            value.Contains("general.size_label") ||
+            value.Contains("- kv   ") ||
+            value.Contains("- tensor ") ||
+            value.Contains("llm_load_print_meta")))
+            return;
+            
+        _originalWriter.WriteLine(value);
+    }
+    
+    public override void Write(string? value)
+    {
+        // Suppress LLAMA model loader and other verbose output
+        if (value != null && (
+            value.StartsWith("llama_model_loader:") ||
+            value.StartsWith("llm_load_") ||
+            value.Contains("model params = ") ||
+            value.Contains("model size = ") ||
+            value.Contains("model desc = ") ||
+            value.Contains("model type = ") ||
+            value.Contains("model ftype = ") ||
+            value.Contains("model dims = ") ||
+            value.Contains("model parts count = ") ||
+            value.Contains("general.architecture") ||
+            value.Contains("general.type") ||
+            value.Contains("general.name") ||
+            value.Contains("general.size_label") ||
+            value.Contains("- kv   ") ||
+            value.Contains("- tensor ") ||
+            value.Contains("llm_load_print_meta")))
+            return;
+            
+        _originalWriter.Write(value);
+    }
+    
+    public override void Write(char value) => _originalWriter.Write(value);
+    public override void Flush() => _originalWriter.Flush();
+}
 
 /// <summary>
 /// Native GGUF inference engine for real local LLM processing with consciousness awareness.
@@ -57,12 +200,16 @@ public class NativeGGUFInferenceEngine : IDisposable
                 Embeddings = false        // Disable embeddings for inference-only mode
             };
 
-            // Load model with consciousness awareness
+            // Load model with consciousness awareness (suppress ALL native output)
             await Task.Run(() =>
             {
-                _model = LLamaWeights.LoadFromFile(parameters);
-                _context = _model.CreateContext(parameters);
-                _executor = new InteractiveExecutor(_context);
+                // Use native console suppression for Windows to block llama.cpp output
+                using (ConsoleSuppressionHelper.SuppressConsoleOutput())
+                {
+                    _model = LLamaWeights.LoadFromFile(parameters);
+                    _context = _model.CreateContext(parameters);
+                    _executor = new InteractiveExecutor(_context);
+                }
             });
 
             _isLoaded = true;

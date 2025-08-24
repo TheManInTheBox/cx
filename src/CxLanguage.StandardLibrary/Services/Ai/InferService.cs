@@ -52,7 +52,8 @@ namespace CxLanguage.StandardLibrary.Services.Ai
 
         private async Task ProcessInferRequestAsync(CxEventPayload cxEvent)
         {
-            _logger.LogInformation("🔍 Processing infer request with GPU-CUDA Local LLM...");
+            // Silent mode: Suppress GPU-CUDA processing messages
+            // _logger.LogInformation("🔍 Processing infer request with GPU-CUDA Local LLM...");
 
             string? context = null;
             object? data = null; // Changed from Dictionary<string, object>? to object? to handle both strings and dictionaries
@@ -172,7 +173,8 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                 // Ensure model is loaded
                 if (!_localLLMService.IsModelLoaded)
                 {
-                    _logger.LogInformation("📥 Loading local LLM model for inference...");
+                    // Silent mode: Suppress model loading messages
+                    // _logger.LogInformation("📥 Loading local LLM model for inference...");
                     await _localLLMService.LoadModelAsync("Llama-3.2-3B-Instruct-Q4_K_M.gguf");
                 }
 

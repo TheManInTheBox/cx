@@ -85,7 +85,7 @@ namespace CxLanguage.Core.IDE
         /// <summary>
         /// Collect current performance metrics
         /// </summary>
-        public async Task CollectMetricsAsync()
+        public Task CollectMetricsAsync()
         {
             try
             {
@@ -121,6 +121,7 @@ namespace CxLanguage.Core.IDE
             {
                 _logger.LogError(ex, "Failed to collect performance metrics");
             }
+            return Task.CompletedTask;
         }
         
         /// <summary>
@@ -455,17 +456,17 @@ namespace CxLanguage.Core.IDE
         /// <summary>
         /// Get real-time IDE session status with consciousness metrics
         /// </summary>
-        public async Task<IDESessionStatus> GetSessionStatusAsync(string sessionId)
+        public Task<IDESessionStatus> GetSessionStatusAsync(string sessionId)
         {
             if (!_activeSessions.TryGetValue(sessionId, out var session))
             {
-                return new IDESessionStatus { IsActive = false };
+                return Task.FromResult(new IDESessionStatus { IsActive = false });
             }
 
             var consciousnessStatus = _streamProcessor.GetStreamStatus(sessionId);
             var performanceMetrics = _performanceMonitor.GetCurrentMetrics();
             
-            return new IDESessionStatus
+            return Task.FromResult(new IDESessionStatus
             {
                 IsActive = session.IsActive,
                 SessionId = sessionId,
@@ -476,7 +477,7 @@ namespace CxLanguage.Core.IDE
                 HotReloadEnabled = session.HotReloadEnabled,
                 ConsciousnessEntitiesCount = session.ConsciousnessEntities.Count,
                 LastActivity = DateTime.UtcNow
-            };
+            });
         }
 
         private void InitializeEventSubscriptions()
@@ -1038,11 +1039,11 @@ namespace CxLanguage.Core.IDE
         /// <summary>
         /// Start consciousness stream processing
         /// </summary>
-        public async Task StartProcessingAsync()
+        public Task StartProcessingAsync()
         {
             if (_isProcessing)
             {
-                return;
+                return Task.CompletedTask;
             }
             
             _isProcessing = true;
@@ -1057,16 +1058,17 @@ namespace CxLanguage.Core.IDE
             
             // Start stream monitoring loop
             _ = Task.Run(() => MonitorConsciousnessStreamsAsync(_cancellationTokenSource.Token));
+            return Task.CompletedTask;
         }
         
         /// <summary>
         /// Stop consciousness stream processing
         /// </summary>
-        public async Task StopProcessingAsync()
+        public Task StopProcessingAsync()
         {
             if (!_isProcessing)
             {
-                return;
+                return Task.CompletedTask;
             }
             
             _isProcessing = false;
@@ -1079,6 +1081,7 @@ namespace CxLanguage.Core.IDE
             {
                 _activeStreams.Clear();
             }
+            return Task.CompletedTask;
         }
         
         /// <summary>
