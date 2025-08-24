@@ -1,0 +1,562 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Threading;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Vortice.Direct3D11;
+using Vortice.DXGI;
+using ICSharpCode.AvalonEdit;
+using CxLanguage.IDE.WinUI.Services;
+
+namespace CxLanguage.IDE.WinUI
+{
+    /// <summary>
+    /// CX Language IDE main window with WPF + DirectX hybrid architecture
+    /// Features consciousness visualization, real-time event processing, and GPU acceleration
+    /// GitHub Issue #220: Implements syntax highlighting and auto-completion
+    /// </summary>
+    public partial class MainWindow : Window
+    {
+        // CX Language services for syntax highlighting and auto-completion
+        private ICxSyntaxHighlighter? _syntaxHighlighter;
+        private ICxAutoCompletionService? _autoCompletionService;
+        private ICxCodeFormattingService? _codeFormattingService;
+        private ICxPerformanceMonitor? _performanceMonitor;
+        private ICxErrorDetectionService? _errorDetectionService;
+        
+        // Real-time monitoring
+        private int _realEventCount = 0;
+        private readonly DateTime _startTime = DateTime.Now;
+        private readonly ObservableCollection<string> _eventHistory = new();
+        private DispatcherTimer? _updateTimer;
+        
+        // DirectX consciousness visualization
+        private ID3D11Device? _d3dDevice;
+        private ConsciousnessDirectXRenderer? _consciousnessRenderer;
+        private NeuralNetworkVisualizer? _neuralNetworkViz;
+        private EventStreamVisualizer? _eventStreamViz;
+        private bool _consciousnessVisualizationEnabled = true;
+
+        public MainWindow()
+        {
+            InitializeComponent();
+            InitializeIDE();
+            _ = Task.Run(InitializeDirectXAsync);
+            _ = Task.Run(InitializeLocalLlmAsync);
+            _ = Task.Run(InitializeCxLanguageServicesAsync);
+        }
+
+        private void InitializeIDE()
+        {
+            // Set up timer for periodic updates
+            _updateTimer = new DispatcherTimer();
+            _updateTimer.Interval = TimeSpan.FromMilliseconds(500);
+            _updateTimer.Tick += UpdateTimer_Tick;
+            _updateTimer.Start();
+
+            // Update initial status
+            this.Title = "CX Language IDE - WPF + DirectX Hybrid - Initializing...";
+            
+            // Window events
+            this.Loaded += MainWindow_Loaded;
+            this.Closing += MainWindow_Closing;
+        }
+
+        private void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            this.Title = "CX Language IDE - WPF + DirectX Hybrid - Ready";
+            AddEventToHistory("CX Language IDE fully loaded with syntax highlighting");
+        }
+
+        private void MainWindow_Closing(object? sender, System.ComponentModel.CancelEventArgs e)
+        {
+            // Cleanup DirectX resources
+            _consciousnessRenderer?.Dispose();
+            _neuralNetworkViz?.Dispose();
+            _eventStreamViz?.Dispose();
+            _d3dDevice?.Dispose();
+            _updateTimer?.Stop();
+        }
+
+        private async Task InitializeDirectXAsync()
+        {
+            try
+            {
+                // Initialize DirectX for consciousness visualization
+                await Task.Run(() => 
+                {
+                    // Create D3D11 device
+                    var result = D3D11.D3D11CreateDevice(
+                        null,
+                        Vortice.Direct3D.DriverType.Hardware,
+                        DeviceCreationFlags.BgraSupport,
+                        null,
+                        out _d3dDevice);
+
+                    if (result.Success && _d3dDevice != null)
+                    {
+                        // Initialize consciousness visualization components
+                        _consciousnessRenderer = new ConsciousnessDirectXRenderer(_d3dDevice);
+                        _neuralNetworkViz = new NeuralNetworkVisualizer(_d3dDevice);
+                        _eventStreamViz = new EventStreamVisualizer(_d3dDevice);
+                    }
+                });
+
+                Dispatcher.Invoke(() => {
+                    this.Title = "CX Language IDE - DirectX Consciousness Ready";
+                });
+                
+                AddEventToHistory("DirectX consciousness visualization initialized");
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() => {
+                    this.Title = $"CX Language IDE - DirectX Failed: {ex.Message}";
+                });
+                
+                AddEventToHistory($"DirectX initialization failed: {ex.Message}");
+            }
+        }
+
+        private async Task InitializeLocalLlmAsync()
+        {
+            try 
+            {
+                await Task.Delay(100); // Simulate initialization
+                
+                Dispatcher.Invoke(() => {
+                    this.Title = "CX Language IDE - Local LLM + DirectX Ready";
+                });
+                
+                AddEventToHistory("Local LLM system initialized");
+            }
+            catch (Exception ex)
+            {
+                Dispatcher.Invoke(() => {
+                    this.Title = $"CX Language IDE - Local LLM Failed: {ex.Message}";
+                });
+                
+                AddEventToHistory($"Local LLM initialization failed: {ex.Message}");
+            }
+        }
+
+        private async Task InitializeCxLanguageServicesAsync()
+        {
+            try
+            {
+                // Create service collection for dependency injection
+                var services = new ServiceCollection();
+                services.AddLogging(builder => builder.AddConsole());
+                services.AddSingleton<ICxSyntaxHighlighter, CxSyntaxHighlighter>();
+                services.AddSingleton<ICxAutoCompletionService, CxAutoCompletionService>();
+                services.AddSingleton<ICxCodeFormattingService, CxCodeFormattingService>();
+                services.AddSingleton<ICxPerformanceMonitor, CxPerformanceMonitor>();
+                services.AddSingleton<ICxErrorDetectionService, CxErrorDetectionService>();
+                
+                var serviceProvider = services.BuildServiceProvider();
+                
+                // Initialize services
+                _syntaxHighlighter = serviceProvider.GetRequiredService<ICxSyntaxHighlighter>();
+                _autoCompletionService = serviceProvider.GetRequiredService<ICxAutoCompletionService>();
+                _codeFormattingService = serviceProvider.GetRequiredService<ICxCodeFormattingService>();
+                _performanceMonitor = serviceProvider.GetRequiredService<ICxPerformanceMonitor>();
+                _errorDetectionService = serviceProvider.GetRequiredService<ICxErrorDetectionService>();
+                
+                await Dispatcher.InvokeAsync(() =>
+                {
+                    // Configure syntax highlighting
+                    _syntaxHighlighter.ConfigureEditor(CodeEditor);
+                    
+                    // Register auto-completion
+                    _autoCompletionService.RegisterCompletionProvider(CodeEditor);
+                    
+                    // Set up real-time syntax highlighting with performance monitoring
+                    CodeEditor.TextChanged += async (sender, e) =>
+                    {
+                        var code = CodeEditor.Text;
+                        
+                        using (_performanceMonitor?.StartOperation("SyntaxHighlighting"))
+                        {
+                            await _syntaxHighlighter.HighlightSyntaxAsync(CodeEditor, code);
+                        }
+                        
+                        using (_performanceMonitor?.StartOperation("ConsciousnessAnalysis"))
+                        {
+                            await AnalyzeCodeConsciousness(code);
+                        }
+                        
+                        // Perform real-time error detection
+                        if (_errorDetectionService != null)
+                        {
+                            using (_performanceMonitor?.StartOperation("ErrorDetection"))
+                            {
+                                var errorResult = await _errorDetectionService.AnalyzeCodeAsync(code);
+                                await Dispatcher.InvokeAsync(() => {
+                                    _errorDetectionService.HighlightErrors(CodeEditor, errorResult);
+                                    
+                                    // Update status with error/warning count
+                                    var statusMessage = errorResult.IsValid 
+                                        ? "✅ No errors found" 
+                                        : $"❌ {errorResult.Errors.Length} errors, {errorResult.Warnings.Length} warnings";
+                                    AddEventToHistory($"Code analysis: {statusMessage}");
+                                });
+                            }
+                        }
+                    };
+                    
+                    // Set up keyboard shortcuts for formatting with comprehensive debugging
+                    CodeEditor.TextArea.KeyDown += async (sender, e) =>
+                    {
+                        try 
+                        {
+                            // Debug logging for ALL key presses
+                            var keyInfo = $"Key: {e.Key}, Modifiers: {System.Windows.Input.Keyboard.Modifiers}, SystemKey: {e.SystemKey}";
+                            AddEventToHistory($"Key event: {keyInfo}");
+                            
+                            // Multiple ways to trigger formatting
+                            bool isFormatShortcut = false;
+                            
+                            // Method 1: Ctrl+F
+                            if (e.Key == System.Windows.Input.Key.F && 
+                                System.Windows.Input.Keyboard.Modifiers == System.Windows.Input.ModifierKeys.Control)
+                            {
+                                isFormatShortcut = true;
+                                AddEventToHistory("Detected Ctrl+F formatting shortcut");
+                            }
+                            
+                            // Method 2: Ctrl+Shift+F (alternative)
+                            if (e.Key == System.Windows.Input.Key.F && 
+                                (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Control) != 0 &&
+                                (System.Windows.Input.Keyboard.Modifiers & System.Windows.Input.ModifierKeys.Shift) != 0)
+                            {
+                                isFormatShortcut = true;
+                                AddEventToHistory("Detected Ctrl+Shift+F formatting shortcut");
+                            }
+                            
+                            if (isFormatShortcut)
+                            {
+                                e.Handled = true;
+                                AddEventToHistory("Starting document formatting...");
+                                
+                                if (_codeFormattingService != null)
+                                {
+                                    using (_performanceMonitor?.StartOperation("CodeFormattingKeyboard"))
+                                    {
+                                        await _codeFormattingService.FormatDocumentAsync(CodeEditor);
+                                        AddEventToHistory("Document formatted successfully via keyboard shortcut");
+                                    }
+                                }
+                                else
+                                {
+                                    AddEventToHistory("ERROR: Code formatting service is null!");
+                                }
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            AddEventToHistory($"ERROR in key handler: {ex.Message}");
+                            AddEventToHistory($"Stack trace: {ex.StackTrace}");
+                        }
+                    };
+                    
+                    // Initial syntax highlighting with performance monitoring
+                    var initialCode = CodeEditor.Text;
+                    if (!string.IsNullOrEmpty(initialCode))
+                    {
+                        _ = Task.Run(async () => 
+                        {
+                            using (_performanceMonitor?.StartOperation("InitialSyntaxHighlighting"))
+                            {
+                                await _syntaxHighlighter.HighlightSyntaxAsync(CodeEditor, initialCode);
+                            }
+                        });
+                    }
+                });
+                
+                AddEventToHistory("CX Language syntax highlighting, auto-completion, error detection, and formatting initialized");
+                
+                // Log initial performance stats
+                if (_performanceMonitor != null)
+                {
+                    var stats = _performanceMonitor.GetOverallStats();
+                    AddEventToHistory($"Performance monitoring active - Target: <100ms response time");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddEventToHistory($"CX Language services initialization failed: {ex.Message}");
+            }
+        }
+
+        private async Task AnalyzeCodeConsciousness(string code)
+        {
+            // Analyze code for consciousness patterns with real-time parsing
+            try
+            {
+                if (string.IsNullOrWhiteSpace(code)) return;
+                
+                var startTime = DateTime.Now;
+                
+                // TODO: Parse code for errors and semantic analysis
+                // var parseResult = await Task.Run(() => CxLanguageParser.Parse(code, "editor"));
+
+                // TODO: Enable parsing and error analysis when parser is available
+                // For now, assume successful parse for syntax highlighting
+                
+                var elapsed = DateTime.Now - startTime;
+                
+                // Update consciousness visualization based on code structure
+                // TODO: Enable when parser is available
+                // if (parseResult.IsSuccess)
+                if (true) // Placeholder for parseResult.IsSuccess
+                {
+                    AddEventToHistory($"Code parsed successfully in {elapsed.TotalMilliseconds:F0}ms");
+                    
+                    // Update neural network visualization based on parsed AST
+                    Dispatcher.Invoke(() => {
+                        _neuralNetworkViz?.UpdateFromCode(code);
+                    });
+
+                    // Apply syntax highlighting
+                    if (_syntaxHighlighter != null)
+                    {
+                        await Dispatcher.InvokeAsync(async () => {
+                            await _syntaxHighlighter.HighlightSyntaxAsync(CodeEditor, code);
+                        });
+                    }
+                }
+
+                // Add minimal delay to satisfy async requirement
+                await Task.Delay(1);
+            }
+            catch (Exception ex)
+            {
+                AddEventToHistory($"Consciousness analysis error: {ex.Message}");
+            }
+        }
+
+        private void UpdateTimer_Tick(object? sender, EventArgs e)
+        {
+            // Update runtime duration
+            var elapsed = DateTime.Now - _startTime;
+            var durationText = elapsed.TotalMinutes > 1 
+                ? $"{elapsed.TotalMinutes:F1}m" 
+                : $"{elapsed.TotalSeconds:F0}s";
+            
+            // Update DirectX consciousness visualization
+            if (_consciousnessRenderer != null && _consciousnessVisualizationEnabled)
+            {
+                _consciousnessRenderer.UpdateFrame();
+            }
+        }
+
+        private void AddEventToHistory(string eventDescription)
+        {
+            _realEventCount++;
+            var timestamp = DateTime.Now.ToString("HH:mm:ss.fff");
+            var entry = $"[{timestamp}] {eventDescription}";
+            
+            _eventHistory.Insert(0, entry); // Add to top of list
+            
+            // Keep only recent events (limit to 100)
+            while (_eventHistory.Count > 100)
+            {
+                _eventHistory.RemoveAt(_eventHistory.Count - 1);
+            }
+            
+            // Update event stream visualization
+            _eventStreamViz?.AddEvent(eventDescription);
+        }
+
+        // File Operations - Core IDE Functionality
+        private string? _currentFilePath;
+        private bool _isFileModified = false;
+        
+        private void OpenMenuItem_Click(object sender, RoutedEventArgs e) => OpenFile();
+        private void SaveMenuItem_Click(object sender, RoutedEventArgs e) => SaveFile();
+        private void ExitMenuItem_Click(object sender, RoutedEventArgs e) => this.Close();
+        private void UndoMenuItem_Click(object sender, RoutedEventArgs e) => CodeEditor.Undo();
+        private void RedoMenuItem_Click(object sender, RoutedEventArgs e) => CodeEditor.Redo();
+        private async void CompileRunMenuItem_Click(object sender, RoutedEventArgs e) 
+        {
+            AddEventToHistory("Compile run menu clicked");
+            using (_performanceMonitor?.StartOperation("CompileAndRun"))
+            {
+                await CompileAndRunCode();
+            }
+        }
+        private void StopMenuItem_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Stop menu clicked");
+        private void Show3DVisualizationMenuItem_Click(object sender, RoutedEventArgs e) => AddEventToHistory("3D visualization menu clicked");
+        private void ShowNeuralNetworkMenuItem_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Neural network menu clicked");
+        private void ShowEventStreamMenuItem_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Event stream menu clicked");
+        private async void RunButton_Click(object sender, RoutedEventArgs e) 
+        {
+            AddEventToHistory("Run button clicked");
+            using (_performanceMonitor?.StartOperation("RunCode"))
+            {
+                await CompileAndRunCode();
+            }
+        }
+        private void StopButton_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Stop button clicked");
+        private void SaveButton_Click(object sender, RoutedEventArgs e) 
+        {
+            AddEventToHistory("Save button clicked");
+            // TODO: Implement file save
+        }
+        private void OpenButton_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Open button clicked");
+        private void Consciousness3DButton_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Consciousness 3D button clicked");
+        private void ToggleNeuralNetworkButton_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Toggle neural network button clicked");
+        private void ToggleEventStreamButton_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Toggle event stream button clicked");
+        private void ToggleConsciousnessButton_Click(object sender, RoutedEventArgs e) => AddEventToHistory("Toggle consciousness button clicked");
+        
+        private async void FormatButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                AddEventToHistory("Format button clicked - starting document formatting...");
+                
+                if (_codeFormattingService != null)
+                {
+                    using (_performanceMonitor?.StartOperation("CodeFormattingButton"))
+                    {
+                        await _codeFormattingService.FormatDocumentAsync(CodeEditor);
+                        AddEventToHistory("Document formatted successfully via button");
+                    }
+                }
+                else
+                {
+                    AddEventToHistory("Error: Code formatting service not initialized");
+                }
+            }
+            catch (Exception ex)
+            {
+                AddEventToHistory($"Error formatting via button: {ex.Message}");
+            }
+        }
+        
+        private async Task CompileAndRunCode()
+        {
+            try
+            {
+                var code = CodeEditor.Text;
+                if (string.IsNullOrWhiteSpace(code))
+                {
+                    AddEventToHistory("No code to compile and run");
+                    return;
+                }
+                
+                AddEventToHistory("Starting compilation...");
+                
+                // TODO: Parse the code when parser is available
+                // var parseResult = await Task.Run(() => CxLanguageParser.Parse(code, "main"));
+                
+                // Placeholder for successful compilation
+                var compilationSuccess = true;
+                    
+                if (compilationSuccess) // TODO: Replace with parseResult.IsSuccess
+                {
+                    AddEventToHistory("✅ Code compiled successfully");
+                    
+                    // TODO: Execute the compiled code
+                    // This would integrate with the CX Language runtime
+                    
+                    AddEventToHistory("🚀 Code execution started");
+                }
+                else
+                {
+                    AddEventToHistory($"❌ Compilation failed: unknown errors");
+                    
+                    // TODO: Show errors in the editor when parser is available
+                    // if (_syntaxHighlighter != null && parseResult.Errors != null)
+                    // {
+                    //     var errorMessages = parseResult.Errors.Select(e => e.ToString()).ToArray();
+                    //     _syntaxHighlighter.HighlightErrors(CodeEditor, errorMessages);
+                    // }
+                }
+
+                // Add simple await to satisfy async method requirement
+                await Task.Delay(1);
+            }
+            catch (Exception ex)
+            {
+                AddEventToHistory($"❌ Compilation error: {ex.Message}");
+            }
+        }
+    }
+
+    // DirectX Consciousness Visualization Classes (placeholder implementations)
+    public class ConsciousnessDirectXRenderer : IDisposable
+    {
+        private readonly ID3D11Device _device;
+        
+        public ConsciousnessDirectXRenderer(ID3D11Device device)
+        {
+            _device = device;
+        }
+        
+        public void UpdateFrame() 
+        {
+            // Render consciousness visualization frame
+        }
+        
+        public void BeginExecution() 
+        {
+            // Start execution visualization
+        }
+        
+        public void CompleteExecution(bool success) 
+        {
+            // Complete execution visualization
+        }
+        
+        public void Dispose() 
+        {
+            // Cleanup DirectX resources
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    public class NeuralNetworkVisualizer : IDisposable
+    {
+        private readonly ID3D11Device _device;
+        
+        public NeuralNetworkVisualizer(ID3D11Device device)
+        {
+            _device = device;
+        }
+        
+        public void UpdateFromCode(string code) 
+        {
+            // Update neural network visualization based on code
+        }
+        
+        public void Dispose() 
+        {
+            // Cleanup DirectX resources
+            GC.SuppressFinalize(this);
+        }
+    }
+
+    public class EventStreamVisualizer : IDisposable
+    {
+        private readonly ID3D11Device _device;
+        
+        public EventStreamVisualizer(ID3D11Device device)
+        {
+            _device = device;
+        }
+        
+        public void AddEvent(string eventDescription) 
+        {
+            // Add event to stream visualization
+        }
+        
+        public void Dispose() 
+        {
+            // Cleanup DirectX resources
+            GC.SuppressFinalize(this);
+        }
+    }
+}

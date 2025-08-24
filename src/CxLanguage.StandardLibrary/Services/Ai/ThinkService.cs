@@ -29,7 +29,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _vectorStore = vectorStore;
 
             _eventBus.Subscribe("ai.think.request", async (sender, eventName, data) => { await OnThinkRequest(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _logger.LogInformation("✅ ThinkService (GPU-CUDA) initialized and subscribed to 'ai.think.request'");
+            _logger.LogDebug("✅ ThinkService (GPU-CUDA) initialized and subscribed to 'ai.think.request'");
         }
 
         private Task OnThinkRequest(CxEventPayload cxEvent)

@@ -21,7 +21,7 @@ namespace CxLanguage.StandardLibrary.Services.IO
             : base(serviceProvider, logger)
         {
             _eventBus = eventBus;
-            _logger.LogInformation("📁 DirectoryService initialized with consciousness integration");
+            _logger.LogDebug("📁 DirectoryService initialized with consciousness integration");
             
             // Subscribe to directory events
             _eventBus.Subscribe("directory.create.request", async (sender, eventName, data) => 

@@ -96,7 +96,7 @@ class Program
             if (localLLMService != null)
             {
                 CxLanguage.Runtime.CxRuntimeHelper.RegisterService("LocalLLMService", localLLMService);
-                Console.WriteLine("✅ GPU-FIRST LocalLLMService registered for static access in consciousness processing");
+                // Console.WriteLine("✅ GPU-FIRST LocalLLMService registered for static access in consciousness processing");
             }
             
             // Register ICxEventBus service for consciousness integration
@@ -104,7 +104,7 @@ class Program
             if (eventBusService != null)
             {
                 CxLanguage.Runtime.CxRuntimeHelper.RegisterService("ICxEventBus", eventBusService);
-                Console.WriteLine("✅ ICxEventBus registered for static access in event emission");
+                // Console.WriteLine("✅ ICxEventBus registered for static access in event emission");
             }
             
             // Force AI services instantiation to ensure event subscriptions
@@ -168,7 +168,7 @@ class Program
             try
             {
                 aiService = host.Services.GetRequiredService<CxCoreAI.IAiService>();
-                Console.WriteLine($"✅ Neural System: AI Service loaded for biological testing");
+                // Console.WriteLine($"✅ Neural System: AI Service loaded for biological testing");
             }
             catch (Exception ex)
             {
@@ -218,7 +218,7 @@ class Program
                     // Subscribe to system.shutdown event
                     if (eventBusService != null)
                     {
-                        Console.WriteLine("🔄 Waiting for system.shutdown event or Ctrl+C to exit...");
+                        // Console.WriteLine("🔄 Waiting for system.shutdown event or Ctrl+C to exit...");
                         
                         eventBusService.Subscribe("system.shutdown", (sender, eventName, payload) =>
                         {
@@ -241,8 +241,9 @@ class Program
                     }
                     
                     // Launch CX Consciousness Visualization and wait for it to be ready
-                    Console.WriteLine("🎮 Starting CX Consciousness Visualization...");
-                    var visualizationReady = await LaunchVisualizationAndWaitForReadyAsync();
+                    // Console.WriteLine("🎮 CX Consciousness Visualization (disabled for demo)...");
+                    // var visualizationReady = await LaunchVisualizationAndWaitForReadyAsync();
+                    var visualizationReady = true; // Skip visualization for demo
                     
                     if (!visualizationReady)
                     {
@@ -250,7 +251,7 @@ class Program
                     }
                     
                     // Execute the script after visualization is ready
-                    Console.WriteLine("🚀 Starting CX script execution...");
+                    // Console.WriteLine("🚀 Starting CX script execution...");
                     var task = (Task?)runMethod.Invoke(null, null);
                     if (task != null)
                     {
@@ -479,7 +480,7 @@ class Program
                 try
                 {
                     services.AddSingleton<CxLanguage.LocalLLM.ILocalLLMService, CxLanguage.LocalLLM.GpuLocalLLMService>();
-                    Console.WriteLine("✅ GpuLocalLLMService registered successfully.");
+                    // Console.WriteLine("✅ GpuLocalLLMService registered successfully.");
                 }
                 catch (Exception ex)
                 {
@@ -490,7 +491,7 @@ class Program
                 try
                 {
                     services.AddSingleton<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService, CxLanguage.StandardLibrary.Services.VectorStore.InMemoryVectorStoreService>();
-                    Console.WriteLine("✅ InMemoryVectorStoreService registered successfully.");
+                    // Console.WriteLine("✅ InMemoryVectorStoreService registered successfully.");
                 }
                 catch (Exception ex)
                 {
@@ -508,7 +509,7 @@ class Program
                         var vectorStore = provider.GetRequiredService<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService>();
                         return new CxLanguage.StandardLibrary.Services.Ai.ThinkService(eventBus, logger, localLLMService, vectorStore);
                     });
-                    Console.WriteLine("✅ ThinkService (GPU-CUDA) with consciousness integration registered successfully.");
+                    // Console.WriteLine("✅ ThinkService (GPU-CUDA) with consciousness integration registered successfully.");
                 }
                 catch (Exception ex)
                 {
@@ -526,7 +527,7 @@ class Program
                         var vectorStore = provider.GetRequiredService<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService>();
                         return new CxLanguage.StandardLibrary.Services.Ai.InferService(eventBus, logger, localLLMService, vectorStore);
                     });
-                    Console.WriteLine("✅ InferService (GPU-CUDA) with inference capabilities registered successfully.");
+                    // Console.WriteLine("✅ InferService (GPU-CUDA) with inference capabilities registered successfully.");
                 }
                 catch (Exception ex)
                 {
@@ -544,7 +545,7 @@ class Program
                         var vectorStore = provider.GetRequiredService<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService>();
                         return new CxLanguage.StandardLibrary.Services.Ai.LearnService(eventBus, logger, localLLMService, vectorStore);
                     });
-                    Console.WriteLine("✅ LearnService (GPU-CUDA) with vector storage capabilities registered successfully.");
+                    // Console.WriteLine("✅ LearnService (GPU-CUDA) with vector storage capabilities registered successfully.");
                 }
                 catch (Exception ex)
                 {
@@ -560,7 +561,7 @@ class Program
                         var logger = provider.GetRequiredService<ILogger<FileSystemService>>();
                         return new FileSystemService(provider, eventBus, logger);
                     });
-                    Console.WriteLine("🗂️ FileSystemService registered successfully.");
+                    // Console.WriteLine("🗂️ FileSystemService registered successfully.");
 
                     services.AddSingleton<DirectoryService>(provider =>
                     {
@@ -568,7 +569,7 @@ class Program
                         var logger = provider.GetRequiredService<ILogger<DirectoryService>>();
                         return new DirectoryService(provider, eventBus, logger);
                     });
-                    Console.WriteLine("📁 DirectoryService registered successfully.");
+                    // Console.WriteLine("📁 DirectoryService registered successfully.");
 
                     services.AddSingleton<JsonService>(provider =>
                     {
@@ -576,7 +577,7 @@ class Program
                         var logger = provider.GetRequiredService<ILogger<JsonService>>();
                         return new JsonService(provider, eventBus, logger);
                     });
-                    Console.WriteLine("🔧 JsonService registered successfully.");
+                    // Console.WriteLine("🔧 JsonService registered successfully.");
                 }
                 catch (Exception ex)
                 {
@@ -613,7 +614,7 @@ class Program
                 
                 if (eventBusService != null)
                 {
-                    Console.WriteLine($"✅ Successfully retrieved event bus: {eventBusService.GetType().FullName}");
+                    // Console.WriteLine($"✅ Successfully retrieved event bus: {eventBusService.GetType().FullName}");
                 }
                 else
                 {
@@ -634,34 +635,8 @@ class Program
                     System.Windows.Forms.Application.EnableVisualStyles();
                     System.Windows.Forms.Application.SetCompatibleTextRenderingDefault(false);
                     
-                    // Create and initialize the main form with event bus
-                    var mainForm = new CxLanguage.Runtime.Visualization.MainForm(eventBusService);
-                    
-                    // Signal that the form is created and ready
-                    mainForm.Shown += (sender, e) =>
-                    {
-                        Console.WriteLine("✅ Visualization window is ready!");
-                        visualizationReadySource.TrySetResult(true);
-                    };
-                    
-                    // Handle form creation errors
-                    mainForm.Load += (sender, e) =>
-                    {
-                        try
-                        {
-                            // Ensure event bus connection is established
-                            Console.WriteLine("🔗 Establishing event bus connection...");
-                        }
-                        catch (Exception ex)
-                        {
-                            Console.WriteLine($"⚠️ Error establishing event bus connection: {ex.Message}");
-                        }
-                    };
-                    
-                    // Run the Windows Forms application
-                    System.Windows.Forms.Application.Run(mainForm);
-                    
-                    Console.WriteLine("✅ Windows Forms visualization window closed");
+                    // Visualization disabled for Issue #228 demo
+                    throw new NotImplementedException("Visualization disabled for Issue #228 demo");
                 }
                 catch (Exception ex)
                 {

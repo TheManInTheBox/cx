@@ -304,7 +304,7 @@ public class CxCompiler : IAstVisitor<object>
     {
         // DISABLED: Auto-instantiation causes duplicate instances when user explicitly creates objects
         // Users must use 'var instance = new ClassName();' to instantiate consciousness entities
-        Console.WriteLine($"🔄 Auto-instantiation disabled - Users must explicitly instantiate consciousness entities");
+        // Console.WriteLine($"🔄 Auto-instantiation disabled - Users must explicitly instantiate consciousness entities");
         return;
     }
 
@@ -1048,11 +1048,11 @@ public class CxCompiler : IAstVisitor<object>
 
     public object VisitLiteral(LiteralNode node)
     {
-        Console.WriteLine($"🔧 COMPILER: VisitLiteral called with value: '{node.Value}' (type: {node.Value?.GetType()?.Name ?? "null"})");
+        // Console.WriteLine($"🔧 COMPILER: VisitLiteral called with value: '{node.Value}' (type: {node.Value?.GetType()?.Name ?? "null"})");
         
         if (node.Value == null)
         {
-            Console.WriteLine($"🔧 COMPILER: Emitting Ldnull for null value");
+            // Console.WriteLine($"🔧 COMPILER: Emitting Ldnull for null value");
             _currentIl!.Emit(OpCodes.Ldnull);
         }
         else if (node.Value is int intValue)
@@ -1072,7 +1072,7 @@ public class CxCompiler : IAstVisitor<object>
         }
         else if (node.Value is string stringValue)
         {
-            Console.WriteLine($"🔧 COMPILER: Emitting Ldstr for string value: '{stringValue}'");
+            // Console.WriteLine($"🔧 COMPILER: Emitting Ldstr for string value: '{stringValue}'");
             _currentIl!.Emit(OpCodes.Ldstr, stringValue);
             // Don't box strings - they're already reference types
         }
@@ -1625,7 +1625,7 @@ public class CxCompiler : IAstVisitor<object>
 
     public object VisitIdentifier(IdentifierNode node)
     {
-        Console.WriteLine($"🔧 COMPILER: VisitIdentifier called with name: '{node.Name}'");
+        // Console.WriteLine($"🔧 COMPILER: VisitIdentifier called with name: '{node.Name}'");
         
         // Special handling for 'this' keyword in class context
         if (node.Name == "this" && _currentClassName != null)
@@ -2663,7 +2663,7 @@ public class CxCompiler : IAstVisitor<object>
         {
             // Convert the member access chain to a string literal
             var handlerName = GetFullMemberAccessName(node);
-            Console.WriteLine($"🔧 COMPILER: Converting handler reference to string: '{handlerName}'");
+            // Console.WriteLine($"🔧 COMPILER: Converting handler reference to string: '{handlerName}'");
             _currentIl!.Emit(OpCodes.Ldstr, handlerName);
             return new object();
         }
@@ -4452,20 +4452,20 @@ public class CompilationResult
 
     public static CompilationResult Success(Assembly assembly, Type programType) 
     {
-        Console.WriteLine($"✅ COMPILATION RESULT: Success - Assembly: {assembly.FullName}, Type: {programType.Name}");
+        // Console.WriteLine($"✅ COMPILATION RESULT: Success - Assembly: {assembly.FullName}, Type: {programType.Name}");
         return new(true, assembly, programType, null);
     }
 
     public static CompilationResult SuccessWithInjections(Assembly assembly, Type programType, List<string> injectedFunctions) 
     {
-        Console.WriteLine($"🎉 COMPILATION RESULT: Success with {injectedFunctions.Count} injected functions");
+        // Console.WriteLine($"🎉 COMPILATION RESULT: Success with {injectedFunctions.Count} injected functions");
         Console.WriteLine($"📋 INJECTED FUNCTIONS: {string.Join(", ", injectedFunctions)}");
         return new(true, assembly, programType, null, injectedFunctions);
     }
 
     public static CompilationResult Failure(string errorMessage) 
     {
-        Console.WriteLine($"❌ COMPILATION RESULT: Failure - {errorMessage}");
+        // Console.WriteLine($"❌ COMPILATION RESULT: Failure - {errorMessage}");
         return new(false, null, null, errorMessage);
     }
 }

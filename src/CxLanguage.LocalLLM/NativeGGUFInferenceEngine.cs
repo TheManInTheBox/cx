@@ -44,7 +44,7 @@ public class NativeGGUFInferenceEngine : IDisposable
                 return false;
             }
 
-            _logger.LogInformation("🧩 Loading GGUF model from {ModelPath}...", _modelPath);
+            _logger.LogDebug("🧩 Loading GGUF model from {ModelPath}...", _modelPath);
 
             // LlamaSharp model parameters for consciousness processing
             var parameters = new ModelParams(_modelPath)
@@ -66,7 +66,7 @@ public class NativeGGUFInferenceEngine : IDisposable
             });
 
             _isLoaded = true;
-            _logger.LogInformation("✅ GGUF model loaded successfully. Real LLM Mode activated.");
+            _logger.LogDebug("✅ GGUF model loaded successfully. Real LLM Mode activated.");
             
             return true;
         }

@@ -35,7 +35,7 @@ public static class RuntimeFunctionRegistry
     {
         try
         {
-            Console.WriteLine($"📚 REGISTRY: Starting registration for assembly: {assemblyName}");
+            // Console.WriteLine($"📚 REGISTRY: Starting registration for assembly: {assemblyName}");
             
             var assemblyInfo = new AssemblyInfo
             {
@@ -46,7 +46,7 @@ public static class RuntimeFunctionRegistry
             
             // Get all callable methods from the program type
             var methods = programType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static);
-            Console.WriteLine($"🔍 REGISTRY: Found {methods.Length} total methods in program type");
+            // Console.WriteLine($"🔍 REGISTRY: Found {methods.Length} total methods in program type");
             
             int registeredCount = 0;
             foreach (var method in methods)
@@ -67,13 +67,13 @@ public static class RuntimeFunctionRegistry
             }
             
             _registeredAssemblies[assemblyName] = assemblyInfo;
-            Console.WriteLine($"✅ REGISTRY: Successfully registered {registeredCount} functions from assembly {assemblyName}");
-            Console.WriteLine($"📊 REGISTRY: Total registered functions: {_registeredMethods.Count}");
+            // Console.WriteLine($"✅ REGISTRY: Successfully registered {registeredCount} functions from assembly {assemblyName}");
+            // Console.WriteLine($"📊 REGISTRY: Total registered functions: {_registeredMethods.Count}");
         }
         catch (Exception ex)
         {
             // Log error but don't fail - this is a runtime enhancement
-            Console.WriteLine($"❌ REGISTRY ERROR: Failed to register assembly {assemblyName}: {ex.Message}");
+            System.Diagnostics.Debug.WriteLine($"❌ REGISTRY ERROR: Failed to register assembly {assemblyName}: {ex.Message}");
         }
     }
     
@@ -125,12 +125,12 @@ public static class RuntimeFunctionRegistry
                 var instance = Activator.CreateInstance(assemblyInfo.ProgramType, console, aiService, aiFunctions);
                 assemblyInfo.ProgramInstance = instance;
                 
-                Console.WriteLine($"✅ INSTANCE: Successfully created program instance for {assemblyName}");
+                // Console.WriteLine($"✅ INSTANCE: Successfully created program instance for {assemblyName}");
                 return instance;
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ INSTANCE ERROR: Failed to create instance for {assemblyName}: {ex.Message}");
+                // Console.WriteLine($"❌ INSTANCE ERROR: Failed to create instance for {assemblyName}: {ex.Message}");
                 Console.WriteLine($"📋 INSTANCE: Stack trace: {ex.StackTrace}");
                 return null;
             }
@@ -150,7 +150,7 @@ public static class RuntimeFunctionRegistry
         {
             try
             {
-                Console.WriteLine($"✅ EXECUTION: Found function {functionName} in registry");
+                // Console.WriteLine($"✅ EXECUTION: Found function {functionName} in registry");
                 
                 // Handle static methods (built-in functions)
                 if (method.IsStatic)
@@ -168,7 +168,7 @@ public static class RuntimeFunctionRegistry
                     Console.WriteLine($"⚡ EXECUTION: Invoking static method {functionName}");
                     var result = method.Invoke(null, convertedArgs);
                     
-                    Console.WriteLine($"🎉 EXECUTION SUCCESS: Static function {functionName} executed successfully");
+                    // Console.WriteLine($"🎉 EXECUTION SUCCESS: Static function {functionName} executed successfully");
                     Console.WriteLine($"📤 EXECUTION: Result type: {result?.GetType().Name ?? "null"}");
                     
                     return result;
@@ -187,7 +187,7 @@ public static class RuntimeFunctionRegistry
                         {
                                                         return null;
                         }
-                        Console.WriteLine($"✅ EXECUTION: Program instance created successfully");
+                        // Console.WriteLine($"✅ EXECUTION: Program instance created successfully");
                     }
                     
                     // Log method details
@@ -201,14 +201,14 @@ public static class RuntimeFunctionRegistry
                     Console.WriteLine($"⚡ EXECUTION: Invoking method {functionName}");
                     var result = method.Invoke(assemblyInfo.ProgramInstance, convertedArgs);
                     
-                    Console.WriteLine($"🎉 EXECUTION SUCCESS: Function {functionName} executed successfully");
+                    // Console.WriteLine($"🎉 EXECUTION SUCCESS: Function {functionName} executed successfully");
                     Console.WriteLine($"📤 EXECUTION: Result type: {result?.GetType().Name ?? "null"}");
                     
                     return result;
                 }
                 else
                 {
-                    Console.WriteLine($"❌ EXECUTION: No assembly found containing function {functionName}");
+                    // Console.WriteLine($"❌ EXECUTION: No assembly found containing function {functionName}");
                 }
             }
             catch (Exception ex)
@@ -219,7 +219,7 @@ public static class RuntimeFunctionRegistry
         }
         else
         {
-            Console.WriteLine($"❌ EXECUTION: Function {functionName} not found in registry");
+            // Console.WriteLine($"❌ EXECUTION: Function {functionName} not found in registry");
             Console.WriteLine($"📋 EXECUTION: Available functions: {string.Join(", ", _registeredMethods.Keys)}");
         }
         
@@ -246,14 +246,14 @@ public static class RuntimeFunctionRegistry
         
         if (runtimeAssembly == null)
         {
-            Console.WriteLine($"❌ REGISTRY: Could not find CxLanguage.Runtime assembly");
+            // Console.WriteLine($"❌ REGISTRY: Could not find CxLanguage.Runtime assembly");
             return;
         }
 
         var runtimeHelperType = runtimeAssembly.GetType("CxLanguage.Runtime.CxRuntimeHelper");
         if (runtimeHelperType == null)
         {
-            Console.WriteLine($"❌ REGISTRY: Could not find CxRuntimeHelper type in Runtime assembly");
+            // Console.WriteLine($"❌ REGISTRY: Could not find CxRuntimeHelper type in Runtime assembly");
             return;
         }
 
@@ -276,11 +276,11 @@ public static class RuntimeFunctionRegistry
             if (method != null)
             {
                 RegisterBuiltInFunction(functionName, method);
-                Console.WriteLine($"✅ REGISTRY: Built-in function registered: {functionName}");
+                // Console.WriteLine($"✅ REGISTRY: Built-in function registered: {functionName}");
             }
             else
             {
-                Console.WriteLine($"❌ REGISTRY: Built-in function not found: {functionName}");
+                // Console.WriteLine($"❌ REGISTRY: Built-in function not found: {functionName}");
             }
         }
 
@@ -296,11 +296,11 @@ public static class RuntimeFunctionRegistry
             if (method != null)
             {
                 RegisterBuiltInFunction(cxName, method);
-                Console.WriteLine($"✅ REGISTRY: Built-in function registered: {cxName} -> {csharpMethodName}");
+                // Console.WriteLine($"✅ REGISTRY: Built-in function registered: {cxName} -> {csharpMethodName}");
             }
             else
             {
-                Console.WriteLine($"❌ REGISTRY: Built-in function not found: {cxName} -> {csharpMethodName}");
+                // Console.WriteLine($"❌ REGISTRY: Built-in function not found: {cxName} -> {csharpMethodName}");
             }
         }
     }
@@ -341,7 +341,7 @@ public static class RuntimeFunctionRegistry
             // Handle object[] to string[] conversion
             if (paramType == typeof(string[]) && arg is object[] objectArray)
             {
-                Console.WriteLine($"🔄 CONVERTING: object[] to string[] for parameter {i}");
+                // Console.WriteLine($"🔄 CONVERTING: object[] to string[] for parameter {i}");
                 convertedArgs[i] = objectArray.Select(o => o?.ToString()).ToArray();
                 continue;
             }
@@ -350,7 +350,7 @@ public static class RuntimeFunctionRegistry
             if (paramType.IsArray && arg is object[] sourceArray)
             {
                 var elementType = paramType.GetElementType();
-                Console.WriteLine($"🔄 CONVERTING: object[] to {elementType?.Name}[] for parameter {i}");
+                // Console.WriteLine($"🔄 CONVERTING: object[] to {elementType?.Name}[] for parameter {i}");
                 
                 var targetArray = Array.CreateInstance(elementType!, sourceArray.Length);
                 for (int j = 0; j < sourceArray.Length; j++)

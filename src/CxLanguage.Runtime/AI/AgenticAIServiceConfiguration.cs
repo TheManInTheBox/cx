@@ -202,7 +202,7 @@ public class CxCodeGenerator : ICodeGenerator
     {
         try
         {
-            _logger.LogInformation("Compiling generated code with length: {Length}", code.Length);
+            _logger.LogDebug("Compiling generated code with length: {Length}", code.Length);
 
             // TODO: Integrate with actual Cx parser and compiler
             // For now, return a successful result
@@ -251,7 +251,7 @@ public class AgenticAIHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("Agentic AI Runtime hosted service started");
+        _logger.LogDebug("Agentic AI Runtime hosted service started");
 
         try
         {
@@ -274,7 +274,7 @@ public class AgenticAIHostedService : BackgroundService
             _logger.LogError(ex, "Error in Agentic AI Runtime hosted service");
         }
 
-        _logger.LogInformation("Agentic AI Runtime hosted service stopped");
+        _logger.LogDebug("Agentic AI Runtime hosted service stopped");
     }
 
     private async Task PerformMaintenanceTasks()
@@ -296,7 +296,7 @@ public class AgenticAIHostedService : BackgroundService
 
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Stopping Agentic AI Runtime hosted service");
+        _logger.LogDebug("Stopping Agentic AI Runtime hosted service");
         await base.StopAsync(cancellationToken);
     }
 }
@@ -349,7 +349,7 @@ internal class SimpleAiService : IAiService
 
     public async Task<AiResponse> GenerateTextAsync(string prompt, AiRequestOptions? options = null)
     {
-        _logger.LogInformation("Processing AI request with prompt: {Prompt}", prompt);
+        _logger.LogDebug("Processing AI request with prompt: {Prompt}", prompt);
         
         // Simple mock response for development
         await Task.Delay(100); // Simulate processing time
@@ -367,7 +367,7 @@ internal class SimpleAiService : IAiService
 
     public async Task<AiResponse> AnalyzeAsync(string content, AiAnalysisOptions options)
     {
-        _logger.LogInformation("Analyzing content: {Content}", content[..Math.Min(content.Length, 50)]);
+        _logger.LogDebug("Analyzing content: {Content}", content[..Math.Min(content.Length, 50)]);
         
         await Task.Delay(50); // Simulate processing time
         
@@ -384,7 +384,7 @@ internal class SimpleAiService : IAiService
 
     public async Task<AiStreamResponse> StreamGenerateTextAsync(string prompt, AiRequestOptions? options = null)
     {
-        _logger.LogInformation("Streaming AI request with prompt: {Prompt}", prompt);
+        _logger.LogDebug("Streaming AI request with prompt: {Prompt}", prompt);
         
         await Task.Delay(50); // Simulate initial processing
         
@@ -393,7 +393,7 @@ internal class SimpleAiService : IAiService
 
     public async Task<AiResponse[]> ProcessBatchAsync(string[] prompts, AiRequestOptions? options = null)
     {
-        _logger.LogInformation("Processing batch of {Count} prompts", prompts.Length);
+        _logger.LogDebug("Processing batch of {Count} prompts", prompts.Length);
         
         var responses = new List<AiResponse>();
         
@@ -415,7 +415,7 @@ internal class SimpleAiService : IAiService
 
     public async Task<AiEmbeddingResponse> GenerateEmbeddingAsync(string text, AiRequestOptions? options = null)
     {
-        _logger.LogInformation("Generating embedding for text: {Text}", text);
+        _logger.LogDebug("Generating embedding for text: {Text}", text);
         
         // Simple mock embedding for development
         await Task.Delay(50); // Simulate processing time
@@ -440,7 +440,7 @@ internal class SimpleAiService : IAiService
 
     public async Task<AiImageResponse> GenerateImageAsync(string prompt, AiImageOptions? options = null)
     {
-        _logger.LogInformation("Generating image for prompt: {Prompt}", prompt);
+        _logger.LogDebug("Generating image for prompt: {Prompt}", prompt);
         
         // Simple mock image generation for development
         await Task.Delay(200); // Simulate processing time
@@ -454,7 +454,7 @@ internal class SimpleAiService : IAiService
 
     public async Task<AiImageAnalysisResponse> AnalyzeImageAsync(string imageUrl, AiImageAnalysisOptions? options = null)
     {
-        _logger.LogInformation("Analyzing image: {ImageUrl}", imageUrl);
+        _logger.LogDebug("Analyzing image: {ImageUrl}", imageUrl);
         
         // Simple mock image analysis for development
         await Task.Delay(300); // Simulate processing time
