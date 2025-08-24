@@ -664,7 +664,7 @@ namespace CxLanguage.Runtime
                     
                     // Register with ICxEventBus (same system as EmitEvent)
                     eventBus.Subscribe(eventName, asyncHandler);
-                    Console.WriteLine($"[DEBUG] Registered handler for {eventName} with ICxEventBus");
+                    // Debug output removed for cleaner console
                     return;
                 }
                 catch (Exception ex)

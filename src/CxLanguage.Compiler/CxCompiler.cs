@@ -3350,10 +3350,7 @@ public class CxCompiler : IAstVisitor<object>
         }
 
         
-        // Add runtime debug output
-        var printMethod = typeof(Console).GetMethod("WriteLine", new[] { typeof(string) });
-        _currentIl!.Emit(OpCodes.Ldstr, $"[DEBUG] RUNTIME: About to create new {node.TypeName}");
-        _currentIl.Emit(OpCodes.Call, printMethod!);
+        // Debug output removed for cleaner console
         
         // Check if we have a user-defined class
         if (_userClasses.TryGetValue(node.TypeName, out var typeBuilder))
@@ -4459,7 +4456,7 @@ public class CompilationResult
     public static CompilationResult SuccessWithInjections(Assembly assembly, Type programType, List<string> injectedFunctions) 
     {
         // Console.WriteLine($"🎉 COMPILATION RESULT: Success with {injectedFunctions.Count} injected functions");
-        Console.WriteLine($"📋 INJECTED FUNCTIONS: {string.Join(", ", injectedFunctions)}");
+        // Console.WriteLine($"📋 INJECTED FUNCTIONS: {string.Join(", ", injectedFunctions)}");
         return new(true, assembly, programType, null, injectedFunctions);
     }
 

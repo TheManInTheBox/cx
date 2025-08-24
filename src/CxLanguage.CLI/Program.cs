@@ -17,6 +17,7 @@ using CxLanguage.StandardLibrary.Services.IO;
 using CxLanguage.Core.Events;
 using CxLanguage.LocalLLM;
 using CxCoreAI = CxLanguage.Core.AI;
+using CxLanguage.Runtime.Services;
 
 namespace CxLanguage.CLI;
 
@@ -90,6 +91,9 @@ class Program
             
             // Start hosted services (including VoiceInputEventBridge via VoiceServiceInitializer)
             await host.StartAsync();
+            
+            // Ensure ConsoleService is created so it subscribes to events
+            _ = host.Services.GetService<ConsoleService>();
             
             // Register LocalLLM service for consciousness integration
             var localLLMService = host.Services.GetService<CxLanguage.LocalLLM.ILocalLLMService>();
@@ -173,7 +177,7 @@ class Program
             catch (Exception ex)
             {
                 Console.WriteLine($"Warning: AI service not available: {ex.Message}");
-                Console.WriteLine("Neural system will continue with basic event functionality.");
+                // Console.WriteLine("Neural system will continue with basic event functionality.");
                 aiService = null;
             }
             
@@ -437,6 +441,11 @@ class Program
     static IHost CreateHost()
     {
         var builder = Host.CreateDefaultBuilder()
+            .ConfigureLogging(logging =>
+            {
+                logging.ClearProviders(); // Remove all default logging providers
+                logging.SetMinimumLevel(LogLevel.Critical); // Only show critical errors
+            })
             .ConfigureAppConfiguration((context, config) =>
             {
                 // Add configuration sources
@@ -578,6 +587,14 @@ class Program
                         return new JsonService(provider, eventBus, logger);
                     });
                     // Console.WriteLine("🔧 JsonService registered successfully.");
+
+                    // Register ConsoleService for system.console.write event handling
+                    services.AddSingleton<ConsoleService>(provider =>
+                    {
+                        var eventBus = provider.GetRequiredService<ICxEventBus>();
+                        var logger = provider.GetRequiredService<ILogger<ConsoleService>>();
+                        return new ConsoleService(eventBus, logger);
+                    });
                 }
                 catch (Exception ex)
                 {

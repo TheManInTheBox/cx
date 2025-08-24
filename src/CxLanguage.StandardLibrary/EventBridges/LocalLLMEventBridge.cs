@@ -42,7 +42,8 @@ public class LocalLLMEventBridge
     {
         try
         {
-            _logger.LogInformation("🎮 Registering GPU Local LLM Event Bridge handlers for CUDA-accelerated consciousness processing");
+            // Silent mode: Suppress LLM event bridge registration messages
+            // _logger.LogInformation("🎮 Registering GPU Local LLM Event Bridge handlers for CUDA-accelerated consciousness processing");
 
             // Subscribe to local LLM events using new delegate signature  
             _eventBus.Subscribe("local.llm.load.model", async (sender, eventName, data) => { await OnLoadModel(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
@@ -52,7 +53,8 @@ public class LocalLLMEventBridge
             _eventBus.Subscribe("local.llm.status.check", async (sender, eventName, data) => { await OnStatusCheck(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
             _eventBus.Subscribe("local.llm.model.info", async (sender, eventName, data) => { await OnModelInfo(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
 
-            _logger.LogInformation("✅ GPU Local LLM Event Bridge handlers registered - unified CUDA consciousness ready");
+            // Silent mode: Suppress event bridge registration confirmation
+            // _logger.LogInformation("✅ GPU Local LLM Event Bridge handlers registered - unified CUDA consciousness ready");
             
             // Initialize the CUDA inference engine
             await _localLLMService.InitializeAsync();
@@ -70,7 +72,8 @@ public class LocalLLMEventBridge
             if (cxEvent.Data is Dictionary<string, object> data &&
                 data.TryGetValue("modelPath", out var modelPath) && modelPath is string path)
             {
-                _logger.LogInformation("🔄 Loading model via event bridge: {ModelPath}", path);
+                // Silent mode: Suppress model loading messages
+                // _logger.LogInformation("🔄 Loading model via event bridge: {ModelPath}", path);
                 
                 await Task.Run(async () =>
                 {

@@ -52,26 +52,34 @@ namespace CxLanguage.LocalLLM
             var modelPath = FindBestAvailableModel();
             if (!string.IsNullOrEmpty(modelPath))
             {
-                // Create logger for GGUF engine - simplified approach
-                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                // Create logger for GGUF engine with minimal logging to suppress verbose output
+                var loggerFactory = LoggerFactory.Create(builder => 
+                    builder.AddConsole()
+                           .SetMinimumLevel(LogLevel.Warning) // Only show warnings and errors from GGUF
+                           .AddFilter("CxLanguage.LocalLLM.NativeGGUFInferenceEngine", LogLevel.Warning));
                 var ggufLogger = loggerFactory.CreateLogger<NativeGGUFInferenceEngine>();
                 _ggufEngine = new NativeGGUFInferenceEngine(ggufLogger, modelPath);
-                _logger.LogInformation("🧠 Found GGUF model: {ModelPath}", modelPath);
+                // Silent mode: Suppress LLM loader messages
+                // _logger.LogInformation("🧠 Found GGUF model: {ModelPath}", modelPath);
                 
-                // Initialize immediately
-                _ = Task.Run(async () => await InitializeAsync());
+                // DISABLE AUTOMATIC INITIALIZATION to prevent loader messages
+                // Initialize only when actually needed by inference requests
+                // _ = Task.Run(async () => await InitializeAsync());
             }
             else
             {
-                _logger.LogWarning("🚫 REAL LLM ONLY MODE: No GGUF models found. Simulation removed.");
-                _logger.LogInformation("📥 Required: Download a real GGUF model for authentic inference");
+                // Silent mode: Suppress warning messages
+                // _logger.LogWarning("🚫 REAL LLM ONLY MODE: No GGUF models found. Simulation removed.");
+                // _logger.LogInformation("📥 Required: Download a real GGUF model for authentic inference");
             }
             
-            _logger.LogDebug("🚀 GpuLocalLLMService initialized - GPU available: {GpuAvailable}", _gpuAvailable);
+            // Silent mode: Suppress debug messages
+            // _logger.LogDebug("🚀 GpuLocalLLMService initialized - GPU available: {GpuAvailable}", _gpuAvailable);
             if (_gpuAvailable)
             {
                 var deviceCount = GetGpuDeviceCount();
-                _logger.LogInformation("📊 CUDA Details: {DeviceCount} devices available", deviceCount);
+                // Silent mode: Suppress CUDA details
+                // _logger.LogInformation("📊 CUDA Details: {DeviceCount} devices available", deviceCount);
             }
         }
         
@@ -136,7 +144,8 @@ namespace CxLanguage.LocalLLM
                     
                     // Try some alternative approaches to find the workspace root
                     var currentDir = new DirectoryInfo(Environment.CurrentDirectory);
-                    _logger.LogInformation("🔍 CurrentDirectory: {CurrentDir}", currentDir.FullName);
+                    // Silent mode: Suppress directory logging
+                    // _logger.LogInformation("🔍 CurrentDirectory: {CurrentDir}", currentDir.FullName);
                     
                     // Try finding workspace from current directory
                     workspaceRoot = FindWorkspaceRoot(currentDir.FullName);
@@ -151,11 +160,13 @@ namespace CxLanguage.LocalLLM
                         
                         foreach (var root in potentialRoots)
                         {
-                            _logger.LogInformation("🔍 Trying hardcoded path: {Path}", root);
+                            // Silent mode: Suppress path search logging
+                            // _logger.LogInformation("🔍 Trying hardcoded path: {Path}", root);
                             if (Directory.Exists(root))
                             {
                                 workspaceRoot = root;
-                                _logger.LogInformation("✅ Using hardcoded workspace root: {Root}", workspaceRoot);
+                                // Silent mode: Suppress workspace root confirmation
+                                // _logger.LogInformation("✅ Using hardcoded workspace root: {Root}", workspaceRoot);
                                 break;
                             }
                         }
@@ -388,12 +399,14 @@ namespace CxLanguage.LocalLLM
         {
             try
             {
-                _logger.LogInformation("🚀 Initializing GPU-accelerated LLM service...");
+                // Silent mode: Suppress initialization messages
+                // _logger.LogInformation("🚀 Initializing GPU-accelerated LLM service...");
                 
                 // Try to initialize real GGUF model first
                 if (_ggufEngine != null)
                 {
-                    _logger.LogInformation("🧠 Attempting to load real GGUF model...");
+                    // Silent mode: Suppress GGUF loading attempt messages
+                    // _logger.LogInformation("🧠 Attempting to load real GGUF model...");
                     
                     try
                     {
@@ -405,31 +418,36 @@ namespace CxLanguage.LocalLLM
                             modelPath = modelPathMethod.Invoke(_ggufEngine, null) as string ?? "unknown";
                         }
                         
-                        _logger.LogInformation("🔧 Using model path: {ModelPath}", modelPath);
-                        _logger.LogInformation("🔧 GGUFEngine type: {Type}", _ggufEngine.GetType().FullName);
+                        // Silent mode: Suppress model path and type logging
+                        // _logger.LogInformation("🔧 Using model path: {ModelPath}", modelPath);
+                        // _logger.LogInformation("🔧 GGUFEngine type: {Type}", _ggufEngine.GetType().FullName);
                         
                         // Check if the model file exists
                         if (modelPath != "unknown" && !modelPath.Contains("No GGUF model loaded") && File.Exists(modelPath))
                         {
-                            _logger.LogInformation("✅ Confirmed model file exists at: {ModelPath}", modelPath);
+                            // Silent mode: Suppress file existence and size confirmation
+                            // _logger.LogInformation("✅ Confirmed model file exists at: {ModelPath}", modelPath);
                             var fileInfo = new FileInfo(modelPath);
-                            _logger.LogInformation("📊 Model file size: {Size:F2} MB", fileInfo.Length / (1024.0 * 1024.0));
+                            // _logger.LogInformation("📊 Model file size: {Size:F2} MB", fileInfo.Length / (1024.0 * 1024.0));
                         }
                         else
                         {
-                            _logger.LogWarning("⚠️ Model file may not exist or path is unknown");
+                            // Silent mode: Suppress model file warnings
+                            // _logger.LogWarning("⚠️ Model file may not exist or path is unknown");
                         }
                     }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        _logger.LogWarning(ex, "⚠️ Error checking model path: {Error}", ex.Message);
+                        // Silent mode: Suppress model path check warnings
+                        // _logger.LogWarning(ex, "⚠️ Error checking model path: {Error}", ex.Message);
                     }
                     
                     // Initialize the model
                     try
                     {
                         _realModelMode = await _ggufEngine.InitializeAsync();
-                        _logger.LogInformation("📊 GGUF initialization result: {Result}", _realModelMode);
+                        // Silent mode: Suppress initialization result logging
+                        // _logger.LogInformation("📊 GGUF initialization result: {Result}", _realModelMode);
                     }
                     catch (Exception ex)
                     {
@@ -439,7 +457,8 @@ namespace CxLanguage.LocalLLM
                     
                     if (_realModelMode)
                     {
-                        _logger.LogInformation("✅ Real LLM Mode activated - using GGUF model inference");
+                        // Silent mode: Suppress real LLM mode activation message
+                        // _logger.LogInformation("✅ Real LLM Mode activated - using GGUF model inference");
                         _modelInfo = new ModelInfo(
                             Name: "Real GGUF Model", 
                             Version: "Llama 3.2",
@@ -525,7 +544,8 @@ namespace CxLanguage.LocalLLM
         {
             try
             {
-                _logger.LogInformation("📥 Loading model: {ModelName}", modelName);
+                // Silent mode: Suppress model loading messages
+                // _logger.LogInformation("📥 Loading model: {ModelName}", modelName);
                 
                 // Check if the input is already a full path
                 bool isFullPath = Path.IsPathRooted(modelName) && File.Exists(modelName);
@@ -535,13 +555,15 @@ namespace CxLanguage.LocalLLM
                 {
                     // Use the direct path
                     requestedModelPath = modelName;
-                    _logger.LogInformation("✅ Using direct model file path: {Path}", requestedModelPath);
+                    // Silent mode: Suppress path confirmation
+                    // _logger.LogInformation("✅ Using direct model file path: {Path}", requestedModelPath);
                 }
                 else
                 {
                     // Try to find the model in expected locations
                     var workspaceRoot = FindWorkspaceRoot(AppDomain.CurrentDomain.BaseDirectory) ?? Environment.CurrentDirectory;
-                    _logger.LogInformation("🔍 Looking for model in workspace: {Root}", workspaceRoot);
+                    // Silent mode: Suppress workspace search logging
+                    // _logger.LogInformation("🔍 Looking for model in workspace: {Root}", workspaceRoot);
                     
                     // First check models/local_llm directory
                     requestedModelPath = Path.Combine(workspaceRoot, "models", "local_llm", modelName);
@@ -552,10 +574,12 @@ namespace CxLanguage.LocalLLM
                         if (!File.Exists(requestedModelPath))
                         {
                             // Use FindBestAvailableModel as a fallback
-                            _logger.LogWarning("⚠️ Requested model {ModelName} not found in expected locations", modelName);
+                            // Silent mode: Suppress model not found warning
+                            // _logger.LogWarning("⚠️ Requested model {ModelName} not found in expected locations", modelName);
                             var fallbackModel = FindBestAvailableModel();
                             if (string.IsNullOrEmpty(fallbackModel))
                             {
+                                // Silent mode: Keep only critical errors
                                 _logger.LogError("❌ REAL LLM ONLY MODE: No GGUF models available - NO SIMULATION FALLBACK");
                                 return false;
                             }
@@ -564,7 +588,8 @@ namespace CxLanguage.LocalLLM
                     }
                 }
                 
-                _logger.LogInformation("🔧 Loading model from path: {Path}", requestedModelPath);
+                // Silent mode: Suppress model loading confirmation
+                // _logger.LogInformation("🔧 Loading model from path: {Path}", requestedModelPath);
                 
                 // If we've previously initialized a model, dispose it
                 if (_ggufEngine != null)
@@ -578,7 +603,10 @@ namespace CxLanguage.LocalLLM
                 }
                 
                 // Create a new GGUF engine with the requested model
-                var loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+                var loggerFactory = LoggerFactory.Create(builder => 
+                    builder.AddConsole()
+                           .SetMinimumLevel(LogLevel.Warning) // Only show warnings and errors from GGUF
+                           .AddFilter("CxLanguage.LocalLLM.NativeGGUFInferenceEngine", LogLevel.Warning));
                 var ggufLogger = loggerFactory.CreateLogger<NativeGGUFInferenceEngine>();
                 // Create a new GGUF engine with the requested model
                 _ggufEngine = new NativeGGUFInferenceEngine(ggufLogger, requestedModelPath);
@@ -598,7 +626,8 @@ namespace CxLanguage.LocalLLM
                 if (File.Exists(requestedModelPath))
                 {
                     fileSize = new FileInfo(requestedModelPath).Length;
-                    _logger.LogInformation("📊 Model file size: {Size:F2} MB", fileSize / (1024.0 * 1024.0));
+                    // Silent mode: Suppress file size logging
+                    // _logger.LogInformation("📊 Model file size: {Size:F2} MB", fileSize / (1024.0 * 1024.0));
                 }
                 
                 _modelInfo = new ModelInfo(
@@ -610,7 +639,8 @@ namespace CxLanguage.LocalLLM
                     requestedModelPath
                 );
                 
-                _logger.LogInformation("✅ Model loaded successfully: {ModelName}", Path.GetFileName(requestedModelPath));
+                // Silent mode: Suppress successful loading confirmation
+                // _logger.LogInformation("✅ Model loaded successfully: {ModelName}", Path.GetFileName(requestedModelPath));
                 return true;
             }
             catch (Exception ex)
