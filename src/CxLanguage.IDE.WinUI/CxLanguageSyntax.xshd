@@ -1,0 +1,99 @@
+<?xml version="1.0"?>
+<SyntaxDefinition name="CX" extensions=".cx" xmlns="http://icsharpcode.net/sharpdevelop/syntaxdefinition/2008">
+    <!-- CX Language Syntax Definition for AvalonEdit -->
+    <!-- GitHub Issue #220: Real-time syntax highlighting for all CX constructs -->
+    
+    <Color name="Comment" foreground="#57A64A" />
+    <Color name="String" foreground="#D69E2E" />
+    <Color name="Number" foreground="#B5CEA8" />
+    <Color name="Keyword" foreground="#569CD6" fontWeight="bold" />
+    <Color name="ConsciousnessKeyword" foreground="#C586C0" fontWeight="bold" />
+    <Color name="AiService" foreground="#4EC9B0" fontWeight="bold" />
+    <Color name="EventName" foreground="#DCDCAA" />
+    <Color name="EmitKeyword" foreground="#FF6B6B" fontWeight="bold" />
+    <Color name="Boolean" foreground="#569CD6" />
+    <Color name="Operator" foreground="#B4B4B4" />
+    <Color name="Punctuation" foreground="#B4B4B4" />
+    
+    <RuleSet>
+        <!-- Comments -->
+        <Span color="Comment" begin="//" />
+        <Span color="Comment" multiline="true" begin="/\*" end="\*/" />
+        
+        <!-- Strings -->
+        <Span color="String">
+            <Begin>"</Begin>
+            <End>"</End>
+            <RuleSet>
+                <Span begin="\\" end="." />
+            </RuleSet>
+        </Span>
+        
+        <Span color="String">
+            <Begin>'</Begin>
+            <End>'</End>
+            <RuleSet>
+                <Span begin="\\" end="." />
+            </RuleSet>
+        </Span>
+        
+        <!-- Numbers -->
+        <Rule color="Number">
+            \b\d+\.?\d*([eE][+-]?\d+)?\b
+        </Rule>
+        
+        <!-- Keywords -->
+        <Keywords color="Keyword">
+            <Word>var</Word>
+            <Word>return</Word>
+            <Word>object</Word>
+            <Word>new</Word>
+            <Word>on</Word>
+        </Keywords>
+        
+        <!-- Consciousness Keywords -->
+        <Keywords color="ConsciousnessKeyword">
+            <Word>conscious</Word>
+            <Word>realize</Word>
+            <Word>adapt</Word>
+            <Word>iam</Word>
+            <Word>handlers</Word>
+        </Keywords>
+        
+        <!-- AI Services -->
+        <Keywords color="AiService">
+            <Word>think</Word>
+            <Word>learn</Word>
+            <Word>infer</Word>
+            <Word>execute</Word>
+            <Word>await</Word>
+        </Keywords>
+        
+        <!-- Emit keyword -->
+        <Keywords color="EmitKeyword">
+            <Word>emit</Word>
+        </Keywords>
+        
+        <!-- Boolean values -->
+        <Keywords color="Boolean">
+            <Word>true</Word>
+            <Word>false</Word>
+            <Word>null</Word>
+        </Keywords>
+        
+        <!-- Event names (dotted identifiers) -->
+        <Rule color="EventName">
+            \b[a-zA-Z_][a-zA-Z0-9_]*(\.[a-zA-Z_][a-zA-Z0-9_]*)+\b
+        </Rule>
+        
+        <!-- Operators -->
+        <Rule color="Operator">
+            [+\-*/%=&lt;&gt;!&amp;|]+
+        </Rule>
+        
+        <!-- Punctuation -->
+        <Rule color="Punctuation">
+            [{}()\[\],;:]
+        </Rule>
+    </RuleSet>
+</SyntaxDefinition>

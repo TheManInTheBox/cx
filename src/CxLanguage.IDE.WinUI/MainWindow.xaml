@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:avalonedit="http://icsharpcode.net/sharpdevelop/avalonedit"
         mc:Ignorable="d"
         Title="CX Language IDE - Consciousness Computing Platform" Height="900" Width="1400"
         Background="#1E1E32" WindowState="Maximized">
@@ -143,50 +144,76 @@
 
                     <!-- Editor Header -->
                     <Border Grid.Row="0" Background="#4CAF50" CornerRadius="4,4,0,0" Padding="12,8">
-                        <TextBlock Text="CX Code Editor" Foreground="White" FontWeight="SemiBold" FontSize="14"/>
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" Text="CX Code Editor" Foreground="White" FontWeight="SemiBold" FontSize="14" VerticalAlignment="Center"/>
+                            <Button Grid.Column="1" x:Name="FormatButton" Content="Format (Ctrl+F)" 
+                                    Background="#2E7D32" Foreground="White" 
+                                    BorderThickness="0" Padding="8,4"
+                                    FontSize="12" Click="FormatButton_Click"/>
+                        </Grid>
                     </Border>
 
-                    <!-- Code Editor -->
-                    <ScrollViewer Grid.Row="1" Margin="8" VerticalScrollBarVisibility="Auto">
-                        <TextBox x:Name="CodeEditor" 
-                                Background="Transparent"
-                                Foreground="White"
-                                FontFamily="Consolas"
-                                FontSize="14"
-                                AcceptsReturn="True"
-                                TextWrapping="NoWrap"
-                                VerticalScrollBarVisibility="Auto"
-                                HorizontalScrollBarVisibility="Auto"
-                                BorderThickness="0">
-conscious calculator {
-    realize(self: conscious) {
+                    <!-- Code Editor with AvalonEdit -->
+                    <avalonedit:TextEditor x:Name="CodeEditor" 
+                                          Grid.Row="1"
+                                          Margin="8"
+                                          Background="#1E1E32"
+                                          Foreground="White"
+                                          FontFamily="Consolas"
+                                          FontSize="14"
+                                          ShowLineNumbers="True"
+                                          LineNumbersForeground="Gray"
+                                          BorderThickness="0">
+                        <avalonedit:TextEditor.Text>conscious calculatorA
+{
+    realize(self: object)
+    {
         learn self;
-    }
-
-    handlers: [
-        calculate.request { operation: "add", numbers: [2, 2] }
-    ]
-
-    calculate.request event => {
-        emit infer {
-            data: event.payload,
-            handlers: [ calculation.complete ]
+        
+        emit calculate.request 
+        { 
+            operation: "add", 
+            numbers: [2, 2] 
         };
     }
-
-    calculation.complete event => {
-        emit learn {
-            data: event.result,
-            handlers: [ result.display ]
-        };
-    }
-
-    result.display event => {
-        print(event.result);
+    
+    on calculate.request (event)
+    {
+        print(event);
     }
 }
-                        </TextBox>
-                    </ScrollViewer>
+
+conscious calculatorB
+{
+    realize(self: object)
+    {
+        learn self;
+        
+        // Will execute both calculate.request
+        // and calculate addition.
+        emit calculate.request 
+        { 
+            operation: "add", 
+            numbers: [2, 2],
+            handlers [calculate.addition]
+        };
+    }
+    
+    on calculate.request (event)
+    {
+        print(event);
+    }
+
+    on calculate.addition (event)
+    {
+        print(event);
+    }
+}</avalonedit:TextEditor.Text>
+                    </avalonedit:TextEditor>
                 </Grid>
             </Border>
 

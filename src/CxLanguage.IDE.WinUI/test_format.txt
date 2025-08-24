@@ -1,0 +1,6 @@
+// Test file for CX Language formatting
+conscious calculator {
+realize(self: conscious) { learn self; emit calculate.request { operation: "add", numbers: [2, 2] }; }
+// This is a comment
+on calculate.request event { print(event); }
+}
