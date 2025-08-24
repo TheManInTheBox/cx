@@ -483,6 +483,17 @@ class Program
                 services.AddSingleton<CxLanguage.Runtime.ParallelHandlers.ParallelParameterEngine>();
                 services.AddSingleton<CxLanguage.Runtime.ParallelHandlers.ParallelParameterIntegrationService>();
 
+                // Register core IAiService interface
+                try
+                {
+                    services.AddSingleton<CxLanguage.Core.AI.IAiService, CxLanguage.Core.AI.SimpleAiService>();
+                    // Console.WriteLine("✅ IAiService registered successfully with SimpleAiService");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Warning: IAiService could not be registered: {ex.Message}");
+                }
+
                 // 🧠 REGISTER AI SERVICES FOR CONSCIOUSNESS INTEGRATION
                 
                 // Register LocalLLM Service
