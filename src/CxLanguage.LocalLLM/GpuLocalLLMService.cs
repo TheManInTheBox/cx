@@ -67,7 +67,7 @@ namespace CxLanguage.LocalLLM
                 _logger.LogInformation("📥 Required: Download a real GGUF model for authentic inference");
             }
             
-            _logger.LogInformation("🚀 GpuLocalLLMService initialized - GPU available: {GpuAvailable}", _gpuAvailable);
+            _logger.LogDebug("🚀 GpuLocalLLMService initialized - GPU available: {GpuAvailable}", _gpuAvailable);
             if (_gpuAvailable)
             {
                 var deviceCount = GetGpuDeviceCount();
@@ -127,7 +127,7 @@ namespace CxLanguage.LocalLLM
             {
                 // Get the base directory (workspace root)
                 var baseDir = AppDomain.CurrentDomain.BaseDirectory;
-                _logger.LogInformation("🔍 BaseDirectory: {BaseDir}", baseDir);
+                _logger.LogDebug("🔍 BaseDirectory: {BaseDir}", baseDir);
                 var workspaceRoot = FindWorkspaceRoot(baseDir);
                 
                 if (string.IsNullOrEmpty(workspaceRoot))
@@ -168,7 +168,7 @@ namespace CxLanguage.LocalLLM
                     }
                 }
 
-                _logger.LogInformation("✅ Using workspace root: {WorkspaceRoot}", workspaceRoot);
+                _logger.LogDebug("✅ Using workspace root: {WorkspaceRoot}", workspaceRoot);
                 var modelsDir = Path.Combine(workspaceRoot, "models");
                 
                 // Check if models directory exists
@@ -197,10 +197,10 @@ namespace CxLanguage.LocalLLM
                     Path.Combine(workspaceRoot, "models", "Phi-3-mini-4k-instruct-q4.gguf")
                 };
 
-                _logger.LogInformation("🔍 Looking for GGUF models in paths:");
+                _logger.LogDebug("🔍 Looking for GGUF models in paths:");
                 foreach (var path in candidatePaths)
                 {
-                    _logger.LogInformation("  • {Path} - Exists: {Exists}", path, File.Exists(path));
+                    _logger.LogDebug("  • {Path} - Exists: {Exists}", path, File.Exists(path));
                     
                     if (File.Exists(path))
                     {
@@ -211,7 +211,7 @@ namespace CxLanguage.LocalLLM
                                        Path.GetFileName(path).Contains("1b", StringComparison.OrdinalIgnoreCase) ? "Llama 3.2 1B" : 
                                        "Phi-3-mini-4k-instruct";
                         
-                        _logger.LogInformation("🎯 Found GGUF model: {ModelName} at {Path} ({Size:F1} MB)", 
+                        _logger.LogDebug("🎯 Found GGUF model: {ModelName} at {Path} ({Size:F1} MB)", 
                             modelName, path, fileInfo.Length / (1024.0 * 1024.0));
                         return path;
                     }

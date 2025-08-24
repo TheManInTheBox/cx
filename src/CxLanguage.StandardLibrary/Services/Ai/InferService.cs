@@ -29,7 +29,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _vectorStore = vectorStore;
 
             _eventBus.Subscribe("ai.infer.request", async (sender, eventName, data) => { await OnInferRequest(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _logger.LogInformation("✅ InferService (GPU-CUDA) initialized and subscribed to 'ai.infer.request'");
+            _logger.LogDebug("✅ InferService (GPU-CUDA) initialized and subscribed to 'ai.infer.request'");
         }
 
         private Task OnInferRequest(CxEventPayload cxEvent)

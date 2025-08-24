@@ -28,7 +28,7 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
         {
             _logger = logger;
             _eventBus = eventBus;
-            _logger.LogInformation("🧠 Dr. Marcus 'MemoryLayer' Sterling's InMemoryVectorStoreService initialized.");
+            _logger.LogDebug("🧠 Dr. Marcus 'MemoryLayer' Sterling's InMemoryVectorStoreService initialized.");
             _eventBus.EmitAsync("vectorstore.initialized", new Dictionary<string, object> { ["service"] = nameof(InMemoryVectorStoreService) });
         }
 

@@ -48,7 +48,7 @@ public class BiologicalNeuralProcessor
         _homeostasisTimer = new Timer(PerformHomeostasisRegulation, null, 
             TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
         
-        _logger.LogInformation("🧬 Biological Neural Processor: Initialized with authentic synaptic timing");
+        _logger.LogDebug("🧬 Biological Neural Processor: Initialized with authentic synaptic timing");
     }
     
     /// <summary>
@@ -150,7 +150,7 @@ public class BiologicalNeuralProcessor
             }
         }
         
-        _logger.LogInformation("🔗 Neural Synapses Created: {Count} synaptic connections", _synapses.Count);
+        _logger.LogDebug("🔗 Neural Synapses Created: {Count} synaptic connections", _synapses.Count);
     }
     
     /// <summary>
@@ -189,7 +189,7 @@ public class BiologicalNeuralProcessor
         _eventBus.Subscribe("synaptic.event", async (sender, eventName, payload) => { await OnSynapticEvent(ConvertDictToCxEvent(eventName, payload)); return true; });
         _eventBus.Subscribe("consciousness.activity.detected", async (sender, eventName, payload) => { await OnConsciousnessActivity(ConvertDictToCxEvent(eventName, payload)); return true; });
         
-        _logger.LogInformation("🧬 Neural Event Handlers: Registered for biological processing");
+        _logger.LogDebug("🧬 Neural Event Handlers: Registered for biological processing");
     }
     
     /// <summary>

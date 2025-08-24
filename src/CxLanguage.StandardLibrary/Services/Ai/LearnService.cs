@@ -30,12 +30,12 @@ namespace CxLanguage.StandardLibrary.Services.Ai
             _vectorStore = vectorStore;
 
             _eventBus.Subscribe("ai.learn.request", async (sender, eventName, data) => { await OnLearnRequest(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _logger.LogInformation("✅ LearnService (GPU-CUDA) initialized and subscribed to 'ai.learn.request'");
+            _logger.LogDebug("✅ LearnService (GPU-CUDA) initialized and subscribed to 'ai.learn.request'");
         }
 
         private Task OnLearnRequest(CxEventPayload cxEvent)
         {
-            _logger.LogInformation("🧠 Received ai.learn.request. Offloading to async task for local LLM learning processing.");
+            _logger.LogDebug("🧠 Received ai.learn.request. Offloading to async task for local LLM learning processing.");
             // Fire and forget with error handling
             _ = Task.Run(async () =>
             {
@@ -55,7 +55,7 @@ namespace CxLanguage.StandardLibrary.Services.Ai
         {
             try
             {
-                _logger.LogInformation("🧠 Processing learn request with vector database storage");
+                _logger.LogDebug("🧠 Processing learn request with vector database storage");
 
                 var payload = cxEvent.Data as Dictionary<string, object>;
                 if (payload == null)
@@ -77,13 +77,13 @@ namespace CxLanguage.StandardLibrary.Services.Ai
                     _ => data.ToString() ?? "No data provided"
                 };
 
-                _logger.LogInformation($"📚 Learning data: {dataForLogging}");
+                _logger.LogDebug($"📚 Learning data: {dataForLogging}");
                 _logger.LogInformation($"🏷️ Category: {category}");
                 _logger.LogInformation($"📍 Source: {source}");
 
                 // Generate a simple embedding (for now, use hash-based approach)
                 var embedding = GenerateSimpleEmbedding(data?.ToString() ?? string.Empty);
-                _logger.LogInformation($"🔢 Generated embedding with {embedding.Length} dimensions");
+                _logger.LogDebug($"🔢 Generated embedding with {embedding.Length} dimensions");
 
                 // Create vector record
                 var vectorRecord = new VectorRecord

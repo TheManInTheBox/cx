@@ -134,9 +134,9 @@ namespace CxLanguage.Runtime
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             _cancellationToken = cancellationToken;
-            _logger.LogInformation("🚀 Dr. Kai Nakamura: Consciousness Service Orchestrator starting");
-            _logger.LogInformation("  🧠 Orchestrating consciousness-aware service lifecycle");
-            _logger.LogInformation("  🔄 Implementing self-healing service architecture");
+            _logger.LogDebug("🚀 Dr. Kai Nakamura: Consciousness Service Orchestrator starting");
+            _logger.LogDebug("  🧠 Orchestrating consciousness-aware service lifecycle");
+            _logger.LogDebug("  🔄 Implementing self-healing service architecture");
             _logger.LogInformation("  📊 Enabling comprehensive service health monitoring");
             
             try

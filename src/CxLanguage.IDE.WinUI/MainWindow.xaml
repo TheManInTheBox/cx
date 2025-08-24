@@ -23,12 +23,23 @@
         <!-- Menu Bar -->
         <Menu Grid.Row="0" Background="#28283C">
             <MenuItem Header="File" Foreground="White">
-                <MenuItem x:Name="OpenMenuItem" Header="Open CX File..." Click="OpenMenuItem_Click">
+                <MenuItem x:Name="NewMenuItem" Header="New CX File..." Click="NewMenuItem_Click" InputGestureText="Ctrl+N">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📄" FontSize="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="OpenMenuItem" Header="Open CX File..." Click="OpenMenuItem_Click" InputGestureText="Ctrl+O">
                     <MenuItem.Icon>
                         <TextBlock Text="📁" FontSize="16"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem x:Name="SaveMenuItem" Header="Save" Click="SaveMenuItem_Click">
+                <Separator/>
+                <MenuItem x:Name="SaveMenuItem" Header="Save" Click="SaveMenuItem_Click" InputGestureText="Ctrl+S">
+                    <MenuItem.Icon>
+                        <TextBlock Text="💾" FontSize="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="SaveAsMenuItem" Header="Save As..." Click="SaveAsMenuItem_Click" InputGestureText="Ctrl+Shift+S">
                     <MenuItem.Icon>
                         <TextBlock Text="💾" FontSize="16"/>
                     </MenuItem.Icon>
@@ -41,19 +52,48 @@
                 </MenuItem>
             </MenuItem>
             <MenuItem Header="Edit" Foreground="White">
-                <MenuItem x:Name="UndoMenuItem" Header="Undo" Click="UndoMenuItem_Click">
+                <MenuItem x:Name="UndoMenuItem" Header="Undo" Click="UndoMenuItem_Click" InputGestureText="Ctrl+Z">
                     <MenuItem.Icon>
                         <TextBlock Text="↶" FontSize="16"/>
                     </MenuItem.Icon>
                 </MenuItem>
-                <MenuItem x:Name="RedoMenuItem" Header="Redo" Click="RedoMenuItem_Click">
+                <MenuItem x:Name="RedoMenuItem" Header="Redo" Click="RedoMenuItem_Click" InputGestureText="Ctrl+Y">
                     <MenuItem.Icon>
                         <TextBlock Text="↷" FontSize="16"/>
                     </MenuItem.Icon>
                 </MenuItem>
+                <Separator/>
+                <MenuItem x:Name="SelectAllMenuItem" Header="Select All" Click="SelectAllMenuItem_Click" InputGestureText="Ctrl+A">
+                    <MenuItem.Icon>
+                        <TextBlock Text="📝" FontSize="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <Separator/>
+                <MenuItem x:Name="FindMenuItem" Header="Find" Click="FindMenuItem_Click" InputGestureText="Ctrl+F">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔍" FontSize="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="ReplaceMenuItem" Header="Replace" Click="ReplaceMenuItem_Click" InputGestureText="Ctrl+H">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔄" FontSize="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+                <MenuItem x:Name="GoToLineMenuItem" Header="Go to Line" Click="GoToLineMenuItem_Click" InputGestureText="Ctrl+G">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🎯" FontSize="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
+            </MenuItem>
+            <MenuItem Header="Build" Foreground="White">
+                <MenuItem x:Name="BuildMenuItem" Header="Build Project" Click="BuildMenuItem_Click" InputGestureText="Ctrl+B">
+                    <MenuItem.Icon>
+                        <TextBlock Text="🔨" FontSize="16"/>
+                    </MenuItem.Icon>
+                </MenuItem>
             </MenuItem>
             <MenuItem Header="Run" Foreground="White">
-                <MenuItem x:Name="CompileRunMenuItem" Header="Compile and Run" Click="CompileRunMenuItem_Click">
+                <MenuItem x:Name="CompileRunMenuItem" Header="Run" Click="CompileRunMenuItem_Click" InputGestureText="F5">
                     <MenuItem.Icon>
                         <TextBlock Text="▶️" FontSize="16"/>
                     </MenuItem.Icon>
@@ -85,6 +125,25 @@
 
         <!-- Toolbar -->
         <ToolBar Grid.Row="1" Background="#28283C">
+            <Button x:Name="NewButton" Click="NewButton_Click" Padding="8,4">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📄" Margin="0,0,4,0"/>
+                    <TextBlock Text="New"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="OpenButton" Click="OpenButton_Click" Padding="8,4">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="📁" Margin="0,0,4,0"/>
+                    <TextBlock Text="Open"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="SaveButton" Click="SaveButton_Click" Padding="8,4">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="💾" Margin="0,0,4,0"/>
+                    <TextBlock Text="Save"/>
+                </StackPanel>
+            </Button>
+            <Separator/>
             <Button x:Name="RunButton" Click="RunButton_Click" Background="#4CAF50" Foreground="White" Padding="8,4">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="▶️" Margin="0,0,4,0"/>
@@ -98,16 +157,10 @@
                 </StackPanel>
             </Button>
             <Separator/>
-            <Button x:Name="SaveButton" Click="SaveButton_Click" Padding="8,4">
+            <Button x:Name="BuildButton" Click="BuildButton_Click" Background="#FF9800" Foreground="White" Padding="8,4">
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="💾" Margin="0,0,4,0"/>
-                    <TextBlock Text="Save"/>
-                </StackPanel>
-            </Button>
-            <Button x:Name="OpenButton" Click="OpenButton_Click" Padding="8,4">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="📁" Margin="0,0,4,0"/>
-                    <TextBlock Text="Open"/>
+                    <TextBlock Text="�" Margin="0,0,4,0"/>
+                    <TextBlock Text="Build"/>
                 </StackPanel>
             </Button>
             <Separator/>

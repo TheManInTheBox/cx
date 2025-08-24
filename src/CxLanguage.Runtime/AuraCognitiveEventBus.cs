@@ -55,10 +55,10 @@ namespace CxLanguage.Runtime
             _consciousnessEntities = new ConcurrentDictionary<string, ConsciousnessEntity>();
             _eventStatistics = new ConcurrentDictionary<string, long>();
             
-            _logger.LogInformation("🧠 Dr. Elena Rodriguez: AuraCognitiveEventBus initialized");
-            _logger.LogInformation("  ⚡ EventHub: Decentralized consciousness processing");
-            _logger.LogInformation("  🧠 NeuroHub: Centralized coordination system");
-            _logger.LogInformation("  🔬 Biological Neural Timing: LTP(5-15ms), LTD(10-25ms), STDP");
+            _logger.LogDebug("🧠 Dr. Elena Rodriguez: AuraCognitiveEventBus initialized");
+            _logger.LogDebug("  ⚡ EventHub: Decentralized consciousness processing");
+            _logger.LogDebug("  🧠 NeuroHub: Centralized coordination system");
+            _logger.LogDebug("  🔬 Biological Neural Timing: LTP(5-15ms), LTD(10-25ms), STDP");
         }
         
         /// <summary>
@@ -149,7 +149,7 @@ namespace CxLanguage.Runtime
                     if (entity.EventCount > 100 && entity.Level < ConsciousnessLevel.Master)
                     {
                         entity.Level++;
-                        _logger.LogInformation("📈 Consciousness evolution: {EntityId} → {Level}", 
+                        _logger.LogDebug("📈 Consciousness evolution: {EntityId} → {Level}", 
                             entityId, entity.Level);
                     }
                 }
@@ -262,7 +262,7 @@ namespace CxLanguage.Runtime
                 _eventHandlers.Clear();
                 _eventStatistics.Clear();
                 _consciousnessEntities.Clear();
-                _logger.LogInformation("🧹 Aura Cognitive Framework cleared");
+                _logger.LogDebug("🧹 Aura Cognitive Framework cleared");
             }
         }
 
