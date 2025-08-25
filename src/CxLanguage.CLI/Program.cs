@@ -95,6 +95,9 @@ class Program
             // Ensure ConsoleService is created so it subscribes to events
             _ = host.Services.GetService<ConsoleService>();
             
+            // Ensure FileService is created so it subscribes to events
+            _ = host.Services.GetService<FileService>();
+            
             // Register LocalLLM service for consciousness integration
             var localLLMService = host.Services.GetService<CxLanguage.LocalLLM.ILocalLLMService>();
             if (localLLMService != null)
@@ -605,6 +608,14 @@ class Program
                         var eventBus = provider.GetRequiredService<ICxEventBus>();
                         var logger = provider.GetRequiredService<ILogger<ConsoleService>>();
                         return new ConsoleService(eventBus, logger);
+                    });
+
+                    // Register FileService for system.file.read and system.file.write event handling
+                    services.AddSingleton<FileService>(provider =>
+                    {
+                        var eventBus = provider.GetRequiredService<ICxEventBus>();
+                        var logger = provider.GetRequiredService<ILogger<FileService>>();
+                        return new FileService(eventBus, logger);
                     });
                 }
                 catch (Exception ex)

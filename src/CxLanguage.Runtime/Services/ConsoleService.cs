@@ -7,7 +7,9 @@ using CxLanguage.Core.Events;
 namespace CxLanguage.Runtime.Services
 {
     /// <summary>
-    /// Handles system.console.write, system.console.read, system.console.clear, and system.console.color events for console I/O with consciousness-aware patterns
+    /// Handles system.console.write, system.console.read, and system.console.clear events for console I/O with consciousness-aware patterns
+    /// Supports integrated color control and cursor positioning within system.console.write events using native .NET Console methods for cross-platform compatibility
+    /// Cursor parameters: x, y (absolute), dx, dy (relative), home (boolean), hideCursor, showCursor (boolean)
     /// </summary>
     public class ConsoleService
     {
@@ -48,19 +50,31 @@ namespace CxLanguage.Runtime.Services
             _eventBus.Subscribe("system.console.write", HandleConsoleWriteAsync);
             _eventBus.Subscribe("system.console.read", HandleConsoleReadAsync);
             _eventBus.Subscribe("system.console.clear", HandleConsoleClearAsync);
-            _logger.LogInformation("ConsoleService subscribed to console events with integrated color support");
+            
+            _logger.LogInformation("ConsoleService subscribed to console events with integrated color and cursor support");
         }
 
         /// <summary>
         /// Handler for 'system.console.write' event
-        /// Supports payloads: { text: string, foregroundColor: string, backgroundColor: string } or { object: any }
+        /// Supports payloads: { text: string, foregroundColor: string, backgroundColor: string, x: int, y: int, dx: int, dy: int, home: bool, hideCursor: bool, showCursor: bool } or { object: any }
         /// Colors are applied temporarily for this write operation only
+        /// Cursor positioning is applied before writing text
         /// </summary>
         private Task<bool> HandleConsoleWriteAsync(object? sender, string eventName, IDictionary<string, object>? payload)
         {
             try
             {
                 payload ??= new Dictionary<string, object>();
+
+                // Handle cursor positioning BEFORE any output
+                if (!HandleCursorPositioning(payload))
+                {
+                    // If cursor positioning failed, continue with output anyway
+                    _logger.LogWarning("Cursor positioning failed, continuing with text output");
+                }
+
+                // Handle cursor visibility control
+                HandleCursorVisibility(payload);
 
                 // Store original colors to restore after writing
                 var originalForeground = Console.ForegroundColor;
@@ -413,6 +427,137 @@ namespace CxLanguage.Runtime.Services
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Helper method to handle cursor positioning from system.console.write payload
+        /// Supports: x, y (absolute), dx, dy (relative), home (boolean)
+        /// </summary>
+        private bool HandleCursorPositioning(IDictionary<string, object>? payload)
+        {
+            if (payload == null) return true;
+
+            try
+            {
+                // Handle absolute positioning (x, y)
+                if (payload.TryGetValue("x", out var xObj) && payload.TryGetValue("y", out var yObj))
+                {
+                    if (int.TryParse(xObj?.ToString(), out var x) && int.TryParse(yObj?.ToString(), out var y))
+                    {
+                        if (x >= 0 && y >= 0)
+                        {
+                            try
+                            {
+                                Console.SetCursorPosition(x, y);
+                                _logger.LogDebug("Cursor positioned at ({X}, {Y})", x, y);
+                                return true;
+                            }
+                            catch (ArgumentOutOfRangeException ex)
+                            {
+                                _logger.LogWarning("Cursor position ({X}, {Y}) is outside console boundaries: {Error}", x, y, ex.Message);
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            _logger.LogWarning("Negative cursor coordinates not allowed: x={X}, y={Y}", x, y);
+                            return false;
+                        }
+                    }
+                }
+
+                // Handle relative movement (dx, dy)
+                var hasDelta = payload.TryGetValue("dx", out var dxObj) || payload.TryGetValue("dy", out var dyObj);
+                if (hasDelta)
+                {
+                    var dx = 0;
+                    var dy = 0;
+                    
+                    if (payload.TryGetValue("dx", out dxObj) && dxObj != null && !int.TryParse(dxObj.ToString(), out dx))
+                        dx = 0;
+                    if (payload.TryGetValue("dy", out dyObj) && dyObj != null && !int.TryParse(dyObj.ToString(), out dy))
+                        dy = 0;
+
+                    var currentX = Console.CursorLeft;
+                    var currentY = Console.CursorTop;
+                    var newX = currentX + dx;
+                    var newY = currentY + dy;
+
+                    if (newX >= 0 && newY >= 0)
+                    {
+                        try
+                        {
+                            Console.SetCursorPosition(newX, newY);
+                            _logger.LogDebug("Cursor moved by ({DX}, {DY}) from ({CurrentX}, {CurrentY}) to ({NewX}, {NewY})", 
+                                dx, dy, currentX, currentY, newX, newY);
+                            return true;
+                        }
+                        catch (ArgumentOutOfRangeException ex)
+                        {
+                            _logger.LogWarning("Cursor move to ({NewX}, {NewY}) is outside console boundaries: {Error}", newX, newY, ex.Message);
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Cursor move would result in negative coordinates: ({NewX}, {NewY})", newX, newY);
+                        return false;
+                    }
+                }
+
+                // Handle home positioning
+                if (payload.TryGetValue("home", out var homeObj) && homeObj is bool home && home)
+                {
+                    try
+                    {
+                        Console.SetCursorPosition(0, 0);
+                        _logger.LogDebug("Cursor moved to home position (0, 0)");
+                        return true;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning("Failed to move cursor to home: {Error}", ex.Message);
+                        return false;
+                    }
+                }
+
+                return true; // No cursor positioning requested
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in cursor positioning");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Helper method to handle cursor visibility from system.console.write payload
+        /// Supports: hideCursor, showCursor (boolean)
+        /// </summary>
+        private void HandleCursorVisibility(IDictionary<string, object>? payload)
+        {
+            if (payload == null) return;
+
+            try
+            {
+                // Handle hide cursor
+                if (payload.TryGetValue("hideCursor", out var hideObj) && hideObj is bool hide && hide)
+                {
+                    Console.CursorVisible = false;
+                    _logger.LogDebug("Cursor hidden");
+                }
+
+                // Handle show cursor
+                if (payload.TryGetValue("showCursor", out var showObj) && showObj is bool show && show)
+                {
+                    Console.CursorVisible = true;
+                    _logger.LogDebug("Cursor shown");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Error handling cursor visibility");
+            }
         }
     }
 }
