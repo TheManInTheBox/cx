@@ -1,0 +1,20 @@
+// Minimal Cursor Test - Just test basic positioning
+
+conscious MinimalCursorTest {
+    realize() {
+        emit system.console.write { text: "Starting cursor test..." };
+        
+        emit system.console.cursor.position { x: 5, y: 3 };
+        emit system.console.write { text: "At position (5,3)" };
+        
+        emit system.console.cursor.home {};
+        emit system.console.write { text: "Back at home" };
+        
+        emit system.console.write { text: "Test complete!" };
+        
+        // Emit shutdown to exit gracefully
+        emit system.shutdown {};
+    }
+}
+
+new MinimalCursorTest();

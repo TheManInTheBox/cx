@@ -1,0 +1,34 @@
+// Simple Cursor Position Test - Issue #238 basic verification
+
+conscious SimpleCursorTest {
+    realize() {
+        // Clear screen first
+        emit system.console.clear {};
+        
+        // Test basic cursor positioning
+        emit system.console.cursor.position { x: 10, y: 5 };
+        emit system.console.write { text: "Hello at (10,5)!" };
+        
+        // Test cursor home
+        emit system.console.cursor.home {};
+        emit system.console.write { text: "Back at home (0,0)" };
+        
+        // Test relative movement
+        emit system.console.cursor.move { dx: 5, dy: 3 };
+        emit system.console.write { text: "Moved 5 right, 3 down" };
+        
+        // Test hide/show cursor
+        emit system.console.cursor.hide {};
+        emit system.console.cursor.position { x: 0, y: 8 };
+        emit system.console.write { text: "Cursor hidden (no blinking)" };
+        
+        emit system.console.cursor.show {};
+        emit system.console.cursor.position { x: 0, y: 10 };
+        emit system.console.write { text: "Cursor shown again" };
+        
+        emit system.console.cursor.position { x: 0, y: 12 };
+        emit system.console.write { text: "Simple cursor test complete!" };
+    }
+}
+
+new SimpleCursorTest();

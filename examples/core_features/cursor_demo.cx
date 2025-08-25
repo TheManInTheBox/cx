@@ -1,0 +1,55 @@
+// CX Language Cursor Demo - Demonstrates integrated cursor control in system.console.write
+// Issue #238 - Updated to use integrated cursor parameters
+
+conscious CursorDemo {
+    realize() {
+        // Clear screen first for clean demonstration
+        emit system.console.clear {};
+        
+        // Write header at top using cursor positioning
+        emit system.console.write { text: "=== CX Language Integrated Cursor Demo ===", foregroundColor: "cyan", x: 0, y: 0 };
+        
+        // Position cursor and write text at specific coordinates
+        emit system.console.write { text: "Text at (20,10)", foregroundColor: "yellow", x: 20, y: 10 };
+        
+        // Move cursor relative to current position
+        emit system.console.write { text: "Moved 5 left, 2 down", foregroundColor: "green", dx: -5, dy: 2 };
+        
+        // Move cursor to home position (0,0) and then offset slightly
+        emit system.console.write { text: "Back near top-left", foregroundColor: "magenta", home: true, dy: 2 };
+        
+        // Test cursor visibility control with positioning
+        emit system.console.write { text: "Hiding cursor now...", foregroundColor: "red", x: 0, y: 4, hideCursor: true };
+        
+        // Position for status updates
+        emit system.console.write { text: "Press any key to show cursor and continue...", x: 0, y: 6 };
+        
+        // Wait for user input
+        emit system.console.read { handlers: ["cursor.test.phase1"] };
+    }
+    
+    // Handler for showing cursor and drawing pattern
+    on cursor.test.phase1 (event)
+    {
+        emit system.console.write { text: "Cursor is now visible again!", foregroundColor: "green", x: 0, y: 8, showCursor: true };
+        
+        // Draw a simple pattern using integrated cursor positioning
+        emit system.console.write { text: "+", x: 30, y: 5 };
+        emit system.console.write { text: "+", x: 32, y: 5 };
+        emit system.console.write { text: "+", x: 34, y: 5 };
+        emit system.console.write { text: "+", foregroundColor: "yellow", x: 31, y: 6 };
+        emit system.console.write { text: "+", foregroundColor: "yellow", x: 33, y: 6 };
+        emit system.console.write { text: "+", foregroundColor: "red", x: 32, y: 7 };
+        
+        // Final message
+        emit system.console.write { text: "Integrated cursor demo complete! All positioning and visibility in system.console.write!", foregroundColor: "cyan", x: 0, y: 10 };
+        
+        emit system.console.write { text: "Press any key to exit...", x: 0, y: 12 };
+        emit system.console.read {};
+        
+        // Clean shutdown
+        emit system.shutdown {};
+    }
+}
+
+new CursorDemo();

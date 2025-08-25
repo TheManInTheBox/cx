@@ -1,0 +1,20 @@
+// CX Language - Console Clear Comparison Demo
+// Shows the difference with and without console clearing
+// Issue #236 - Proof that console clearing works
+
+conscious WithoutClearDemo {
+    realize() {
+        emit system.console.write { text: "🔴 TEST WITHOUT CLEARING - You should see all content below:" };
+        emit system.console.write { text: "============================================================" };
+        emit system.console.write { text: "Line 1: This content will remain visible" };
+        emit system.console.write { text: "Line 2: Because we're NOT calling system.console.clear" };
+        emit system.console.write { text: "Line 3: All these lines should be visible" };
+        emit system.console.write { text: "Line 4: In the final output" };
+        emit system.console.write { text: "Line 5: No clearing happening here" };
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "✅ END OF NON-CLEARING TEST" };
+        emit system.console.write { text: "All lines above should be visible in the output." };
+    }
+}
+
+new WithoutClearDemo();

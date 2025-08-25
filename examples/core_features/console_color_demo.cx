@@ -1,0 +1,100 @@
+// CX Language Console Color Demo
+// Demonstrates system.console.color.set and system.console.color.reset events
+// Tests named colors, RGB values, and hex colors
+
+conscious ConsoleColorDemo {
+    realize() {
+        emit system.console.write { text: "=== CX Language Console Color Demo ===" };
+        emit system.console.write { text: "" };
+        
+        // Test basic named colors
+        emit system.console.write { text: "Testing basic named colors:" };
+        
+        emit system.console.color.set { foreground: "red" };
+        emit system.console.write { text: "This text is RED" };
+        
+        emit system.console.color.set { foreground: "green" };
+        emit system.console.write { text: "This text is GREEN" };
+        
+        emit system.console.color.set { foreground: "blue" };
+        emit system.console.write { text: "This text is BLUE" };
+        
+        emit system.console.color.set { foreground: "yellow" };
+        emit system.console.write { text: "This text is YELLOW" };
+        
+        emit system.console.color.reset {};
+        emit system.console.write { text: "Colors reset to normal" };
+        emit system.console.write { text: "" };
+        
+        // Test background colors
+        emit system.console.write { text: "Testing background colors:" };
+        
+        emit system.console.color.set { foreground: "white", background: "red" };
+        emit system.console.write { text: "White text on RED background" };
+        
+        emit system.console.color.set { foreground: "black", background: "yellow" };
+        emit system.console.write { text: "Black text on YELLOW background" };
+        
+        emit system.console.color.set { foreground: "yellow", background: "blue" };
+        emit system.console.write { text: "Yellow text on BLUE background" };
+        
+        emit system.console.color.reset {};
+        emit system.console.write { text: "Background colors reset" };
+        emit system.console.write { text: "" };
+        
+        // Test bright colors
+        emit system.console.write { text: "Testing bright colors:" };
+        
+        emit system.console.color.set { foreground: "bright_red" };
+        emit system.console.write { text: "This is BRIGHT RED" };
+        
+        emit system.console.color.set { foreground: "bright_green" };
+        emit system.console.write { text: "This is BRIGHT GREEN" };
+        
+        emit system.console.color.set { foreground: "bright_blue" };
+        emit system.console.write { text: "This is BRIGHT BLUE" };
+        
+        emit system.console.color.reset {};
+        emit system.console.write { text: "Bright colors reset" };
+        emit system.console.write { text: "" };
+        
+        // Test RGB colors
+        emit system.console.write { text: "Testing RGB colors:" };
+        
+        emit system.console.color.set { r: 255, g: 128, b: 0 };
+        emit system.console.write { text: "Orange RGB color (255, 128, 0)" };
+        
+        emit system.console.color.set { r: 128, g: 0, b: 255 };
+        emit system.console.write { text: "Purple RGB color (128, 0, 255)" };
+        
+        emit system.console.color.set { r: 0, g: 255, b: 128 };
+        emit system.console.write { text: "Mint RGB color (0, 255, 128)" };
+        
+        emit system.console.color.reset {};
+        emit system.console.write { text: "RGB colors reset" };
+        emit system.console.write { text: "" };
+        
+        // Test hex colors
+        emit system.console.write { text: "Testing hex colors:" };
+        
+        emit system.console.color.set { hex: "#FF8000" };
+        emit system.console.write { text: "Orange hex color #FF8000" };
+        
+        emit system.console.color.set { hex: "#8000FF" };
+        emit system.console.write { text: "Purple hex color #8000FF" };
+        
+        emit system.console.color.set { hex: "#00FF80" };
+        emit system.console.write { text: "Mint hex color #00FF80" };
+        
+        emit system.console.color.set { hex: "F0F" };
+        emit system.console.write { text: "Short hex color F0F (bright magenta)" };
+        
+        emit system.console.color.reset {};
+        emit system.console.write { text: "Hex colors reset" };
+        emit system.console.write { text: "" };
+        
+        emit system.console.write { text: "=== Console Color Demo Complete ===" };
+    }
+}
+
+new ConsoleColorDemo();

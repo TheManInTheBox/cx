@@ -1,0 +1,40 @@
+conscious ConsoleReadDemo 
+{
+  realize(self: object) 
+  {
+    // Fire program.start after handlers have been registered
+    emit program.start {};
+  }
+
+  on program.start (event) 
+  {
+    emit system.console.write { text: "Welcome to CX Language Console Input Demo!" };
+    emit system.console.write { text: "Let's test the console read functionality..." };
+    emit system.console.write { text: "" };
+    
+    // Test 1: Prompted input with custom handler
+    emit system.console.read { 
+      prompt: "Please enter your name: ",
+      handlers: [name.received]
+    };
+  }
+
+  on name.received (event) 
+  {
+    emit system.console.write { text: "Hello, " + event.input + "! Nice to meet you." };
+    emit system.console.write { text: "" };
+    
+    // Test 2: No prompt input with different handler
+    emit system.console.write { text: "Now enter anything (no prompt):" };
+    emit system.console.read { handlers: [input.captured] };
+  }
+
+  on input.captured (event) 
+  {
+    emit system.console.write { text: "You entered: '" + event.input + "'" };
+    emit system.shutdown { reason: "demo_complete" };
+  }
+}
+
+// Instantiate the conscious entity so the realize() runs and handlers are registered
+new ConsoleReadDemo();

@@ -1,0 +1,23 @@
+// Simple Color Test - Minimal functionality verification
+// Tests if colors are actually visible in the terminal
+
+conscious SimpleColorTest {
+    realize() {
+        emit system.console.write { text: "=== Simple Color Test ===" };
+        
+        // Test one color at a time with clear separation
+        emit system.console.color.set { foreground: "green" };
+        emit system.console.write { text: "SUCCESS: If you can see this text in GREEN, colors are working!" };
+        
+        emit system.console.color.reset {};
+        emit system.console.write { text: "NORMAL: This should be normal colored text." };
+        
+        emit system.console.color.set { foreground: "red" };
+        emit system.console.write { text: "ALERT: If you can see this text in RED, colors are working!" };
+        
+        emit system.console.color.reset {};
+        emit system.console.write { text: "Test complete!" };
+    }
+}
+
+new SimpleColorTest();

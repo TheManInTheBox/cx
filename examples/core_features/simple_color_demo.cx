@@ -1,0 +1,23 @@
+// Simple Console Color Demo - Basic functionality test
+// Tests the core color setting and reset functionality
+
+conscious SimpleColorDemo {
+    realize(self: object) {
+        emit system.console.write { text: "Simple Console Color Test" };
+        emit system.console.write { text: "" };
+        
+        // Set green text
+        emit system.console.color.set { foreground: "green" };
+        emit system.console.write { text: "✅ This text should be GREEN" };
+        
+        // Set red text with yellow background
+        emit system.console.color.set { foreground: "red", background: "yellow" };
+        emit system.console.write { text: "⚠️ Red text on yellow background" };
+        
+        // Reset colors
+        emit system.console.color.reset {};
+        emit system.console.write { text: "✅ Colors reset - back to normal" };
+        
+        emit system.console.write { text: "Simple color test complete!" };
+    }
+}

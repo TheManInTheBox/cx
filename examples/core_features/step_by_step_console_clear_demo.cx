@@ -1,0 +1,55 @@
+// CX Language - Step-by-Step Console Clear Test
+// Proves console clearing works by showing step-by-step execution
+// Issue #236 - Console clear functionality verification
+
+conscious StepByStepDemo {
+    realize() {
+        emit system.console.write { text: "=== STEP 1: FILLING SCREEN WITH CONTENT ===" };
+        emit system.console.write { text: "This is line 1 of content" };
+        emit system.console.write { text: "This is line 2 of content" };
+        emit system.console.write { text: "This is line 3 of content" };
+        emit system.console.write { text: "This is line 4 of content" };
+        emit system.console.write { text: "This is line 5 of content" };
+        emit system.console.write { text: "This is line 6 of content" };
+        emit system.console.write { text: "This is line 7 of content" };
+        emit system.console.write { text: "This is line 8 of content" };
+        emit system.console.write { text: "This is line 9 of content" };
+        emit system.console.write { text: "This is line 10 of content" };
+    }
+}
+
+conscious ClearStep {
+    realize() {
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "=== STEP 2: ABOUT TO CLEAR ===" };
+        emit system.console.write { text: "All the above content will disappear..." };
+    }
+}
+
+conscious ExecuteClear {
+    realize() {
+        emit system.console.clear {};
+    }
+}
+
+conscious ShowResult {
+    realize() {
+        emit system.console.write { text: "=== STEP 3: AFTER CLEARING ===" };
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "✅ SUCCESS!" };
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "If you can see this message and ONLY this message," };
+        emit system.console.write { text: "then the console clearing worked perfectly!" };
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "All the previous 'This is line X of content' messages" };
+        emit system.console.write { text: "were successfully removed by system.console.clear" };
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "🎯 Issue #236 - Console Clear: OPERATIONAL!" };
+    }
+}
+
+// Execute in sequence
+new StepByStepDemo();
+new ClearStep();
+new ExecuteClear();
+new ShowResult();
