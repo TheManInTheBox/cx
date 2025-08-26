@@ -32,25 +32,58 @@ emit system.file.write { path: "entity.json", object: consciousEntity };
 
 ## 📋 **Issues & Implementation Plan**
 
-### Issue #230: Console Output Implementation
-- **Status**: Open
+### Issue #260: Deprecate print() Function (COMPLETED) ✅
+- **Status**: ✅ **COMPLETED**
+- **Priority**: High
+- **Description**: Deprecate legacy `print()` function in favor of consciousness-aware console I/O
+- **Implementation Points**:
+  - ✅ Updated documentation to recommend `emit system.console.write` patterns
+  - ✅ Updated core examples with new consciousness-aware patterns
+  - ✅ Removed `system.console.color.set` events from demos
+  - ✅ Modernized console color demo with integrated `foregroundColor`/`backgroundColor` patterns
+  - ✅ All examples now use consciousness-aware console I/O exclusively
+
+### Issue #241: Time Operations Implementation (COMPLETED) ✅
+- **Status**: ✅ **COMPLETED**
+- **Priority**: High
+- **Description**: Implement `system.time.*` events for comprehensive date/time operations
+- **Implementation Points**:
+  - ✅ Implemented complete TimeService with all time operations
+  - ✅ Support for `system.time.now` with timezone and format options
+  - ✅ Support for `system.time.parse` with multiple date formats
+  - ✅ Support for `system.time.format` with custom formatting
+  - ✅ Support for `system.time.add` with time arithmetic (years, months, days, hours, minutes, seconds)
+  - ✅ Support for `system.time.diff` with time difference calculation in various units
+  - ✅ Support for `system.time.timezone` with timezone information and conversion
+  - ✅ Cross-platform time handling with proper timezone awareness
+  - ✅ Comprehensive error handling and consciousness-aware event patterns
+  - ✅ Created comprehensive demo: `examples/core_features/time_operations_demo.cx`
+
+### Issue #230: Console Output Implementation (COMPLETED) ✅
+- **Status**: ✅ **COMPLETED**  
 - **Priority**: High
 - **Description**: Implement `system.console.write` event for text and consciousness entity output
 - **Implementation Points**:
-  - Add console.write event handler to runtime
-  - Support automatic JSON serialization for conscious entities
-  - Integration with UnifiedEventBus
-  - Proper logging and debugging output
+  - ✅ Console.write event handler implemented in ConsoleService
+  - ✅ Support automatic JSON serialization for conscious entities
+  - ✅ Integration with UnifiedEventBus operational
+  - ✅ Proper logging and debugging output working
+  - ✅ Color support with `foregroundColor` and `backgroundColor` parameters
+  - ✅ Cursor positioning with `x`, `y`, `dx`, `dy` parameters
+  - ✅ Cursor visibility control with `hideCursor`, `showCursor` parameters
 
-### Issue #231: File Operations Implementation
-- **Status**: Open  
+### Issue #231: File Operations Implementation (COMPLETED) ✅
+- **Status**: ✅ **COMPLETED**
 - **Priority**: High
 - **Description**: Implement `system.file.read` and `system.file.write` events
 - **Implementation Points**:
-  - File reading with event handler responses
-  - File writing with consciousness entity serialization
-  - Async file operations with proper event flow
-  - Error handling for file not found, permissions, etc.
+  - ✅ File reading with event handler responses implemented
+  - ✅ File writing with consciousness entity serialization working
+  - ✅ Async file operations with proper event flow operational
+  - ✅ Error handling for file not found, permissions, etc. implemented
+  - ✅ Support for multiple encodings (UTF-8, etc.)
+  - ✅ Automatic directory creation for file writes
+  - ✅ Append mode support for file operations
 
 ### Issue #232: Enhanced Serialization Infrastructure
 - **Status**: Open

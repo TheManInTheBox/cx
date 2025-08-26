@@ -1,0 +1,182 @@
+// CX Language Time Operations Demo
+// Demonstrates system.time.* events for date/time operations with consciousness-aware patterns
+// Issue #241 - Implement system.time events for date/time operations
+
+conscious TimeOperationsDemo {
+    realize() {
+        emit system.console.write { text: "⏰ CX Language Time Operations Demo", foregroundColor: "cyan" };
+        emit system.console.write { text: "=========================================", foregroundColor: "cyan" };
+        emit system.console.write { text: "" };
+        
+        // Test 1: Get current time in different formats
+        emit system.console.write { text: "📅 Test 1: Current time in different formats", foregroundColor: "yellow" };
+        emit system.time.now { 
+            format: "ISO8601", 
+            timezone: "UTC",
+            handlers: [current.time.iso] 
+        };
+    }
+
+    on current.time.iso (event) {
+        emit system.console.write { text: "✅ Current time (ISO8601 UTC): " + event.timestamp, foregroundColor: "green" };
+        emit system.console.write { text: "📊 Unix timestamp: " + event.unixTimestamp, foregroundColor: "gray" };
+        
+        // Test 2: Get local time
+        emit system.time.now { 
+            format: "datetime", 
+            timezone: "local",
+            handlers: [current.time.local] 
+        };
+    }
+
+    on current.time.local (event) {
+        emit system.console.write { text: "✅ Local time: " + event.timestamp, foregroundColor: "green" };
+        emit system.console.write { text: "" };
+        
+        // Test 3: Parse a date string
+        emit system.console.write { text: "🔍 Test 3: Parse date string", foregroundColor: "yellow" };
+        emit system.time.parse { 
+            value: "2025-12-25", 
+            format: "yyyy-MM-dd",
+            handlers: [parsed.christmas] 
+        };
+    }
+
+    on parsed.christmas (event) {
+        emit system.console.write { text: "✅ Parsed Christmas date: " + event.timestamp, foregroundColor: "green" };
+        emit system.console.write { text: "📅 Original value: " + event.originalValue, foregroundColor: "gray" };
+        
+        // Test 4: Add 30 days to the parsed date
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "➕ Test 4: Add 30 days to Christmas", foregroundColor: "yellow" };
+        emit system.time.add { 
+            timestamp: event.timestamp,
+            days: 30,
+            handlers: [christmas.plus.thirty] 
+        };
+    }
+
+    on christmas.plus.thirty (event) {
+        emit system.console.write { text: "✅ Christmas + 30 days: " + event.timestamp, foregroundColor: "green" };
+        emit system.console.write { text: "📆 Original: " + event.originalTimestamp, foregroundColor: "gray" };
+        
+        // Test 5: Calculate difference between dates
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "📐 Test 5: Calculate time difference", foregroundColor: "yellow" };
+        emit system.time.diff { 
+            start: event.originalTimestamp,
+            end: event.timestamp,
+            unit: "days",
+            handlers: [time.difference] 
+        };
+    }
+
+    on time.difference (event) {
+        emit system.console.write { text: "✅ Time difference: " + event.difference + " " + event.unit, foregroundColor: "green" };
+        emit system.console.write { text: "📊 Total hours: " + event.totalHours, foregroundColor: "gray" };
+        emit system.console.write { text: "📊 Total minutes: " + event.totalMinutes, foregroundColor: "gray" };
+        
+        // Test 6: Format timestamp with custom format
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "🎨 Test 6: Custom time formatting", foregroundColor: "yellow" };
+        emit system.time.format { 
+            timestamp: event.start,
+            format: "MMMM d, yyyy",
+            handlers: [formatted.date] 
+        };
+    }
+
+    on formatted.date (event) {
+        emit system.console.write { text: "✅ Formatted date: " + event.formatted, foregroundColor: "green" };
+        emit system.console.write { text: "📝 Format used: " + event.format, foregroundColor: "gray" };
+        
+        // Test 7: Get timezone information
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "🌍 Test 7: Timezone information", foregroundColor: "yellow" };
+        emit system.time.timezone { 
+            current: true,
+            handlers: [timezone.info] 
+        };
+    }
+
+    on timezone.info (event) {
+        emit system.console.write { text: "✅ Current timezone: " + event.currentTimezone.displayName, foregroundColor: "green" };
+        emit system.console.write { text: "🆔 Timezone ID: " + event.currentTimezone.id, foregroundColor: "gray" };
+        emit system.console.write { text: "⏰ UTC Offset: " + event.currentTimezone.utcOffset, foregroundColor: "gray" };
+        
+        // Test 8: Time arithmetic with multiple units
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "🧮 Test 8: Complex time arithmetic", foregroundColor: "yellow" };
+        emit system.time.now { 
+            format: "ISO8601",
+            handlers: [base.time.for.math] 
+        };
+    }
+
+    on base.time.for.math (event) {
+        emit system.time.add { 
+            timestamp: event.timestamp,
+            years: 1,
+            months: 2,
+            days: 15,
+            hours: 6,
+            minutes: 30,
+            handlers: [complex.math.result] 
+        };
+    }
+
+    on complex.math.result (event) {
+        emit system.console.write { text: "✅ Complex calculation: " + event.timestamp, foregroundColor: "green" };
+        emit system.console.write { text: "📅 Original: " + event.originalTimestamp, foregroundColor: "gray" };
+        emit system.console.write { text: "📈 Added: 1 year, 2 months, 15 days, 6 hours, 30 minutes", foregroundColor: "cyan" };
+        
+        // Completion
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "🎉 Time Operations Demo Complete!", foregroundColor: "green" };
+        emit system.console.write { text: "✨ All time operations working with consciousness-aware patterns", foregroundColor: "cyan" };
+        emit system.console.write { text: "" };
+        emit system.console.write { text: "📚 Supported operations:", foregroundColor: "white" };
+        emit system.console.write { text: "   • system.time.now - Current time retrieval", foregroundColor: "white" };
+        emit system.console.write { text: "   • system.time.parse - Date string parsing", foregroundColor: "white" };
+        emit system.console.write { text: "   • system.time.format - Custom formatting", foregroundColor: "white" };
+        emit system.console.write { text: "   • system.time.add - Time arithmetic", foregroundColor: "white" };
+        emit system.console.write { text: "   • system.time.diff - Time difference calculation", foregroundColor: "white" };
+        emit system.console.write { text: "   • system.time.timezone - Timezone operations", foregroundColor: "white" };
+        
+        emit system.shutdown { reason: "demo_complete" };
+    }
+
+    // Error handling for time operations
+    on system.time.now.error (event) {
+        emit system.console.write { text: "❌ Time.now error: " + event.error, foregroundColor: "red" };
+        emit system.shutdown { reason: "error" };
+    }
+
+    on system.time.parse.error (event) {
+        emit system.console.write { text: "❌ Time.parse error: " + event.error, foregroundColor: "red" };
+        emit system.shutdown { reason: "error" };
+    }
+
+    on system.time.format.error (event) {
+        emit system.console.write { text: "❌ Time.format error: " + event.error, foregroundColor: "red" };
+        emit system.shutdown { reason: "error" };
+    }
+
+    on system.time.add.error (event) {
+        emit system.console.write { text: "❌ Time.add error: " + event.error, foregroundColor: "red" };
+        emit system.shutdown { reason: "error" };
+    }
+
+    on system.time.diff.error (event) {
+        emit system.console.write { text: "❌ Time.diff error: " + event.error, foregroundColor: "red" };
+        emit system.shutdown { reason: "error" };
+    }
+
+    on system.time.timezone.error (event) {
+        emit system.console.write { text: "❌ Time.timezone error: " + event.error, foregroundColor: "red" };
+        emit system.shutdown { reason: "error" };
+    }
+}
+
+// Instantiate the conscious entity
+new TimeOperationsDemo();

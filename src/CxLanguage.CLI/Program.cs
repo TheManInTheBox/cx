@@ -98,6 +98,9 @@ class Program
             // Ensure FileService is created so it subscribes to events
             _ = host.Services.GetService<FileService>();
             
+            // Ensure TimeService is created so it subscribes to events
+            _ = host.Services.GetService<TimeService>();
+            
             // Register LocalLLM service for consciousness integration
             var localLLMService = host.Services.GetService<CxLanguage.LocalLLM.ILocalLLMService>();
             if (localLLMService != null)
@@ -521,6 +524,67 @@ class Program
                     Console.WriteLine($"⚠️ Warning: InMemoryVectorStoreService could not be registered: {ex.Message}");
                 }
 
+                // Register Azure OpenAI Client and Embedding Generator
+                try
+                {
+                    // Temporarily disable Azure to test local embeddings
+                    /*
+                    services.AddSingleton<Azure.AI.OpenAI.AzureOpenAIClient>(provider =>
+                    {
+                        var config = provider.GetRequiredService<IConfiguration>();
+                        var endpoint = config["AzureOpenAI:Services:0:Endpoint"];
+                        var apiKey = config["AzureOpenAI:Services:0:ApiKey"];
+                        
+                        if (string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(apiKey))
+                        {
+                            throw new InvalidOperationException("Azure OpenAI configuration is missing");
+                        }
+                        
+                        return new Azure.AI.OpenAI.AzureOpenAIClient(new Uri(endpoint), new Azure.AzureKeyCredential(apiKey));
+                    });
+                    */
+
+                    services.AddSingleton<Microsoft.Extensions.AI.IEmbeddingGenerator<string, Microsoft.Extensions.AI.Embedding<float>>>(provider =>
+                    {
+                        try
+                        {
+                            // Try Azure OpenAI first
+                            var azureClient = provider.GetRequiredService<Azure.AI.OpenAI.AzureOpenAIClient>();
+                            var config = provider.GetRequiredService<IConfiguration>();
+                            var deploymentName = config["AzureOpenAI:Services:0:Models:TextEmbedding"] ?? "text-embedding-3-small";
+                            var azureLogger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.AI.Embeddings.CustomEmbeddingGenerator>>();
+                            
+                            return new CxLanguage.StandardLibrary.AI.Embeddings.CustomEmbeddingGenerator(azureClient, deploymentName, azureLogger);
+                        }
+                        catch
+                        {
+                            // Fall back to local embedding model
+                            var localLogger = provider.GetRequiredService<ILogger<CxLanguage.LocalLLM.LocalEmbeddingGenerator>>();
+                            var localModelPath = "models/embedding/nomic-embed-text-v1.5.Q4_0.gguf"; // Q4_0 quantized embedding model
+                            
+                            Console.WriteLine("🧩 Falling back to local embedding model");
+                            return new CxLanguage.LocalLLM.LocalEmbeddingGenerator(localModelPath, localLogger);
+                        }
+                    });
+                    
+                    // Console.WriteLine("✅ Azure OpenAI and EmbeddingGenerator registered successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Warning: Azure OpenAI services could not be registered: {ex.Message}");
+                }
+
+                // Register Document Ingestion Service
+                try
+                {
+                    services.AddSingleton<CxLanguage.StandardLibrary.Services.Document.IDocumentIngestionService, CxLanguage.StandardLibrary.Services.Document.DocumentIngestionService>();
+                    // Console.WriteLine("✅ DocumentIngestionService registered successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Warning: DocumentIngestionService could not be registered: {ex.Message}");
+                }
+
                 // Register ThinkService
                 try
                 {
@@ -616,6 +680,14 @@ class Program
                         var eventBus = provider.GetRequiredService<ICxEventBus>();
                         var logger = provider.GetRequiredService<ILogger<FileService>>();
                         return new FileService(eventBus, logger);
+                    });
+
+                    // Register TimeService for system.time.* event handling
+                    services.AddSingleton<TimeService>(provider =>
+                    {
+                        var eventBus = provider.GetRequiredService<ICxEventBus>();
+                        var logger = provider.GetRequiredService<ILogger<TimeService>>();
+                        return new TimeService(eventBus, logger);
                     });
                 }
                 catch (Exception ex)
