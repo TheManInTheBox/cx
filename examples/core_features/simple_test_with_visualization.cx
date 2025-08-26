@@ -2,8 +2,8 @@
 
 conscious SimpleTestAgent {
     realize() {
-        print("🎮 Simple Test Agent Starting");
-        print("If you see this, the visualization should already be visible!");
+        emit system.console.write { text: "🎮 Simple Test Agent Starting", foregroundColor: "cyan" };
+        emit system.console.write { text: "If you see this, the visualization should already be visible!", foregroundColor: "white" };
         
         emit test.starting {
             message: "Script execution has begun",
@@ -12,8 +12,8 @@ conscious SimpleTestAgent {
     }
     
     on test.starting (event) {
-        print("Event received: test.starting");
-        print("Agent: Simple test completed successfully");
+        emit system.console.write { text: "Event received: test.starting", foregroundColor: "green" };
+        emit system.console.write { text: "Agent: Simple test completed successfully", foregroundColor: "yellow" };
         
         // Emit shutdown to end gracefully
         emit system.shutdown {

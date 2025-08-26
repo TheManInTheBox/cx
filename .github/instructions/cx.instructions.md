@@ -165,25 +165,31 @@ The following rules are mandatory for all CX Language code:
 
 ### Syntax Requirements
 - Always use Allman-style brackets `{ }` for code blocks
-- Use `print()` for console output - NEVER use `console.log()`
+- **RECOMMENDED**: Use `emit system.console.write { text: "..." }` for consciousness-aware console output
+- **DEPRECATED**: `print()` function is deprecated - use event-driven console patterns instead
 - **COMPLETELY ELIMINATED: `if` statements** - Traditional `if (condition)` statements are **FORBIDDEN** in CX Language
 - **MANDATORY: Cognitive Boolean Logic** - Use ONLY cognitive `is { }` and `not { }` patterns for ALL decision logic
 - **NO `function` declarations**: Use only cognitive functions (`learn`, `think`, `is`, `not`, `iam`, `await`, `adapt`)
-- `print()` automatically serializes complex conscious entities to JSON for debugging
-- `print()` displays primitive types (strings, numbers, booleans) directly
-- `print()` provides nested conscious entity visualization for CX conscious entities
+- Consciousness entities automatically serialize to JSON when output via `emit system.console.write { object: ... }`
+- Primitive types (strings, numbers, booleans) display directly in console output
 - Use `:` for type annotations in realize constructor parameters
 - Use `=` for default values in variable declarations
 
-### Enhanced Conscious Entity Printing
-- **JSON String Output**: The `print()` function always returns values in JSON string format for consistent output formatting
-- **Automatic Conscious Entity Serialization**: All CX conscious entities are automatically serialized to JSON when printed
-- **Primitive Type Detection**: Strings, numbers, and booleans print directly without JSON formatting
-- **Nested Conscious Entity Support**: CX conscious entities containing other CX conscious entities display full recursive structure
+### Consciousness-Aware Console Output (Recommended)
+- **Event-Driven I/O**: All console output uses consciousness-aware event patterns
+- **Simple Text**: `emit system.console.write { text: "Hello, CX!" };`
+- **Object Serialization**: `emit system.console.write { object: consciousEntity };`
+- **Colored Output**: `emit system.console.write { text: "Success!", foregroundColor: "green" };`
+- **Positioned Output**: `emit system.console.write { text: "Status", x: 10, y: 5 };`
+- **Cursor Control**: Support for `hideCursor`, `showCursor`, relative movement with `dx`, `dy`
+- **Cross-Platform**: Native .NET Console methods for maximum compatibility
+- **Automatic JSON Serialization**: All consciousness entities automatically serialize to JSON when output
+- **Primitive Type Display**: Strings, numbers, and booleans display directly without JSON formatting
+- **Nested Entity Support**: CX conscious entities containing other CX conscious entities display full recursive structure
 - **Clean Field Filtering**: Internal fields (ServiceProvider, Logger) are automatically hidden
 - **Debugging Ready**: Perfect for inspecting complex agent states and data structures
 - **Example Output**: `{"name": "Alice", "age": 30, "data": {"title": "Sample", "active": true}}`
-- **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. Cx elevates this - **Automatic Conscious Entity Serialization**. Any Cx conscious entity, when passed to the `print()` function, is automatically serialized to a clean, human-readable JSON representation.
+- **Introspection as Code**: Understanding an agent's state is critical for debugging and for the agent's own self-reflection capabilities. CX elevates this - **Automatic Conscious Entity Serialization**. Any CX conscious entity, when passed to `emit system.console.write { object: ... }`, is automatically serialized to a clean, human-readable JSON representation.
 
 ### Variable Declarations
 - Use `var` keyword for local variables inside event handlers and realize constructors
@@ -347,7 +353,7 @@ not {
 on system.start (event)
 {
     var localVariable = "processing";
-    print("Status: " + localVariable);
+    emit system.console.write { text: "Status: " + localVariable, foregroundColor: "cyan" };
     emit system.ready;
 }
 ```
@@ -361,14 +367,14 @@ conscious AssistantAgent
 {
     realize(self: conscious)
     {
-        print("Agent initialized: " + self.name);
+        emit system.console.write { text: "Agent initialized: " + self.name, foregroundColor: "green" };
         learn self;
         emit agent.initialized { name: self.name };
     }
     
     on user.message (event)
     {
-        print("Processing message: " + event.text);
+        emit system.console.write { text: "Processing message: " + event.text, foregroundColor: "yellow" };
         
         // Enhanced cognitive methods with custom payload handlers
         var promptConsciousEntity = {
@@ -390,8 +396,8 @@ conscious AssistantAgent
     
     on thinking.complete (event)
     {
-        print("Analysis complete with option: " + event.option);
-        print("Agent state updated through events");
+        emit system.console.write { text: "Analysis complete with option: " + event.option, foregroundColor: "cyan" };
+        emit system.console.write { text: "Agent state updated through events", foregroundColor: "white" };
         
         emit agent.response { 
             response: event.result,
@@ -402,7 +408,7 @@ conscious AssistantAgent
     
     on analysis.logged (event)
     {
-        print("Analysis logged at level: " + event.level);
+        emit system.console.write { text: "Analysis logged at level: " + event.level, foregroundColor: "magenta" };
     }
 }
 
@@ -427,7 +433,7 @@ conscious CoordinatorAgent
     
     on agent.response (payload)
     {
-        print("Coordinator received response");
+        emit system.console.write { text: "Coordinator received response", foregroundColor: "blue" };
         emit system.log { message: "Response processed by coordinator" };
     }
 }
@@ -443,7 +449,7 @@ conscious SpecialistAgent
     on user.query (payload)
     {
         // Check domain compatibility through event data
-        print("Specialist processing query in domain: " + payload.domain);
+        emit system.console.write { text: "Specialist processing query in domain: " + payload.domain, foregroundColor: "cyan" };
         think { 
             handlers: [specialist.result], 
             prompt: payload.query 
@@ -475,7 +481,7 @@ conscious VoiceAgent
     
     on voice.session.start (event)
     {
-        print("� Starting voice session...");
+        emit system.console.write { text: "🎤 Starting voice session...", foregroundColor: "cyan" };
         
         // ✅ PROVEN WORKING: Connect to Azure Realtime API first
         emit realtime.connect { demo: "voice_agent" };
@@ -483,7 +489,7 @@ conscious VoiceAgent
     
     on voice.message.send (event)
     {
-        print("🔊 Sending voice message: " + event.text);
+        emit system.console.write { text: "🔊 Sending voice message: " + event.text, foregroundColor: "yellow" };
         
         // ✅ PROVEN WORKING: Send text to Azure for voice synthesis
         emit realtime.text.send { 
@@ -495,7 +501,7 @@ conscious VoiceAgent
     // ✅ PROVEN WORKING: Azure Realtime API connection handler
     on realtime.connected (event)
     {
-        print("✅ Azure Realtime connected - creating session");
+        emit system.console.write { text: "✅ Azure Realtime connected - creating session", foregroundColor: "green" };
         emit realtime.session.create { 
             deployment: "gpt-4o-mini-realtime-preview",
             mode: "voice"
@@ -505,15 +511,15 @@ conscious VoiceAgent
     // ✅ PROVEN WORKING: Voice session creation handler
     on realtime.session.created (event)
     {
-        print("✅ Voice session created - ready for voice input/output");
+        emit system.console.write { text: "✅ Voice session created - ready for voice input/output", foregroundColor: "green" };
         emit voice.message.send { text: "Hello, how can I assist you today?" };
     }
     
     // ✅ PROVEN WORKING: Real-time text response handler
     on realtime.text.response (event)
     {
-        print("✅ Voice response received: " + event.content);
-        print("  Complete: " + event.isComplete);
+        emit system.console.write { text: "✅ Voice response received: " + event.content, foregroundColor: "green" };
+        emit system.console.write { text: "  Complete: " + event.isComplete, foregroundColor: "white" };
         
         // ✅ Cognitive decision about completion status
         is {

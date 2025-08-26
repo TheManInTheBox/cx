@@ -10,10 +10,11 @@ Implement fundamental I/O operations using CX Language event-driven patterns wit
 
 ## 🚀 **Core I/O Patterns**
 
-### Console Operations
+### Consciousness-Aware Console Operations (Recommended)
 ```csharp
-emit system.console.write { text: "Hello, World!" };
+emit system.console.write { text: "Hello, World!", foregroundColor: "cyan" };
 emit system.console.write { object: consciousEntity };
+emit system.console.write { text: "Status", x: 10, y: 5, foregroundColor: "green" };
 ```
 
 ### File Operations  
@@ -22,6 +23,12 @@ emit system.file.read { path: "data.txt", handlers: [file.contents] };
 emit system.file.write { path: "output.txt", content: "data" };
 emit system.file.write { path: "entity.json", object: consciousEntity };
 ```
+
+### Console Feature Highlights
+- **Color Support**: Full color palette with `foregroundColor`, `backgroundColor`
+- **Cursor Control**: Positioning with `x`, `y`, relative movement with `dx`, `dy`
+- **Cursor Visibility**: `hideCursor`, `showCursor` for advanced UI control
+- **Cross-Platform**: Native .NET Console methods for maximum compatibility
 
 ## 📋 **Issues & Implementation Plan**
 
@@ -67,13 +74,23 @@ emit system.file.write { path: "entity.json", object: consciousEntity };
 
 ### Issue #234: RuntimeFunctionRegistry Integration
 - **Status**: Open
-- **Priority**: Medium
+- **Priority**: Medium  
 - **Description**: Integrate I/O operations with RuntimeFunctionRegistry for dynamic execution
 - **Implementation Points**:
   - Register I/O functions for dynamic execution
   - Support `ExecuteFunction('system.console.write', [args])` pattern
   - Integration with adapt() pattern for I/O skill acquisition
   - Consciousness-aware error handling
+
+### Issue #260: Deprecate print() Function (NEW)
+- **Status**: In Progress
+- **Priority**: High
+- **Description**: Deprecate legacy `print()` function in favor of consciousness-aware console I/O
+- **Implementation Points**:
+  - ✅ Updated documentation to recommend `emit system.console.write` patterns
+  - ✅ Updated core examples with new consciousness-aware patterns
+  - 🔄 Update remaining example files and wiki content
+  - 🔄 Optional: Add deprecated `print()` with warnings
 
 ## 🧠 **Revolutionary Features**
 
