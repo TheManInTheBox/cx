@@ -229,7 +229,6 @@ namespace CxLanguage.Runtime
                 // Register services that are available in the container
                 var availableServices = new[]
                 {
-                    "ThinkService",
                     "InferService", 
                     "LearnService",
                     "AwaitService"
@@ -383,10 +382,6 @@ namespace CxLanguage.Runtime
                 // Auto Shutdown Timer Service
                 // Auto Shutdown Timer Service (placeholder - class not available)
                 _logger.LogInformation("  ⚠️ AutoShutdownTimerService: Class not available, continuing");
-                
-                // Developer Terminal Service
-                // Developer Terminal Service (placeholder - class not available)
-                _logger.LogInformation("  ⚠️ DeveloperTerminalService: Class not available, continuing");
                 
                 await Task.Delay(15); // Utility service initialization delay
                 _logger.LogInformation("✅ Utility services registered successfully");

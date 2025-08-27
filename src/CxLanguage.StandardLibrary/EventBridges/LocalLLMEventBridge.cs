@@ -45,13 +45,7 @@ public class LocalLLMEventBridge
             // Silent mode: Suppress LLM event bridge registration messages
             // _logger.LogInformation("🎮 Registering GPU Local LLM Event Bridge handlers for CUDA-accelerated consciousness processing");
 
-            // Subscribe to local LLM events using new delegate signature  
-            _eventBus.Subscribe("local.llm.load.model", async (sender, eventName, data) => { await OnLoadModel(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _eventBus.Subscribe("local.llm.generate.text", async (sender, eventName, data) => { await OnGenerateText(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _eventBus.Subscribe("local.llm.stream.tokens", async (sender, eventName, data) => { await OnStreamTokens(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _eventBus.Subscribe("local.llm.unload.model", async (sender, eventName, data) => { await OnUnloadModel(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _eventBus.Subscribe("local.llm.status.check", async (sender, eventName, data) => { await OnStatusCheck(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
-            _eventBus.Subscribe("local.llm.model.info", async (sender, eventName, data) => { await OnModelInfo(new CxEventPayload(eventName, data ?? new Dictionary<string, object>())); return true; });
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
 
             // Silent mode: Suppress event bridge registration confirmation
             // _logger.LogInformation("✅ GPU Local LLM Event Bridge handlers registered - unified CUDA consciousness ready");

@@ -342,15 +342,13 @@ namespace CxLanguage.Core.Compiler
             {
                 PatternCount = CountConsciousnessPatterns(sourceCode),
                 HasEventPatterns = sourceCode.Contains("on ") || sourceCode.Contains("emit "),
-                HasAdaptationPatterns = sourceCode.Contains("adapt {") || sourceCode.Contains("learn {"),
-                HasCognitivePatterns = sourceCode.Contains("is {") || sourceCode.Contains("think {"),
                 ConsciousnessComplexity = CalculateConsciousnessComplexity(sourceCode)
             };
         }
         
         private int CountConsciousnessPatterns(string sourceCode)
         {
-            var patterns = new[] { "conscious ", "realize(", "on ", "emit ", "adapt {", "is {", "not {", "iam {" };
+            var patterns = new[] { "conscious ", "realize(", "on ", "emit " };
             return patterns.Sum(pattern => CountOccurrences(sourceCode, pattern));
         }
         

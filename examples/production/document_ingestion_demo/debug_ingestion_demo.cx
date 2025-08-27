@@ -1,0 +1,157 @@
+///
+/// DEBUG Document Ingestion Demo - Simplified Version
+/// Helps identify why the full demo is hanging
+///
+
+// Simple debug orchestrator to test each component
+conscious DebugOrchestrator {
+    realize() {
+        emit system.console.write {
+            text: "🔍 DEBUG: Starting Document Ingestion Debug Session"
+        };
+        
+        emit system.console.write {
+            text: "🔍 DEBUG: Testing basic event flow..."
+        };
+        
+        // Test basic event emission
+        emit debug.test.basic {};
+    }
+    
+    on debug.test.basic (event) {
+        emit system.console.write {
+            text: "✅ DEBUG: Basic event handling works!"
+        };
+        
+        emit debug.test.document.service {};
+    }
+    
+    on debug.test.document.service (event) {
+        emit system.console.write {
+            text: "🔍 DEBUG: Testing if DocumentIngestionService is listening..."
+        };
+        
+        // Test if document service responds
+        emit document.ingest {
+            path: "examples/production/document_ingestion_demo/sample_documents/ai_consciousness.txt",
+            metadata: {
+                debug: true,
+                test: "service_response"
+            }
+        };
+        
+        // Set a timeout to detect hanging
+        emit debug.timeout.check {};
+    }
+    
+    on debug.timeout.check (event) {
+        emit system.console.write {
+            text: "⚠️ DEBUG: 5 second timeout - checking if service responded..."
+        };
+        
+        emit debug.test.vector.store {};
+    }
+    
+    on debug.test.vector.store (event) {
+        emit system.console.write {
+            text: "🔍 DEBUG: Testing vector store service directly..."
+        };
+        
+        // Test vector search without ingestion
+        emit search.vector {
+            query: "test query",
+            topK: 1
+        };
+    }
+    
+    on document.vector.complete (event) {
+        emit system.console.write {
+            text: "✅ DEBUG: DocumentIngestionService responded!"
+        };
+        
+        emit system.console.write {
+            text: "✅ DEBUG: File: " + event.filePath
+        };
+        
+        emit system.console.write {
+            text: "✅ DEBUG: Vector count: " + event.vectorCount
+        };
+        
+        emit debug.success {};
+    }
+    
+    on document.ingest.error (event) {
+        emit system.console.write {
+            text: "❌ DEBUG: Document ingestion error detected!"
+        };
+        
+        emit system.console.write {
+            text: "❌ DEBUG: Error: " + event.error
+        };
+        
+        emit debug.error.detected {};
+    }
+    
+    on search.vector.complete (event) {
+        emit system.console.write {
+            text: "✅ DEBUG: Vector search service responded!"
+        };
+        
+        emit debug.complete {};
+    }
+    
+    on debug.success (event) {
+        emit system.console.write {
+            text: "🎉 DEBUG: All services are working correctly!"
+        };
+        
+        emit debug.complete {};
+    }
+    
+    on debug.error.detected (event) {
+        emit system.console.write {
+            text: "💡 DEBUG: Issue identified - check service registration or file paths"
+        };
+        
+        emit debug.complete {};
+    }
+    
+    on debug.complete (event) {
+        emit system.console.write {
+            text: "🔍 DEBUG: Session complete. Check output above for issues."
+        };
+    }
+}
+
+// Debug monitor to catch any unexpected events
+conscious DebugMonitor {
+    realize() {
+        emit system.console.write {
+            text: "🔍 DEBUG: Monitor initialized - watching for all events"
+        };
+    }
+    
+    // Catch document processing events
+    on document.chunk.complete (event) {
+        emit system.console.write {
+            text: "📄 DEBUG: Chunk event: " + event.filePath + " (" + event.chunkCount + " chunks)"
+        };
+    }
+    
+    // Catch common error events
+    on document.ingest.error (event) {
+        emit system.console.write {
+            text: "❌ DEBUG: Document ingest error captured"
+        };
+    }
+    
+    on search.vector.error (event) {
+        emit system.console.write {
+            text: "❌ DEBUG: Vector search error captured"
+        };
+    }
+}
+
+// Start debugging
+new DebugMonitor();
+new DebugOrchestrator();

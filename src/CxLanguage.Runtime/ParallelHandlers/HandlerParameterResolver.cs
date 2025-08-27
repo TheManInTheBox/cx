@@ -32,7 +32,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
         /// Resolve handler parameters from AI service call expression.
         /// 
         /// Example CX syntax:
-        /// think { 
+        /// learn { 
         ///     prompt: "Analyze data",
         ///     handlers: [
         ///         analysis: analysis.complete,

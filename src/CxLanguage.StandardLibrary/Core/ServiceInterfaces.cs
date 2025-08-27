@@ -4,7 +4,7 @@ namespace CxLanguage.StandardLibrary.Core;
 // These capabilities are now provided by default via AiServiceBase inheritance:
 // - this.GenerateAsync() (basic text generation)
 // - this.ChatAsync() (basic chat completion)  
-// - this.ThinkAsync(), this.CommunicateAsync(), this.ConnectAsync() (realtime capabilities)
+// - this.CommunicateAsync(), this.ConnectAsync() (realtime capabilities)
 
 /// <summary>
 /// Interface for classes that need text-to-speech capabilities
@@ -62,7 +62,7 @@ public interface IImageAnalysis
 
 /// <summary>
 /// Interface for classes that need vector database capabilities
-/// When implemented, provides access to this.SearchAsync() and this.Learn() methods
+/// When implemented, provides access to this.SearchAsync() methods
 /// </summary>
 public interface IVectorDatabase
 {
@@ -83,6 +83,6 @@ public interface IFullAICapabilities :
     IVectorDatabase
 {
     // Composite marker interface for all specialized AI capabilities
-    // Basic capabilities (GenerateAsync, ChatAsync, ThinkAsync, etc.) are inherited by default
+    // Basic capabilities (GenerateAsync, ChatAsync, etc.) are inherited by default
 }
 

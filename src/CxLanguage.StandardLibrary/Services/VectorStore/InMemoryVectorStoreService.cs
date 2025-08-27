@@ -43,6 +43,9 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
             _logger = logger;
             _eventBus = eventBus;
             _embeddingGenerator = embeddingGenerator;
+            
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
+            
             _logger.LogDebug("🧠 Dr. Marcus 'MemoryLayer' Sterling's Enhanced InMemoryVectorStoreService initialized with embedding capabilities.");
             _eventBus.EmitAsync("vectorstore.initialized", new Dictionary<string, object> 
             { 
@@ -438,6 +441,109 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                 metrics["total_records"], metrics["consciousness_records"]);
 
             return Task.FromResult(metrics);
+        }
+
+        /// <summary>
+        /// Handle vector.add.text event requests from CX language runtime
+        /// </summary>
+        private async Task OnAddTextRequest(CxEventPayload cxEvent)
+        {
+            _logger.LogInformation("🧩 Processing vector.add.text request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (cxEvent.Data is Dictionary<string, object> payload)
+                {
+                    var text = payload.TryGetValue("text", out var textObj) ? textObj?.ToString() : "";
+                    var metadata = payload.TryGetValue("metadata", out var metadataObj) && metadataObj is Dictionary<string, object> meta 
+                        ? meta : new Dictionary<string, object>();
+
+                    if (!string.IsNullOrEmpty(text))
+                    {
+                        var result = await AddTextAsync(text, metadata);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        // Emit success event
+                        await _eventBus.EmitAsync("vector.add.text.completed", new Dictionary<string, object>
+                        {
+                            ["id"] = result.Id,
+                            ["text"] = text,
+                            ["duration"] = duration,
+                            ["consciousness_context"] = metadata.ContainsKey("consciousness_aware")
+                        });
+
+                        _logger.LogInformation("✅ vector.add.text completed in {Duration}ms", duration);
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Text parameter is required for vector.add.text");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.add.text failed");
+                await _eventBus.EmitAsync("vector.add.text.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+            }
+        }
+
+        /// <summary>
+        /// Handle vector.search.text event requests from CX language runtime
+        /// </summary>
+        private async Task OnSearchTextRequest(CxEventPayload cxEvent)
+        {
+            _logger.LogInformation("🧩 Processing vector.search.text request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (cxEvent.Data is Dictionary<string, object> payload)
+                {
+                    var query = payload.TryGetValue("query", out var queryObj) ? queryObj?.ToString() : "";
+                    var topK = payload.TryGetValue("topK", out var topKObj) && int.TryParse(topKObj?.ToString(), out var k) ? k : 5;
+                    var includeMetadata = payload.TryGetValue("includeMetadata", out var includeObj) && bool.TryParse(includeObj?.ToString(), out var include) && include;
+
+                    if (!string.IsNullOrEmpty(query))
+                    {
+                        var results = await SearchTextAsync(query, topK);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        // Emit success event
+                        await _eventBus.EmitAsync("vector.search.text.completed", new Dictionary<string, object>
+                        {
+                            ["query"] = query,
+                            ["results"] = results.Select(r => new Dictionary<string, object>
+                            {
+                                ["id"] = r.Id,
+                                ["content"] = r.Content,
+                                ["metadata"] = includeMetadata ? r.Metadata : new Dictionary<string, object>()
+                            }).ToList(),
+                            ["duration"] = duration,
+                            ["topK"] = topK
+                        });
+
+                        _logger.LogInformation("✅ vector.search.text completed in {Duration}ms with {ResultCount} results", duration, results.Count());
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Query parameter is required for vector.search.text");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.search.text failed");
+                await _eventBus.EmitAsync("vector.search.text.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+            }
         }
     }
 }

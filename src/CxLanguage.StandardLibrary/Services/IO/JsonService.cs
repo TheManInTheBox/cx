@@ -34,37 +34,7 @@ namespace CxLanguage.StandardLibrary.Services.IO
                 PropertyNameCaseInsensitive = true
             };
             
-            // Subscribe to JSON events
-            _eventBus.Subscribe("json.read.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleJsonReadRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("json.write.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleJsonWriteRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("json.validate.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleJsonValidateRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("json.parse.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleJsonParseRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("json.stringify.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleJsonStringifyRequest(eventPayload);
-                return true;
-            });
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
         }
 
         private async Task HandleJsonReadRequest(CxEventPayload eventPayload)

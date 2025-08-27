@@ -77,11 +77,28 @@ public class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<flo
                 Embeddings = true          // Enable embeddings mode
             };
 
-            // Load model with embedding support
+            // Load model with embedding support - suppress console output
             await Task.Run(() =>
             {
-                _model = LLamaWeights.LoadFromFile(parameters);
-                _embedder = new LLamaEmbedder(_model, parameters);
+                // Temporarily redirect console output to suppress llama_model_loader output
+                var originalOut = Console.Out;
+                var originalError = Console.Error;
+                
+                try
+                {
+                    // Completely suppress all output during model loading
+                    Console.SetOut(TextWriter.Null);
+                    Console.SetError(TextWriter.Null);
+                    
+                    _model = LLamaWeights.LoadFromFile(parameters);
+                    _embedder = new LLamaEmbedder(_model, parameters);
+                }
+                finally
+                {
+                    // Restore console output
+                    Console.SetOut(originalOut);
+                    Console.SetError(originalError);
+                }
             });
 
             _isLoaded = true;
@@ -134,8 +151,25 @@ public class LocalEmbeddingGenerator : IEmbeddingGenerator<string, Embedding<flo
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                // Generate embedding using LlamaSharp
-                var embeddingVector = await Task.Run(() => _embedder.GetEmbeddings(text), cancellationToken);
+                // Generate embedding using LlamaSharp - suppress output
+                var embeddingVector = await Task.Run(() => 
+                {
+                    // Suppress any potential LlamaSharp console output during embedding generation
+                    var originalOut = Console.Out;
+                    var originalError = Console.Error;
+                    
+                    try
+                    {
+                        Console.SetOut(TextWriter.Null);
+                        Console.SetError(TextWriter.Null);
+                        return _embedder.GetEmbeddings(text);
+                    }
+                    finally
+                    {
+                        Console.SetOut(originalOut);
+                        Console.SetError(originalError);
+                    }
+                }, cancellationToken);
                 
                 // Convert to Microsoft.Extensions.AI format
                 var embedding = new Embedding<float>(embeddingVector);

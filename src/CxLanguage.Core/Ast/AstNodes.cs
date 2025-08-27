@@ -666,7 +666,7 @@ public class EmitStatementNode : StatementNode
 }
 
 /// <summary>
-/// AI service statement (learn, payload; think, payload; etc.)
+/// AI service statement (learn, infer, iam; etc.)
 /// </summary>
 public class AiServiceStatementNode : StatementNode
 {

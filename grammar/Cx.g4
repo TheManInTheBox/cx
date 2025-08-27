@@ -78,7 +78,7 @@ emitStatement: 'emit' eventName expression? ';';
 
 // AI service statements - cognitive capabilities with parallel handlers
 aiServiceName
-    : 'iam' | 'learn' | 'think' | 'await' | 'adapt' | 'execute' | 'infer'
+    : 'adapt' | 'execute'
     ;
 aiServiceStatement: aiServiceName aiServiceParameters ';';
 
@@ -150,13 +150,7 @@ type
     ;
 
 // AI cognitive service keywords - RESERVED WORDS
-LEARN: 'learn';
-THINK: 'think';
-AWAIT: 'await';
-ADAPT: 'adapt';
-IAM: 'iam';
 REALIZE: 'realize';
-INFER: 'infer';
 
 // CONSCIOUSNESS KEYWORDS - RESERVED
 CONSCIOUS: 'conscious';
@@ -165,7 +159,6 @@ ON: 'on';
 
 // OBJECT KEYWORDS  
 OBJECT: 'object';
-EXTENDS: 'extends';
 NEW: 'new';
 
 // LITERALS

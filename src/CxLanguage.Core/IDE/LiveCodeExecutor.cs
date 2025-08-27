@@ -277,11 +277,6 @@ namespace CxLanguage.Core.IDE
                 compiledCode += "// Consciousness realization pattern\n";
             }
             
-            if (cxCode.Contains("learn"))
-            {
-                compiledCode += "// Learning pattern detected\n";
-            }
-            
             if (cxCode.Contains("emit"))
             {
                 compiledCode += "// Event emission pattern\n";
@@ -303,7 +298,6 @@ namespace CxLanguage.Core.IDE
                 CodeLength = cxCode.Length,
                 HasConsciousEntities = cxCode.Contains("conscious"),
                 HasRealizationPattern = cxCode.Contains("realize"),
-                HasLearningPattern = cxCode.Contains("learn"),
                 HasEventEmission = cxCode.Contains("emit"),
                 HasEventHandlers = cxCode.Contains("on "),
                 EstimatedComplexity = CalculateCodeComplexity(cxCode)
@@ -320,7 +314,6 @@ namespace CxLanguage.Core.IDE
             // Add complexity for various CX patterns
             complexity += cxCode.Split("conscious").Length - 1; // Conscious entities
             complexity += cxCode.Split("realize").Length - 1; // Realization patterns
-            complexity += cxCode.Split("learn").Length - 1; // Learning patterns
             complexity += cxCode.Split("emit").Length - 1; // Event emissions
             complexity += cxCode.Split("on ").Length - 1; // Event handlers
             complexity += cxCode.Split("{").Length - 1; // Code blocks
@@ -363,11 +356,6 @@ namespace CxLanguage.Core.IDE
                 output += "✨ Consciousness realization completed\n";
             }
             
-            if (compilation.Metadata?.HasLearningPattern == true)
-            {
-                output += "📚 Learning patterns activated\n";
-            }
-            
             if (compilation.Metadata?.HasEventEmission == true)
             {
                 output += "📡 Events emitted successfully\n";
@@ -402,17 +390,6 @@ namespace CxLanguage.Core.IDE
             if (compilation.Metadata?.HasRealizationPattern == true)
             {
                 await _eventBus.EmitAsync("consciousness.realization.completed", new Dictionary<string, object>
-                {
-                    ["sessionId"] = ideEvent.SessionId,
-                    ["executionId"] = ideEvent.EventId,
-                    ["timestamp"] = DateTime.UtcNow
-                });
-                eventsEmitted++;
-            }
-            
-            if (compilation.Metadata?.HasLearningPattern == true)
-            {
-                await _eventBus.EmitAsync("consciousness.learning.active", new Dictionary<string, object>
                 {
                     ["sessionId"] = ideEvent.SessionId,
                     ["executionId"] = ideEvent.EventId,
@@ -485,7 +462,6 @@ namespace CxLanguage.Core.IDE
         public int CodeLength { get; set; }
         public bool HasConsciousEntities { get; set; }
         public bool HasRealizationPattern { get; set; }
-        public bool HasLearningPattern { get; set; }
         public bool HasEventEmission { get; set; }
         public bool HasEventHandlers { get; set; }
         public int EstimatedComplexity { get; set; }

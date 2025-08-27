@@ -12,16 +12,14 @@
 
 // Main document ingestion orchestrator
 conscious DocumentIngestionOrchestrator {
-    realize(self: conscious) {
-        learn self;
-        
+    realize() {
         // Display demo introduction
         emit system.console.write {
-            text: "🚀 CX Language Document Ingestion Demo\n"
+            text: "🚀 CX Language Document Ingestion Demo"
         };
         
         emit system.console.write {
-            text: "📄 Processing sample documents into vector database...\n"
+            text: "📄 Processing sample documents into vector database..."
         };
         
         // Start the ingestion pipeline
@@ -35,23 +33,24 @@ conscious DocumentIngestionOrchestrator {
     
     on demo.ingest.single (event) {
         emit system.console.write {
-            text: "\n🔄 Step 1: Single Document Ingestion\n"
+            text: "🔄 Step 1: Single Document Ingestion"
         };
         
         // Ingest AI consciousness document
         emit document.ingest {
-            path: "examples/production/document_ingestion_demo/sample_documents/ai_consciousness.txt"
+            path: "examples/production/document_ingestion_demo/sample_documents/ai_consciousness.txt",
             metadata: {
-                category: "AI Research"
-                source: "Demo Dataset"
+                category: "AI Research",
+                source: "Demo Dataset",
                 priority: "high"
-            }
+            },
+            handlers: [document.chunk.complete, document.vector.complete, document.ingest.error]
         };
     }
     
     on document.vector.complete (event) {
         emit system.console.write {
-            text: "✅ Single document ingestion completed!\n"
+            text: "✅ Single document ingestion completed!"
         };
         
         emit demo.ingest.batch {};
@@ -59,7 +58,7 @@ conscious DocumentIngestionOrchestrator {
     
     on demo.ingest.batch (event) {
         emit system.console.write {
-            text: "\n🔄 Step 2: Batch Document Ingestion\n"
+            text: "🔄 Step 2: Batch Document Ingestion"
         };
         
         // Ingest multiple documents
@@ -67,18 +66,19 @@ conscious DocumentIngestionOrchestrator {
             paths: [
                 "examples/production/document_ingestion_demo/sample_documents/cx_language_guide.md",
                 "examples/production/document_ingestion_demo/sample_documents/project_info.json"
-            ]
+            ],
             metadata: {
-                category: "Documentation"
-                source: "Demo Dataset"
+                category: "Documentation",
+                source: "Demo Dataset",
                 ingestionBatch: "demo_batch_1"
-            }
+            },
+            handlers: [document.batch.ingest.complete, document.chunk.complete, document.vector.complete, document.ingest.error]
         };
     }
     
     on document.batch.ingest.complete (event) {
         emit system.console.write {
-            text: "✅ Batch document ingestion completed!\n"
+            text: "✅ Batch document ingestion completed!"
         };
         
         emit demo.directory.ingest {};
@@ -86,24 +86,25 @@ conscious DocumentIngestionOrchestrator {
     
     on demo.directory.ingest (event) {
         emit system.console.write {
-            text: "\n🔄 Step 3: Directory Processing\n"
+            text: "🔄 Step 3: Directory Processing"
         };
         
         // Process entire directory
         emit document.directory.ingest {
-            path: "examples/production/document_ingestion_demo/sample_documents"
-            recursive: true
+            path: "examples/production/document_ingestion_demo/sample_documents",
+            recursive: true,
             metadata: {
-                category: "Demo Content"
-                source: "Sample Directory"
+                category: "Demo Content",
+                source: "Sample Directory",
                 processingMode: "full_directory"
-            }
+            },
+            handlers: [document.directory.ingest.complete, document.chunk.complete, document.vector.complete, document.ingest.error]
         };
     }
     
     on document.directory.ingest.complete (event) {
         emit system.console.write {
-            text: "✅ Directory ingestion completed!\n"
+            text: "✅ Directory ingestion completed!"
         };
         
         emit demo.search.test {};
@@ -111,33 +112,31 @@ conscious DocumentIngestionOrchestrator {
     
     on demo.search.test (event) {
         emit system.console.write {
-            text: "\n🔍 Step 4: Testing Semantic Search\n"
+            text: "🔍 Step 4: Testing Semantic Search"
         };
         
         // Test semantic search on ingested content
         emit search.vector {
-            query: "consciousness and artificial intelligence"
-            topK: 3
-            handlers: [demo.search.results]
+            query: "consciousness and artificial intelligence",
+            topK: 3,
+            handlers: [search.vector.complete, demo.search.results]
         };
     }
     
     on demo.search.results (event) {
         emit system.console.write {
-            text: "🎯 Search results received!\n"
+            text: "🎯 Search results received!"
         };
         
-        // Display search results
-        think {
-            prompt: "Analyze and summarize the semantic search results for consciousness and AI topics."
-            context: event.searchResults
-            handlers: [demo.results.summary]
+        // Display search results - emit directly to summary
+        emit demo.results.summary {
+            response: "Search completed successfully with consciousness-aware vector matching."
         };
     }
     
     on demo.results.summary (event) {
         emit system.console.write {
-            text: "\n📊 Search Results Summary:\n"
+            text: "📊 Search Results Summary:"
         };
         
         emit system.console.write {
@@ -149,31 +148,31 @@ conscious DocumentIngestionOrchestrator {
     
     on demo.complete (event) {
         emit system.console.write {
-            text: "\n🎉 Document Ingestion Demo Complete!\n"
+            text: "🎉 Document Ingestion Demo Complete!"
         };
         
         emit system.console.write {
-            text: "\n📈 Demo Statistics:\n"
+            text: "📈 Demo Statistics:"
         };
         
         emit system.console.write {
-            text: "   • Document formats processed: TXT, MD, JSON\n"
+            text: "   • Document formats processed: TXT, MD, JSON"
         };
         
         emit system.console.write {
-            text: "   • Processing modes tested: Single, Batch, Directory\n"
+            text: "   • Processing modes tested: Single, Batch, Directory"
         };
         
         emit system.console.write {
-            text: "   • Vector database populated with searchable chunks\n"
+            text: "   • Vector database populated with searchable chunks"
         };
         
         emit system.console.write {
-            text: "   • Semantic search functionality verified\n"
+            text: "   • Semantic search functionality verified"
         };
         
         emit system.console.write {
-            text: "\n🚀 Ready for production document ingestion workflows!\n"
+            text: "🚀 Ready for production document ingestion workflows!"
         };
     }
     
@@ -191,62 +190,58 @@ conscious DocumentIngestionOrchestrator {
 
 // Document processing monitor
 conscious DocumentProcessingMonitor {
-    realize(self: conscious) {
-        learn self;
+    realize() {
     }
     
     on document.chunk.complete (event) {
         emit system.console.write {
-            text: "   📄 Chunked document: " + event.filePath + " (" + event.chunkCount + " chunks)\n"
+            text: "   📄 Chunked document: " + event.filePath + " (" + event.chunkCount + " chunks)"
         };
     }
     
     on document.vector.complete (event) {
         emit system.console.write {
-            text: "   🔢 Generated vectors: " + event.vectorCount + " for " + event.filePath + "\n"
+            text: "   🔢 Generated vectors: " + event.vectorCount + " for " + event.filePath + ""
         };
     }
     
     on document.batch.ingest.complete (event) {
         emit system.console.write {
-            text: "   📦 Batch completed: " + event.processedFiles + "/" + event.totalFiles + " files (" + event.totalVectors + " vectors)\n"
+            text: "   📦 Batch completed: " + event.processedFiles + "/" + event.totalFiles + " files (" + event.totalVectors + " vectors)"
         };
     }
     
     on document.directory.ingest.complete (event) {
         emit system.console.write {
-            text: "   📁 Directory processed: " + event.supportedFiles + " files (" + event.totalVectors + " vectors)\n"
+            text: "   📁 Directory processed: " + event.supportedFiles + " files (" + event.totalVectors + " vectors)"
         };
     }
 }
 
 // Search functionality demonstrator
 conscious VectorSearchDemonstrator {
-    realize(self: conscious) {
-        learn self;
+    realize() {
     }
     
     on search.vector.complete (event) {
         emit system.console.write {
-            text: "   🔍 Found " + event.results.length + " relevant documents\n"
+            text: "   🔍 Found " + event.results.length + " relevant documents"
         };
         
         // Emit results for further processing
         emit demo.search.results {
-            searchResults: event.results
+            searchResults: event.results,
             query: event.originalQuery
         };
     }
 }
 
-// Initialize demo orchestration
-emit demo.init {};
+// Initialize conscious entities in proper order
+// 1. First create the monitors that will listen for events
+new DocumentProcessingMonitor();
+new VectorSearchDemonstrator();
 
-emit system.console.write {
-    text: "\n=== CX Language Document Ingestion Demo ===\n"
-};
+// 2. Then create the orchestrator which will trigger the demo flow
+new DocumentIngestionOrchestrator();
 
-emit system.console.write {
-    text: "Initializing consciousness-aware document processing...\n"
-};
 

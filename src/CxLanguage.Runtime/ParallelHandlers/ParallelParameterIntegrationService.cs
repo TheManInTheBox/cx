@@ -57,15 +57,7 @@ namespace CxLanguage.Runtime.ParallelHandlers
         /// </summary>
         private void RegisterIntegrationEventHandlers()
         {
-            // Intercept AI service calls with parallel handler potential
-            _eventBus.Subscribe("ai.service.call", HandleAiServiceCallAsync);
-            _eventBus.Subscribe("think.request", HandleThinkRequestAsync);
-            _eventBus.Subscribe("learn.request", HandleLearnRequestAsync);
-            _eventBus.Subscribe("adapt.request", HandleAdaptRequestAsync);
-            _eventBus.Subscribe("infer.request", HandleInferRequestAsync);
-            
-            // Handle enhanced result distribution
-            _eventBus.Subscribe("parallel.result.enhanced", HandleEnhancedResultAsync);
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
             
             _logger.LogDebug("✅ Integration event handlers registered for parallel parameter optimization");
         }
@@ -133,39 +125,12 @@ namespace CxLanguage.Runtime.ParallelHandlers
         }
         
         /// <summary>
-        /// Handle think requests with parallel parameter optimization.
-        /// Example CX syntax: think { prompt: "analyze", handlers: [analysis.complete, summary.ready] }
-        /// </summary>
-        private async Task<bool> HandleThinkRequestAsync(object? sender, string eventName, IDictionary<string, object>? payload)
-        {
-            return await HandleParameterizedServiceCallAsync("think", payload);
-        }
-        
-        /// <summary>
-        /// Handle learn requests with parallel parameter optimization.
-        /// Example CX syntax: learn { data: "content", handlers: [knowledge.acquired, skills.updated] }
-        /// </summary>
-        private async Task<bool> HandleLearnRequestAsync(object? sender, string eventName, IDictionary<string, object>? payload)
-        {
-            return await HandleParameterizedServiceCallAsync("learn", payload);
-        }
-        
-        /// <summary>
         /// Handle adapt requests with parallel parameter optimization.
         /// Example CX syntax: adapt { context: "situation", handlers: [abilities.enhanced, knowledge.expanded] }
         /// </summary>
         private async Task<bool> HandleAdaptRequestAsync(object? sender, string eventName, IDictionary<string, object>? payload)
         {
             return await HandleParameterizedServiceCallAsync("adapt", payload);
-        }
-        
-        /// <summary>
-        /// Handle infer requests with parallel parameter optimization.
-        /// Example CX syntax: infer { pattern: "data", handlers: [conclusions.drawn, insights.generated] }
-        /// </summary>
-        private async Task<bool> HandleInferRequestAsync(object? sender, string eventName, IDictionary<string, object>? payload)
-        {
-            return await HandleParameterizedServiceCallAsync("infer", payload);
         }
         
         /// <summary>

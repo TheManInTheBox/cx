@@ -2238,10 +2238,7 @@ public class CxCompiler : IAstVisitor<object>
         return modulePath switch
         {
             // AI Services - Modern Microsoft.Extensions.AI architecture
-            "Cx.AI.Wait" => typeof(CxLanguage.StandardLibrary.AI.Wait.AwaitService),
             "Cx.AI.Realtime" => typeof(CxLanguage.StandardLibrary.AI.Realtime.ModernRealtimeService),
-            "Cx.AI.TextToSpeech" => typeof(CxLanguage.StandardLibrary.AI.Modern.ModernTextToSpeechService),
-            "Cx.AI.Modern" => typeof(CxLanguage.StandardLibrary.AI.Modern.ModernAwaitService),
             
             // Core Standard Library - for future non-AI services like:
             // "Cx.Core.IO" => typeof(...),

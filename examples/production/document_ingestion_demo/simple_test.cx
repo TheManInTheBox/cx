@@ -5,8 +5,6 @@
 
 conscious DocumentIngestionTest {
     realize(self: object) {
-        learn self;
-        
         emit system.console.write {
             text: "🧪 Testing Document Ingestion Service\n"
         };

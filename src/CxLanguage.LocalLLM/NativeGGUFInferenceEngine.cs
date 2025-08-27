@@ -248,16 +248,31 @@ public class NativeGGUFInferenceEngine : IDisposable
 
             var responseBuilder = new StringBuilder();
 
-            await foreach (string token in _executor.InferAsync(consciousnessPrompt, inferenceParams, cancellationToken))
+            // Suppress LlamaSharp console output during inference
+            var originalOut = Console.Out;
+            var originalError = Console.Error;
+            
+            try
             {
-                if (cancellationToken.IsCancellationRequested)
-                    break;
-
-                responseBuilder.Append(token);
+                Console.SetOut(TextWriter.Null);
+                Console.SetError(TextWriter.Null);
                 
-                // Stop at reasonable response length for consciousness processing
-                if (responseBuilder.Length > 2048)
-                    break;
+                await foreach (string token in _executor.InferAsync(consciousnessPrompt, inferenceParams, cancellationToken))
+                {
+                    if (cancellationToken.IsCancellationRequested)
+                        break;
+
+                    responseBuilder.Append(token);
+                    
+                    // Stop at reasonable response length for consciousness processing
+                    if (responseBuilder.Length > 2048)
+                        break;
+                }
+            }
+            finally
+            {
+                Console.SetOut(originalOut);
+                Console.SetError(originalError);
             }
 
             var response = responseBuilder.ToString().Trim();

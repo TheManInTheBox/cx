@@ -22,55 +22,7 @@ namespace CxLanguage.StandardLibrary.Services.IO
             _eventBus = eventBus;
             _logger.LogInformation("🗂️ FileSystemService initialized with consciousness integration");
             
-            // Subscribe to file system events
-            _eventBus.Subscribe("file.read.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileReadRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("file.write.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileWriteRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("file.exists.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileExistsRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("file.delete.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileDeleteRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("file.copy.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileCopyRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("file.move.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileMoveRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("file.append.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileAppendRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("file.info.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleFileInfoRequest(eventPayload);
-                return true;
-            });
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
         }
 
         private async Task HandleFileReadRequest(CxEventPayload eventPayload)

@@ -45,10 +45,20 @@ namespace CxLanguage.StandardLibrary.Services.Document
             _embeddingGenerator = embeddingGenerator ?? throw new ArgumentNullException(nameof(embeddingGenerator));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            // Subscribe to document ingestion events
-            _eventBus.Subscribe("document.ingest", HandleDocumentIngestAsync);
-            _eventBus.Subscribe("document.batch.ingest", HandleDocumentBatchIngestAsync);
-            _eventBus.Subscribe("document.directory.ingest", HandleDirectoryIngestAsync);
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
+            // However, we still need to register our service methods so they can be called when events are emitted
+            
+            // Register this service instance for event handling
+            try
+            {
+                _eventBus.Subscribe("document.ingest", HandleDocumentIngestAsync);
+                _eventBus.Subscribe("document.batch.ingest", HandleDocumentBatchIngestAsync);
+                _logger.LogInformation("✅ DocumentIngestionService event handlers registered");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Could not register DocumentIngestionService event handlers");
+            }
             
             _logger.LogInformation("✅ DocumentIngestionService initialized with consciousness-aware processing");
         }

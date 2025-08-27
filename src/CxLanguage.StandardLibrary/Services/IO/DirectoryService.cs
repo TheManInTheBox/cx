@@ -23,37 +23,7 @@ namespace CxLanguage.StandardLibrary.Services.IO
             _eventBus = eventBus;
             _logger.LogDebug("📁 DirectoryService initialized with consciousness integration");
             
-            // Subscribe to directory events
-            _eventBus.Subscribe("directory.create.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleDirectoryCreateRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("directory.list.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleDirectoryListRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("directory.exists.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleDirectoryExistsRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("directory.delete.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandleDirectoryDeleteRequest(eventPayload);
-                return true;
-            });
-            _eventBus.Subscribe("path.join.request", async (sender, eventName, data) => 
-            {
-                var eventPayload = new CxEventPayload(eventName, data ?? new Dictionary<string, object>());
-                await HandlePathJoinRequest(eventPayload);
-                return true;
-            });
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
         }
 
         private async Task HandleDirectoryCreateRequest(CxEventPayload eventPayload)

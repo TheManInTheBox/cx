@@ -37,15 +37,9 @@ namespace CxLanguage.Runtime.Services
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-            // Subscribe to time operation events
-            _eventBus.Subscribe("system.time.now", HandleTimeNowAsync);
-            _eventBus.Subscribe("system.time.parse", HandleTimeParseAsync);
-            _eventBus.Subscribe("system.time.format", HandleTimeFormatAsync);
-            _eventBus.Subscribe("system.time.add", HandleTimeAddAsync);
-            _eventBus.Subscribe("system.time.diff", HandleTimeDiffAsync);
-            _eventBus.Subscribe("system.time.timezone", HandleTimeZoneAsync);
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
             
-            _logger.LogInformation("TimeService subscribed to time events with consciousness-aware patterns");
+            _logger.LogInformation("TimeService initialized with consciousness-aware patterns");
         }
 
         /// <summary>

@@ -15,8 +15,7 @@ namespace CxLanguage.StandardLibrary.NeuroHub
 
         protected override void InitializeReflexes()
         {
-            // This pod is interested in all temperature readings.
-            CentralNervousSystem.Subscribe("sensor.temperature.*", HandleTemperatureReading);
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
         }
 
         private async Task HandleTemperatureReading(NeuroEvent @event)

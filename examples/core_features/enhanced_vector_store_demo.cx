@@ -13,8 +13,7 @@
 
 // Enhanced vector store orchestrator for Issue #252 validation
 conscious EnhancedVectorStoreValidator {
-    realize(self: conscious) {
-        learn self;
+    realize() {
         
         emit system.console.write {
             text: "🚀 Enhanced Vector Store Demo - Issue #252 Validation"
@@ -23,7 +22,7 @@ conscious EnhancedVectorStoreValidator {
         emit system.console.write {
             text: "📊 Testing native .NET 9 embedding capabilities with consciousness integration..."
         };
-        
+
         // Start validation sequence
         emit demo.validation.start {};
     }
@@ -39,10 +38,10 @@ conscious EnhancedVectorStoreValidator {
         
         // Test embedding generation performance
         emit vectorstore.text.add {
-            content: "Artificial consciousness represents the emergence of self-aware cognitive processes within computational systems."
+            content: "Artificial consciousness represents the emergence of self-aware cognitive processes within computational systems.",
             metadata: {
-                test_id: "performance_test_1"
-                consciousness_context: "AI research"
+                test_id: "performance_test_1",
+                consciousness_context: "AI research",
                 validation_target: "sub_50ms"
             }
         };
@@ -63,7 +62,7 @@ conscious EnhancedVectorStoreValidator {
         
         // Perform semantic search with performance validation
         emit vectorstore.text.search {
-            query: "machine consciousness and cognitive processes"
+            query: "machine consciousness and cognitive processes",
             topK: 3
         };
     }
@@ -86,10 +85,10 @@ conscious EnhancedVectorStoreValidator {
         
         // Test file processing integration
         emit vectorstore.file.process {
-            filePath: "examples/production/document_ingestion_demo/sample_documents/ai_consciousness.txt"
-            chunkSize: 500
+            filePath: "examples/production/document_ingestion_demo/sample_documents/ai_consciousness.txt",
+            chunkSize: 500,
             metadata: {
-                test_id: "file_integration_test"
+                test_id: "file_integration_test",
                 consciousness_file_processing: true
             }
         };
@@ -179,5 +178,5 @@ conscious EnhancedVectorStoreValidator {
     }
 }
 
-// Initialize the validation demo
-emit demo.validation.start {};
+
+new EnhancedVectorStoreValidator();

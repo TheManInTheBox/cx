@@ -114,60 +114,6 @@ public static class IDEServiceConfiguration
         {
             Console.WriteLine($"⚠️ Warning: InMemoryVectorStoreService could not be registered: {ex.Message}");
         }
-
-        // Register ThinkService
-        try
-        {
-            services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.ThinkService>(provider =>
-            {
-                var eventBus = provider.GetRequiredService<ICxEventBus>();
-                var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.ThinkService>>();
-                var localLLMService = provider.GetRequiredService<ILocalLLMService>();
-                var vectorStore = provider.GetRequiredService<IVectorStoreService>();
-                return new CxLanguage.StandardLibrary.Services.Ai.ThinkService(eventBus, logger, localLLMService, vectorStore);
-            });
-            Console.WriteLine("✅ ThinkService (GPU-CUDA) with consciousness integration registered successfully");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠️ Warning: ThinkService could not be registered: {ex.Message}");
-        }
-
-        // Register InferService
-        try
-        {
-            services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.InferService>(provider =>
-            {
-                var eventBus = provider.GetRequiredService<ICxEventBus>();
-                var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.InferService>>();
-                var localLLMService = provider.GetRequiredService<ILocalLLMService>();
-                var vectorStore = provider.GetRequiredService<IVectorStoreService>();
-                return new CxLanguage.StandardLibrary.Services.Ai.InferService(eventBus, logger, localLLMService, vectorStore);
-            });
-            Console.WriteLine("✅ InferService (GPU-CUDA) with inference capabilities registered successfully");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠️ Warning: InferService could not be registered: {ex.Message}");
-        }
-
-        // Register LearnService
-        try
-        {
-            services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.LearnService>(provider =>
-            {
-                var eventBus = provider.GetRequiredService<ICxEventBus>();
-                var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.LearnService>>();
-                var localLLMService = provider.GetRequiredService<ILocalLLMService>();
-                var vectorStore = provider.GetRequiredService<IVectorStoreService>();
-                return new CxLanguage.StandardLibrary.Services.Ai.LearnService(eventBus, logger, localLLMService, vectorStore);
-            });
-            Console.WriteLine("✅ LearnService (GPU-CUDA) with vector storage capabilities registered successfully");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"⚠️ Warning: LearnService could not be registered: {ex.Message}");
-        }
     }
 
     /// <summary>
@@ -258,9 +204,6 @@ public static class IDEServiceConfiguration
             }
             
             // Force AI services instantiation to ensure event subscriptions
-            var thinkService = serviceProvider.GetService<CxLanguage.StandardLibrary.Services.Ai.ThinkService>();
-            var inferService = serviceProvider.GetService<CxLanguage.StandardLibrary.Services.Ai.InferService>();
-            var learnService = serviceProvider.GetService<CxLanguage.StandardLibrary.Services.Ai.LearnService>();
             
             Console.WriteLine("✅ AI services instantiated and ready for consciousness processing");
         }

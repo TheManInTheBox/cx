@@ -101,6 +101,30 @@ class Program
             // Ensure TimeService is created so it subscribes to events
             _ = host.Services.GetService<TimeService>();
             
+            // Register DocumentIngestionService for consciousness integration
+            var documentService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Document.IDocumentIngestionService>();
+            if (documentService != null)
+            {
+                CxLanguage.Runtime.CxRuntimeHelper.RegisterService("DocumentIngestionService", documentService);
+                // Console.WriteLine("✅ DocumentIngestionService registered for static access in consciousness processing");
+            }
+            
+            // Register VectorStoreService for consciousness integration
+            var vectorStoreService = host.Services.GetService<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService>();
+            if (vectorStoreService != null)
+            {
+                CxLanguage.Runtime.CxRuntimeHelper.RegisterService("VectorStoreService", vectorStoreService);
+                // Console.WriteLine("✅ VectorStoreService registered for static access in consciousness processing");
+            }
+            
+            // Register FileSystemService for consciousness integration
+            var fileSystemService = host.Services.GetService<FileSystemService>();
+            if (fileSystemService != null)
+            {
+                CxLanguage.Runtime.CxRuntimeHelper.RegisterService("FileSystemService", fileSystemService);
+                // Console.WriteLine("✅ FileSystemService registered for static access in consciousness processing");
+            }
+            
             // Register LocalLLM service for consciousness integration
             var localLLMService = host.Services.GetService<CxLanguage.LocalLLM.ILocalLLMService>();
             if (localLLMService != null)
@@ -118,35 +142,6 @@ class Program
             }
             
             // Force AI services instantiation to ensure event subscriptions
-            var thinkService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.ThinkService>();
-            if (thinkService != null)
-            {
-                // Service registration output removed
-            }
-            else
-            {
-                // Service warning output removed
-            }
-            
-            var inferService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.InferService>();
-            if (inferService != null)
-            {
-                // Service registration output removed
-            }
-            else
-            {
-                // Service warning output removed
-            }
-            
-            var learnService = host.Services.GetService<CxLanguage.StandardLibrary.Services.Ai.LearnService>();
-            if (learnService != null)
-            {
-                // Service registration output removed
-            }
-            else
-            {
-                // Service warning output removed
-            }
             
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             var telemetryService = host.Services.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
@@ -524,50 +519,19 @@ class Program
                     Console.WriteLine($"⚠️ Warning: InMemoryVectorStoreService could not be registered: {ex.Message}");
                 }
 
-                // Register Azure OpenAI Client and Embedding Generator
+                // Register Local Embedding Generator
                 try
                 {
-                    // Temporarily disable Azure to test local embeddings
-                    /*
-                    services.AddSingleton<Azure.AI.OpenAI.AzureOpenAIClient>(provider =>
-                    {
-                        var config = provider.GetRequiredService<IConfiguration>();
-                        var endpoint = config["AzureOpenAI:Services:0:Endpoint"];
-                        var apiKey = config["AzureOpenAI:Services:0:ApiKey"];
-                        
-                        if (string.IsNullOrEmpty(endpoint) || string.IsNullOrEmpty(apiKey))
-                        {
-                            throw new InvalidOperationException("Azure OpenAI configuration is missing");
-                        }
-                        
-                        return new Azure.AI.OpenAI.AzureOpenAIClient(new Uri(endpoint), new Azure.AzureKeyCredential(apiKey));
-                    });
-                    */
-
+                    // Use LocalEmbeddingGenerator for local model processing
                     services.AddSingleton<Microsoft.Extensions.AI.IEmbeddingGenerator<string, Microsoft.Extensions.AI.Embedding<float>>>(provider =>
                     {
-                        try
-                        {
-                            // Try Azure OpenAI first
-                            var azureClient = provider.GetRequiredService<Azure.AI.OpenAI.AzureOpenAIClient>();
-                            var config = provider.GetRequiredService<IConfiguration>();
-                            var deploymentName = config["AzureOpenAI:Services:0:Models:TextEmbedding"] ?? "text-embedding-3-small";
-                            var azureLogger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.AI.Embeddings.CustomEmbeddingGenerator>>();
-                            
-                            return new CxLanguage.StandardLibrary.AI.Embeddings.CustomEmbeddingGenerator(azureClient, deploymentName, azureLogger);
-                        }
-                        catch
-                        {
-                            // Fall back to local embedding model
-                            var localLogger = provider.GetRequiredService<ILogger<CxLanguage.LocalLLM.LocalEmbeddingGenerator>>();
-                            var localModelPath = "models/embedding/nomic-embed-text-v1.5.Q4_0.gguf"; // Q4_0 quantized embedding model
-                            
-                            Console.WriteLine("🧩 Falling back to local embedding model");
-                            return new CxLanguage.LocalLLM.LocalEmbeddingGenerator(localModelPath, localLogger);
-                        }
+                        var localLogger = provider.GetRequiredService<ILogger<CxLanguage.LocalLLM.LocalEmbeddingGenerator>>();
+                        
+                        // Use the correct local embedding model file path
+                        var modelPath = "models/embedding/nomic-embed-text-v1.5.Q4_0.gguf";
+                        
+                        return new CxLanguage.LocalLLM.LocalEmbeddingGenerator(modelPath, localLogger);
                     });
-                    
-                    // Console.WriteLine("✅ Azure OpenAI and EmbeddingGenerator registered successfully.");
                 }
                 catch (Exception ex)
                 {
@@ -578,65 +542,10 @@ class Program
                 try
                 {
                     services.AddSingleton<CxLanguage.StandardLibrary.Services.Document.IDocumentIngestionService, CxLanguage.StandardLibrary.Services.Document.DocumentIngestionService>();
-                    // Console.WriteLine("✅ DocumentIngestionService registered successfully.");
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"⚠️ Warning: DocumentIngestionService could not be registered: {ex.Message}");
-                }
-
-                // Register ThinkService
-                try
-                {
-                    services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.ThinkService>(provider =>
-                    {
-                        var eventBus = provider.GetRequiredService<CxLanguage.Core.Events.ICxEventBus>();
-                        var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.ThinkService>>();
-                        var localLLMService = provider.GetRequiredService<CxLanguage.LocalLLM.ILocalLLMService>();
-                        var vectorStore = provider.GetRequiredService<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService>();
-                        return new CxLanguage.StandardLibrary.Services.Ai.ThinkService(eventBus, logger, localLLMService, vectorStore);
-                    });
-                    // Console.WriteLine("✅ ThinkService (GPU-CUDA) with consciousness integration registered successfully.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Warning: ThinkService could not be registered: {ex.Message}");
-                }
-
-                // Register InferService
-                try
-                {
-                    services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.InferService>(provider =>
-                    {
-                        var eventBus = provider.GetRequiredService<CxLanguage.Core.Events.ICxEventBus>();
-                        var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.InferService>>();
-                        var localLLMService = provider.GetRequiredService<CxLanguage.LocalLLM.ILocalLLMService>();
-                        var vectorStore = provider.GetRequiredService<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService>();
-                        return new CxLanguage.StandardLibrary.Services.Ai.InferService(eventBus, logger, localLLMService, vectorStore);
-                    });
-                    // Console.WriteLine("✅ InferService (GPU-CUDA) with inference capabilities registered successfully.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Warning: InferService could not be registered: {ex.Message}");
-                }
-
-                // Register LearnService
-                try
-                {
-                    services.AddSingleton<CxLanguage.StandardLibrary.Services.Ai.LearnService>(provider =>
-                    {
-                        var eventBus = provider.GetRequiredService<CxLanguage.Core.Events.ICxEventBus>();
-                        var logger = provider.GetRequiredService<ILogger<CxLanguage.StandardLibrary.Services.Ai.LearnService>>();
-                        var localLLMService = provider.GetRequiredService<CxLanguage.LocalLLM.ILocalLLMService>();
-                        var vectorStore = provider.GetRequiredService<CxLanguage.StandardLibrary.Services.VectorStore.IVectorStoreService>();
-                        return new CxLanguage.StandardLibrary.Services.Ai.LearnService(eventBus, logger, localLLMService, vectorStore);
-                    });
-                    // Console.WriteLine("✅ LearnService (GPU-CUDA) with vector storage capabilities registered successfully.");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"⚠️ Warning: LearnService could not be registered: {ex.Message}");
                 }
 
                 // Register Service-Based I/O Architecture

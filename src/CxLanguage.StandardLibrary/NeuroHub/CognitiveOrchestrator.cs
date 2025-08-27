@@ -14,7 +14,7 @@ namespace CxLanguage.StandardLibrary.NeuroHub
         public CognitiveOrchestrator(NeuroHub eventHub)
         {
             _eventHub = eventHub;
-            _eventHub.Subscribe("alert.*", HandleAlert);
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
         }
 
         private Task HandleAlert(NeuroEvent @event)

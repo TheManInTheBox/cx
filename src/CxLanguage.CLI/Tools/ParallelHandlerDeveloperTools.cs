@@ -272,8 +272,7 @@ namespace CxLanguage.CLI.Tools
             {
                 var line = lines[i].Trim();
                 
-                if (line.StartsWith("think {") || line.StartsWith("learn {") || 
-                    line.StartsWith("is {") || line.StartsWith("adapt {"))
+                if (line.StartsWith("is {") || line.StartsWith("adapt {"))
                 {
                     aiServiceCalls.Add(i);
                 }
@@ -342,8 +341,7 @@ namespace CxLanguage.CLI.Tools
                 else if (inEventHandler)
                 {
                     // Count complexity indicators
-                    if (line.Contains("think {") || line.Contains("learn {") || 
-                        line.Contains("is {") || line.Contains("emit "))
+                    if (line.Contains("is {") || line.Contains("emit "))
                     {
                         complexityScore++;
                     }
@@ -504,7 +502,7 @@ namespace CxLanguage.CLI.Tools
                     hasConsciousEntity = true;
                 }
                 
-                if (line.Contains("is {") || line.Contains("adapt {") || line.Contains("iam {"))
+                if (line.Contains("is {") || line.Contains("adapt {"))
                 {
                     hasConsciousnessPatterns = true;
                 }
@@ -515,7 +513,7 @@ namespace CxLanguage.CLI.Tools
                 report.SyntaxIssues.Add(new SyntaxIssue
                 {
                     Line = 1,
-                    Message = "Conscious entity detected but no consciousness patterns used - consider adding 'is {}', 'adapt {}', or 'iam {}' patterns",
+                    Message = "Conscious entity detected but no consciousness patterns used - consider adding 'is {}' or 'adapt {}' patterns",
                     Severity = "Info"
                 });
             }

@@ -108,10 +108,7 @@ public class ProductionInfrastructureCoordinator
     {
         try
         {
-            // Register neural event handlers for biological authenticity
-            _eventBus.Subscribe("neural.plasticity", (sender, eventName, payload) => { OnNeuralPlasticity(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-            _eventBus.Subscribe("synaptic.activity", (sender, eventName, payload) => { OnSynapticActivity(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-            _eventBus.Subscribe("biological.timing", (sender, eventName, payload) => { OnBiologicalTiming(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
             
             _systemComponents["NeuralProcessing"] = "Operational";
             
@@ -131,10 +128,7 @@ public class ProductionInfrastructureCoordinator
     {
         try
         {
-            // Register for Aura Cognitive Framework events
-            _eventBus.Subscribe("aura.eventhub", (sender, eventName, payload) => { OnAuraEventHub(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-            _eventBus.Subscribe("aura.neurohub", (sender, eventName, payload) => { OnAuraNeuroHub(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-            _eventBus.Subscribe("enhanced.handlers", (sender, eventName, payload) => { OnEnhancedHandlers(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
             
             _systemComponents["EventCoordination"] = "Operational";
             
@@ -154,10 +148,7 @@ public class ProductionInfrastructureCoordinator
     {
         try
         {
-            // Register monitoring event handlers
-            _eventBus.Subscribe("system.health", (sender, eventName, payload) => { OnSystemHealth(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-            _eventBus.Subscribe("performance.metrics", (sender, eventName, payload) => { OnPerformanceMetrics(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-            _eventBus.Subscribe("consciousness.metrics", (sender, eventName, payload) => { OnConsciousnessMetrics(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
             
             _systemComponents["MonitoringSystems"] = "Operational";
             
@@ -175,16 +166,9 @@ public class ProductionInfrastructureCoordinator
     /// </summary>
     private void RegisterSystemEventHandlers()
     {
-        // System lifecycle events
-        _eventBus.Subscribe("system.startup", (sender, eventName, payload) => { OnSystemStartup(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-        _eventBus.Subscribe("system.shutdown", (sender, eventName, payload) => { OnSystemShutdown(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-        _eventBus.Subscribe("system.restart", (sender, eventName, payload) => { OnSystemRestart(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
+        // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
         
-        // Error handling events  
-        _eventBus.Subscribe("system.error", (sender, eventName, payload) => { OnSystemError(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-        _eventBus.Subscribe("critical.failure", (sender, eventName, payload) => { OnCriticalFailure(ConvertDictToCxEvent(eventName, payload)); return Task.FromResult(true); });
-        
-        _logger.LogInformation("🔧 System Event Handlers: Registered for production coordination");
+        _logger.LogInformation("🔧 System Event Handlers: Ready for explicit CX program binding");
     }
     
     /// <summary>
