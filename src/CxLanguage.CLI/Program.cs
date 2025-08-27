@@ -117,6 +117,14 @@ class Program
                 // Console.WriteLine("✅ VectorStoreService registered for static access in consciousness processing");
             }
             
+            // Register SemanticSearchService for consciousness integration
+            var semanticSearchService = host.Services.GetService<CxLanguage.StandardLibrary.Services.VectorStore.ISemanticSearchService>();
+            if (semanticSearchService != null)
+            {
+                CxLanguage.Runtime.CxRuntimeHelper.RegisterService("SemanticSearchService", semanticSearchService);
+                // Console.WriteLine("✅ SemanticSearchService registered for static access in consciousness processing");
+            }
+            
             // Register FileSystemService for consciousness integration
             var fileSystemService = host.Services.GetService<FileSystemService>();
             if (fileSystemService != null)
@@ -517,6 +525,17 @@ class Program
                 catch (Exception ex)
                 {
                     Console.WriteLine($"⚠️ Warning: InMemoryVectorStoreService could not be registered: {ex.Message}");
+                }
+
+                // Register Semantic Search Service
+                try
+                {
+                    services.AddSingleton<CxLanguage.StandardLibrary.Services.VectorStore.ISemanticSearchService, CxLanguage.StandardLibrary.Services.VectorStore.SemanticSearchService>();
+                    // Console.WriteLine("✅ SemanticSearchService registered successfully.");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Warning: SemanticSearchService could not be registered: {ex.Message}");
                 }
 
                 // Register Local Embedding Generator

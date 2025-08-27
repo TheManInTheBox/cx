@@ -44,9 +44,11 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
             _eventBus = eventBus;
             _embeddingGenerator = embeddingGenerator;
             
-            // NO AUTO HANDLERS - All handlers must be explicitly declared in CX programs
+            // Subscribe to vector events - Runtime services SHOULD handle events (unlike CX programs which declare handlers explicitly)
+            _eventBus.Subscribe("vector.add.text", HandleAddTextEventAsync);
+            _eventBus.Subscribe("vector.search.text", HandleSearchTextEventAsync);
             
-            _logger.LogDebug("🧠 Dr. Marcus 'MemoryLayer' Sterling's Enhanced InMemoryVectorStoreService initialized with embedding capabilities.");
+            _logger.LogDebug("🧠 Dr. Marcus 'MemoryLayer' Sterling's Enhanced InMemoryVectorStoreService initialized with embedding capabilities and event handlers.");
             _eventBus.EmitAsync("vectorstore.initialized", new Dictionary<string, object> 
             { 
                 ["service"] = nameof(InMemoryVectorStoreService),
@@ -446,14 +448,14 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
         /// <summary>
         /// Handle vector.add.text event requests from CX language runtime
         /// </summary>
-        private async Task OnAddTextRequest(CxEventPayload cxEvent)
+        private async Task<bool> HandleAddTextEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
         {
             _logger.LogInformation("🧩 Processing vector.add.text request");
             var startTime = DateTime.UtcNow;
 
             try
             {
-                if (cxEvent.Data is Dictionary<string, object> payload)
+                if (payload != null)
                 {
                     var text = payload.TryGetValue("text", out var textObj) ? textObj?.ToString() : "";
                     var metadata = payload.TryGetValue("metadata", out var metadataObj) && metadataObj is Dictionary<string, object> meta 
@@ -464,22 +466,45 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                         var result = await AddTextAsync(text, metadata);
                         var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
 
-                        // Emit success event
-                        await _eventBus.EmitAsync("vector.add.text.completed", new Dictionary<string, object>
+                        var responsePayload = new Dictionary<string, object>
                         {
                             ["id"] = result.Id,
                             ["text"] = text,
                             ["duration"] = duration,
                             ["consciousness_context"] = metadata.ContainsKey("consciousness_aware")
-                        });
+                        };
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload.TryGetValue("handlers", out var handlersObj) && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.add.text.completed", responsePayload);
+                        }
 
                         _logger.LogInformation("✅ vector.add.text completed in {Duration}ms", duration);
+                        return true;
                     }
                     else
                     {
                         throw new ArgumentException("Text parameter is required for vector.add.text");
                     }
                 }
+                return false;
             }
             catch (Exception ex)
             {
@@ -489,20 +514,21 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                     ["error"] = ex.Message,
                     ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
                 });
+                return false;
             }
         }
 
         /// <summary>
         /// Handle vector.search.text event requests from CX language runtime
         /// </summary>
-        private async Task OnSearchTextRequest(CxEventPayload cxEvent)
+        private async Task<bool> HandleSearchTextEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
         {
             _logger.LogInformation("🧩 Processing vector.search.text request");
             var startTime = DateTime.UtcNow;
 
             try
             {
-                if (cxEvent.Data is Dictionary<string, object> payload)
+                if (payload != null)
                 {
                     var query = payload.TryGetValue("query", out var queryObj) ? queryObj?.ToString() : "";
                     var topK = payload.TryGetValue("topK", out var topKObj) && int.TryParse(topKObj?.ToString(), out var k) ? k : 5;
@@ -528,12 +554,14 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                         });
 
                         _logger.LogInformation("✅ vector.search.text completed in {Duration}ms with {ResultCount} results", duration, results.Count());
+                        return true;
                     }
                     else
                     {
                         throw new ArgumentException("Query parameter is required for vector.search.text");
                     }
                 }
+                return false;
             }
             catch (Exception ex)
             {
@@ -543,6 +571,7 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                     ["error"] = ex.Message,
                     ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
                 });
+                return false;
             }
         }
     }

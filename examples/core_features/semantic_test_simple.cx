@@ -1,0 +1,58 @@
+///
+/// Simple Semantic Search Test - Debug handler format
+///
+
+conscious SemanticTester {
+    realize() {
+        emit system.console.write {
+            text: "🧪 Testing semantic search handler format..."
+        };
+        
+        // Add a test document first with explicit handler
+        emit vector.add.text {
+            text: "This is a test document for semantic search debugging.",
+            metadata: {
+                test: true,
+                source: "semantic_test"
+            },
+            handlers: [ vector.add.complete ]
+        };
+    }
+    
+    // Wait for vector addition to complete before searching
+    on vector.add.complete (event) {
+        emit system.console.write {
+            text: "📄 Test document added successfully: " + event.id
+        };
+        
+        emit system.console.write {
+            text: "🔍 Performing semantic search with custom handler..."
+        };
+        
+        // Simple semantic search with handler
+        emit semantic.search {
+            query: "test document",
+            options: {
+                topK: 1,
+                similarityThreshold: 0.1,
+                generateSnippets: true
+            },
+            handlers: [ search.test.complete ]
+        };
+    }
+    
+    // Custom handler to see if it gets called
+    on search.test.complete (event) {
+        emit system.console.write {
+            text: "🎉 Custom handler was called successfully!"
+        };
+        emit system.console.write {
+            text: "Query: " + event.query
+        };
+        emit system.console.write {
+            text: "Result count: " + event.result_count
+        };
+    }
+}
+
+new SemanticTester();
