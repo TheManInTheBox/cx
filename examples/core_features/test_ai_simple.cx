@@ -1,0 +1,32 @@
+conscious SimpleAiTest {
+    realize() {
+        emit system.console.write {
+            text: "🔬 Simple AI Test - Initializing Service Chain"
+        };
+        
+        emit system.console.write {
+            text: "🚀 Starting AI test sequence..."
+        };
+        
+        // Test the AI event system
+        emit ai.generate {
+            prompt: "Hello! Please respond with a simple greeting.",
+            handlers: [ test.response ]
+        };
+    }
+    
+    on test.response (event) {
+        emit system.console.write {
+            text: "📢 Full AI Response: '" + event.result + "'"
+        };
+        
+        emit system.console.write {
+            text: "✅ Real AI response received!"
+        };
+        
+        // Shutdown after test
+        emit system.shutdown { reason: "test_complete" };
+    }
+}
+
+new SimpleAiTest();

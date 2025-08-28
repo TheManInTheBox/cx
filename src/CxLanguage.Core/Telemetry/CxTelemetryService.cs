@@ -149,6 +149,34 @@ namespace CxLanguage.Core.Telemetry
         }
 
         /// <summary>
+        /// Track AI event processing performance and results
+        /// </summary>
+        public void TrackAiEventProcessing(string eventName, TimeSpan duration, bool success, string? errorMessage = null)
+        {
+            var telemetry = new EventTelemetry("CX_AiEventProcessing");
+            telemetry.Properties["EventName"] = eventName;
+            telemetry.Properties["Success"] = success.ToString();
+            telemetry.Metrics["DurationMs"] = duration.TotalMilliseconds;
+            
+            if (!string.IsNullOrEmpty(errorMessage))
+            {
+                telemetry.Properties["ErrorMessage"] = errorMessage;
+            }
+
+            _telemetryClient.TrackEvent(telemetry);
+            
+            if (success)
+            {
+                _logger.LogInformation("AI event {EventName} completed in {DurationMs}ms", eventName, duration.TotalMilliseconds);
+            }
+            else
+            {
+                _logger.LogWarning("AI event {EventName} failed after {DurationMs}ms: {ErrorMessage}", 
+                    eventName, duration.TotalMilliseconds, errorMessage);
+            }
+        }
+
+        /// <summary>
         /// Flush all telemetry data
         /// </summary>
         public void Flush()

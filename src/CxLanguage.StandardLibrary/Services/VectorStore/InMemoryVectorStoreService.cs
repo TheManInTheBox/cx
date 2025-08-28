@@ -539,8 +539,7 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                         var results = await SearchTextAsync(query, topK);
                         var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
 
-                        // Emit success event
-                        await _eventBus.EmitAsync("vector.search.text.completed", new Dictionary<string, object>
+                        var responsePayload = new Dictionary<string, object>
                         {
                             ["query"] = query,
                             ["results"] = results.Select(r => new Dictionary<string, object>
@@ -551,7 +550,29 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                             }).ToList(),
                             ["duration"] = duration,
                             ["topK"] = topK
-                        });
+                        };
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload.TryGetValue("handlers", out var handlersObj) && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom search handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.search.text.completed", responsePayload);
+                        }
 
                         _logger.LogInformation("✅ vector.search.text completed in {Duration}ms with {ResultCount} results", duration, results.Count());
                         return true;

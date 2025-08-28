@@ -1,0 +1,23 @@
+conscious QuickAiTest {
+    on test.start (event) {
+        emit system.console.write {
+            text: "🧪 Quick AI Test - Testing Fixed Implementation"
+        };
+        
+        // Test simple AI generation without heavy model loading
+        emit ai.generate {
+            prompt: "Hello AI",
+            handlers: [ test.ai.response ]
+        };
+    }
+    
+    on test.ai.response (event) {
+        emit system.console.write {
+            text: "✅ AI Response received: " + event.result
+        };
+        
+        emit system.console.write {
+            text: "🎯 Test completed - checking if we get real AI text or placeholder"
+        };
+    }
+}

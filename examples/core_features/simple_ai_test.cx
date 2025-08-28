@@ -1,0 +1,29 @@
+///
+/// Simple AI Service Test
+/// Test direct LocalLLM connectivity
+///
+
+conscious SimpleAiTest {
+    realize() {
+        emit system.console.write {
+            text: "🤖 Testing LocalLLM Service Connectivity"
+        };
+        
+        // Simple AI generation test
+        emit ai.generate {
+            prompt: "Hello world",
+            type: "simple",
+            handlers: [ test.complete ]
+        };
+    }
+    
+    on test.complete (event) {
+        emit system.console.write {
+            text: "✅ AI Response: " + event.result
+        };
+        
+        emit system.shutdown {};
+    }
+}
+
+new SimpleAiTest();

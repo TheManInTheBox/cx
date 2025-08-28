@@ -1,0 +1,33 @@
+conscious SimpleVectorTest {
+    realize() {
+        emit system.console.write {
+            text: "🧠 Simple Vector Test Starting"
+        };
+        
+        emit vector.add.text {
+            text: "Test vector embedding functionality.",
+            metadata: {
+                "test": "simple"
+            },
+            handlers: [ test.completed ]
+        };
+    }
+    
+    on test.completed (event) {
+        emit system.console.write {
+            text: "✅ Vector test completed successfully!"
+        };
+        
+        emit system.console.write {
+            text: "Duration: " + event.duration + "ms"
+        };
+        
+        emit system.console.write {
+            text: "Record ID: " + event.id
+        };
+        
+        emit system.shutdown { reason: "test_complete" };
+    }
+}
+
+new SimpleVectorTest();

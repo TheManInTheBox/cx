@@ -112,8 +112,9 @@ public static class RuntimeFunctionRegistry
     
     /// <summary>
     /// Create an instance of a program type for function execution
+    /// Updated for event-driven architecture - no longer passes legacy AI functions
     /// </summary>
-    public static object? CreateProgramInstance(string assemblyName, object console, object? aiService, object? aiFunctions)
+    public static object? CreateProgramInstance(string assemblyName, object console, object? aiService)
     {
         Console.WriteLine($"🏗️ INSTANCE: Creating program instance for assembly: {assemblyName}");
         
@@ -122,7 +123,7 @@ public static class RuntimeFunctionRegistry
             try
             {
                                                 
-                var instance = Activator.CreateInstance(assemblyInfo.ProgramType, console, aiService, aiFunctions);
+                var instance = Activator.CreateInstance(assemblyInfo.ProgramType, console, aiService);
                 assemblyInfo.ProgramInstance = instance;
                 
                 // Console.WriteLine($"✅ INSTANCE: Successfully created program instance for {assemblyName}");
@@ -182,7 +183,7 @@ public static class RuntimeFunctionRegistry
                     // Create instance if needed
                     if (assemblyInfo.ProgramInstance == null)
                     {
-                                                assemblyInfo.ProgramInstance = CreateProgramInstance(assemblyInfo.AssemblyName, new object(), null, null);
+                                                assemblyInfo.ProgramInstance = CreateProgramInstance(assemblyInfo.AssemblyName, new object(), null);
                         if (assemblyInfo.ProgramInstance == null)
                         {
                                                         return null;

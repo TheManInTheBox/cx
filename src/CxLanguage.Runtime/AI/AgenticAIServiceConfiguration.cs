@@ -18,7 +18,8 @@ public static class AgenticAIServiceConfiguration
     public static IServiceCollection AddAgenticAI(this IServiceCollection services)
     {
         // Core AI services - using the Core implementations
-        services.AddSingleton<IAiService, SimpleAiService>();
+        // Note: IAiService registration should be handled by the consuming application
+        // that has access to LocalLLM project
         services.AddSingleton<IMultiModalAI, MultiModalAIService>();
         services.AddSingleton<ICodeSynthesizer, RuntimeCodeSynthesizer>();
         services.AddSingleton<IAgenticRuntime, AgenticRuntime>();
@@ -332,139 +333,6 @@ public class AgenticRuntimeFactory
         // Configure services with custom options
         // This would require more sophisticated service registration
         return scope.ServiceProvider.GetRequiredService<IAgenticRuntime>();
-    }
-}
-
-/// <summary>
-/// Simple AI service implementation for development/testing
-/// </summary>
-internal class SimpleAiService : IAiService
-{
-    private readonly ILogger<SimpleAiService> _logger;
-
-    public SimpleAiService(ILogger<SimpleAiService> logger)
-    {
-        _logger = logger;
-    }
-
-    public async Task<AiResponse> GenerateTextAsync(string prompt, AiRequestOptions? options = null)
-    {
-        _logger.LogDebug("Processing AI request with prompt: {Prompt}", prompt);
-        
-        // Simple mock response for development
-        await Task.Delay(100); // Simulate processing time
-        
-        var content = $"AI Response: {prompt} (processed with {options?.Model ?? "default model"})";
-        var usage = new AiUsage 
-        { 
-            PromptTokens = prompt.Length / 4, 
-            CompletionTokens = content.Length / 4,
-            TotalTokens = (prompt.Length + content.Length) / 4
-        };
-        
-        return AiResponse.Success(content, usage);
-    }
-
-    public async Task<AiResponse> AnalyzeAsync(string content, AiAnalysisOptions options)
-    {
-        _logger.LogDebug("Analyzing content: {Content}", content[..Math.Min(content.Length, 50)]);
-        
-        await Task.Delay(50); // Simulate processing time
-        
-        var analysis = $"Analysis of content ({options.Task}): {content[..Math.Min(content.Length, 100)]}...";
-        var usage = new AiUsage 
-        { 
-            PromptTokens = content.Length / 4, 
-            CompletionTokens = analysis.Length / 4,
-            TotalTokens = (content.Length + analysis.Length) / 4
-        };
-        
-        return AiResponse.Success(analysis, usage);
-    }
-
-    public async Task<AiStreamResponse> StreamGenerateTextAsync(string prompt, AiRequestOptions? options = null)
-    {
-        _logger.LogDebug("Streaming AI request with prompt: {Prompt}", prompt);
-        
-        await Task.Delay(50); // Simulate initial processing
-        
-        return new SimpleStreamResponse($"Streaming response for: {prompt}");
-    }
-
-    public async Task<AiResponse[]> ProcessBatchAsync(string[] prompts, AiRequestOptions? options = null)
-    {
-        _logger.LogDebug("Processing batch of {Count} prompts", prompts.Length);
-        
-        var responses = new List<AiResponse>();
-        
-        foreach (var prompt in prompts)
-        {
-            await Task.Delay(20); // Simulate processing time per prompt
-            var content = $"Batch response for: {prompt}";
-            var usage = new AiUsage 
-            { 
-                PromptTokens = prompt.Length / 4, 
-                CompletionTokens = content.Length / 4,
-                TotalTokens = (prompt.Length + content.Length) / 4
-            };
-            responses.Add(AiResponse.Success(content, usage));
-        }
-        
-        return responses.ToArray();
-    }
-
-    public async Task<AiEmbeddingResponse> GenerateEmbeddingAsync(string text, AiRequestOptions? options = null)
-    {
-        _logger.LogDebug("Generating embedding for text: {Text}", text);
-        
-        // Simple mock embedding for development
-        await Task.Delay(50); // Simulate processing time
-        
-        // Generate a simple mock embedding vector (1536 dimensions like OpenAI)
-        var random = new Random(text.GetHashCode()); // Use text hash as seed for consistency
-        var embedding = new float[1536];
-        for (int i = 0; i < embedding.Length; i++)
-        {
-            embedding[i] = (float)(random.NextDouble() * 2.0 - 1.0); // Random values between -1 and 1
-        }
-        
-        var usage = new AiUsage 
-        { 
-            PromptTokens = text.Length / 4, 
-            CompletionTokens = 0,
-            TotalTokens = text.Length / 4
-        };
-        
-        return AiEmbeddingResponse.Success(embedding, usage);
-    }
-
-    public async Task<AiImageResponse> GenerateImageAsync(string prompt, AiImageOptions? options = null)
-    {
-        _logger.LogDebug("Generating image for prompt: {Prompt}", prompt);
-        
-        // Simple mock image generation for development
-        await Task.Delay(200); // Simulate processing time
-        
-        // Generate a mock image URL
-        var imageUrl = $"https://example.com/generated-image-{prompt.GetHashCode():X}.jpg";
-        var revisedPrompt = $"Enhanced: {prompt} with artistic style and vivid colors";
-        
-        return AiImageResponse.Success(imageUrl, null, revisedPrompt);
-    }
-
-    public async Task<AiImageAnalysisResponse> AnalyzeImageAsync(string imageUrl, AiImageAnalysisOptions? options = null)
-    {
-        _logger.LogDebug("Analyzing image: {ImageUrl}", imageUrl);
-        
-        // Simple mock image analysis for development
-        await Task.Delay(300); // Simulate processing time
-        
-        var description = $"Mock analysis of image at {imageUrl}";
-        var extractedText = "Mock extracted text from image";
-        var tags = new[] { "mock", "image", "analysis" };
-        var objects = new[] { "mock-object-1", "mock-object-2" };
-        
-        return AiImageAnalysisResponse.Success(description, extractedText, tags, objects);
     }
 }
 

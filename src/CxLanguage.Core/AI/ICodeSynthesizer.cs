@@ -89,16 +89,16 @@ public class CodeMetrics
 /// </summary>
 public class RuntimeCodeSynthesizer : ICodeSynthesizer
 {
-    private readonly IAgenticRuntime _runtime;
+    private readonly IAiService _aiService;
     private readonly ICodeGenerator _codeGenerator;
     private readonly ILogger<RuntimeCodeSynthesizer> _logger;
 
     public RuntimeCodeSynthesizer(
-        IAgenticRuntime runtime,
+        IAiService aiService,
         ICodeGenerator codeGenerator,
         ILogger<RuntimeCodeSynthesizer> logger)
     {
-        _runtime = runtime;
+        _aiService = aiService;
         _codeGenerator = codeGenerator;
         _logger = logger;
     }
@@ -115,34 +115,27 @@ public class RuntimeCodeSynthesizer : ICodeSynthesizer
             _logger.LogInformation("Synthesizing function from specification: {Spec}", 
                 specification.Substring(0, Math.Min(100, specification.Length)));
 
-            // Plan the code generation task
-            var planResult = await _runtime.PlanTaskAsync(
-                $"Generate Cx function: {specification}",
-                new TaskPlanningOptions 
-                { 
-                    MaxSubTasks = 5,
-                    Model = options.Model,
-                    Temperature = options.Temperature
-                });
-
-            if (!planResult.IsSuccess || planResult.Plan == null)
-            {
-                return CodeSynthesisResult.Failure($"Failed to plan code generation: {planResult.ErrorMessage}");
-            }
-
-            // Execute the code generation plan
-            var executionResult = await _runtime.ExecuteTaskAsync(planResult.Plan);
+            // Generate code directly using AI service
+            var codePrompt = CreateCodeGenerationPrompt(specification, options);
             
-            if (!executionResult.IsSuccess)
+            var response = await _aiService.GenerateTextAsync(codePrompt, new AiRequestOptions
             {
-                return CodeSynthesisResult.Failure($"Failed to execute code generation: {executionResult.ErrorMessage}");
+                Model = options.Model,
+                Temperature = options.Temperature,
+                MaxTokens = 2000,
+                SystemPrompt = GetCodeGenerationSystemPrompt()
+            });
+
+            if (!response.IsSuccess)
+            {
+                return CodeSynthesisResult.Failure($"Failed to generate code: {response.ErrorMessage}");
             }
 
-            // Extract the generated code
-            var generatedCode = executionResult.Results.GetValueOrDefault("code")?.ToString();
+            // Extract the generated code from the response
+            var generatedCode = ExtractCodeFromResponse(response.Content);
             if (string.IsNullOrEmpty(generatedCode))
             {
-                return CodeSynthesisResult.Failure("No code was generated");
+                return CodeSynthesisResult.Failure("No valid code was generated");
             }
 
             var metrics = new CodeMetrics
@@ -203,26 +196,94 @@ public class RuntimeCodeSynthesizer : ICodeSynthesizer
             _logger.LogInformation("Adapting code path: {Path} with strategy: {Strategy}", 
                 path, options.Strategy);
 
-            // Analyze current performance/behavior
-            var analysisPrompt = $"Analyze code path '{path}' with context: {context}. Strategy: {options.Strategy}";
-            
-            var planResult = await _runtime.PlanTaskAsync(
-                $"Adapt code path: {analysisPrompt}",
-                new TaskPlanningOptions { MaxSubTasks = 3 });
+            // Analyze current performance/behavior using AI service directly
+            var analysisPrompt = $@"
+Analyze and suggest adaptations for the code path '{path}' with the following context:
+{context}
 
-            if (!planResult.IsSuccess || planResult.Plan == null)
+Strategy: {options.Strategy}
+
+Please provide specific recommendations for code improvements, optimizations, or adaptations.
+";
+            
+            var response = await _aiService.GenerateTextAsync(analysisPrompt, new AiRequestOptions
             {
+                Temperature = 0.3,
+                MaxTokens = 1500
+            });
+
+            if (!response.IsSuccess)
+            {
+                _logger.LogWarning("Failed to generate adaptation suggestions: {Error}", response.ErrorMessage);
                 return false;
             }
 
-            var executionResult = await _runtime.ExecuteTaskAsync(planResult.Plan);
-            return executionResult.IsSuccess;
+            _logger.LogInformation("Code adaptation suggestions generated: {Suggestions}", 
+                response.Content.Substring(0, Math.Min(200, response.Content.Length)));
+            
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error adapting code path");
             return false;
         }
+    }
+
+    private string CreateCodeGenerationPrompt(string specification, CodeSynthesisOptions options)
+    {
+        return $@"
+Generate {options.TargetLanguage} code based on the following specification:
+
+{specification}
+
+Requirements:
+- Target language: {options.TargetLanguage}
+- Follow best practices for {options.TargetLanguage}
+- Include appropriate error handling
+- Write clean, readable code
+- Add helpful comments
+
+Please provide only the code implementation without additional explanations.
+";
+    }
+
+    private string GetCodeGenerationSystemPrompt()
+    {
+        return @"
+You are an expert code generator specializing in multiple programming languages.
+Your goal is to generate high-quality, production-ready code based on specifications.
+
+Guidelines:
+- Write clean, maintainable code
+- Follow language-specific best practices
+- Include appropriate error handling
+- Use meaningful variable and function names
+- Add necessary imports/using statements
+- Ensure code is ready to compile and run
+
+Always respond with code only, wrapped in appropriate code block markers.
+";
+    }
+
+    private string ExtractCodeFromResponse(string response)
+    {
+        // Extract code from markdown code blocks
+        var codeBlockStart = response.IndexOf("```");
+        if (codeBlockStart == -1) return response.Trim();
+
+        var languageEnd = response.IndexOf('\n', codeBlockStart);
+        if (languageEnd == -1) return response.Trim();
+
+        var codeStart = languageEnd + 1;
+        var codeBlockEnd = response.IndexOf("```", codeStart);
+        
+        if (codeBlockEnd == -1) 
+        {
+            return response.Substring(codeStart).Trim();
+        }
+
+        return response.Substring(codeStart, codeBlockEnd - codeStart).Trim();
     }
 }
 

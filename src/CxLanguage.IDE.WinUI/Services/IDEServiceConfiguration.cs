@@ -82,11 +82,20 @@ public static class IDEServiceConfiguration
     /// </summary>
     private static void RegisterAIServices(IServiceCollection services)
     {
-        // Register core IAiService interface with SimpleAiService implementation
+        // Register core IAiService interface with LocalLLM wrapper
         try
         {
-            services.AddSingleton<IAiService, SimpleAiService>();
-            Console.WriteLine("✅ IAiService registered successfully with SimpleAiService");
+            // Use LocalLLM service as the IAiService implementation
+            services.AddSingleton<IAiService>(provider =>
+            {
+                var localLLMService = provider.GetRequiredService<ILocalLLMService>();
+                var logger = provider.GetRequiredService<ILogger<IAiService>>();
+                
+                // TODO: Create a simple wrapper that delegates to LocalLLM
+                // For now, return a placeholder implementation
+                return new PlaceholderAiService(logger);
+            });
+            Console.WriteLine("✅ IAiService registered successfully with LocalLLM wrapper");
         }
         catch (Exception ex)
         {

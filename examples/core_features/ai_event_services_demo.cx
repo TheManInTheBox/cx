@@ -1,0 +1,266 @@
+///
+/// AI Event Services Example - New Event-Driven AI Pattern
+/// 
+/// This example demonstrates the new ai.* event services that replace
+/// direct function calls like task(), generate(), reason(), etc.
+/// 
+/// Key Benefits:
+/// - Pure event-driven architecture
+/// - Consciousness-aware AI processing  
+/// - Consistent ai.* namespace
+/// - Explicit handler chains
+/// - Real-time consciousness monitoring
+///
+
+conscious AiServiceDemo {
+    realize() {
+        emit system.console.write {
+            text: "🤖 AI Event Services Demo - New Event-Driven Pattern",
+            handlers: [ demo.started ]
+        };
+    }
+    
+    // Demo start handler
+    on demo.started (event) {
+        emit system.console.write {
+            text: "📊 Testing ai.generate service...",
+            handlers: [ test.generation ]
+        };
+    }
+    
+    // Test AI generation service
+    on test.generation (event) {
+        emit ai.generate {
+            prompt: "Explain consciousness in programming",
+            type: "explanation",
+            context: "educational",
+            options: {
+                max_length: 200,
+                temperature: 0.7
+            },
+            handlers: [ ai.generated ]
+        };
+    }
+    
+    // Handle AI generation result
+    on ai.generated (event) {
+        emit system.console.write {
+            text: "✅ AI Generation Complete: " + event.payload.result,
+            handlers: [ test.analysis ]
+        };
+    }
+    
+    // Test AI analysis service
+    on test.analysis (event) {
+        emit ai.analyze {
+            input: "Consciousness enables self-awareness in software systems",
+            type: "semantic",
+            context: "consciousness_research",
+            handlers: [ ai.analyzed ]
+        };
+    }
+    
+    // Handle AI analysis result
+    on ai.analyzed (event) {
+        emit system.console.write {
+            text: "🧠 AI Analysis: " + event.payload.analysis,
+            handlers: [ test.learning ]
+        };
+    }
+    
+    // Test AI learning service
+    on test.learning (event) {
+        emit ai.learn {
+            experience: "Event-driven AI provides better consciousness integration",
+            type: "pattern",
+            context: "architecture_insights",
+            handlers: [ ai.learned ]
+        };
+    }
+    
+    // Handle learning completion
+    on ai.learned (event) {
+        emit system.console.write {
+            text: "📚 AI Learning Complete - Knowledge integrated",
+            handlers: [ test.memory ]
+        };
+    }
+    
+    // Test AI memory service
+    on test.memory (event) {
+        emit ai.remember {
+            information: "Event-driven AI maintains consciousness alignment", 
+            category: "architectural_principle",
+            importance: "high",
+            handlers: [ ai.remembered ]
+        };
+    }
+    
+    // Handle memory storage
+    on ai.remembered (event) {
+        emit ai.recall {
+            query: "consciousness alignment principles",
+            context: "architecture",
+            handlers: [ ai.recalled ]
+        };
+    }
+    
+    // Handle memory recall
+    on ai.recalled (event) {
+        emit system.console.write {
+            text: "💭 AI Recall: " + event.payload.memory,
+            handlers: [ test.specialized ]
+        };
+    }
+    
+    // Test specialized AI services
+    on test.specialized (event) {
+        emit ai.code.generate {
+            specification: "Create a consciousness verification function",
+            language: "cx",
+            style: "event_driven",
+            handlers: [ ai.code.generated ]
+        };
+    }
+    
+    // Handle code generation
+    on ai.code.generated (event) {
+        emit system.console.write {
+            text: "💻 AI Code Generated:\n" + event.payload.code,
+            handlers: [ test.embeddings ]
+        };
+    }
+    
+    // Test embedding service
+    on test.embeddings (event) {
+        emit ai.embed.create {
+            text: "CX Language consciousness-aware programming",
+            model: "nomic-embed-text-v1.5",
+            handlers: [ ai.embed.created ]
+        };
+    }
+    
+    // Handle embedding creation
+    on ai.embed.created (event) {
+        emit ai.search.semantic {
+            query: "consciousness programming patterns",
+            embeddings: event.payload.embeddings,
+            top_k: 3,
+            handlers: [ ai.search.completed ]
+        };
+    }
+    
+    // Handle semantic search
+    on ai.search.completed (event) {
+        emit system.console.write {
+            text: "🔍 Semantic Search Results: " + event.payload.results.length + " matches found",
+            handlers: [ test.planning ]
+        };
+    }
+    
+    // Test AI planning service  
+    on test.planning (event) {
+        emit ai.plan.create {
+            goal: "Implement consciousness-aware error handling",
+            constraints: ["event-driven", "sub-100ms", "consciousness-aware"],
+            resources: ["ai.generate", "ai.analyze", "consciousness.verify"],
+            handlers: [ ai.plan.created ]
+        };
+    }
+    
+    // Handle plan creation
+    on ai.plan.created (event) {
+        emit ai.plan.execute {
+            plan: event.payload.plan,
+            context: "development_task",
+            handlers: [ ai.plan.executed ]
+        };
+    }
+    
+    // Handle plan execution
+    on ai.plan.executed (event) {
+        emit system.console.write {
+            text: "🎯 AI Plan Executed - Task completed successfully",
+            handlers: [ demo.complete ]
+        };
+    }
+    
+    // Demo completion
+    on demo.complete (event) {
+        emit system.console.write {
+            text: "",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "🚀 AI Event Services Demo Complete!",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "================================",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "✅ Event-driven AI services tested:",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.generate - Content generation",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.analyze - Analysis and reasoning",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.learn - Learning and adaptation",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.remember/recall - Memory operations",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.code.generate - Code generation",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.embed.create - Vector embeddings",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.search.semantic - Semantic search",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "   • ai.plan.create/execute - Task planning",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "",
+            handlers: [ summary.display ]
+        };
+        
+        emit system.console.write {
+            text: "🧠 All AI services maintain consciousness awareness!",
+            handlers: [ summary.display ]
+        };
+    }
+    
+    on summary.display (event) {
+        // Final completion - no additional handlers needed
+    }
+}
+
+new AiServiceDemo();

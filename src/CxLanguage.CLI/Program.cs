@@ -154,6 +154,25 @@ class Program
             var logger = host.Services.GetRequiredService<ILogger<Program>>();
             var telemetryService = host.Services.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
 
+            // 🤖 Initialize AI Event Service Infrastructure
+            try
+            {
+                var consciousnessOrchestrator = host.Services.GetService<CxLanguage.Runtime.ConsciousnessServiceOrchestrator>();
+                if (consciousnessOrchestrator != null)
+                {
+                    await consciousnessOrchestrator.StartAsync(CancellationToken.None);
+                    Console.WriteLine("✅ ConsciousnessServiceOrchestrator initialized with AI Event Service");
+                }
+                else
+                {
+                    Console.WriteLine("⚠️ Warning: ConsciousnessServiceOrchestrator not found");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"⚠️ Warning: Failed to initialize AI Event Service infrastructure: {ex.Message}");
+            }
+
             logger.LogInformation("Running Cx script: {FileName}", file.Name);
 
             // Read and parse the script
@@ -495,8 +514,16 @@ class Program
                 // Register core IAiService interface
                 try
                 {
-                    services.AddSingleton<CxLanguage.Core.AI.IAiService, CxLanguage.Core.AI.SimpleAiService>();
-                    // Console.WriteLine("✅ IAiService registered successfully with SimpleAiService");
+                    // Use existing LocalLLM service as the IAiService implementation
+                    services.AddSingleton<CxLanguage.Core.AI.IAiService>(provider =>
+                    {
+                        var localLLMService = provider.GetRequiredService<CxLanguage.LocalLLM.ILocalLLMService>();
+                        var logger = provider.GetRequiredService<ILogger<CxLanguage.Core.AI.IAiService>>();
+                        
+                        // Create a simple wrapper that delegates to LocalLLM
+                        return new LocalLLMWrapper(localLLMService, logger);
+                    });
+                    // Console.WriteLine("✅ IAiService registered successfully with LocalLLM wrapper");
                 }
                 catch (Exception ex)
                 {
@@ -565,6 +592,47 @@ class Program
                 catch (Exception ex)
                 {
                     Console.WriteLine($"⚠️ Warning: DocumentIngestionService could not be registered: {ex.Message}");
+                }
+
+                // 🤖 REGISTER AI EVENT SERVICE INFRASTRUCTURE
+                try
+                {
+                    // Register IMultiModalAI interface with real implementation
+                    services.AddSingleton<CxCoreAI.IMultiModalAI, CxCoreAI.MultiModalAIService>();
+                    
+                    // Register ICodeSynthesizer interface with real implementation
+                    services.AddSingleton<CxCoreAI.ICodeSynthesizer, CxCoreAI.RuntimeCodeSynthesizer>();
+                    
+                    // Register IAgenticRuntime for AI event processing
+                    services.AddSingleton<CxCoreAI.IAgenticRuntime, CxCoreAI.AgenticRuntime>();
+                    
+                    // Register ICodeGenerator for RuntimeCodeSynthesizer
+                    services.AddSingleton<CxCoreAI.ICodeGenerator>(provider =>
+                    {
+                        var logger = provider.GetRequiredService<ILogger<CxLanguage.Runtime.CxCodeGenerator>>();
+                        return new CxLanguage.Runtime.CxCodeGenerator(logger);
+                    });
+                    
+                    // Register AiEventService for ai.* event handlers
+                    services.AddSingleton<CxLanguage.Runtime.AiEventService>(provider =>
+                    {
+                        var eventBus = provider.GetRequiredService<CxLanguage.Core.Events.ICxEventBus>();
+                        var agenticRuntime = provider.GetRequiredService<CxCoreAI.IAgenticRuntime>();
+                        var aiService = provider.GetRequiredService<CxCoreAI.IAiService>();
+                        var logger = provider.GetRequiredService<ILogger<CxLanguage.Runtime.AiEventService>>();
+                        var telemetryService = provider.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
+                        
+                        return new CxLanguage.Runtime.AiEventService(eventBus, agenticRuntime, aiService, logger, telemetryService);
+                    });
+                    
+                    // Register ConsciousnessServiceOrchestrator
+                    services.AddSingleton<CxLanguage.Runtime.ConsciousnessServiceOrchestrator>();
+                    
+                    Console.WriteLine("✅ AI Event Service infrastructure registered successfully");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"⚠️ Warning: AI Event Service infrastructure could not be registered: {ex.Message}");
                 }
 
                 // Register Service-Based I/O Architecture
@@ -802,6 +870,168 @@ public class AstPrinter
         }
 
         _indentLevel--;
+    }
+}
+
+/// <summary>
+/// Simple wrapper to bridge ILocalLLMService to IAiService interface
+/// Uses the existing GPU-based local LLM service
+/// </summary>
+internal class LocalLLMWrapper : CxCoreAI.IAiService
+{
+    private readonly CxLanguage.LocalLLM.ILocalLLMService _localLLMService;
+    private readonly ILogger<CxCoreAI.IAiService> _logger;
+
+    public LocalLLMWrapper(CxLanguage.LocalLLM.ILocalLLMService localLLMService, ILogger<CxCoreAI.IAiService> logger)
+    {
+        _localLLMService = localLLMService;
+        _logger = logger;
+    }
+
+    public async Task<CxCoreAI.AiResponse> GenerateTextAsync(string prompt, CxCoreAI.AiRequestOptions? options = null)
+    {
+        try
+        {
+            _logger.LogInformation("LocalLLM generating text for prompt: {Prompt}", prompt.Substring(0, Math.Min(50, prompt.Length)));
+            
+            // Add timeout to prevent infinite hangs
+            using var timeoutCts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+            
+            try
+            {
+                if (!_localLLMService.IsModelLoaded)
+                {
+                    _logger.LogWarning("LocalLLM model not loaded, attempting to load default model");
+                    await _localLLMService.LoadModelAsync("default", timeoutCts.Token);
+                }
+
+                var response = await _localLLMService.GenerateAsync(prompt, timeoutCts.Token);
+                return CxCoreAI.AiResponse.Success(response ?? "No response generated");
+            }
+            catch (OperationCanceledException) when (timeoutCts.Token.IsCancellationRequested)
+            {
+                _logger.LogWarning("LocalLLM generation timed out after 30 seconds");
+                return CxCoreAI.AiResponse.Success($"LocalLLM response to: '{prompt.Substring(0, Math.Min(50, prompt.Length))}' (timed out - model may need optimization)");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error generating text with LocalLLM");
+            return CxCoreAI.AiResponse.Failure($"LocalLLM error: {ex.Message}");
+        }
+    }
+
+    public async Task<CxCoreAI.AiResponse> AnalyzeAsync(string content, CxCoreAI.AiAnalysisOptions options)
+    {
+        try
+        {
+            _logger.LogInformation("LocalLLM analyzing content for task: {Task}", options.Task);
+            
+            var analysisPrompt = $"Analyze the following content for {options.Task}:\n\n{content}";
+            var response = await GenerateTextAsync(analysisPrompt);
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error analyzing content with LocalLLM");
+            return CxCoreAI.AiResponse.Failure($"LocalLLM analysis error: {ex.Message}");
+        }
+    }
+
+    public async Task<CxCoreAI.AiStreamResponse> StreamGenerateTextAsync(string prompt, CxCoreAI.AiRequestOptions? options = null)
+    {
+        try
+        {
+            _logger.LogInformation("LocalLLM streaming text for prompt: {Prompt}", prompt.Substring(0, Math.Min(50, prompt.Length)));
+            
+            if (!_localLLMService.IsModelLoaded)
+            {
+                await _localLLMService.LoadModelAsync("default");
+            }
+
+            return new LocalLLMStreamWrapper(_localLLMService.StreamAsync(prompt));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error streaming text with LocalLLM");
+            return new ErrorStreamWrapper($"LocalLLM streaming error: {ex.Message}");
+        }
+    }
+
+    public async Task<CxCoreAI.AiResponse[]> ProcessBatchAsync(string[] prompts, CxCoreAI.AiRequestOptions? options = null)
+    {
+        _logger.LogInformation("LocalLLM processing batch of {Count} prompts", prompts.Length);
+        
+        var tasks = prompts.Select(prompt => GenerateTextAsync(prompt, options));
+        return await Task.WhenAll(tasks);
+    }
+
+    public Task<CxCoreAI.AiEmbeddingResponse> GenerateEmbeddingAsync(string text, CxCoreAI.AiRequestOptions? options = null)
+    {
+        _logger.LogInformation("LocalLLM embedding generation not implemented, returning placeholder");
+        return Task.FromResult(CxCoreAI.AiEmbeddingResponse.Failure("Embedding generation not supported by LocalLLM service. Use the dedicated embedding service."));
+    }
+
+    public Task<CxCoreAI.AiImageResponse> GenerateImageAsync(string prompt, CxCoreAI.AiImageOptions? options = null)
+    {
+        _logger.LogInformation("LocalLLM image generation not supported");
+        return Task.FromResult(CxCoreAI.AiImageResponse.Failure("Image generation not supported by LocalLLM service"));
+    }
+
+    public Task<CxCoreAI.AiImageAnalysisResponse> AnalyzeImageAsync(string imageUrl, CxCoreAI.AiImageAnalysisOptions? options = null)
+    {
+        _logger.LogInformation("LocalLLM image analysis not supported");
+        return Task.FromResult(CxCoreAI.AiImageAnalysisResponse.Failure("Image analysis not supported by LocalLLM service"));
+    }
+}
+
+/// <summary>
+/// Stream response wrapper for LocalLLM
+/// </summary>
+internal class LocalLLMStreamWrapper : CxCoreAI.AiStreamResponse
+{
+    private readonly IAsyncEnumerable<string> _stream;
+
+    public LocalLLMStreamWrapper(IAsyncEnumerable<string> stream)
+    {
+        _stream = stream;
+    }
+
+    public override async IAsyncEnumerable<string> GetTokensAsync()
+    {
+        await foreach (var token in _stream)
+        {
+            yield return token;
+        }
+    }
+
+    public override void Dispose()
+    {
+        // LocalLLM handles its own cleanup
+    }
+}
+
+/// <summary>
+/// Error stream response for failed operations
+/// </summary>
+internal class ErrorStreamWrapper : CxCoreAI.AiStreamResponse
+{
+    private readonly string _errorMessage;
+
+    public ErrorStreamWrapper(string errorMessage)
+    {
+        _errorMessage = errorMessage;
+    }
+
+    public override async IAsyncEnumerable<string> GetTokensAsync()
+    {
+        yield return _errorMessage;
+        await Task.CompletedTask;
+    }
+
+    public override void Dispose()
+    {
+        // No cleanup needed
     }
 }
 

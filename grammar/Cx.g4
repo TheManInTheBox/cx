@@ -5,7 +5,7 @@
 // 3. Conscious entities have NO inheritance - pure consciousness
 // 4. realize() can have optional parameters for consciousness initialization
 // 5. Object properties MUST have commas between entries
-// 6. AI services use expression syntax for parameters
+// 6. AI services use ai.* event patterns (not direct function calls)
 
 grammar Cx;
 
@@ -21,7 +21,6 @@ statement
     | blockStatement
     | onStatement
     | emitStatement
-    | aiServiceStatement
     ;
 
 dottedIdentifier: IDENTIFIER ('.' IDENTIFIER)*;
@@ -75,15 +74,6 @@ onStatement: 'on' 'async'? eventName '(' IDENTIFIER ')' blockStatement;
 
 // EMIT statements - event names are identifiers, payloads are expressions
 emitStatement: 'emit' eventName expression? ';';
-
-// AI service statements - cognitive capabilities with parallel handlers
-aiServiceName
-    : 'adapt' | 'execute'
-    ;
-aiServiceStatement: aiServiceName aiServiceParameters ';';
-
-// 🚀 ENHANCED AI SERVICE PARAMETERS - Supports parallel execution
-aiServiceParameters: expression;
 
 // Enhanced parameter structure for parallel handler detection
 enhancedParameterList
@@ -179,11 +169,12 @@ SEMICOLON: ';';
 // FORBIDDEN CONSTRUCTS IN CX LANGUAGE:
 // - '$' symbols (not part of CX syntax)
 // - 'Random' class (use consciousness-aware data generation)
-// - 'if' statements (use consciousness boolean logic with 'is {}' and 'not {}')
+// - 'if' statements (use consciousness boolean logic with event patterns)
 // - 'for'/'while' loops (use event-driven patterns)
-// - 'Math' class (use AI services for calculations)
+// - 'Math' class (use ai.* event services for calculations)
 // - String event names in quotes (use identifier patterns)
 // - Traditional OOP inheritance in conscious entities
+// - Direct AI function calls (use ai.* event patterns: ai.generate, ai.analyze, etc.)
 // - Complex parameter lists beyond simple typed parameters
 
 // Whitespace and comments

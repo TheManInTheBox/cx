@@ -199,8 +199,8 @@ public class AgenticRuntime : IAgenticRuntime
 
             var functionCallOptions = new FunctionCallOptions
             {
-                Timeout = options.Timeout,
-                Context = options.Context
+                Timeout = TimeSpan.FromMilliseconds(options.MaxProcessingTimeMs),
+                Context = options.CustomParameters
             };
 
             var result = await _multiModalAI.ExecuteFunctionAsync(functionName, parameters, functionCallOptions);

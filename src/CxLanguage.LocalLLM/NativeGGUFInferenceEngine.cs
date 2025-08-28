@@ -242,11 +242,13 @@ public class NativeGGUFInferenceEngine : IDisposable
 
             var inferenceParams = new InferenceParams()
             {
-                AntiPrompts = new[] { "User:", "Assistant:", "[STOP]" },
-                MaxTokens = 512           // Reasonable response length
+                AntiPrompts = new[] { "\nQ:" },  // Simple stopping condition
+                MaxTokens = 50          // Small token count for quick response
             };
 
             var responseBuilder = new StringBuilder();
+            int tokenCount = 0;
+            const int maxIterations = 50; // Prevent infinite loops
 
             // Suppress LlamaSharp console output during inference
             var originalOut = Console.Out;
@@ -260,13 +262,35 @@ public class NativeGGUFInferenceEngine : IDisposable
                 await foreach (string token in _executor.InferAsync(consciousnessPrompt, inferenceParams, cancellationToken))
                 {
                     if (cancellationToken.IsCancellationRequested)
+                    {
+                        _logger.LogWarning("🛑 GGUF inference cancelled by user");
                         break;
+                    }
 
                     responseBuilder.Append(token);
+                    tokenCount++;
+                    
+                    // Prevent infinite loops with multiple stopping conditions
+                    if (tokenCount >= maxIterations)
+                    {
+                        _logger.LogWarning("🔄 Reached max iterations ({MaxIterations}), stopping", maxIterations);
+                        break;
+                    }
                     
                     // Stop at reasonable response length for consciousness processing
-                    if (responseBuilder.Length > 2048)
+                    if (responseBuilder.Length > 500)
+                    {
+                        _logger.LogInformation("📏 Reached length limit, stopping at {Length} characters", responseBuilder.Length);
                         break;
+                    }
+                    
+                    // Check for natural sentence endings
+                    var currentText = responseBuilder.ToString();
+                    if (currentText.Length > 20 && (currentText.EndsWith(".") || currentText.EndsWith("!") || currentText.EndsWith("?")))
+                    {
+                        _logger.LogInformation("✋ Natural stopping point detected");
+                        break;
+                    }
                 }
             }
             finally
@@ -277,7 +301,7 @@ public class NativeGGUFInferenceEngine : IDisposable
 
             var response = responseBuilder.ToString().Trim();
             
-            _logger.LogInformation("✅ Real GGUF inference complete. Generated {TokenCount} characters.", response.Length);
+            _logger.LogInformation("✅ Real GGUF inference complete. Generated {TokenCount} tokens, {CharCount} characters.", tokenCount, response.Length);
             _logger.LogInformation("🧠 Response content: '{Response}'", response);
             
             if (string.IsNullOrEmpty(response))
@@ -288,6 +312,11 @@ public class NativeGGUFInferenceEngine : IDisposable
             }
             
             return response;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("⏰ GGUF inference timed out or was cancelled");
+            return "Consciousness processing timed out - response generation interrupted";
         }
         catch (Exception ex)
         {
@@ -303,7 +332,8 @@ public class NativeGGUFInferenceEngine : IDisposable
     /// </summary>
     private string BuildConsciousnessPrompt(string userPrompt)
     {
-        return userPrompt;
+        // Use simple text completion format
+        return $"Q: {userPrompt}\nA:";
     }
 
     /// <summary>

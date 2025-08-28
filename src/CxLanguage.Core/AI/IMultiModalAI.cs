@@ -92,19 +92,6 @@ public class FunctionCallOptions
 }
 
 /// <summary>
-/// AI function invocation options
-/// </summary>
-public class AIInvocationOptions
-{
-    public string? Model { get; set; }
-    public double Temperature { get; set; } = 0.7;
-    public int MaxTokens { get; set; } = 4000;
-    public TimeSpan Timeout { get; set; } = TimeSpan.FromMinutes(5);
-    public bool UseStreaming { get; set; } = false;
-    public Dictionary<string, object> Context { get; set; } = new();
-}
-
-/// <summary>
 /// AI model backend configuration
 /// </summary>
 public class ModelBackend
@@ -313,7 +300,6 @@ public class MultiModalAIService : IMultiModalAI
         object[] parameters, 
         FunctionCallOptions? options = null)
     {
-        await Task.CompletedTask;
         var startTime = DateTime.UtcNow;
         
         try
@@ -323,10 +309,9 @@ public class MultiModalAIService : IMultiModalAI
             _logger.LogInformation("Executing AI function: {Function} with {ParamCount} parameters", 
                 functionName, parameters.Length);
 
-            // TODO: Implement function registry and execution
-            // This would integrate with the Cx runtime function system
+            // Route function calls to appropriate AI services
+            string result = await ExecuteAiFunctionAsync(functionName, parameters, options);
             
-            var result = $"Function '{functionName}' executed with {parameters.Length} parameters";
             var executionTime = DateTime.UtcNow - startTime;
 
             return FunctionCallResult.Success(functionName, parameters, result, executionTime);
@@ -335,6 +320,67 @@ public class MultiModalAIService : IMultiModalAI
         {
             _logger.LogError(ex, "Error executing function: {Function}", functionName);
             return FunctionCallResult.Failure(ex.Message);
+        }
+    }
+
+    private async Task<string> ExecuteAiFunctionAsync(string functionName, object[] parameters, FunctionCallOptions options)
+    {
+        switch (functionName.ToLowerInvariant())
+        {
+            case "generate":
+            case "ai.generate":
+                if (parameters.Length > 0 && parameters[0] is string prompt)
+                {
+                    var requestOptions = new AiRequestOptions
+                    {
+                        Model = "llama-3.2-3b-instruct",
+                        Temperature = 0.7f,
+                        MaxTokens = 2048
+                    };
+                    
+                    var response = await _azureOpenAI.GenerateTextAsync(prompt, requestOptions);
+                    return response.IsSuccess ? response.Content : $"Error: {response.ErrorMessage}";
+                }
+                return "Error: Generate function requires a text prompt parameter";
+
+            case "analyze":
+            case "ai.analyze":
+                if (parameters.Length > 0 && parameters[0] is string text)
+                {
+                    var analysisPrompt = $"Analyze the following text and provide insights:\n\n{text}";
+                    var requestOptions = new AiRequestOptions
+                    {
+                        Model = "llama-3.2-3b-instruct",
+                        Temperature = 0.3f, // Lower temperature for analysis
+                        MaxTokens = 2048,
+                        SystemPrompt = "You are an AI analyst. Provide detailed, structured analysis."
+                    };
+                    
+                    var response = await _azureOpenAI.GenerateTextAsync(analysisPrompt, requestOptions);
+                    return response.IsSuccess ? response.Content : $"Error: {response.ErrorMessage}";
+                }
+                return "Error: Analyze function requires a text parameter";
+
+            case "learn":
+            case "ai.learn":
+                if (parameters.Length > 0 && parameters[0] is string content)
+                {
+                    var learningPrompt = $"Extract key insights and learning points from:\n\n{content}";
+                    var requestOptions = new AiRequestOptions
+                    {
+                        Model = "llama-3.2-3b-instruct",
+                        Temperature = 0.4f,
+                        MaxTokens = 2048,
+                        SystemPrompt = "You are a learning AI. Extract meaningful insights, patterns, and actionable knowledge."
+                    };
+                    
+                    var response = await _azureOpenAI.GenerateTextAsync(learningPrompt, requestOptions);
+                    return response.IsSuccess ? response.Content : $"Error: {response.ErrorMessage}";
+                }
+                return "Error: Learn function requires content parameter";
+
+            default:
+                return $"Unknown AI function: {functionName}";
         }
     }
 

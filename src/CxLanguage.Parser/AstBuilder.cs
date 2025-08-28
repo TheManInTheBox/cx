@@ -748,23 +748,6 @@ public class AstBuilder : CxBaseVisitor<AstNode>
         return emitStmt;
     }
 
-    public override AstNode VisitAiServiceStatement(AiServiceStatementContext context)
-    {
-        var aiServiceStmt = new AiServiceStatementNode();
-        SetLocation(aiServiceStmt, context);
-
-        // Parse AI service name
-        aiServiceStmt.ServiceName = context.aiServiceName().GetText();
-
-        // Parse payload (expression, if present)
-        if (context.aiServiceParameters() != null)
-        {
-            aiServiceStmt.Payload = (ExpressionNode)Visit(context.aiServiceParameters().expression());
-        }
-
-        return aiServiceStmt;
-    }
-
     public override AstNode VisitEventHandlerReference(CxParser.EventHandlerReferenceContext context)
     {
         // EventHandlerReference is IDENTIFIER ('.' IDENTIFIER)*

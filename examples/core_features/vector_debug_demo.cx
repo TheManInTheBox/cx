@@ -1,0 +1,79 @@
+conscious VectorDebugDemo {
+    realize() {
+        emit system.console.write {
+            text: "🐛 Vector Store Debug Demo - Issue #252"
+        };
+        
+        emit system.console.write {
+            text: "Testing basic vector operations step by step..."
+        };
+        
+        // Test 1: Simple embedding
+        emit vector.add.text {
+            text: "Debug test for vector embedding.",
+            metadata: { "debug": "step1" },
+            handlers: [ debug.step1_complete ]
+        };
+    }
+    
+    on debug.step1_complete (event) {
+        emit system.console.write {
+            text: "✅ Step 1 Complete - Text embedded in " + event.duration + "ms"
+        };
+        
+        emit system.console.write {
+            text: "ID: " + event.id
+        };
+        
+        // Test 2: Search functionality
+        emit vector.search.text {
+            query: "debug test",
+            topK: 1,
+            handlers: [ debug.step2_complete ]
+        };
+    }
+    
+    on debug.step2_complete (event) {
+        emit system.console.write {
+            text: "✅ Step 2 Complete - Search in " + event.duration + "ms"
+        };
+        
+        emit system.console.write {
+            text: "Found " + event.results.length + " results"
+        };
+        
+        // Test 3: Add another text
+        emit vector.add.text {
+            text: "Second debug test for performance.",
+            metadata: { "debug": "step3" },
+            handlers: [ debug.step3_complete ]
+        };
+    }
+    
+    on debug.step3_complete (event) {
+        emit system.console.write {
+            text: "✅ Step 3 Complete - Second text embedded in " + event.duration + "ms"
+        };
+        
+        // Test 4: Final search
+        emit vector.search.text {
+            query: "performance test",
+            topK: 5,
+            handlers: [ debug.final_complete ]
+        };
+    }
+    
+    on debug.final_complete (event) {
+        emit system.console.write {
+            text: "✅ Final Step Complete - Search found " + event.results.length + " results"
+        };
+        
+        emit system.console.write {
+            text: "🎉 Debug demo completed successfully!"
+        };
+        
+        emit system.shutdown { reason: "debug_complete" };
+    }
+}
+
+new VectorDebugDemo();

@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
 using CxLanguage.Core.Events;
+using CxLanguage.Core.AI;
 using CxLanguage.Runtime;
 using System;
 using System.Collections.Concurrent;
@@ -226,15 +227,40 @@ namespace CxLanguage.Runtime
             
             try
             {
-                // Register services that are available in the container
-                var availableServices = new[]
+                // Register new AI Event Service for standardized ai.* events
+                var aiEventService = _serviceProvider.GetService<AiEventService>();
+                if (aiEventService != null)
+                {
+                    _registry.RegisterService("AiEventService", "Cognitive");
+                    await aiEventService.InitializeAsync();
+                    _registry.UpdateServiceStatus("AiEventService", ServiceHealthStatus.Healthy);
+                    _logger.LogInformation("  ✅ AiEventService: Event-driven AI processing active with 13 handlers");
+                }
+                else
+                {
+                    // Create and register AI Event Service if not in container
+                    var eventBus = _serviceProvider.GetRequiredService<ICxEventBus>();
+                    var agenticRuntime = _serviceProvider.GetRequiredService<IAgenticRuntime>();
+                    var aiService = _serviceProvider.GetRequiredService<IAiService>();
+                    var logger = _serviceProvider.GetRequiredService<ILogger<AiEventService>>();
+                    var telemetryService = _serviceProvider.GetService<CxLanguage.Core.Telemetry.CxTelemetryService>();
+                    
+                    aiEventService = new AiEventService(eventBus, agenticRuntime, aiService, logger, telemetryService);
+                    _registry.RegisterService("AiEventService", "Cognitive");
+                    await aiEventService.InitializeAsync();
+                    _registry.UpdateServiceStatus("AiEventService", ServiceHealthStatus.Healthy);
+                    _logger.LogInformation("  ✅ AiEventService: Event-driven AI processing active (manually instantiated)");
+                }
+                
+                // Register legacy services that are available in the container
+                var legacyServices = new[]
                 {
                     "InferService", 
                     "LearnService",
                     "AwaitService"
                 };
                 
-                foreach (var serviceName in availableServices)
+                foreach (var serviceName in legacyServices)
                 {
                     try
                     {
