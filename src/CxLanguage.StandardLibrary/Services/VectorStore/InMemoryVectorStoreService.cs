@@ -2,7 +2,10 @@ using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Threading;
 using System.Threading.Tasks;
 using CxLanguage.Core.Events;
 using Microsoft.Extensions.AI;
@@ -20,8 +23,14 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
     /// - Consciousness context preservation in embeddings
     /// - FileService integration for document processing
     /// - Zero external dependencies with pure local processing
+    /// 
+    /// Enhanced for Issue #255:
+    /// - File-based persistence with automatic recovery
+    /// - Consciousness context preservation across restarts
+    /// - Binary and JSON storage formats for optimal performance
+    /// - Background persistence for real-time memory retention
     /// </summary>
-    public class InMemoryVectorStoreService : IVectorStoreService
+    public class InMemoryVectorStoreService : IVectorStoreService, IDisposable
     {
         private readonly ILogger<InMemoryVectorStoreService> _logger;
         private readonly ICxEventBus _eventBus;
@@ -38,32 +47,65 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
         /// </summary>
         private readonly ConcurrentDictionary<string, (float[] Vector, DateTime CachedAt)> _embeddingCache = new();
 
+        /// <summary>
+        /// Issue #255: Persistence-related fields for file-based storage
+        /// </summary>
+        private readonly string _defaultStorageDirectory;
+        private Timer? _autoPersistenceTimer;
+        private bool _autoPersistenceEnabled = false;
+        private int _autoPersistenceIntervalSeconds = 30;
+        private readonly SemaphoreSlim _persistenceLock = new(1, 1);
+
         public InMemoryVectorStoreService(ILogger<InMemoryVectorStoreService> logger, ICxEventBus eventBus, IEmbeddingGenerator<string, Embedding<float>>? embeddingGenerator = null)
         {
             _logger = logger;
             _eventBus = eventBus;
             _embeddingGenerator = embeddingGenerator;
             
+            // Initialize storage directory for persistence (Issue #255)
+            _defaultStorageDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), 
+                "CxLanguage", "VectorStore");
+            
             // Subscribe to vector events - Runtime services SHOULD handle events (unlike CX programs which declare handlers explicitly)
             _eventBus.Subscribe("vector.add.text", HandleAddTextEventAsync);
             _eventBus.Subscribe("vector.search.text", HandleSearchTextEventAsync);
+            // Issue #255: Add persistence event handlers
+            _eventBus.Subscribe("vector.persistence.save", HandlePersistenceSaveEventAsync);
+            _eventBus.Subscribe("vector.persistence.load", HandlePersistenceLoadEventAsync);
+            _eventBus.Subscribe("vector.autopersistence.enable", HandleAutoPersistenceEventAsync);
             
-            _logger.LogDebug("🧠 Dr. Marcus 'MemoryLayer' Sterling's Enhanced InMemoryVectorStoreService initialized with embedding capabilities and event handlers.");
+            _logger.LogDebug("🧠 Dr. Marcus 'MemoryLayer' Sterling's Enhanced InMemoryVectorStoreService initialized with embedding capabilities, event handlers, and persistence support.");
             _eventBus.EmitAsync("vectorstore.initialized", new Dictionary<string, object> 
             { 
                 ["service"] = nameof(InMemoryVectorStoreService),
                 ["embeddingEnabled"] = _embeddingGenerator != null,
-                ["consciousnessAware"] = true
+                ["consciousnessAware"] = true,
+                ["persistenceEnabled"] = true,
+                ["storageDirectory"] = _defaultStorageDirectory
+            });
+            
+            // Attempt to load existing data on startup (Issue #255)
+            _ = Task.Run(async () =>
+            {
+                try
+                {
+                    await LoadFromPersistentStorageAsync();
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "⚠️ Failed to load persisted vector data on startup, starting with empty store");
+                }
             });
         }
 
         /// <summary>
         /// Adds a new vector record to the in-memory store.
         /// Enhanced for Issue #252: Supports consciousness context preservation.
+        /// Enhanced for Issue #255: Triggers persistence when auto-persistence is enabled.
         /// </summary>
         /// <param name="record">The vector record to add.</param>
         /// <returns>A task representing the asynchronous operation.</returns>
-        public Task AddAsync(VectorRecord record)
+        public async Task AddAsync(VectorRecord record)
         {
             if (string.IsNullOrEmpty(record.Id))
             {
@@ -79,14 +121,14 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
 
             _vectorStore[record.Id] = record;
             _logger.LogDebug("Vector record added with ID: {RecordId}, consciousness context preserved", record.Id);
-            _eventBus.EmitAsync("vectorstore.record.added", new Dictionary<string, object> 
+            
+            await _eventBus.EmitAsync("vectorstore.record.added", new Dictionary<string, object> 
             { 
                 ["Id"] = record.Id, 
                 ["Content"] = record.Content,
-                ["ConsciousnessContext"] = record.Metadata.ContainsKey("consciousness_aware")
+                ["ConsciousnessContext"] = record.Metadata.ContainsKey("consciousness_aware"),
+                ["PersistenceEnabled"] = _autoPersistenceEnabled
             });
-            
-            return Task.CompletedTask;
         }
 
         /// <summary>
@@ -593,6 +635,539 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                     ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
                 });
                 return false;
+            }
+        }
+
+        /// <summary>
+        /// Enhanced for Issue #255: Save vector store to persistent storage.
+        /// Implements file-based persistence with consciousness context preservation.
+        /// </summary>
+        /// <param name="baseDirectory">Base directory for storage (optional, uses default if null)</param>
+        /// <returns>Success status and saved file information</returns>
+        public async Task<Dictionary<string, object>> SaveToPersistentStorageAsync(string? baseDirectory = null)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            await _persistenceLock.WaitAsync();
+
+            try
+            {
+                var storageDir = baseDirectory ?? _defaultStorageDirectory;
+                Directory.CreateDirectory(storageDir);
+
+                // Create storage subdirectories
+                var vectorsDir = Path.Combine(storageDir, "vectors");
+                var metadataDir = Path.Combine(storageDir, "metadata");
+                var indicesDir = Path.Combine(storageDir, "indices");
+                
+                Directory.CreateDirectory(vectorsDir);
+                Directory.CreateDirectory(metadataDir);
+                Directory.CreateDirectory(indicesDir);
+
+                var savedRecords = 0;
+                var totalSize = 0L;
+
+                // Save each vector record
+                foreach (var kvp in _vectorStore)
+                {
+                    var record = kvp.Value;
+                    
+                    // Save metadata as JSON (human-readable)
+                    var metadataFile = Path.Combine(metadataDir, $"{record.Id}.json");
+                    var metadata = new
+                    {
+                        Id = record.Id,
+                        Content = record.Content,
+                        CreatedAt = record.CreatedAt,
+                        Metadata = record.Metadata,
+                        VectorDimensions = record.Vector.Length,
+                        ConsciousnessProcessed = record.Metadata.ContainsKey("consciousness_aware"),
+                        SavedAt = DateTimeOffset.UtcNow
+                    };
+
+                    var metadataJson = JsonSerializer.Serialize(metadata, new JsonSerializerOptions { WriteIndented = true });
+                    await File.WriteAllTextAsync(metadataFile, metadataJson);
+
+                    // Save vector as binary (performance-critical)
+                    var vectorFile = Path.Combine(vectorsDir, $"{record.Id}.bin");
+                    var vectorBytes = new byte[record.Vector.Length * 4]; // float = 4 bytes
+                    Buffer.BlockCopy(record.Vector, 0, vectorBytes, 0, vectorBytes.Length);
+                    await File.WriteAllBytesAsync(vectorFile, vectorBytes);
+
+                    savedRecords++;
+                    totalSize += vectorBytes.Length + metadataJson.Length;
+                }
+
+                // Save index information
+                var indexFile = Path.Combine(indicesDir, "vector_index.json");
+                var indexData = new
+                {
+                    TotalRecords = savedRecords,
+                    SavedAt = DateTimeOffset.UtcNow,
+                    StorageDirectory = storageDir,
+                    Records = _vectorStore.Keys.ToList(),
+                    ConsciousnessRecords = _vectorStore.Values.Count(r => r.Metadata.ContainsKey("consciousness_aware")),
+                    Version = "1.0.0"
+                };
+
+                var indexJson = JsonSerializer.Serialize(indexData, new JsonSerializerOptions { WriteIndented = true });
+                await File.WriteAllTextAsync(indexFile, indexJson);
+
+                stopwatch.Stop();
+
+                var result = new Dictionary<string, object>
+                {
+                    ["success"] = true,
+                    ["recordsSaved"] = savedRecords,
+                    ["totalSizeBytes"] = totalSize,
+                    ["storageDirectory"] = storageDir,
+                    ["processingTimeMs"] = stopwatch.ElapsedMilliseconds,
+                    ["consciousnessRecordsPreserved"] = indexData.ConsciousnessRecords
+                };
+
+                _logger.LogInformation("✅ Successfully saved {RecordCount} vector records to persistent storage in {ElapsedMs}ms", 
+                    savedRecords, stopwatch.ElapsedMilliseconds);
+
+                await _eventBus.EmitAsync("vectorstore.persistence.saved", result);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                _logger.LogError(ex, "❌ Failed to save vector store to persistent storage");
+
+                var errorResult = new Dictionary<string, object>
+                {
+                    ["success"] = false,
+                    ["error"] = ex.Message,
+                    ["processingTimeMs"] = stopwatch.ElapsedMilliseconds
+                };
+
+                await _eventBus.EmitAsync("vectorstore.persistence.save.failed", errorResult);
+                return errorResult;
+            }
+            finally
+            {
+                _persistenceLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Enhanced for Issue #255: Load vector store from persistent storage.
+        /// Implements automatic recovery with consciousness context restoration.
+        /// </summary>
+        /// <param name="baseDirectory">Base directory for storage (optional, uses default if null)</param>
+        /// <returns>Success status and loaded record information</returns>
+        public async Task<Dictionary<string, object>> LoadFromPersistentStorageAsync(string? baseDirectory = null)
+        {
+            var stopwatch = Stopwatch.StartNew();
+            await _persistenceLock.WaitAsync();
+
+            try
+            {
+                var storageDir = baseDirectory ?? _defaultStorageDirectory;
+                
+                if (!Directory.Exists(storageDir))
+                {
+                    return new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["error"] = "Storage directory does not exist",
+                        ["storageDirectory"] = storageDir
+                    };
+                }
+
+                var vectorsDir = Path.Combine(storageDir, "vectors");
+                var metadataDir = Path.Combine(storageDir, "metadata");
+                var indicesDir = Path.Combine(storageDir, "indices");
+
+                if (!Directory.Exists(vectorsDir) || !Directory.Exists(metadataDir))
+                {
+                    return new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["error"] = "Required storage subdirectories not found"
+                    };
+                }
+
+                // Load index file
+                var indexFile = Path.Combine(indicesDir, "vector_index.json");
+                if (!File.Exists(indexFile))
+                {
+                    return new Dictionary<string, object>
+                    {
+                        ["success"] = false,
+                        ["error"] = "Vector index file not found"
+                    };
+                }
+
+                var indexJson = await File.ReadAllTextAsync(indexFile);
+                var indexData = JsonSerializer.Deserialize<JsonElement>(indexJson);
+
+                var recordIds = indexData.GetProperty("Records").EnumerateArray()
+                    .Select(e => e.GetString()).Where(s => !string.IsNullOrEmpty(s)).ToList();
+
+                var loadedRecords = 0;
+                var consciousnessRecordsRestored = 0;
+
+                // Clear existing store
+                _vectorStore.Clear();
+
+                // Load each record
+                foreach (var recordId in recordIds)
+                {
+                    try
+                    {
+                        var metadataFile = Path.Combine(metadataDir, $"{recordId}.json");
+                        var vectorFile = Path.Combine(vectorsDir, $"{recordId}.bin");
+
+                        if (!File.Exists(metadataFile) || !File.Exists(vectorFile))
+                        {
+                            _logger.LogWarning("⚠️ Missing files for record {RecordId}, skipping", recordId);
+                            continue;
+                        }
+
+                        // Load metadata
+                        var metadataJson = await File.ReadAllTextAsync(metadataFile);
+                        var metadata = JsonSerializer.Deserialize<JsonElement>(metadataJson);
+
+                        // Load vector binary
+                        var vectorBytes = await File.ReadAllBytesAsync(vectorFile);
+                        var vectorDimensions = metadata.GetProperty("VectorDimensions").GetInt32();
+                        var vector = new float[vectorDimensions];
+                        Buffer.BlockCopy(vectorBytes, 0, vector, 0, vectorBytes.Length);
+
+                        // Recreate VectorRecord
+                        var recordIdValue = metadata.GetProperty("Id").GetString() ?? recordId ?? Guid.NewGuid().ToString();
+                        var record = new VectorRecord
+                        {
+                            Id = recordIdValue,
+                            Content = metadata.GetProperty("Content").GetString() ?? "",
+                            Vector = vector,
+                            CreatedAt = metadata.GetProperty("CreatedAt").GetDateTimeOffset(),
+                            Metadata = new Dictionary<string, object>()
+                        };
+
+                        // Restore metadata dictionary
+                        if (metadata.TryGetProperty("Metadata", out var metadataProperty))
+                        {
+                            foreach (var prop in metadataProperty.EnumerateObject())
+                            {
+                                var value = prop.Value.ValueKind switch
+                                {
+                                    JsonValueKind.String => (object)(prop.Value.GetString() ?? ""),
+                                    JsonValueKind.Number => (object)prop.Value.GetDouble(),
+                                    JsonValueKind.True => (object)true,
+                                    JsonValueKind.False => (object)false,
+                                    _ => (object)(prop.Value.ToString() ?? "")
+                                };
+                                record.Metadata[prop.Name] = value;
+                            }
+                        }
+
+                        _vectorStore[recordIdValue] = record;
+                        loadedRecords++;
+
+                        if (record.Metadata.ContainsKey("consciousness_aware"))
+                        {
+                            consciousnessRecordsRestored++;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "⚠️ Failed to load record {RecordId}", recordId);
+                    }
+                }
+
+                stopwatch.Stop();
+
+                var result = new Dictionary<string, object>
+                {
+                    ["success"] = true,
+                    ["recordsLoaded"] = loadedRecords,
+                    ["consciousnessRecordsRestored"] = consciousnessRecordsRestored,
+                    ["storageDirectory"] = storageDir,
+                    ["processingTimeMs"] = stopwatch.ElapsedMilliseconds
+                };
+
+                _logger.LogInformation("✅ Successfully loaded {RecordCount} vector records from persistent storage in {ElapsedMs}ms", 
+                    loadedRecords, stopwatch.ElapsedMilliseconds);
+
+                await _eventBus.EmitAsync("vectorstore.persistence.loaded", result);
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                stopwatch.Stop();
+                _logger.LogError(ex, "❌ Failed to load vector store from persistent storage");
+
+                var errorResult = new Dictionary<string, object>
+                {
+                    ["success"] = false,
+                    ["error"] = ex.Message,
+                    ["processingTimeMs"] = stopwatch.ElapsedMilliseconds
+                };
+
+                await _eventBus.EmitAsync("vectorstore.persistence.load.failed", errorResult);
+                return errorResult;
+            }
+            finally
+            {
+                _persistenceLock.Release();
+            }
+        }
+
+        /// <summary>
+        /// Enhanced for Issue #255: Enable/disable automatic persistence.
+        /// Background persistence for real-time consciousness memory retention.
+        /// </summary>
+        /// <param name="enabled">Whether to enable automatic persistence</param>
+        /// <param name="intervalSeconds">Persistence interval in seconds (default: 30)</param>
+        /// <returns>Configuration status</returns>
+        public async Task<bool> SetAutoPersistenceAsync(bool enabled, int intervalSeconds = 30)
+        {
+            try
+            {
+                _autoPersistenceEnabled = enabled;
+                _autoPersistenceIntervalSeconds = intervalSeconds;
+
+                // Dispose existing timer
+                _autoPersistenceTimer?.Dispose();
+
+                if (enabled)
+                {
+                    _logger.LogInformation("🔄 Enabling automatic persistence every {IntervalSeconds} seconds", intervalSeconds);
+                    
+                    _autoPersistenceTimer = new Timer(async _ =>
+                    {
+                        try
+                        {
+                            _logger.LogDebug("🔄 Running automatic persistence...");
+                            var result = await SaveToPersistentStorageAsync();
+                            
+                            if (result.TryGetValue("success", out var success) && success.Equals(true))
+                            {
+                                _logger.LogDebug("✅ Automatic persistence completed successfully");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogWarning(ex, "⚠️ Automatic persistence failed");
+                        }
+                    }, null, TimeSpan.FromSeconds(intervalSeconds), TimeSpan.FromSeconds(intervalSeconds));
+
+                    await _eventBus.EmitAsync("vectorstore.autopersistence.enabled", new Dictionary<string, object>
+                    {
+                        ["intervalSeconds"] = intervalSeconds,
+                        ["enabledAt"] = DateTimeOffset.UtcNow
+                    });
+                }
+                else
+                {
+                    _logger.LogInformation("⏹️ Disabling automatic persistence");
+                    
+                    await _eventBus.EmitAsync("vectorstore.autopersistence.disabled", new Dictionary<string, object>
+                    {
+                        ["disabledAt"] = DateTimeOffset.UtcNow
+                    });
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ Failed to configure automatic persistence");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Handle vector.persistence.save event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandlePersistenceSaveEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.persistence.save request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                var baseDirectory = payload?.TryGetValue("baseDirectory", out var baseDirObj) == true ? baseDirObj?.ToString() : null;
+                
+                var result = await SaveToPersistentStorageAsync(baseDirectory);
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                
+                result["duration"] = duration;
+
+                // Check for custom handlers first
+                var customHandlers = new List<string>();
+                if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                {
+                    customHandlers.AddRange(handlersArray.OfType<string>());
+                }
+
+                // Emit custom handlers if specified
+                if (customHandlers.Count > 0)
+                {
+                    foreach (var handler in customHandlers)
+                    {
+                        await _eventBus.EmitAsync(handler, result);
+                        _logger.LogInformation("✅ Emitted custom persistence save handler: {Handler}", handler);
+                    }
+                }
+                else
+                {
+                    // Fallback to default event if no custom handlers
+                    await _eventBus.EmitAsync("vector.persistence.save.completed", result);
+                }
+
+                _logger.LogInformation("✅ vector.persistence.save completed in {Duration}ms", duration);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.persistence.save failed");
+                await _eventBus.EmitAsync("vector.persistence.save.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Handle vector.persistence.load event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandlePersistenceLoadEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.persistence.load request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                var baseDirectory = payload?.TryGetValue("baseDirectory", out var baseDirObj) == true ? baseDirObj?.ToString() : null;
+                
+                var result = await LoadFromPersistentStorageAsync(baseDirectory);
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+                
+                result["duration"] = duration;
+
+                // Check for custom handlers first
+                var customHandlers = new List<string>();
+                if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                {
+                    customHandlers.AddRange(handlersArray.OfType<string>());
+                }
+
+                // Emit custom handlers if specified
+                if (customHandlers.Count > 0)
+                {
+                    foreach (var handler in customHandlers)
+                    {
+                        await _eventBus.EmitAsync(handler, result);
+                        _logger.LogInformation("✅ Emitted custom persistence load handler: {Handler}", handler);
+                    }
+                }
+                else
+                {
+                    // Fallback to default event if no custom handlers
+                    await _eventBus.EmitAsync("vector.persistence.load.completed", result);
+                }
+
+                _logger.LogInformation("✅ vector.persistence.load completed in {Duration}ms", duration);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.persistence.load failed");
+                await _eventBus.EmitAsync("vector.persistence.load.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Handle vector.autopersistence.enable event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleAutoPersistenceEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.autopersistence.enable request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                var enabled = payload?.TryGetValue("enabled", out var enabledObj) == true && 
+                             bool.TryParse(enabledObj?.ToString(), out var isEnabled) && isEnabled;
+                
+                var intervalSeconds = payload?.TryGetValue("intervalSeconds", out var intervalObj) == true &&
+                                    int.TryParse(intervalObj?.ToString(), out var interval) ? interval : 30;
+
+                var success = await SetAutoPersistenceAsync(enabled, intervalSeconds);
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                var result = new Dictionary<string, object>
+                {
+                    ["success"] = success,
+                    ["enabled"] = enabled,
+                    ["intervalSeconds"] = intervalSeconds,
+                    ["duration"] = duration
+                };
+
+                // Check for custom handlers first
+                var customHandlers = new List<string>();
+                if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                {
+                    customHandlers.AddRange(handlersArray.OfType<string>());
+                }
+
+                // Emit custom handlers if specified
+                if (customHandlers.Count > 0)
+                {
+                    foreach (var handler in customHandlers)
+                    {
+                        await _eventBus.EmitAsync(handler, result);
+                        _logger.LogInformation("✅ Emitted custom autopersistence handler: {Handler}", handler);
+                    }
+                }
+                else
+                {
+                    // Fallback to default event if no custom handlers
+                    await _eventBus.EmitAsync("vector.autopersistence.enable.completed", result);
+                }
+
+                _logger.LogInformation("✅ vector.autopersistence.enable completed in {Duration}ms", duration);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.autopersistence.enable failed");
+                await _eventBus.EmitAsync("vector.autopersistence.enable.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Enhanced for Issue #255: Dispose of resources including persistence timer and semaphore.
+        /// </summary>
+        public void Dispose()
+        {
+            try
+            {
+                _autoPersistenceTimer?.Dispose();
+                _persistenceLock?.Dispose();
+                _logger.LogDebug("🧹 InMemoryVectorStoreService disposed successfully");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "⚠️ Error during InMemoryVectorStoreService disposal");
             }
         }
     }

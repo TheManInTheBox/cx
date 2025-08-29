@@ -8,6 +8,7 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
     /// Dr. Marcus "MemoryLayer" Sterling - Memory Layer Vector Index Architect
     /// Defines the contract for a consciousness-aware vector store service.
     /// Enhanced for Issue #252: Native embedding generation and FileService integration.
+    /// Enhanced for Issue #255: File persistence with consciousness context preservation.
     /// </summary>
     public interface IVectorStoreService
     {
@@ -67,6 +68,31 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
         /// </summary>
         /// <returns>Performance and consciousness metrics</returns>
         Task<Dictionary<string, object>> GetMetricsAsync();
+
+        /// <summary>
+        /// Enhanced for Issue #255: Save vector store to persistent storage.
+        /// Implements file-based persistence with consciousness context preservation.
+        /// </summary>
+        /// <param name="baseDirectory">Base directory for storage (optional, uses default if null)</param>
+        /// <returns>Success status and saved file information</returns>
+        Task<Dictionary<string, object>> SaveToPersistentStorageAsync(string? baseDirectory = null);
+
+        /// <summary>
+        /// Enhanced for Issue #255: Load vector store from persistent storage.
+        /// Implements automatic recovery with consciousness context restoration.
+        /// </summary>
+        /// <param name="baseDirectory">Base directory for storage (optional, uses default if null)</param>
+        /// <returns>Success status and loaded record information</returns>
+        Task<Dictionary<string, object>> LoadFromPersistentStorageAsync(string? baseDirectory = null);
+
+        /// <summary>
+        /// Enhanced for Issue #255: Enable/disable automatic persistence.
+        /// Background persistence for real-time consciousness memory retention.
+        /// </summary>
+        /// <param name="enabled">Whether to enable automatic persistence</param>
+        /// <param name="intervalSeconds">Persistence interval in seconds (default: 30)</param>
+        /// <returns>Configuration status</returns>
+        Task<bool> SetAutoPersistenceAsync(bool enabled, int intervalSeconds = 30);
     }
 }
 
