@@ -1,0 +1,96 @@
+///
+/// Simple Vector Dimension Test - Issue #256 Debugging
+/// Test to understand how vector dimensions work
+///
+
+conscious SimpleVectorDimensionTest {
+    realize() {
+        emit system.console.write {
+            text: "🔧 Vector Dimension Test - Understanding the Issue"
+        };
+        
+        emit system.console.write {
+            text: "Step 1: Adding text with auto-embedding (should create 768D vector)..."
+        };
+
+        // Add text content - this will create a proper 768D vector
+        emit vector.add.text {
+            text: "Test content for embedding generation",
+            metadata: { test: "dimension_check" },
+            handlers: [ text.added ]
+        };
+    }
+    
+    on text.added (event) {
+        emit system.console.write {
+            text: "✅ Text added successfully with ID: " + event.id
+        };
+        
+        emit system.console.write {
+            text: "Step 2: Searching using text query (should work)..."
+        };
+
+        // Use text search first - this should work fine
+        emit vector.search.text {
+            query: "test content",
+            topK: 1,
+            handlers: [ text.search.complete ]
+        };
+    }
+    
+    on text.search.complete (event) {
+        emit system.console.write {
+            text: "✅ Text search completed successfully!"
+        };
+        
+        emit system.console.write {
+            text: "Results found: " + event.result_count
+        };
+        
+        emit system.console.write {
+            text: "Duration: " + event.duration + "ms"
+        };
+        
+        emit system.console.write {
+            text: "Step 3: Now trying vector search with wrong dimensions..."
+        };
+
+        // Now try vector search with wrong dimensions to see error handling
+        emit vector.search.vector {
+            vector: [1.0, 0.0],  // Wrong dimensions - should fail gracefully
+            topK: 1,
+            handlers: [ vector.search.complete ]
+        };
+    }
+    
+    on vector.search.complete (event) {
+        emit system.console.write {
+            text: "✅ Vector search somehow completed - Results: " + event.result_count
+        };
+        
+        emit system.shutdown { reason: "test_complete" };
+    }
+    
+    on vector.search.failed (event) {
+        emit system.console.write {
+            text: "✅ Vector search failed as expected: " + event.error
+        };
+        
+        emit system.console.write {
+            text: "Duration until failure: " + event.duration + "ms"
+        };
+        
+        emit system.shutdown { reason: "test_complete_with_expected_failure" };
+    }
+    
+    // Add error handlers for debugging
+    on text.search.failed (event) {
+        emit system.console.write {
+            text: "❌ Text search failed: " + event.error
+        };
+        
+        emit system.shutdown { reason: "text_search_failed" };
+    }
+}
+
+new SimpleVectorDimensionTest();

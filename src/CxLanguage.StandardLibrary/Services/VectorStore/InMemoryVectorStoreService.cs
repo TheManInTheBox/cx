@@ -14,24 +14,23 @@ using Microsoft.Extensions.Logging;
 namespace CxLanguage.StandardLibrary.Services.VectorStore
 {
     /// <summary>
-    /// Dr. Marcus "MemoryLayer" Sterling's enhanced high-performance, in-memory vector store.
+    /// Enhanced high-performance, in-memory vector store service.
     /// This service provides a zero-dependency, local-first vector database solution
-    /// optimized for the Aura Cognitive Framework and consciousness-native processing.
+    /// optimized for the CX Language consciousness-aware processing framework.
     /// 
-    /// Enhanced for Issue #252:
-    /// - Native .NET 9 embedding generation (sub-50ms performance)
+    /// Features:
+    /// - Issue #252: Native .NET 9 embedding generation (sub-50ms performance)
+    /// - Issue #255: File-based persistence with automatic recovery
+    /// - Issue #256: Complete vector events integration (10 new events)
     /// - Consciousness context preservation in embeddings
     /// - FileService integration for document processing
     /// - Zero external dependencies with pure local processing
-    /// 
-    /// Enhanced for Issue #255:
-    /// - File-based persistence with automatic recovery
-    /// - Consciousness context preservation across restarts
-    /// - Binary and JSON storage formats for optimal performance
     /// - Background persistence for real-time memory retention
     /// </summary>
     public class InMemoryVectorStoreService : IVectorStoreService, IDisposable
     {
+        #region Fields and Dependencies
+
         private readonly ILogger<InMemoryVectorStoreService> _logger;
         private readonly ICxEventBus _eventBus;
         private readonly IEmbeddingGenerator<string, Embedding<float>>? _embeddingGenerator;
@@ -56,6 +55,10 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
         private int _autoPersistenceIntervalSeconds = 30;
         private readonly SemaphoreSlim _persistenceLock = new(1, 1);
 
+        #endregion
+
+        #region Constructor and Initialization
+
         public InMemoryVectorStoreService(ILogger<InMemoryVectorStoreService> logger, ICxEventBus eventBus, IEmbeddingGenerator<string, Embedding<float>>? embeddingGenerator = null)
         {
             _logger = logger;
@@ -73,6 +76,17 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
             _eventBus.Subscribe("vector.persistence.save", HandlePersistenceSaveEventAsync);
             _eventBus.Subscribe("vector.persistence.load", HandlePersistenceLoadEventAsync);
             _eventBus.Subscribe("vector.autopersistence.enable", HandleAutoPersistenceEventAsync);
+            // Issue #256: Add missing vector events integration
+            _eventBus.Subscribe("vector.get", HandleGetEventAsync);
+            _eventBus.Subscribe("vector.add.vector", HandleAddVectorEventAsync);
+            _eventBus.Subscribe("vector.search.vector", HandleSearchVectorEventAsync);
+            _eventBus.Subscribe("vector.delete", HandleDeleteEventAsync);
+            _eventBus.Subscribe("vector.update", HandleUpdateEventAsync);
+            _eventBus.Subscribe("vector.clear", HandleClearEventAsync);
+            _eventBus.Subscribe("vector.list.ids", HandleListIdsEventAsync);
+            _eventBus.Subscribe("vector.count", HandleCountEventAsync);
+            _eventBus.Subscribe("vector.metrics", HandleMetricsEventAsync);
+            _eventBus.Subscribe("vector.process.file", HandleProcessFileEventAsync);
             
             _logger.LogDebug("🧠 Dr. Marcus 'MemoryLayer' Sterling's Enhanced InMemoryVectorStoreService initialized with embedding capabilities, event handlers, and persistence support.");
             _eventBus.EmitAsync("vectorstore.initialized", new Dictionary<string, object> 
@@ -97,6 +111,10 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                 }
             });
         }
+
+        #endregion
+
+        #region Core Vector Operations
 
         /// <summary>
         /// Adds a new vector record to the in-memory store.
@@ -268,6 +286,15 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
             {
                 _logger.LogWarning("SearchAsync called on an empty vector store.");
                 return Task.FromResult(Enumerable.Empty<VectorRecord>());
+            }
+
+            // Validate vector dimensions before search
+            var firstRecord = _vectorStore.Values.FirstOrDefault();
+            if (firstRecord != null && firstRecord.Vector.Length != queryVector.Length)
+            {
+                var errorMessage = $"Query vector dimension ({queryVector.Length}) does not match stored vector dimension ({firstRecord.Vector.Length})";
+                _logger.LogError("❌ Vector dimension mismatch: {ErrorMessage}", errorMessage);
+                throw new ArgumentException(errorMessage);
             }
 
             // Enhanced parallel processing for performance optimization
@@ -1155,6 +1182,865 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
         }
 
         /// <summary>
+        /// Issue #256: Handle vector.get event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleGetEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.get request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (payload != null)
+                {
+                    var id = payload.TryGetValue("id", out var idObj) ? idObj?.ToString() : "";
+
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        var result = await GetAsync(id);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        var responsePayload = new Dictionary<string, object>
+                        {
+                            ["id"] = id,
+                            ["found"] = result != null,
+                            ["duration"] = duration
+                        };
+
+                        if (result != null)
+                        {
+                            responsePayload["record"] = new Dictionary<string, object>
+                            {
+                                ["id"] = result.Id,
+                                ["content"] = result.Content,
+                                ["vector"] = result.Vector,
+                                ["metadata"] = result.Metadata
+                            };
+                        }
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom get handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.get.completed", responsePayload);
+                        }
+
+                        _logger.LogInformation("✅ vector.get completed in {Duration}ms", duration);
+                        return true;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("ID parameter is required for vector.get");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Payload is required for vector.get");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.get failed");
+                await _eventBus.EmitAsync("vector.get.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.add.vector event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleAddVectorEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.add.vector request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (payload != null)
+                {
+                    var content = payload.TryGetValue("content", out var contentObj) ? contentObj?.ToString() : "";
+                    var vectorArray = payload.TryGetValue("vector", out var vectorObj) && vectorObj is object[] vecArray
+                        ? vecArray.Select(v => Convert.ToSingle(v)).ToArray() : null;
+                    var metadata = payload.TryGetValue("metadata", out var metadataObj) && metadataObj is Dictionary<string, object> meta 
+                        ? meta : new Dictionary<string, object>();
+
+                    if (!string.IsNullOrEmpty(content) && vectorArray != null)
+                    {
+                        var result = await AddVectorAsync(content, vectorArray, metadata);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        var responsePayload = new Dictionary<string, object>
+                        {
+                            ["id"] = result.Id,
+                            ["content"] = result.Content,
+                            ["metadata"] = result.Metadata,
+                            ["duration"] = duration,
+                            ["vector_length"] = vectorArray.Length
+                        };
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom add vector handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.add.vector.completed", responsePayload);
+                        }
+
+                        _logger.LogInformation("✅ vector.add.vector completed in {Duration}ms", duration);
+                        return true;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Content and vector parameters are required for vector.add.vector");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Payload is required for vector.add.vector");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.add.vector failed");
+                await _eventBus.EmitAsync("vector.add.vector.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.search.vector event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleSearchVectorEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.search.vector request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (payload != null)
+                {
+                    var vectorArray = payload.TryGetValue("vector", out var vectorObj) && vectorObj is object[] vecArray
+                        ? vecArray.Select(v => Convert.ToSingle(v)).ToArray() : null;
+                    var topK = payload.TryGetValue("topK", out var topKObj) ? Convert.ToInt32(topKObj) : 5;
+
+                    if (vectorArray != null)
+                    {
+                        _logger.LogInformation("🔍 Starting vector search with {VectorLength}D query vector", vectorArray.Length);
+                        
+                        var results = await SearchVectorAsync(vectorArray, topK);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        var responsePayload = new Dictionary<string, object>
+                        {
+                            ["results"] = results.Select(r => new Dictionary<string, object>
+                            {
+                                ["id"] = r.Id,
+                                ["content"] = r.Content,
+                                ["metadata"] = r.Metadata,
+                                ["vector"] = r.Vector
+                            }).ToArray(),
+                            ["duration"] = duration,
+                            ["query_vector_length"] = vectorArray.Length,
+                            ["result_count"] = results.Count()
+                        };
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom search vector handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.search.vector.completed", responsePayload);
+                        }
+
+                        _logger.LogInformation("✅ vector.search.vector completed in {Duration}ms with {ResultCount} results", duration, results.Count());
+                        return true;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("Vector parameter is required for vector.search.vector");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Payload is required for vector.search.vector");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.search.vector failed");
+                await _eventBus.EmitAsync("vector.search.vector.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.delete event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleDeleteEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.delete request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (payload != null)
+                {
+                    var id = payload.TryGetValue("id", out var idObj) ? idObj?.ToString() : "";
+
+                    if (!string.IsNullOrEmpty(id))
+                    {
+                        var deleted = await DeleteAsync(id);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        var responsePayload = new Dictionary<string, object>
+                        {
+                            ["id"] = id,
+                            ["deleted"] = deleted,
+                            ["duration"] = duration
+                        };
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom delete handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.delete.completed", responsePayload);
+                        }
+
+                        _logger.LogInformation("✅ vector.delete completed in {Duration}ms", duration);
+                        return true;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("ID parameter is required for vector.delete");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Payload is required for vector.delete");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.delete failed");
+                await _eventBus.EmitAsync("vector.delete.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.update event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleUpdateEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.update request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (payload != null)
+                {
+                    var id = payload.TryGetValue("id", out var idObj) ? idObj?.ToString() : "";
+                    var content = payload.TryGetValue("content", out var contentObj) ? contentObj?.ToString() : "";
+                    var vectorArray = payload.TryGetValue("vector", out var vectorObj) && vectorObj is object[] vecArray
+                        ? vecArray.Select(v => Convert.ToSingle(v)).ToArray() : null;
+                    var metadata = payload.TryGetValue("metadata", out var metadataObj) && metadataObj is Dictionary<string, object> meta 
+                        ? meta : new Dictionary<string, object>();
+
+                    if (!string.IsNullOrEmpty(id) && !string.IsNullOrEmpty(content) && vectorArray != null)
+                    {
+                        var record = new VectorRecord
+                        {
+                            Id = id,
+                            Content = content,
+                            Vector = vectorArray,
+                            Metadata = metadata
+                        };
+
+                        var updated = await UpdateAsync(record);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        var responsePayload = new Dictionary<string, object>
+                        {
+                            ["id"] = id,
+                            ["updated"] = updated,
+                            ["duration"] = duration
+                        };
+
+                        if (updated)
+                        {
+                            responsePayload["content"] = content;
+                            responsePayload["metadata"] = metadata;
+                        }
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom update handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.update.completed", responsePayload);
+                        }
+
+                        _logger.LogInformation("✅ vector.update completed in {Duration}ms", duration);
+                        return true;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("ID, content and vector parameters are required for vector.update");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Payload is required for vector.update");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.update failed");
+                await _eventBus.EmitAsync("vector.update.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.clear event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleClearEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.clear request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                var recordsCleared = await ClearAsync();
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                var responsePayload = new Dictionary<string, object>
+                {
+                    ["records_cleared"] = recordsCleared,
+                    ["duration"] = duration
+                };
+
+                // Check for custom handlers first
+                var customHandlers = new List<string>();
+                if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                {
+                    customHandlers.AddRange(handlersArray.OfType<string>());
+                }
+
+                // Emit custom handlers if specified
+                if (customHandlers.Count > 0)
+                {
+                    foreach (var handler in customHandlers)
+                    {
+                        await _eventBus.EmitAsync(handler, responsePayload);
+                        _logger.LogInformation("✅ Emitted custom clear handler: {Handler}", handler);
+                    }
+                }
+                else
+                {
+                    // Fallback to default event if no custom handlers
+                    await _eventBus.EmitAsync("vector.clear.completed", responsePayload);
+                }
+
+                _logger.LogInformation("✅ vector.clear completed in {Duration}ms, cleared {RecordsCleared} records", duration, recordsCleared);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.clear failed");
+                await _eventBus.EmitAsync("vector.clear.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.list.ids event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleListIdsEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.list.ids request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                var ids = await ListIdsAsync();
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                var responsePayload = new Dictionary<string, object>
+                {
+                    ["ids"] = ids.ToArray(),
+                    ["count"] = ids.Count(),
+                    ["duration"] = duration
+                };
+
+                // Check for custom handlers first
+                var customHandlers = new List<string>();
+                if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                {
+                    customHandlers.AddRange(handlersArray.OfType<string>());
+                }
+
+                // Emit custom handlers if specified
+                if (customHandlers.Count > 0)
+                {
+                    foreach (var handler in customHandlers)
+                    {
+                        await _eventBus.EmitAsync(handler, responsePayload);
+                        _logger.LogInformation("✅ Emitted custom list ids handler: {Handler}", handler);
+                    }
+                }
+                else
+                {
+                    // Fallback to default event if no custom handlers
+                    await _eventBus.EmitAsync("vector.list.ids.completed", responsePayload);
+                }
+
+                _logger.LogInformation("✅ vector.list.ids completed in {Duration}ms, returned {IdCount} IDs", duration, ids.Count());
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.list.ids failed");
+                await _eventBus.EmitAsync("vector.list.ids.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.count event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleCountEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.count request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                var count = await GetCountAsync();
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                var responsePayload = new Dictionary<string, object>
+                {
+                    ["count"] = count,
+                    ["duration"] = duration
+                };
+
+                // Check for custom handlers first
+                var customHandlers = new List<string>();
+                if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                {
+                    customHandlers.AddRange(handlersArray.OfType<string>());
+                }
+
+                // Emit custom handlers if specified
+                if (customHandlers.Count > 0)
+                {
+                    foreach (var handler in customHandlers)
+                    {
+                        await _eventBus.EmitAsync(handler, responsePayload);
+                        _logger.LogInformation("✅ Emitted custom count handler: {Handler}", handler);
+                    }
+                }
+                else
+                {
+                    // Fallback to default event if no custom handlers
+                    await _eventBus.EmitAsync("vector.count.completed", responsePayload);
+                }
+
+                _logger.LogInformation("✅ vector.count completed in {Duration}ms, count: {Count}", duration, count);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.count failed");
+                await _eventBus.EmitAsync("vector.count.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.metrics event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleMetricsEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.metrics request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                var metrics = await GetMetricsAsync();
+                var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                var responsePayload = new Dictionary<string, object>
+                {
+                    ["metrics"] = metrics,
+                    ["duration"] = duration
+                };
+
+                // Check for custom handlers first
+                var customHandlers = new List<string>();
+                if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                {
+                    customHandlers.AddRange(handlersArray.OfType<string>());
+                }
+
+                // Emit custom handlers if specified
+                if (customHandlers.Count > 0)
+                {
+                    foreach (var handler in customHandlers)
+                    {
+                        await _eventBus.EmitAsync(handler, responsePayload);
+                        _logger.LogInformation("✅ Emitted custom metrics handler: {Handler}", handler);
+                    }
+                }
+                else
+                {
+                    // Fallback to default event if no custom handlers
+                    await _eventBus.EmitAsync("vector.metrics.completed", responsePayload);
+                }
+
+                _logger.LogInformation("✅ vector.metrics completed in {Duration}ms", duration);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.metrics failed");
+                await _eventBus.EmitAsync("vector.metrics.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Handle vector.process.file event requests from CX language runtime
+        /// </summary>
+        private async Task<bool> HandleProcessFileEventAsync(object? sender, string eventName, IDictionary<string, object>? payload)
+        {
+            _logger.LogInformation("🧩 Processing vector.process.file request");
+            var startTime = DateTime.UtcNow;
+
+            try
+            {
+                if (payload != null)
+                {
+                    var filePath = payload.TryGetValue("filePath", out var filePathObj) ? filePathObj?.ToString() : "";
+                    var chunkSize = payload.TryGetValue("chunkSize", out var chunkSizeObj) ? Convert.ToInt32(chunkSizeObj) : 1000;
+                    var metadata = payload.TryGetValue("metadata", out var metadataObj) && metadataObj is Dictionary<string, object> meta 
+                        ? meta : new Dictionary<string, object>();
+
+                    if (!string.IsNullOrEmpty(filePath))
+                    {
+                        var results = await ProcessFileAsync(filePath, chunkSize, metadata);
+                        var duration = (DateTime.UtcNow - startTime).TotalMilliseconds;
+
+                        var responsePayload = new Dictionary<string, object>
+                        {
+                            ["filePath"] = filePath,
+                            ["chunkSize"] = chunkSize,
+                            ["recordsCreated"] = results.Count(),
+                            ["duration"] = duration,
+                            ["records"] = results.Select(r => new Dictionary<string, object>
+                            {
+                                ["id"] = r.Id,
+                                ["content"] = r.Content,
+                                ["metadata"] = r.Metadata
+                            }).ToArray()
+                        };
+
+                        // Check for custom handlers first
+                        var customHandlers = new List<string>();
+                        if (payload?.TryGetValue("handlers", out var handlersObj) == true && handlersObj is object[] handlersArray)
+                        {
+                            customHandlers.AddRange(handlersArray.OfType<string>());
+                        }
+
+                        // Emit custom handlers if specified
+                        if (customHandlers.Count > 0)
+                        {
+                            foreach (var handler in customHandlers)
+                            {
+                                await _eventBus.EmitAsync(handler, responsePayload);
+                                _logger.LogInformation("✅ Emitted custom process file handler: {Handler}", handler);
+                            }
+                        }
+                        else
+                        {
+                            // Fallback to default event if no custom handlers
+                            await _eventBus.EmitAsync("vector.process.file.completed", responsePayload);
+                        }
+
+                        _logger.LogInformation("✅ vector.process.file completed in {Duration}ms, created {RecordCount} records", duration, results.Count());
+                        return true;
+                    }
+                    else
+                    {
+                        throw new ArgumentException("FilePath parameter is required for vector.process.file");
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Payload is required for vector.process.file");
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "❌ vector.process.file failed");
+                await _eventBus.EmitAsync("vector.process.file.failed", new Dictionary<string, object>
+                {
+                    ["error"] = ex.Message,
+                    ["duration"] = (DateTime.UtcNow - startTime).TotalMilliseconds
+                });
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Add pre-computed vector directly to the store.
+        /// </summary>
+        /// <param name="content">Text content for the record</param>
+        /// <param name="vector">Pre-computed vector</param>
+        /// <param name="metadata">Optional metadata</param>
+        /// <returns>The created vector record</returns>
+        public async Task<VectorRecord> AddVectorAsync(string content, float[] vector, Dictionary<string, object>? metadata = null)
+        {
+            var record = new VectorRecord
+            {
+                Id = Guid.NewGuid().ToString(),
+                Content = content,
+                Vector = vector,
+                Metadata = metadata ?? new Dictionary<string, object>()
+            };
+
+            await AddAsync(record);
+            return record;
+        }
+
+        /// <summary>
+        /// Issue #256: Search using pre-computed vector.
+        /// </summary>
+        /// <param name="queryVector">The vector to search with</param>
+        /// <param name="topK">Number of results to return</param>
+        /// <returns>Search results</returns>
+        public Task<IEnumerable<VectorRecord>> SearchVectorAsync(float[] queryVector, int topK = 5)
+        {
+            return SearchAsync(queryVector, topK);
+        }
+
+        /// <summary>
+        /// Issue #256: Delete a vector record by ID.
+        /// </summary>
+        /// <param name="id">The ID of the record to delete</param>
+        /// <returns>True if deleted successfully, false if not found</returns>
+        public Task<bool> DeleteAsync(string id)
+        {
+            var removed = _vectorStore.TryRemove(id, out var removedRecord);
+            if (removed && removedRecord != null)
+            {
+                _logger.LogInformation("🗑️ Vector record deleted with ID: {RecordId}", id);
+                _ = _eventBus.EmitAsync("vectorstore.record.deleted", new Dictionary<string, object> 
+                { 
+                    ["Id"] = id,
+                    ["Content"] = removedRecord.Content,
+                    ["ConsciousnessContext"] = removedRecord.Metadata.ContainsKey("consciousness_aware")
+                });
+            }
+            else
+            {
+                _logger.LogWarning("🔍 Vector record with ID: {RecordId} not found for deletion", id);
+            }
+            return Task.FromResult(removed);
+        }
+
+        /// <summary>
+        /// Issue #256: Update an existing vector record.
+        /// </summary>
+        /// <param name="record">The updated record</param>
+        /// <returns>True if updated successfully, false if not found</returns>
+        public async Task<bool> UpdateAsync(VectorRecord record)
+        {
+            if (string.IsNullOrEmpty(record.Id))
+            {
+                throw new ArgumentException("Record ID is required for update operation");
+            }
+
+            if (_vectorStore.ContainsKey(record.Id))
+            {
+                // Preserve consciousness context in metadata
+                if (!record.Metadata.ContainsKey("consciousness_updated_at"))
+                {
+                    record.Metadata["consciousness_updated_at"] = DateTimeOffset.UtcNow;
+                    record.Metadata["consciousness_aware"] = true;
+                }
+
+                _vectorStore[record.Id] = record;
+                _logger.LogInformation("🔄 Vector record updated with ID: {RecordId}", record.Id);
+                
+                await _eventBus.EmitAsync("vectorstore.record.updated", new Dictionary<string, object> 
+                { 
+                    ["Id"] = record.Id,
+                    ["Content"] = record.Content,
+                    ["ConsciousnessContext"] = record.Metadata.ContainsKey("consciousness_aware")
+                });
+                return true;
+            }
+            else
+            {
+                _logger.LogWarning("🔍 Vector record with ID: {RecordId} not found for update", record.Id);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Issue #256: Clear all vector records from the store.
+        /// </summary>
+        /// <returns>Number of records cleared</returns>
+        public async Task<int> ClearAsync()
+        {
+            var count = _vectorStore.Count;
+            _vectorStore.Clear();
+            _embeddingCache.Clear();
+            
+            _logger.LogInformation("🧹 Vector store cleared, removed {RecordCount} records", count);
+            
+            await _eventBus.EmitAsync("vectorstore.cleared", new Dictionary<string, object> 
+            { 
+                ["RecordsCleared"] = count,
+                ["ClearedAt"] = DateTimeOffset.UtcNow
+            });
+            
+            return count;
+        }
+
+        /// <summary>
+        /// Issue #256: List all record IDs in the store.
+        /// </summary>
+        /// <returns>Collection of all record IDs</returns>
+        public Task<IEnumerable<string>> ListIdsAsync()
+        {
+            var ids = _vectorStore.Keys.ToList();
+            _logger.LogDebug("📋 Listed {IdCount} vector record IDs", ids.Count);
+            return Task.FromResult<IEnumerable<string>>(ids);
+        }
+
+        /// <summary>
+        /// Issue #256: Get the count of records in the store.
+        /// </summary>
+        /// <returns>Number of records</returns>
+        public Task<int> GetCountAsync()
+        {
+            var count = _vectorStore.Count;
+            _logger.LogDebug("📊 Vector store contains {RecordCount} records", count);
+            return Task.FromResult(count);
+        }
+
+        /// <summary>
         /// Enhanced for Issue #255: Dispose of resources including persistence timer and semaphore.
         /// </summary>
         public void Dispose()
@@ -1170,6 +2056,8 @@ namespace CxLanguage.StandardLibrary.Services.VectorStore
                 _logger.LogWarning(ex, "⚠️ Error during InMemoryVectorStoreService disposal");
             }
         }
+
+        #endregion
     }
 }
 

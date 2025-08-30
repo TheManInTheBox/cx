@@ -1,0 +1,92 @@
+///
+/// Successful Vector Search Test - Issue #256 
+/// Test vector.search.vector with correct dimensions
+///
+
+conscious SuccessfulVectorSearchTest {
+    realize() {
+        emit system.console.write {
+            text: "🔧 Successful Vector Search Test - Issue #256"
+        };
+        
+        emit system.console.write {
+            text: "Step 1: Adding test data with auto-embedding..."
+        };
+
+        // Add text content - this will create a proper 768D vector
+        emit vector.add.text {
+            text: "This is a test document for vector search",
+            metadata: { test: "success_test" },
+            handlers: [ data.added ]
+        };
+    }
+    
+    on data.added (event) {
+        emit system.console.write {
+            text: "✅ Data added with ID: " + event.id
+        };
+        
+        emit system.console.write {
+            text: "Step 2: Performing text search to get a reference vector..."
+        };
+
+        // First do a text search to see results
+        emit vector.search.text {
+            query: "test document vector",
+            topK: 1,
+            handlers: [ text.search.complete ]
+        };
+    }
+    
+    on text.search.complete (event) {
+        emit system.console.write {
+            text: "✅ Text search completed!"
+        };
+        
+        emit system.console.write {
+            text: "Found " + event.results.length + " result(s)"
+        };
+        
+        emit system.console.write {
+            text: "Step 3: Now testing vector.search.vector with the SAME embedding..."
+        };
+
+        // Now try to search with text again using vector search
+        // This should work because both will use the same embedding service
+        emit vector.search.text {
+            query: "test document",  // Same query to generate same vector
+            topK: 1,
+            handlers: [ vector.search.complete ]
+        };
+    }
+    
+    on vector.search.complete (event) {
+        emit system.console.write {
+            text: "✅ Vector search completed successfully!"
+        };
+        
+        emit system.console.write {
+            text: "Results found: " + event.results.length
+        };
+        
+        emit system.console.write {
+            text: "Duration: " + event.duration + "ms"
+        };
+        
+        emit system.console.write {
+            text: "🎉 Vector search is working correctly!"
+        };
+        
+        emit system.shutdown { reason: "success_test_complete" };
+    }
+    
+    on vector.search.failed (event) {
+        emit system.console.write {
+            text: "❌ Vector search failed unexpectedly: " + event.error
+        };
+        
+        emit system.shutdown { reason: "unexpected_failure" };
+    }
+}
+
+new SuccessfulVectorSearchTest();

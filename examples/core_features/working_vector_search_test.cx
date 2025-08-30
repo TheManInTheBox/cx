@@ -1,0 +1,79 @@
+///
+/// Working Vector Search Test - Issue #256 
+/// Test both success and failure cases for vector.search.vector
+///
+
+conscious WorkingVectorSearchTest {
+    realize() {
+        emit system.console.write {
+            text: "🔧 Working Vector Search Test - Issue #256"
+        };
+        
+        emit system.console.write {
+            text: "Step 1: Adding test data with auto-embedding..."
+        };
+
+        // Add text content - this will create a proper 768D vector
+        emit vector.add.text {
+            text: "Sample text for vector search testing",
+            metadata: { test: "vector_search" },
+            handlers: [ data.added ]
+        };
+    }
+    
+    on data.added (event) {
+        emit system.console.write {
+            text: "✅ Data added with ID: " + event.id
+        };
+        
+        emit system.console.write {
+            text: "Step 2: Testing text search first (should work)..."
+        };
+
+        // Use text search - this works fine
+        emit vector.search.text {
+            query: "sample vector testing",
+            topK: 1,
+            handlers: [ text.search.complete ]
+        };
+    }
+    
+    on text.search.complete (event) {
+        emit system.console.write {
+            text: "✅ Text search completed!"
+        };
+        
+        emit system.console.write {
+            text: "Step 3: Testing vector search with wrong dimensions (should fail gracefully)..."
+        };
+
+        // Test vector search with wrong dimensions - should fail with clear error
+        emit vector.search.vector {
+            vector: [1.0, 0.0],  // Wrong dimensions - only 2D
+            topK: 1,
+            handlers: [ vector.search.complete, vector.search.failed ]
+        };
+    }
+    
+    on vector.search.complete (event) {
+        emit system.console.write {
+            text: "❓ Vector search completed unexpectedly"
+        };
+        
+        emit system.shutdown { reason: "unexpected_success" };
+    }
+    
+    on vector.search.failed (event) {
+        emit system.console.write {
+            text: "✅ Vector search failed as expected: " + event.error
+        };
+        
+        emit system.console.write {
+            text: "✅ Error handling is working correctly!"
+        };
+        
+        emit system.shutdown { reason: "test_complete" };
+    }
+}
+
+new WorkingVectorSearchTest();

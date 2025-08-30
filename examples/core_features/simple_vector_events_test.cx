@@ -1,0 +1,42 @@
+///
+/// Simple Vector Events Test - Issue #256 Validation
+/// Basic test of new vector events integration
+///
+
+conscious SimpleVectorEventsTest {
+    realize() {
+        emit system.console.write {
+            text: "🧪 Simple Vector Events Test - Issue #256"
+        };
+        
+        // Test vector.count event
+        emit vector.count {
+            handlers: [ count.received ]
+        };
+    }
+    
+    on count.received (event) {
+        emit system.console.write {
+            text: "✅ vector.count event working! Count: " + event.count
+        };
+        
+        // Test vector.metrics event
+        emit vector.metrics {
+            handlers: [ metrics.received ]
+        };
+    }
+    
+    on metrics.received (event) {
+        emit system.console.write {
+            text: "✅ vector.metrics event working! Duration: " + event.duration + "ms"
+        };
+        
+        emit system.console.write {
+            text: "🎉 Basic vector events integration validated!"
+        };
+        
+        emit system.shutdown { reason: "simple_test_complete" };
+    }
+}
+
+new SimpleVectorEventsTest();
