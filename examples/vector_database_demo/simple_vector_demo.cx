@@ -1,0 +1,128 @@
+///
+/// CX Language Vector Database Demo - Issue #259 (Simplified Debug Version)
+/// 
+/// This simplified demo focuses on core functionality without complex error handling
+///
+
+conscious SimpleVectorDemo {
+    realize() {
+        emit system.console.write {
+            text: "🎯 Simple Vector Database Demo - Issue #259",
+            foregroundColor: "cyan"
+        };
+        
+        emit system.console.write {
+            text: "🧠 Testing core vector operations",
+            foregroundColor: "blue"
+        };
+        
+        // Start with basic vector count
+        emit vector.count {
+            handlers: [ demo.count.check ]
+        };
+    }
+    
+    // Check initial count
+    on demo.count.check (event) {
+        emit system.console.write {
+            text: "📊 Initial vector count: " + event.count,
+            foregroundColor: "green"
+        };
+        
+        // Add a test document
+        emit vector.add.text {
+            text: "CX Language is a consciousness-aware programming platform for AI agents.",
+            metadata: {
+                category: "test",
+                demo: "simple"
+            },
+            handlers: [ demo.document.added ]
+        };
+    }
+    
+    // Document added successfully
+    on demo.document.added (event) {
+        emit system.console.write {
+            text: "✅ Document added with ID: " + event.id,
+            foregroundColor: "green"
+        };
+        
+        // Test search functionality
+        emit vector.search.text {
+            query: "consciousness programming",
+            topK: 1,
+            handlers: [ demo.search.complete ]
+        };
+    }
+    
+    // Search completed
+    on demo.search.complete (event) {
+        emit system.console.write {
+            text: "🔍 Search completed successfully!",
+            foregroundColor: "green"
+        };
+        
+        emit system.console.write {
+            text: "📊 Search duration: " + event.duration + "ms",
+            foregroundColor: "blue"
+        };
+        
+        // Get final count
+        emit vector.count {
+            handlers: [ demo.final.count ]
+        };
+    }
+    
+    // Final count check
+    on demo.final.count (event) {
+        emit system.console.write {
+            text: "📊 Final vector count: " + event.count,
+            foregroundColor: "green"
+        };
+        
+        emit system.console.write {
+            text: "🎉 Simple demo completed successfully!",
+            foregroundColor: "cyan"
+        };
+        
+        emit system.console.write {
+            text: "✅ Issue #259: Core functionality validated",
+            foregroundColor: "green"
+        };
+        
+        emit system.shutdown { 
+            reason: "demo_complete",
+            exit_code: 0
+        };
+    }
+    
+    // Error handlers
+    on vector.count.failed (event) {
+        emit system.console.write {
+            text: "❌ Vector count failed: " + event.error,
+            foregroundColor: "red"
+        };
+        
+        emit system.shutdown { reason: "error" };
+    }
+    
+    on vector.add.text.failed (event) {
+        emit system.console.write {
+            text: "❌ Document add failed: " + event.error,
+            foregroundColor: "red"
+        };
+        
+        emit system.shutdown { reason: "error" };
+    }
+    
+    on vector.search.text.failed (event) {
+        emit system.console.write {
+            text: "❌ Search failed: " + event.error,
+            foregroundColor: "red"
+        };
+        
+        emit system.shutdown { reason: "error" };
+    }
+}
+
+new SimpleVectorDemo();

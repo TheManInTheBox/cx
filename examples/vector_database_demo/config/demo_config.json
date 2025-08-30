@@ -1,0 +1,64 @@
+{
+  "demo_settings": {
+    "name": "CX Language Vector Database Demo",
+    "version": "1.0.0",
+    "issue_number": "259",
+    "performance_targets": {
+      "search_response_ms": 200,
+      "embedding_generation_ms": 50,
+      "consciousness_overhead_percent": 10
+    },
+    "display_settings": {
+      "colors": {
+        "header": "cyan",
+        "success": "green",
+        "warning": "yellow",
+        "error": "red",
+        "info": "blue",
+        "neutral": "white"
+      },
+      "menu_style": "numbered",
+      "result_limit": 5
+    },
+    "simulation_settings": {
+      "auto_advance": true,
+      "demonstration_mode": true,
+      "interactive_pauses": false
+    }
+  },
+  "vector_database": {
+    "embedding_model": "nomic-embed-text-v1.5",
+    "vector_dimensions": 768,
+    "similarity_threshold": 0.7,
+    "max_documents": 1000
+  },
+  "sample_documents": {
+    "cx_language_docs": {
+      "path": "sample_data/cx_language_docs/",
+      "category": "documentation",
+      "auto_ingest": true
+    },
+    "consciousness_patterns": {
+      "path": "sample_data/consciousness_patterns/",
+      "category": "patterns",
+      "auto_ingest": true
+    }
+  },
+  "consciousness_contexts": [
+    {
+      "name": "technical_documentation",
+      "description": "Focused on technical content and implementation details",
+      "search_bias": "architecture,implementation,performance"
+    },
+    {
+      "name": "consciousness_research",
+      "description": "Emphasizes consciousness and adaptation patterns",
+      "search_bias": "consciousness,adaptation,awareness"
+    },
+    {
+      "name": "educational",
+      "description": "Optimized for learning and demonstration scenarios",
+      "search_bias": "examples,tutorials,concepts"
+    }
+  ]
+}
